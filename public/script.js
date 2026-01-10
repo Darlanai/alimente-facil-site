@@ -2803,13 +2803,9 @@ handleSaveRecipe() {
         executeClearPlannerDay(data) { if(data.day && this.state.planejador[data.day]) delete this.state.planejador[data.day]; },
         executeClearPlannerWeek() { this.state.planejador = {}; },
 
-initRoboAssistant() {
+        initRoboAssistant() {
             const chatbot = {
-                widget: document.getElementById('af-chatbot'),
-                toggleBtn: document.getElementById('af-chatbot-toggle'),
-                closeBtn: document.getElementById('af-chatbot-close'),
-                homeBtn: document.getElementById('af-chatbot-home'),
-                bodyEl: document.getElementById('af-chatbot-body'),
+                widget: document.getElementById('af-chatbot'), toggleBtn: document.getElementById('af-chatbot-toggle'), closeBtn: document.getElementById('af-chatbot-close'), homeBtn: document.getElementById('af-chatbot-home'), bodyEl: document.getElementById('af-chatbot-body'),
                 menuTree: {
                     start: { text: "Olá! 👋 Sou o Assistente Virtual do Alimente Fácil. Como posso te ajudar hoje?", options: [ { label: "📝 Quero me Cadastrar", next: "guide_signup" }, { label: "💎 Planos e Preços", next: "guide_plans" }, { label: "🚀 Como funciona o Painel?", next: "guide_features" }, { label: "📞 Preciso de Suporte", next: "guide_support" } ] },
                     guide_signup: { text: "É muito simples! Você pode criar uma conta gratuita agora mesmo.", options: [ { label: "Abrir Cadastro Agora", action: "open_auth_signup", icon: "fa-user-plus" }, { label: "Já tenho conta (Login)", action: "open_auth_login", icon: "fa-sign-in-alt" }, { label: "Voltar ao Início", next: "start", icon: "fa-arrow-left" } ] },
@@ -2837,46 +2833,15 @@ initRoboAssistant() {
                     }
                 },
                 scrollToBottom() { this.bodyEl.scrollTop = this.bodyEl.scrollHeight; },
-                
-                // --- CORREÇÃO: Toggle mais robusto para funcionar na Landing Page ---
-                toggle() { 
-                    const isOpen = this.widget.classList.contains('af-open'); 
-                    if (isOpen) { 
-                        this.widget.classList.remove('af-open'); 
-                        this.widget.setAttribute('aria-hidden', 'true'); 
-                        this.toggleBtn.classList.remove('af-hidden'); 
-                    } else { 
-                        this.widget.classList.add('af-open'); 
-                        this.widget.setAttribute('aria-hidden', 'false'); 
-                        this.toggleBtn.classList.add('af-hidden'); 
-                        if (this.bodyEl.children.length === 0) { this.navigateMenu('start'); } 
-                    } 
-                },
+                toggle() { const isOpen = this.widget.classList.contains('af-open'); if (isOpen) { this.widget.classList.remove('af-open'); this.widget.setAttribute('aria-hidden', 'true'); this.toggleBtn.classList.remove('af-hidden'); } else { this.widget.classList.add('af-open'); this.widget.setAttribute('aria-hidden', 'false'); this.toggleBtn.classList.add('af-hidden'); if (this.bodyEl.children.length === 0) { this.navigateMenu('start'); } } },
                 restart() { this.bodyEl.innerHTML = ''; this.navigateMenu('start'); }
             };
-
-            // --- CORREÇÃO: Event Listeners com preventDefault para evitar bloqueios ---
-            if(chatbot.toggleBtn) {
-                chatbot.toggleBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); chatbot.toggle(); };
-            }
-            
-            if(chatbot.closeBtn) {
-                chatbot.closeBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); chatbot.toggle(); };
-            }
-
-            if(chatbot.homeBtn) {
-                chatbot.homeBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); chatbot.restart(); };
-            }
-            
-            document.addEventListener('click', (e) => { 
-                const isOpen = chatbot.widget.classList.contains('af-open'); 
-                const clickedInside = chatbot.widget.contains(e.target); 
-                const clickedToggle = chatbot.toggleBtn.contains(e.target); 
-                if (isOpen && !clickedInside && !clickedToggle) { 
-                    chatbot.toggle(); 
-                } 
-            });
-        },
+            if(chatbot.toggleBtn) chatbot.toggleBtn.addEventListener('click', () => chatbot.toggle());
+            if(chatbot.closeBtn) chatbot.closeBtn.addEventListener('click', () => chatbot.toggle());
+            if(chatbot.homeBtn) chatbot.homeBtn.addEventListener('click', () => chatbot.restart());
+            document.addEventListener('click', (e) => { const isOpen = chatbot.widget.classList.contains('af-open'); const clickedInside = chatbot.widget.contains(e.target); const clickedToggle = chatbot.toggleBtn.contains(e.target); if (isOpen && !clickedInside && !clickedToggle) { chatbot.toggle(); } });
+        }
+    };
 
 const ALL_ITEMS_DATA = [
     { name: 'Abacate', price: 5.00, unit_desc: 'unidade de abacate', icon: 'icone-abacate.png' },
