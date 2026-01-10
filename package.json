@@ -1,0 +1,27 @@
+{
+  "name": "alimente-facil-app",
+  "version": "1.0.0",
+  "description": "Alimente Fácil - Painel Inteligente e Chef IA",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "alimentacao",
+    "ia",
+    "planejamento",
+    "node"
+  ],
+  "author": "Darlan",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-rate-limit": "^8.2.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

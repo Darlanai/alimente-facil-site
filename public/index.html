@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Alimente Fácil [Visão Futurista]</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Projetando o futuro da sua alimentação. Fluidez, inteligência e zero desperdício com o Alimente Fácil.">
+    <meta name="author" content="Alimente Fácil">
+    
+    <meta property="og:title" content="Alimente Fácil [Visão Futurista]">
+    <meta property="og:description" content="Projetando o futuro da sua alimentação. Fluidez, inteligência e zero desperdício.">
+    <meta property="og:type" content="website">
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;400;600;700&family=Roboto+Mono:wght@400;500;700&family=Kalam:wght@400;700&family=Roboto:wght@400;500;700&family=Segoe+UI:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+<style>
+    :root {
+        --time-scale: 1;
+        --quantum-black: linear-gradient(135deg, #000000 0%, #050505 50%, #000000 100%);
+        --starlight-gold: conic-gradient(from 0deg at 50% 50%, #FFD700 0deg, #D4AF37 180deg, #FFD700 360deg);
+    }
+</style>
+</head>
+<body>
+
+    <div id="landing-video-container" class="video-container">
+        <video class="background-video active" src="fundo.mp4" poster="fundo_poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
+        <video class="background-video" src="fundo3.mp4" poster="fundo3_poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
+    </div>
+    <div id="panel-video-container" class="video-container">
+        <video class="background-video active" src="videopainel.mp4" poster="videopainel_poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
+    </div>
+
+<header class="header" id="landing-header">
+  <div class="header-inner">
+    <div class="brand">ALIMENTE FÁCIL</div>
+
+    <div class="actions">
+      <div class="icon-btn" id="landing-theme-toggle" title="Tema">
+        <svg viewBox="0 0 24 24"><path d="M12 2a1 1 0 0 0 0 2 8 8 0 1 1-8 8 1 1 0 0 0-2 0 10 10 0 1 0 10-10z"/></svg>
+      </div>
+
+      <div class="icon-btn power" id="landing-auth-btn" title="Entrar">
+        <svg viewBox="0 0 24 24"><path d="M11 2h2v10h-2zM12 22a9 9 0 0 1-6.36-15.36l1.42 1.42A7 7 0 1 0 16.94 8.06l1.42-1.42A9 9 0 0 1 12 22z"/></svg>
+      </div>
+
+      <div class="menu-btn" id="hamburger">
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="menu-panel" id="menuItems">
+    <div class="menu-item"><a href="#inicio"><span>Início</span></a></div>
+    <div class="menu-item" data-action="open-calculator"><span>Calculadora</span></div>
+    <div class="menu-item"><a href="#dicas-valiosas"><span>Dicas Valiosas</span></a></div>
+    <div class="menu-item"><a href="#receitas-landing"><span>Receitas Rápidas</span></a></div>
+    <div class="menu-item"><a href="#sobre"><span>Sobre & Contato</span></a></div>
+    <div class="menu-sep"></div>
+    <div class="menu-item cta" onclick="if(window.app){window.app.showAuthModal();}"><span>Acessar Painel</span></div>
+  </div>
+</header>
+
+    <main class="main-container">
+        
+        <section id="inicio" class="page-section">
+<div class="identity-container">
+                <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
+                
+                <h2 class="hero-tagline">O FUTURO DA SUA COZINHA AGORA</h2>
+                
+                <p class="simple-subtitle">
+                    Organize, planeje e economize com a inteligência artificial que transforma sua rotina alimentar.
+                </p>
+                
+                <div style="margin-top: 2.5rem;">
+                    <a href="#" class="modern-start-btn" onclick="if(window.app){window.app.handleStartButtonClick(); return false;}">
+                        <span class="btn-text">Começar Agora</span>
+                        <span class="btn-icon-wrapper"><i class="fa-solid fa-arrow-right"></i></span>
+                    </a>
+                </div>
+            </div>
+
+             <div class="scroll-down-indicator" aria-hidden="true">
+                <span>Role para explorar</span>
+                <i class="fa-solid fa-arrow-down"></i>
+            </div>
+        </section>
+
+    <section class="page-section" style="min-height: auto; padding: 4rem 2rem; background: rgba(0,0,0,0.6); border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div class="section-content">
+            <div class="features-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; width: 100%; max-width: 1200px;">
+                <div class="feature-item" style="text-align: center;">
+                    <i class="fa-solid fa-brain" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 1rem; filter: drop-shadow(0 0 10px rgba(0, 242, 234, 0.4));"></i>
+                    <h3 style="color: #fff; margin-bottom: 0.5rem; font-size: 1.2rem;">IA Inteligente</h3>
+                    <p style="color: #aaa; font-size: 0.95rem; line-height: 1.5;">Receitas e listas criadas automaticamente para você com base no que você já tem.</p>
+                </div>
+                <div class="feature-item" style="text-align: center;">
+                    <i class="fa-solid fa-wallet" style="font-size: 2.5rem; color: var(--green); margin-bottom: 1rem; filter: drop-shadow(0 0 10px rgba(52, 199, 89, 0.4));"></i>
+                    <h3 style="color: #fff; margin-bottom: 0.5rem; font-size: 1.2rem;">Economia Real</h3>
+                    <p style="color: #aaa; font-size: 0.95rem; line-height: 1.5;">Evite desperdícios e controle seu orçamento mensal com precisão.</p>
+                </div>
+                <div class="feature-item" style="text-align: center;">
+                    <i class="fa-solid fa-mobile-screen" style="font-size: 2.5rem; color: var(--accent-purple); margin-bottom: 1rem; filter: drop-shadow(0 0 10px rgba(175, 82, 222, 0.4));"></i>
+                    <h3 style="color: #fff; margin-bottom: 0.5rem; font-size: 1.2rem;">100% Mobile</h3>
+                    <p style="color: #aaa; font-size: 0.95rem; line-height: 1.5;">Leve sua organização no bolso. Funciona perfeitamente em qualquer dispositivo.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+        
+        <section id="calculadora" class="page-section" aria-labelledby="calc-title">
+            <div class="section-content">
+                <h1 id="calc-title" class="page-title">Calculadora de Desperdício</h1>
+                <p class="page-subtitle">Veja o impacto real do desperdício no seu orçamento e no planeta.</p>
+
+                <div class="mobile-tab-nav" role="tablist">
+                    <button class="mobile-tab-btn active" data-tab-target="home-calculator" role="tab" aria-selected="true" aria-controls="home-calculator">
+                        Calculadora
+                    </button>
+                    <button class="mobile-tab-btn" data-tab-target="info-card-calculator" role="tab" aria-selected="false" aria-controls="info-card-calculator" tabindex="-1">
+                        O Custo Invisível
+                    </button>
+                </div>
+                
+                <div class="calculator-info-container">
+                    <div id="home-calculator" class="mobile-tab-content glass-card" role="tabpanel" aria-labelledby="calc-title">
+                        <div class="widget-header">
+                            <h3><i class="fa-solid fa-calculator" aria-hidden="true"></i> Calculadora Rápida</h3>
+                        </div>
+                        <div class="calculator-display-section">
+                            <div class="calculator-result-area">
+                                <p>Prejuízo anual estimado:</p>
+                                <h2 id="home-calculator-result">R$ 0,00</h2>
+                                <div id="sustainability-score-container"></div>
+                                <p id="calculator-context-sentence"></p>
+                            </div>
+                            <a href="#" id="home-calculator-clear" class="clear-link" aria-label="Limpar calculadora"><i class="fa-solid fa-undo" aria-hidden="true"></i></a>
+                        </div>
+                        <div class="calculator-items-section">
+                            <h3>Itens Desperdiçados por semana</h3>
+                            <div id="home-calculator-grid"></div>
+                        </div>
+                    </div>
+
+                    <div id="info-card-calculator" class="info-card mobile-tab-content glass-card" role="tabpanel" tabindex="-1">
+                        <h2>O Custo Invisível</h2>
+                        <p>No Brasil, o desperdício de alimentos é um problema alarmante. Milhões de toneladas de comida vão parar no lixo todos os anos.</p>
+                        <p>Estima-se que:</p>
+                        <ul>
+                            <li>Cerca de <strong>30%</strong> de toda a comida produzida no mundo é perdida ou desperdiçada.</li>
+                            <li>Para uma família média, isso pode representar mais de <strong>R$ 1.000,00</strong> jogados fora por ano.</li>
+                        </ul>
+                        <p>Usando nossa calculadora, você pode ter uma visão clara de como pequenas mudanças na sua rotina podem gerar uma economia significativa.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="dicas-valiosas" class="page-section" aria-labelledby="dicas-title">
+            <div class="section-content">
+                <h1 id="dicas-title" class="page-title">Dicas Valiosas</h1>
+                <p class="page-subtitle">Otimize sua rotina, economize e reduza o desperdício com nossas dicas.</p>
+                <div class="carousel-slider dicas-carousel"></div>
+                <button class="ai-cta-button" id="ai-cta-dicas">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="sparkle" aria-hidden="true">
+                    <path class="path" stroke-linejoin="round" stroke-linecap="round" d="M14.187 8.096L15 5.25L15.813 8.096C16.0231 8.83114 16.4171 9.50062 16.9577 10.0413C17.4984 10.5819 18.1679 10.9759 18.903 11.186L21.75 12L18.904 12.813C18.1689 13.0231 17.4994 13.4171 16.9587 13.9577C16.4181 14.4984 16.0241 15.1679 15.814 15.903L15 18.75L14.187 15.904C13.9769 15.1689 13.5829 14.4994 13.0423 13.9587C12.5016 13.4181 11.8321 13.0241 11.097 12.814L8.25 12L11.096 11.187C11.8311 10.9769 12.5006 10.5829 13.0413 10.0423C13.5819 9.50162 13.9759 8.83214 14.186 8.097L14.187 8.096Z"></path>
+                    <path class="path" stroke-linejoin="round" stroke-linecap="round" d="M6 14.25L5.741 15.285C5.59267 15.8785 5.28579 16.4206 4.85319 16.8532C4.42059 17.2858 3.87853 17.5927 3.285 17.741L2.25 18L3.285 18.259C3.87853 18.4073 4.42059 18.7142 4.85319 19.1468C5.28579 19.5794 5.59267 20.1215 5.741 20.715L6 21.75L6.259 20.715C6.40725 20.1216 6.71398 19.5796 7.14639 19.147C7.5788 18.7144 8.12065 18.4075 8.714 18.259L9.75 18L8.714 17.741C8.12065 17.5925 7.5788 17.2856 7.14639 16.853C6.71398 16.4204 6.40725 15.8784 6.259 15.285L6 14.25Z"></path>
+                  </svg>
+                  <span class="text_button">Mais dicas? Pergunte ao Chef IA</span>
+                </button>
+            </div>
+        </section>
+
+        <section id="receitas-landing" class="page-section" aria-labelledby="receitas-title">
+            <div class="section-content">
+                <h1 id="receitas-title" class="page-title">Receitas Rápidas</h1>
+                <p class="page-subtitle">Inspire-se com pratos fáceis e deliciosos para o dia a dia.</p>
+                <div class="carousel-slider receitas-carousel"></div>
+                <button class="ai-cta-button" id="ai-cta-receitas">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="sparkle" aria-hidden="true">
+                      </svg>
+                    <span class="text_button">Mais receitas? Pergunte ao Chef IA</span>
+                </button>
+            </div>
+        </section>
+
+        <section id="sobre" class="page-section" aria-labelledby="sobre-title">
+            <div class="section-content">
+                <div class="about-contact-container">
+                    <div class="about-card glass-card">
+                        <h2 id="sobre-title">Sobre o Projeto</h2>
+                        <p>O "Alimente Fácil" nasceu da ideia de que a tecnologia pode ser nossa maior aliada contra o desperdício de alimentos. Queremos transformar a maneira como você planeja suas compras e gerencia sua despensa.</p>
+                    </div>
+                    <div class="contact-card glass-card">
+                        <h2 id="contato-title">Contato</h2>
+                        <form id="contact-form" class="contact-form">
+                            <div class="form-group">
+                                <label for="contact-name" class="sr-only">Seu Nome</label>
+                                <input type="text" id="contact-name" placeholder="Seu Nome" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-email" class="sr-only">Seu E-mail</label>
+                                <input type="email" id="contact-email" placeholder="Seu E-mail" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-message" class="sr-only">Sua Mensagem</label>
+                                <textarea rows="4" id="contact-message" placeholder="Sua Mensagem" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Mensagem</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="page-footer glass-card">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="#">Termos de Uso</a>
+                    <a href="#">Política de Privacidade</a>
+                </div>
+                <p>Alimente Fácil &copy; 2025 - Todos os direitos reservados.</p>
+            </div>
+        </footer>
+    </main>
+
+    <div id="item-edit-modal" class="modal-overlay">
+       <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="item-edit-title">
+            <div class="modal-header">
+                <button class="icon-button close-btn" data-modal-close="item-edit-modal" aria-label="Fechar modal"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+                <h3 id="item-edit-title"><i class="fa-solid fa-pencil" aria-hidden="true"></i> Editar Item</h3>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-item-id">
+                <input type="hidden" id="edit-item-type">
+                <div class="form-group">
+                    <label for="edit-item-name">Nome</label>
+                    <input type="text" id="edit-item-name">
+                </div>
+                <div class="form-row-trio">
+                    <div class="form-group">
+                        <label for="edit-item-qtd">Qtd</label>
+                        <input type="number" id="edit-item-qtd">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-item-unid">Unid</label>
+                        <select id="edit-item-unid">
+                            <option value="un">un</option>
+                            <option value="kg">kg</option>
+                            <option value="g">g</option>
+                            <option value="L">L</option>
+                            <option value="ml">ml</option>
+                            <option value="pct">pct</option>
+                            <option value="cx">cx</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-item-valor">Valor (R$)</label>
+                        <input type="number" id="edit-item-valor" step="0.01">
+                    </div>
+                </div>
+                <div id="edit-item-despensa-fields" style="display: none;">
+                    <hr class="divider">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-item-validade">Validade</label>
+                            <input type="date" id="edit-item-validade">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-item-stock">Estoque (%)</label>
+                            <input type="number" id="edit-item-stock" min="0" max="100" step="25">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal-close="item-edit-modal">Cancelar</button>
+                <button class="btn btn-primary" id="item-edit-save-btn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="auth-modal" class="modal-overlay"> 
+         <div class="modal-box auth-modal-content" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title"> 
+             <div class="modal-header">
+                 <button class="icon-button close-btn" data-modal-close="auth-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
+                 <h3 id="auth-modal-title">Acessar Painel</h3> 
+             </div>
+             
+             <div class="modal-body">
+                 <div id="login-view" class="auth-form-container active"> 
+                     <form id="login-form"> 
+                         <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required></div> 
+                         <div class="form-group"><label for="login-password">Senha</label><input type="password" id="login-password" required></div> 
+                         <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Entrar</button> 
+                     </form> 
+                     <p class="form-footer-text">Não tem uma conta? <span class="auth-toggle-link" data-view="signup-view" role="button" tabindex="0">Cadastre-se</span></p> 
+                 </div> 
+                 <div id="signup-view" class="auth-form-container"> 
+                     <h3>Criar Conta</h3> 
+                     <form id="signup-form"> 
+                         <div class="form-group"><label for="signup-name">Nome</label><input type="text" id="signup-name" required></div> 
+                         <div class="form-group"><label for="signup-email">Email</label><input type="email" id="signup-email" required></div> 
+                         <div class="form-group"><label for="signup-password">Senha</label><input type="password" id="signup-password" required></div> 
+                         <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Criar Conta</button> 
+                     </form> 
+                     <p class="form-footer-text">Já tem uma conta? <span class="auth-toggle-link" data-view="login-view" role="button" tabindex="0">Faça o login</span></p> 
+                 </div> 
+             </div>
+         </div> 
+     </div>
+
+    <div id="plans-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-gem"></i> Escolha seu Plano</h3>
+                <button class="icon-button close-btn" data-modal-close="plans-modal"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <p class="page-subtitle" style="text-align: center; margin-bottom: 2rem;">Desbloqueie todo o potencial da sua cozinha inteligente.</p>
+                
+                <div class="plans-container">
+                    <div class="plan-card" id="plan-free">
+                        <h4>Gratuito</h4>
+                        <div class="plan-price">R$ 0<span>/mês</span></div>
+                        <ul>
+                            <li><i class="fa-solid fa-check"></i> 2 Listas de Compras</li>
+                            <li><i class="fa-solid fa-check"></i> 5 Receitas Salvas</li>
+                            <li><i class="fa-solid fa-check"></i> Gestão de Despensa Básica</li>
+                            <li style="opacity: 0.5;"><i class="fa-solid fa-times"></i> Sem Chef IA</li>
+                            <li style="opacity: 0.5;"><i class="fa-solid fa-times"></i> Sem Análises Avançadas</li>
+                        </ul>
+                        <div class="plan-actions">
+                            <button class="btn btn-secondary" disabled>Seu Plano Atual</button>
+                        </div>
+                    </div>
+
+                    <div class="plan-card recommended" id="plan-premium_ai" style="border-color: var(--primary-color); background: rgba(0, 242, 234, 0.05);">
+                        <div style="background: var(--primary-color); color: #000; font-size: 0.8rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; align-self: center; margin-bottom: 1rem;">MAIS POPULAR</div>
+                        <h4>Premium IA</h4>
+                        <div class="plan-price">R$ 29,90<span>/mês</span></div>
+                        <ul>
+                            <li><i class="fa-solid fa-check"></i> <strong>Chef IA Ilimitado</strong></li>
+                            <li><i class="fa-solid fa-check"></i> Listas Ilimitadas</li>
+                            <li><i class="fa-solid fa-check"></i> Receitas Ilimitadas</li>
+                            <li><i class="fa-solid fa-check"></i> Planejador Semanal Completo</li>
+                            <li><i class="fa-solid fa-check"></i> Análises de Gastos</li>
+                        </ul>
+                        <div class="plan-actions">
+                            <button class="btn btn-primary" data-action="subscribe" data-plan="premium_ai" style="width: 100%;">Assinar Agora</button>
+                            <div class="cancel-link">Cancelar Assinatura</div>
+                        </div>
+                    </div>
+                    
+                    <div class="plan-card" id="plan-premium">
+                         <h4>Essencial</h4>
+                         <div class="plan-price">R$ 14,90<span>/mês</span></div>
+                         <ul>
+                             <li><i class="fa-solid fa-check"></i> Listas Ilimitadas</li>
+                             <li><i class="fa-solid fa-check"></i> Receitas Ilimitadas</li>
+                             <li><i class="fa-solid fa-check"></i> Planejador Semanal</li>
+                             <li style="opacity: 0.5;"><i class="fa-solid fa-times"></i> Sem Chef IA</li>
+                         </ul>
+                         <div class="plan-actions">
+                             <button class="btn btn-secondary" data-action="subscribe" data-plan="premium" style="width: 100%;">Assinar Essencial</button>
+                             <div class="cancel-link">Cancelar Assinatura</div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="app-panel-container-standalone">
+        <aside class="app-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-logo">
+                    <span>ALIMENTE</span>
+                    <span>FÁCIL</span>
+                </div>
+            </div>
+            <nav class="main-nav" aria-label="Navegação principal do painel">
+                <button class="nav-item active" data-module="inicio"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Início</span></button>
+                <button class="nav-item" data-module="lista"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i><span>Listas</span></button>
+                <button class="nav-item" data-module="despensa"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>Despensa</span></button>
+                <button class="nav-item" data-module="receitas"><i class="fa-solid fa-utensils" aria-hidden="true"></i><span>Receitas</span></button>
+                <button class="nav-item" data-module="planejador"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i><span>Planejador</span></button>
+                <button class="nav-item" data-module="analises"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>Análises</span></button>
+                <button class="nav-item" data-module="configuracoes"><i class="fa-solid fa-sliders" aria-hidden="true"></i><span>Configurações</span></button>
+            </nav>
+            <div class="sidebar-footer">
+                 <button class="icon-button" id="logout-btn" title="Sair" aria-label="Sair da conta"><i class="fa-solid fa-power-off" aria-hidden="true"></i></button>
+            </div>
+        </aside>
+        <main class="app-main-content">
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="icon-button" id="menu-toggle-btn" title="Menu" aria-label="Alternar menu lateral"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="header-budget" data-modal-open="budget-modal" title="G: Gastos da Lista Atual / T: Teto do Orçamento Definido">
+                        <i class="fa-solid fa-wallet" aria-hidden="true"></i>
+                        <div class="header-budget-values">
+                            <span>G:R$</span><span id="budget-spent-display">0</span> /
+                            <span>T:R$</span><span id="budget-total-display">500</span>
+                        </div>
+                        <div class="header-budget-bar"><div id="budget-bar-fill-display" class="header-budget-bar-fill" style="width: 0%;"></div></div>
+                    </button>
+
+                    <div class="header-utility-cluster">
+                        <button class="icon-button" data-modal-open="essentials-modal" title="Itens Essenciais" aria-label="Itens Essenciais">
+                            <i class="fa-solid fa-star" aria-hidden="true"></i>
+                        </button>
+                        <button class="icon-button" id="theme-toggle-btn-panel" title="Alternar Tema" aria-label="Alternar tema de cores">
+                            <i class="fa-solid fa-sun" aria-hidden="true"></i>
+                        </button>
+                        <button class="icon-button" title="Notificações (Simulação)" aria-label="Notificações">
+                            <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                        </button>
+                        <button class="icon-button" id="home-btn-panel" title="Voltar para a página inicial" aria-label="Voltar para a página inicial">
+                            <i class="fa-solid fa-sign-out-alt" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="modules-area">
+                 <div id="module-inicio" class="module-container active"></div>
+                 <div id="module-lista" class="module-container">
+                     <div class="list-management-layout" id="list-manager">
+                        <div class="saved-lists-column">
+                            <button class="btn btn-secondary btn-create-list"><i class="fa-solid fa-plus" aria-hidden="true"></i> Criar Nova Lista</button>
+                            <div class="dashboard-card">
+                                <div class="card-header" style="cursor: default;">
+                                    <h3><i class="fa-solid fa-list-ul" aria-hidden="true"></i> Minhas Listas</h3>
+                                </div>
+                                <div class="card-content" id="saved-lists-container"></div>
+                            </div>
+                        </div>
+                        <div class="active-list-column">
+                            <div class="dashboard-card">
+                                <div class="card-header" style="cursor: default;">
+                                    <button class="icon-button mobile-back-btn" id="list-back-btn" title="Voltar" aria-label="Voltar para Minhas Listas"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                                    <h3 id="active-list-title"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> Carregando...</h3>
+                                </div>
+                                <div class="add-item-form-container">
+                                    <form class="add-item-form">
+                                        <input type="hidden" id="active-list-id-input" value="">
+                                        <div class="form-group form-group-flex"> <label for="lista-form-nome-full">Nome</label> <input type="text" id="lista-form-nome-full" placeholder="Ex: Arroz"> </div>
+                                        <div class="form-group form-group-small"> <label for="lista-form-qtd-full">Qtd</label> <input type="number" id="lista-form-qtd-full" value="1" min="0.1" step="any"> </div>
+                                        <div class="form-group form-group-small"> <label for="lista-form-unid-full">Unid</label> <select id="lista-form-unid-full" aria-label="Unidade do item"></select> </div>
+                                        <div class="form-group form-group-medium"> <label for="lista-form-valor-full">Valor</label> <input type="text" id="lista-form-valor-full" placeholder="0.00"> </div>
+                                        <button type="submit" class="btn btn-primary btn-add-item" id="lista-add-item-btn-full" title="Adicionar Item" aria-label="Adicionar Item"> <i class="fa-solid fa-plus" aria-hidden="true"></i> </button>
+                                    </form>
+                                </div>
+                                <div class="card-content no-padding-top" id="lista-items-full" data-group="shared-items" data-list-type="lista"></div>
+                                <div class="card-footer" id="active-list-actions">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+                 <div id="module-despensa" class="module-container"></div>
+                 <div id="module-receitas" class="module-container"></div>
+                 <div id="module-planejador" class="module-container"></div>
+                 <div id="module-analises" class="module-container"></div>
+                 <div id="module-configuracoes" class="module-container"></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="chef-ia-fab-placeholder" data-modal-open="ai-chat-modal" role="button" tabindex="0" aria-label="Abrir Chef IA">
+        <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+    </div>
+    
+    <div id="custom-confirm-modal" class="modal-overlay"> 
+        <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message"> 
+            <div class="modal-header">
+                <button class="icon-button close-btn" data-modal-close="custom-confirm-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+                <h3 id="confirm-title">Confirmar</h3>
+            </div> 
+            <div class="modal-body"><p id="confirm-message">Tem certeza?</p></div> 
+            <div class="modal-footer"> 
+                <button id="confirm-cancel-btn" class="btn btn-secondary">Cancelar</button> 
+                <button id="confirm-ok-btn" class="btn btn-danger">Confirmar</button> 
+            </div> 
+        </div> 
+    </div>
+
+    <div id="list-view-modal" class="modal-overlay">
+         <div class="modal-box list-fullscreen-box" role="dialog" aria-modal="true" aria-labelledby="list-view-modal-title">
+            <div class="modal-header">
+                <button class="icon-button close-btn" data-modal-close="list-view-modal"><i class="fa-solid fa-arrow-left"></i></button>
+                <h3 id="list-view-modal-title">Lista</h3>
+            </div>
+            
+            <div class="add-item-form-container compact-add-form">
+                 <form class="add-item-form">
+                     <input type="hidden" id="modal-list-id-input" value="">
+                     <div class="form-group form-group-flex"> <input type="text" id="modal-lista-nome" placeholder="Adicionar item rápido..."> </div>
+                     <div class="form-group form-group-small" style="display:none;"> <input type="number" id="modal-lista-qtd" value="1"> </div>
+                     <button type="submit" class="btn btn-primary btn-add-item" id="modal-lista-add-btn"> <i class="fa-solid fa-plus"></i> </button>
+                 </form>
+            </div>
+
+            <div class="modal-body" id="list-view-modal-body"></div>
+            
+            <div class="modal-footer" id="list-view-modal-footer">
+                </div>
+        </div>
+    </div>
+    
+<div id="pantry-view-modal" class="modal-overlay">
+        <div class="modal-box list-fullscreen-box" role="dialog" aria-modal="true" aria-labelledby="pantry-view-title">
+            <div class="modal-header">
+                <button class="icon-button close-btn" data-modal-close="pantry-view-modal" aria-label="Voltar"><i class="fa-solid fa-arrow-left"></i></button>
+                <h3 id="pantry-view-title">Editar Despensa</h3>
+            </div>
+            <div class="modal-body" id="pantry-view-body">
+                <form id="pantry-edit-form-fullscreen">
+                    <input type="hidden" id="pantry-edit-id">
+                    <div class="form-group">
+                        <label for="pantry-edit-name">Nome do Item</label>
+                        <input type="text" id="pantry-edit-name" class="input-large" placeholder="Ex: Arroz">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Quantidade</label>
+                            <div class="stepper-control">
+                                <button type="button" class="stepper-btn minus"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="pantry-edit-qtd" value="1">
+                                <button type="button" class="stepper-btn plus"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="pantry-edit-unid">Unidade</label>
+                            <select id="pantry-edit-unid" class="input-large">
+                                <option value="un">un</option>
+                                <option value="kg">kg</option>
+                                <option value="g">g</option>
+                                <option value="L">L</option>
+                                <option value="ml">ml</option>
+                                <option value="pct">pct</option>
+                                <option value="cx">cx</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nível de Estoque</label>
+                        <input type="range" id="pantry-edit-stock" min="0" max="100" step="25" class="stock-range">
+                        <div class="stock-labels">
+                            <span>Vazio</span><span>Baixo</span><span>Médio</span><span>Cheio</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pantry-edit-validade">Data de Validade</label>
+                        <input type="date" id="pantry-edit-validade" class="input-large">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="justify-content: space-between;">
+                 <div id="pantry-view-actions-container">
+                     </div>
+                 <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" data-modal-close="pantry-view-modal">Cancelar</button>
+                    <button class="btn btn-primary" id="pantry-save-btn">Salvar</button>
+                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="recipe-detail-modal" class="modal-overlay">
+        <div class="modal-box list-fullscreen-box" role="dialog" aria-modal="true" aria-labelledby="recipe-detail-modal-title">
+            <div class="modal-header">
+                <button class="icon-button close-btn" id="recipe-detail-close-btn" data-modal-close="recipe-detail-modal"><i class="fa-solid fa-arrow-left"></i></button>
+                <h3 id="recipe-detail-modal-title">Detalhes</h3>
+            </div>
+            <div class="modal-body" id="recipe-detail-modal-body"></div>
+            <div class="modal-footer" style="background-color: #121212;">
+                </div>
+        </div>
+    </div>
+    
+    <div id="recipe-picker-modal" class="modal-overlay"> 
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="recipe-picker-title"> 
+            <div class="modal-header"> 
+                <button class="icon-button close-btn" data-modal-close="recipe-picker-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
+                <h3 id="recipe-picker-title"><i class="fa-solid fa-utensils" aria-hidden="true"></i> Escolher Receita</h3> 
+            </div> 
+            <div class="modal-body"> 
+                <p>Selecione uma receita da sua lista.</p> 
+                <div class="recipe-picker-list" id="recipe-picker-list-container"></div> 
+            </div> 
+        </div> 
+    </div>
+
+    <div id="budget-modal" class="modal-overlay"> 
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="budget-title"> 
+            <div class="modal-header"> 
+                <button class="icon-button close-btn" data-modal-close="budget-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
+                <h3 id="budget-title"><i class="fa-solid fa-wallet" aria-hidden="true"></i> Gerenciar Orçamento</h3> 
+            </div> 
+            <div class="modal-body"> 
+                <p>Defina seu orçamento mensal total.</p> 
+                <div class="form-group"> 
+                    <label for="budget-total-input">Orçamento Total (R$)</label> 
+                    <input type="number" id="budget-total-input" value="500.00" step="50"> 
+                </div> 
+            </div> 
+            <div class="modal-footer"> 
+                <button class="btn btn-secondary" data-modal-close="budget-modal">Cancelar</button> 
+                <button class="btn btn-primary" id="budget-save-btn">Salvar</button> 
+            </div> 
+        </div> 
+    </div>
+    
+    <div id="essentials-modal" class="modal-overlay"> 
+        <div class="modal-box" style="max-width: 600px;" role="dialog" aria-modal="true" aria-labelledby="essentials-title"> 
+            <div class="modal-header"> 
+                <button class="icon-button close-btn" data-modal-close="essentials-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
+                <h3 id="essentials-title"><i class="fa-solid fa-star" aria-hidden="true"></i> Meus Itens Essenciais</h3> 
+            </div> 
+            <div class="modal-body"> 
+                <p>Gerencie seus itens comprados com frequência.</p> 
+                <div class="form-row-trio"> 
+                    <div class="form-group" style="grid-column: 1 / 2;"> 
+                        <label for="essential-name">Nome</label> 
+                        <input type="text" id="essential-name" placeholder="Ex: Arroz"> 
+                    </div> 
+                    <div class="form-group"> 
+                        <label for="essential-price">Preço</label> 
+                        <input type="number" id="essential-price" placeholder="8.50"> 
+                    </div> 
+                    <div class="form-group"> 
+                        <label for="essential-unit">Unid.</label> 
+                        <input type="text" id="essential-unit" placeholder="kg"> 
+                    </div> 
+                </div> 
+                <button class="btn btn-primary" id="essentials-add-btn" style="width: 100%;"><i class="fa-solid fa-plus" aria-hidden="true"></i> Adicionar</button> 
+                <hr class="divider"> 
+                <div id="essentials-list-container"> </div> 
+            </div> 
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal-close="essentials-modal">Fechar</button>
+            </div>
+        </div> 
+    </div>
+    
+    <div id="ai-chat-modal" class="modal-overlay"> 
+        <div class="modal-box" style="max-width: 600px;" role="dialog" aria-modal="true" aria-labelledby="ai-chat-title"> 
+            <div class="modal-header"> 
+                <button class="icon-button close-btn" data-modal-close="ai-chat-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
+                <h3 id="ai-chat-title"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Chef IA</h3> 
+            </div> 
+            <div class="modal-body"> 
+                <div class="ai-chat-messages" id="ai-chat-messages-container" role="log" aria-live="polite"> 
+                    <div class="chat-message ia"><div class="bubble">Olá! Como posso te ajudar hoje com suas receitas ou planejamento?</div></div> 
+                </div> 
+            </div>
+            <div class="modal-footer ai-chat-footer" style="justify-content: space-between;"> 
+                 <div class="form-group" style="width: 100%; display: flex; gap: 8px;"> 
+                     <label for="ai-chat-input" class="sr-only">Digite sua mensagem para o Chef IA</label>
+                     <input type="text" id="ai-chat-input" placeholder="Digite sua mensagem..."> 
+                     <button class="btn btn-primary" id="ai-chat-send-btn" style="padding: 0 1rem;" aria-label="Enviar mensagem"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button> 
+                 </div> 
+            </div> 
+        </div> 
+    </div>
+
+<div class="glass-dock-container">
+    <div class="glass-dock">
+        <div class="dock-indicator"></div>
+        <button class="dock-item active" data-target="home"><i class="fa-solid fa-house"></i><span>Início</span></button>
+        <button class="dock-item" data-target="app"><i class="fa-solid fa-border-all"></i><span>Painel</span></button>
+    </div>
+</div>
+
+    <div id="af-chatbot" class="af-chatbot" aria-hidden="true">
+         <div class="af-chatbot-header">
+            <div class="af-header-info">
+                <div class="af-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="af-title-group">
+                    <span class="af-bot-name">Assistente Alimente</span>
+                    <span class="af-bot-status">Online</span>
+                </div>
+            </div>
+            <div class="af-header-actions">
+                <button id="af-chatbot-home" class="af-header-btn" title="Menu Principal"><i class="fa-solid fa-house"></i></button>
+                <button id="af-chatbot-close" class="af-header-btn" title="Minimizar"><i class="fa-solid fa-chevron-down"></i></button>
+            </div>
+        </div>
+
+        <div class="af-chatbot-body" id="af-chatbot-body" role="log" aria-live="polite"></div>
+
+        <div class="af-chatbot-footer">
+            <span class="af-footer-hint">Selecione uma opção acima</span>
+        </div>
+    </div>
+    
+    <button id="af-chatbot-toggle" class="af-chatbot-toggle" aria-label="Ajuda">
+        <i class="fa-solid fa-comment-dots"></i>
+        <span class="af-notification-dot"></span>
+    </button>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script> 
+    
+    <script src="script.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => { console.log('ServiceWorker registrado com sucesso: ', registration.scope); })
+                    .catch(err => { console.log('Registro do ServiceWorker falhou: ', err); });
+            });
+        }
+    </script>
+</body>
+</html>
