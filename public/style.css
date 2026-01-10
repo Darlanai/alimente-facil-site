@@ -2315,3 +2315,12 @@ body.app-mode .header { display: none !important; }
   .header-inner { padding: 10px 15px; }
   .menu-panel { right: 15px; width: calc(100% - 30px); }
 }
+/* CORREÇÃO CRÍTICA: Garante que a confirmação apareça na frente de TUDO */
+#custom-confirm-modal {
+    z-index: 20000 !important; /* Mais alto que o menu (10001) e as listas (9999) */
+}
+
+#custom-confirm-modal .modal-box {
+    border: 1px solid var(--danger-color) !important; /* Borda vermelha para destaque de alerta */
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.9) !important;
+}
