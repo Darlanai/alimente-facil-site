@@ -2350,23 +2350,3 @@ body.app-mode .header { display: none !important; }
     box-shadow: 0 0 50px rgba(0, 0, 0, 1) !important;
     max-width: 90% !important;
 }
-/* --- CORREÇÃO SUPREMA DO CHATBOT NA LANDING PAGE --- */
-
-/* Força o Chatbot (quando aberto) a ficar ACIMA do cabeçalho da Landing Page */
-#af-chatbot.af-open {
-    z-index: 15000 !important; /* O Header costuma ser 1000 ou 2000. Isso garante a vitória. */
-}
-
-/* Garante que o botão de fechar especificamente seja clicável */
-#af-chatbot .af-header-actions button {
-    pointer-events: auto !important;
-    position: relative !important;
-    z-index: 15001 !important;
-}
-
-/* Ajuste de segurança para o topo não ficar cortado em alguns iPhones */
-@media (max-width: 600px) {
-    #af-chatbot.af-open {
-        padding-top: env(safe-area-inset-top); /* Respeita o "notch" da câmera */
-    }
-}
