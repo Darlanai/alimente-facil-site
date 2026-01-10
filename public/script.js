@@ -1670,36 +1670,33 @@ renderPlanejador(container) {
             this.renderOrcamento();
         },
 
-        renderOrcamento() {
+renderOrcamento() {
             const totalOrcamento = this.state.orcamento.total || 0;
-            const agora = new Date();
-            const mesAtual = agora.getMonth();
-            const anoAtual = agora.getFullYear();
-            let gastoTotalMes = 0;
-            for (const listId in this.state.listas) {
-                const lista = this.state.listas[listId];
-                lista.items.forEach(item => {
-                    if (item.checked && item.boughtDate) {
-                        const dataCompra = new Date(item.boughtDate);
-                        if (dataCompra.getMonth() === mesAtual && dataCompra.getFullYear() === anoAtual) {
-                            gastoTotalMes += (parseFloat(item.valor || 0) * parseFloat(item.qtd || 0));
-                        }
-                    }
-                });
-            }
-            const percent = totalOrcamento > 0 ? (gastoTotalMes / totalOrcamento) * 100 : 0;
+            
+            // NOVA LÓGICA: Soma o valor financeiro de todos os itens atualmente na Despensa
+            let valorTotalDespensa = this.state.despensa.reduce((acc, item) => {
+                const valor = parseFloat(item.valor) || 0;
+                const quantidade = parseFloat(item.qtd) || 0;
+                return acc + (valor * quantidade);
+            }, 0);
+
+            const percent = totalOrcamento > 0 ? (valorTotalDespensa / totalOrcamento) * 100 : 0;
             const totalDisplay = document.getElementById('budget-total-display');
             const spentDisplay = document.getElementById('budget-spent-display');
             const barFill = document.getElementById('budget-bar-fill-display');
             const budgetInput = document.getElementById('budget-total-input');
+            
             if(totalDisplay) totalDisplay.textContent = parseFloat(totalOrcamento).toFixed(0);
-            if(spentDisplay) spentDisplay.textContent = parseFloat(gastoTotalMes).toFixed(2);
+            if(spentDisplay) spentDisplay.textContent = valorTotalDespensa.toFixed(2);
+            
             if(barFill) {
                 barFill.style.width = `${Math.min(percent, 100)}%`;
+                // Cores dinâmicas: Verde (OK), Amarelo (Atenção), Vermelho (Estoque caro/acima do teto)
                 if (percent > 100) barFill.style.backgroundColor = 'var(--red)';
                 else if (percent > 80) barFill.style.backgroundColor = 'var(--accent-yellow)';
                 else barFill.style.backgroundColor = 'var(--green)';
             }
+            
             if(budgetInput) budgetInput.value = parseFloat(totalOrcamento).toFixed(2);
         },
 
