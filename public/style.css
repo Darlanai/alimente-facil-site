@@ -997,12 +997,22 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
 
 /* Listas Fullscreen no Mobile */
 .list-fullscreen-box {
-    max-width: 100% !important; width: 100vw !important;
-    /* CORREÇÃO: dvh ajusta a altura ignorando a barra do navegador */
+    /* O SEGREDO ESTÁ AQUI: Fixar na frente da tela */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 9999 !important; /* Garante que cubra tudo */
+    
+    /* Tamanho total */
+    max-width: 100% !important; 
+    width: 100vw !important;
     height: 100dvh !important; 
     max-height: 100dvh !important;
-    border-radius: 0 !important; margin: 0 !important;
-    background: #000 !important;
+    
+    /* Estilo visual */
+    border-radius: 0 !important; 
+    margin: 0 !important;
+    background: #000 !important; /* Fundo preto sólido para tapar o site atrás */
     display: flex;
     flex-direction: column;
 }
