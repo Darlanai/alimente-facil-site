@@ -2271,6 +2271,7 @@ body.app-mode .header { display: none !important; }
   .header-inner { padding: 10px 15px; }
   .menu-panel { right: 15px; width: calc(100% - 30px); }
 }
+
 /* --- CORREÇÃO DE EMERGÊNCIA PARA O MODAL DE CONFIRMAÇÃO --- */
 
 /* 1. Força o Overlay (fundo escuro) a ficar no topo máximo absoluto */
