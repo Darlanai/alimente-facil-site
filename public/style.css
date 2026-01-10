@@ -2271,3 +2271,38 @@ body.app-mode .header { display: none !important; }
   .header-inner { padding: 10px 15px; }
   .menu-panel { right: 15px; width: calc(100% - 30px); }
 }
+/* --- CORREÇÃO DE EMERGÊNCIA PARA O MODAL DE CONFIRMAÇÃO --- */
+
+/* 1. Força o Overlay (fundo escuro) a ficar no topo máximo absoluto */
+#custom-confirm-modal, 
+#custom-confirm-modal.modal-overlay {
+    z-index: 2147483647 !important; /* Valor máximo permitido pelo navegador */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.9) !important; /* Fundo bem escuro para destaque */
+    display: none; /* Padrão fechado */
+    align-items: center;
+    justify-content: center;
+}
+
+/* Garante que o display flex funcione quando a classe active entrar */
+#custom-confirm-modal.active, 
+#custom-confirm-modal.is-visible {
+    display: flex !important;
+}
+
+/* 2. Força a Caixa de Diálogo a aparecer e reseta transformações que causam bugs */
+#custom-confirm-modal .modal-box {
+    z-index: 2147483647 !important;
+    position: relative !important;
+    transform: none !important; /* Remove animações que podem esconder o modal */
+    opacity: 1 !important;
+    visibility: visible !important;
+    margin: auto !important;
+    border: 2px solid var(--red) !important; /* Borda vermelha para você ver que funcionou */
+    box-shadow: 0 0 50px rgba(0, 0, 0, 1) !important;
+    max-width: 90% !important;
+}
