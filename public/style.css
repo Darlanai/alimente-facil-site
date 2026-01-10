@@ -932,10 +932,15 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
 
 /* ================= SYSTEMA DE MODAIS FIXOS ================= */
 .modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
-    z-index: 2000; display: none; align-items: center; justify-content: center;
-    opacity: 0; transition: opacity 0.3s ease; padding: 1rem;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+    z-index: 3000; /* Aumentado para cobrir tudo */
+    display: none; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.3s ease; padding: 1rem;
+}
+/* FIX CRÍTICO: Garante que o Modal de Confirmação fique SEMPRE por cima de outros modais */
+#custom-confirm-modal {
+    z-index: 99999 !important;
 }
 .modal-overlay.active, .modal-overlay.is-visible { display: flex; opacity: 1; visibility: visible; }
 
