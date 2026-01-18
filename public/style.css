@@ -543,114 +543,8 @@ body {
 .close-modal-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; color: var(--glass-text-secondary); cursor: pointer; transition: color 0.3s ease, transform 0.3s ease; z-index: 10; width: 32px; height: 32px; display: flex; justify-content: center; align-items: center; }
 .close-modal-btn:hover { color: var(--glass-text-primary); transform: rotate(90deg); }
 
-/* === PAINEL GAVETA (DRAWER) === */
-.app-panel-container-standalone {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10001; /* Acima de tudo */
-    
-    /* Visual */
-    background: var(--glass-dark-bg);
-    color: var(--glass-text-primary);
-    
-    /* Comportamento de Slide (Escondido na direita) */
-    transform: translateX(100%);
-    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-    box-shadow: -10px 0 40px rgba(0,0,0,0.8);
-    
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* Classe para abrir o painel */
-.app-panel-container-standalone.active {
-    transform: translateX(0);
-}
-
-/* === MARGENS (PADDING) - APENAS NO MOBILE === */
-@media (max-width: 991px) {
-    .app-panel-container-standalone {
-        /* Margem de segurança nas laterais para não colar na borda */
-        padding: 0 16px; 
-    }
-    
-    /* Header e Footer compensam a margem para fundo total, mas conteúdo alinhado */
-    .main-header, .card-footer, .modal-footer {
-        margin-left: -16px;
-        margin-right: -16px;
-        padding-left: 16px;
-        padding-right: 16px;
-        width: calc(100% + 32px);
-    }
-}
-
-/* Desktop: Ocupa tudo normalmente */
-@media (min-width: 992px) {
-    .app-panel-container-standalone {
-        padding: 0;
-        width: 100vw;
-    }
-}
-
-/* === ABA LATERAL (HANDLE) === */
-#drawer-handle {
-    position: fixed;
-    top: 25%; /* Posição vertical */
-    right: 0;
-    width: 25px; /* Largura visível */
-    height: 100px;
-    z-index: 10002; /* Acima do painel */
-    
-    /* Estilo da Aba */
-    background: rgba(30, 30, 30, 0.8);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-right: none;
-    border-radius: 12px 0 0 12px;
-    backdrop-filter: blur(10px);
-    box-shadow: -4px 0 15px rgba(0,0,0,0.5);
-    
-    cursor: grab;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: width 0.2s, background 0.2s;
-}
-
-/* Indicador visual (Barra Neon) */
-#drawer-handle::after {
-    content: '';
-    width: 4px;
-    height: 40px;
-    background-color: var(--glass-text-secondary);
-    border-radius: 10px;
-    transition: background-color 0.3s;
-}
-
-/* Interação com a Aba */
-#drawer-handle:active { cursor: grabbing; }
-#drawer-handle:hover, #drawer-handle:active {
-    width: 35px; /* Expande um pouco */
-    background: rgba(40, 40, 40, 0.95);
-}
-#drawer-handle:hover::after {
-    background-color: var(--primary-color);
-    box-shadow: 0 0 10px var(--glass-on-glow);
-}
-
-/* === OVERLAY DE VISITANTE (BLOQUEIO) === */
-#guest-overlay {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.01); /* Quase transparente */
-    z-index: 99999; /* Bloqueia cliques no painel */
-    display: none;
-}
+/* Correção: height: 100dvh garante que o layout se ajuste à barra do navegador mobile */
+.app-panel-container-standalone { display: none; width: 100%; height: 100vh; height: 100dvh; position: fixed; top: 0; left: 0; z-index: 100; font-family: var(--font-body); font-size: 14px; background: var(--glass-dark-bg); color: var(--glass-text-primary); overflow: hidden; }
 
 .app-sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); width: var(--sidebar-width-desktop); height: 100%; background-color: var(--glass-color); border-right: 1px solid var(--glass-border); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur)); box-shadow: none; padding: 1rem; display: flex; flex-direction: column; z-index: 1100; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
 .app-sidebar.is-open { transform: translateX(0); }
@@ -1299,6 +1193,14 @@ body.app-mode .power-container .power-btn:active { background: linear-gradient(1
 .particle { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #FFD700; opacity: 0; }
 .glow { position: absolute; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%); filter: blur(10px); opacity: 0; transition: opacity 0.4s ease; z-index: -2; left: 50%; top: 5px; }
 .power-container.is-active .glow { opacity: 1; animation: glowPulse 2s infinite alternate; }
+
+.glass-dock-container { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 2000; width: auto; }
+.glass-dock { position: relative; display: flex; align-items: center; background: rgba(15, 15, 15, 0.65); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 6px 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); gap: 5px; cursor: grab; }
+.glass-dock:active { cursor: grabbing; transform: scale(0.98); }
+.dock-item { position: relative; background: transparent; border: none; color: var(--glass-text-secondary); padding: 10px 20px; font-family: var(--font-display); font-size: 0.9rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; z-index: 2; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); outline: none; border-radius: 20px; }
+.dock-item i { font-size: 1.1rem; }
+.dock-item.active { color: #000; font-weight: 700; }
+.dock-indicator { position: absolute; top: 6px; left: 6px; height: calc(100% - 12px); background: linear-gradient(135deg, var(--primary-color), #00c2ba); border-radius: 18px; z-index: 1; box-shadow: 0 0 15px rgba(0, 242, 234, 0.4); transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); width: 0; }
 
 @media (min-width: 992px) {
     .app-sidebar { position: static; transform: translateX(0); flex-shrink: 0; }

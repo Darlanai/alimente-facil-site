@@ -162,137 +162,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-initDockMenu() {
-            // Remove a barra antiga se existir
-            document.querySelector('.glass-dock-container')?.remove();
-            
-            // 1. Cria a ALÇA (Aba Lateral)
-            let handle = document.getElementById('drawer-handle');
-            if (!handle) {
-                handle = document.createElement('div');
-                handle.id = 'drawer-handle';
-                handle.title = "Puxe para abrir";
-                document.body.appendChild(handle);
-            }
-
-            // 2. Cria o OVERLAY DE VISITANTE (Bloqueio)
-            const panel = document.querySelector('.app-panel-container-standalone');
-            let guestOverlay = document.getElementById('guest-overlay');
-            if (!guestOverlay && panel) {
-                guestOverlay = document.createElement('div');
-                guestOverlay.id = 'guest-overlay';
-                guestOverlay.addEventListener('click', (e) => {
-                    e.preventDefault(); e.stopPropagation();
-                    this.showAuthModal();
+        initDockMenu() {
+            const dockItems = document.querySelectorAll('.dock-item');
+            const indicator = document.querySelector('.dock-indicator');
+            if (!dockItems.length || !indicator) return;
+            const updateIndicator = (targetBtn) => {
+                dockItems.forEach(btn => btn.classList.remove('active'));
+                targetBtn.classList.add('active');
+                requestAnimationFrame(() => {
+                    indicator.style.width = `${targetBtn.offsetWidth}px`;
+                    indicator.style.left = `${targetBtn.offsetLeft}px`;
                 });
-                panel.appendChild(guestOverlay);
-            }
-
-            // --- LÓGICA DE ARRASTE (TOUCH & MOUSE) ---
-            let startX = 0;
-            let currentX = 0;
-            let isDragging = false;
-            const threshold = window.innerWidth * 0.25; // 25% da tela para ativar
-
-            const onStart = (x) => {
-                const width = window.innerWidth;
-                const isOpen = panel.classList.contains('active');
-                
-                // Se fechado, só pega na borda direita (40px) ou na alça
-                if (!isOpen && x < width - 50) return;
-                
-                startX = x;
-                isDragging = true;
-                panel.style.transition = 'none'; // Desativa animação para seguir o dedo
             };
-
-            const onMove = (x) => {
-                if (!isDragging) return;
-                currentX = x;
-                const width = window.innerWidth;
-                const delta = currentX - startX;
-                let translateX;
-
-                if (panel.classList.contains('active')) {
-                    // Aberto -> Arrastando p/ direita (Fechar)
-                    translateX = Math.max(0, delta); // Só permite valores positivos
-                } else {
-                    // Fechado -> Arrastando p/ esquerda (Abrir)
-                    // Ex: width=400. start=400. current=350. delta=-50. translate=350.
-                    translateX = Math.max(0, width + delta);
-                }
-                
-                panel.style.transform = `translateX(${translateX}px)`;
-            };
-
-            const onEnd = () => {
-                if (!isDragging) return;
-                isDragging = false;
-                panel.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)';
-                
-                const width = window.innerWidth;
-                // Lê a posição atual real do elemento
-                const style = window.getComputedStyle(panel);
-                const matrix = new WebKitCSSMatrix(style.transform);
-                const currentPos = matrix.m41; 
-
-                if (panel.classList.contains('active')) {
-                    // Estava aberto: se moveu muito pra direita (> 100px), fecha
-                    if (currentPos > 100) { this.exitAppMode(); }
-                    else { panel.style.transform = 'translateX(0)'; } // Volta a abrir
-                } else {
-                    // Estava fechado: se moveu muito pra esquerda (< width - 100), abre
-                    if (currentPos < width - 100) { this.enterAppMode(); }
-                    else { panel.style.transform = 'translateX(100%)'; } // Volta a fechar
-                }
-            };
-
-            // Eventos Touch
-            const touchStart = (e) => onStart(e.touches[0].clientX);
-            const touchMove = (e) => onMove(e.touches[0].clientX);
-            
-            handle.addEventListener('touchstart', touchStart, {passive: true});
-            handle.addEventListener('touchmove', touchMove, {passive: true});
-            handle.addEventListener('touchend', onEnd);
-            
-            // Também permite arrastar o painel para fechar
-            panel.addEventListener('touchstart', touchStart, {passive: true});
-            panel.addEventListener('touchmove', touchMove, {passive: true});
-            panel.addEventListener('touchend', onEnd);
-
-            // Clique na alça para abrir/fechar
-            handle.addEventListener('click', () => {
-                if (panel.classList.contains('active')) this.exitAppMode();
-                else this.enterAppMode();
+            dockItems.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    const target = btn.dataset.target;
+                    if (target === 'app') {
+                        if (!this.isLoggedIn) { this.showAuthModal(); } 
+                        else { this.enterAppMode(); updateIndicator(btn); }
+                    } else { this.exitAppMode(); updateIndicator(btn); }
+                });
             });
-        },
-
-            // Evento de Clique
-            toggleBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation(); // Impede cliques fantasmas
-
-                if (this.isAppMode) {
-                    this.exitAppMode();
-                } else {
-                    if (!this.isLoggedIn) {
-                        this.showAuthModal();
-                    } else {
-                        this.enterAppMode();
-                    }
-                }
-                updateTabState();
-            });
-
-            // Atualiza estado inicial
-            setTimeout(updateTabState, 100);
-            
-            // Garante que o estado atualize se mudarmos de modo por outros botões
-            const originalEnter = this.enterAppMode.bind(this);
-            this.enterAppMode = () => { originalEnter(); updateTabState(); };
-            
-            const originalExit = this.exitAppMode.bind(this);
-            this.exitAppMode = () => { originalExit(); updateTabState(); };
+            setTimeout(() => {
+                if (this.isAppMode) { const appBtn = document.querySelector('.dock-item[data-target="app"]'); if(appBtn) updateIndicator(appBtn); } 
+                else { const homeBtn = document.querySelector('.dock-item[data-target="home"]'); if(homeBtn) updateIndicator(homeBtn); }
+            }, 100);
         },
 
         initDraggableDock() {
@@ -669,12 +564,7 @@ attachEventListeners() {
             });
         },
 
-        updateBodyClasses() { 
-            // Na nova lógica, o 'app-mode' não deve esconder o container principal (landing page)
-            // pois o painel agora é um overlay deslizante.
-            // Então removemos a classe que escondia o fundo.
-            this.elements.body.classList.remove('app-mode'); 
-        },
+        updateBodyClasses() { this.elements.body.classList.toggle('app-mode', this.isAppMode); },
         
 updateStartButton() {
             const accessLink = this.elements.panelAccessLink;
@@ -715,44 +605,26 @@ updateStartButton() {
             this.enterAppMode(); 
         },
         
-enterAppMode() {
-             const panel = document.querySelector('.app-panel-container-standalone');
-             const guestOverlay = document.getElementById('guest-overlay');
-             
-             // Lógica do Visitante: Se não logado, mostra overlay e bloqueia
-             if (!this.isLoggedIn && guestOverlay) {
-                 guestOverlay.style.display = 'block';
-             } else if (guestOverlay) {
-                 guestOverlay.style.display = 'none';
-             }
-
-             if (panel) {
-                 panel.classList.add('active');
-                 panel.style.transform = 'translateX(0)';
-             }
-
-             this.isAppMode = true;
+        enterAppMode() {
+             if (this.isAppMode) return;
              this.clearIntervals();
+             this.isAppMode = true;
              this.updateBodyClasses();
              this.activateModuleUI(this.activeModule);
              this.renderAllPanelContent();
              this.saveState();
+             window.scrollTo(0, 0);
         },
         
-exitAppMode() {
-             const panel = document.querySelector('.app-panel-container-standalone');
-             if (panel) {
-                 panel.classList.remove('active');
-                 panel.style.transform = 'translateX(100%)';
-             }
-
-             this.isAppMode = false;
+        exitAppMode() {
+             if (!this.isAppMode) return;
              this.clearIntervals();
+             this.isAppMode = false;
              this.updateBodyClasses();
              this.closeSidebar();
              this.saveState();
-             // Pequeno delay para reiniciar a landing page após a animação de fechar
-             setTimeout(() => this.initLandingPage(), 300);
+             window.scrollTo(0, 0);
+             this.initLandingPage();
         },
         
         handleLogout() {
