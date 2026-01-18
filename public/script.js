@@ -162,32 +162,85 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        initDockMenu() {
-            const dockItems = document.querySelectorAll('.dock-item');
-            const indicator = document.querySelector('.dock-indicator');
-            if (!dockItems.length || !indicator) return;
-            const updateIndicator = (targetBtn) => {
-                dockItems.forEach(btn => btn.classList.remove('active'));
-                targetBtn.classList.add('active');
-                requestAnimationFrame(() => {
-                    indicator.style.width = `${targetBtn.offsetWidth}px`;
-                    indicator.style.left = `${targetBtn.offsetLeft}px`;
-                });
-            };
-            dockItems.forEach(btn => {
-                btn.addEventListener('click', (e) => {
+initDockMenu() {
+            // Remove lixo antigo
+            document.querySelector('.glass-dock-container')?.remove();
+
+            // 1. Cria a Aba Lateral (Handle)
+            let handle = document.getElementById('drawer-handle');
+            if (!handle) {
+                handle = document.createElement('div');
+                handle.id = 'drawer-handle';
+                handle.title = "Puxar Painel";
+                document.body.appendChild(handle);
+            }
+
+            // 2. Cria o Bloqueio de Visitante
+            const panel = document.querySelector('.app-panel-container-standalone');
+            let guestOverlay = document.getElementById('guest-overlay');
+            if (!guestOverlay && panel) {
+                guestOverlay = document.createElement('div');
+                guestOverlay.id = 'guest-overlay';
+                guestOverlay.addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation();
-                    const target = btn.dataset.target;
-                    if (target === 'app') {
-                        if (!this.isLoggedIn) { this.showAuthModal(); } 
-                        else { this.enterAppMode(); updateIndicator(btn); }
-                    } else { this.exitAppMode(); updateIndicator(btn); }
+                    this.showAuthModal();
                 });
-            });
-            setTimeout(() => {
-                if (this.isAppMode) { const appBtn = document.querySelector('.dock-item[data-target="app"]'); if(appBtn) updateIndicator(appBtn); } 
-                else { const homeBtn = document.querySelector('.dock-item[data-target="home"]'); if(homeBtn) updateIndicator(homeBtn); }
-            }, 100);
+                panel.appendChild(guestOverlay);
+            }
+
+            // --- Lógica de Arrastar (Touch) ---
+            let startX = 0; let currentX = 0; let isDragging = false;
+            
+            const onStart = (x) => {
+                const width = window.innerWidth;
+                const isOpen = panel.classList.contains('active');
+                // Se fechado, só pega na borda direita (40px)
+                if (!isOpen && x < width - 40) return;
+                startX = x; isDragging = true;
+                panel.style.transition = 'none';
+            };
+
+            const onMove = (x) => {
+                if (!isDragging) return;
+                currentX = x;
+                const width = window.innerWidth;
+                const delta = currentX - startX;
+                let translate = 0;
+                
+                if (panel.classList.contains('active')) {
+                    translate = Math.max(0, delta); // Fechando
+                } else {
+                    translate = Math.max(0, width + delta); // Abrindo
+                }
+                panel.style.transform = `translateX(${translate}px)`;
+            };
+
+            const onEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                panel.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                const width = window.innerWidth;
+                const style = window.getComputedStyle(panel);
+                const matrix = new WebKitCSSMatrix(style.transform);
+                const currentPos = matrix.m41;
+                
+                if (panel.classList.contains('active')) {
+                    if (currentPos > 100) this.exitAppMode(); // Fecha
+                    else panel.style.transform = 'translateX(0)';
+                } else {
+                    if (currentPos < width - 100) this.enterAppMode(); // Abre
+                    else panel.style.transform = 'translateX(100%)';
+                }
+            };
+
+            handle.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX), {passive: true});
+            handle.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX), {passive: true});
+            handle.addEventListener('touchend', onEnd);
+            handle.addEventListener('click', () => { if(panel.classList.contains('active')) this.exitAppMode(); else this.enterAppMode(); });
+
+            panel.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX), {passive: true});
+            panel.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX), {passive: true});
+            panel.addEventListener('touchend', onEnd);
         },
 
         initDraggableDock() {
@@ -564,7 +617,10 @@ attachEventListeners() {
             });
         },
 
-        updateBodyClasses() { this.elements.body.classList.toggle('app-mode', this.isAppMode); },
+        updateBodyClasses() { 
+            // Remove app-mode para não esconder o fundo
+            this.elements.body.classList.remove('app-mode'); 
+        },
         
 updateStartButton() {
             const accessLink = this.elements.panelAccessLink;
@@ -605,26 +661,40 @@ updateStartButton() {
             this.enterAppMode(); 
         },
         
-        enterAppMode() {
-             if (this.isAppMode) return;
-             this.clearIntervals();
+enterAppMode() {
+             const panel = document.querySelector('.app-panel-container-standalone');
+             const guestOverlay = document.getElementById('guest-overlay');
+             
+             // Se não logado: Mostra painel mas com bloqueio
+             if (!this.isLoggedIn && guestOverlay) guestOverlay.style.display = 'block';
+             else if (guestOverlay) guestOverlay.style.display = 'none';
+
+             if (panel) {
+                 panel.classList.add('active');
+                 panel.style.transform = 'translateX(0)';
+             }
+
              this.isAppMode = true;
+             this.clearIntervals();
              this.updateBodyClasses();
              this.activateModuleUI(this.activeModule);
              this.renderAllPanelContent();
              this.saveState();
-             window.scrollTo(0, 0);
         },
         
-        exitAppMode() {
-             if (!this.isAppMode) return;
-             this.clearIntervals();
+exitAppMode() {
+             const panel = document.querySelector('.app-panel-container-standalone');
+             if (panel) {
+                 panel.classList.remove('active');
+                 panel.style.transform = 'translateX(100%)';
+             }
+
              this.isAppMode = false;
+             this.clearIntervals();
              this.updateBodyClasses();
              this.closeSidebar();
              this.saveState();
-             window.scrollTo(0, 0);
-             this.initLandingPage();
+             setTimeout(() => this.initLandingPage(), 300);
         },
         
         handleLogout() {
