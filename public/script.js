@@ -162,32 +162,60 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        initDockMenu() {
-            const dockItems = document.querySelectorAll('.dock-item');
-            const indicator = document.querySelector('.dock-indicator');
-            if (!dockItems.length || !indicator) return;
-            const updateIndicator = (targetBtn) => {
-                dockItems.forEach(btn => btn.classList.remove('active'));
-                targetBtn.classList.add('active');
-                requestAnimationFrame(() => {
-                    indicator.style.width = `${targetBtn.offsetWidth}px`;
-                    indicator.style.left = `${targetBtn.offsetLeft}px`;
-                });
+initDockMenu() {
+            // Remove a barra antiga se existir
+            const oldDock = document.querySelector('.glass-dock-container');
+            if (oldDock) oldDock.remove();
+
+            // Cria a nova ABINHA LATERAL
+            let toggleBtn = document.getElementById('side-panel-toggle');
+            if (!toggleBtn) {
+                toggleBtn = document.createElement('div');
+                toggleBtn.id = 'side-panel-toggle';
+                // Ícone inicial e texto
+                toggleBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> PAINEL'; 
+                document.body.appendChild(toggleBtn);
+            }
+
+            // Função para atualizar o visual da aba
+            const updateTabState = () => {
+                if (this.isAppMode) {
+                    toggleBtn.classList.add('active');
+                    toggleBtn.innerHTML = '<i class="fa-solid fa-house"></i> INÍCIO';
+                    toggleBtn.title = "Voltar para Home";
+                } else {
+                    toggleBtn.classList.remove('active');
+                    toggleBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> PAINEL';
+                    toggleBtn.title = "Abrir Painel";
+                }
             };
-            dockItems.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault(); e.stopPropagation();
-                    const target = btn.dataset.target;
-                    if (target === 'app') {
-                        if (!this.isLoggedIn) { this.showAuthModal(); } 
-                        else { this.enterAppMode(); updateIndicator(btn); }
-                    } else { this.exitAppMode(); updateIndicator(btn); }
-                });
+
+            // Evento de Clique
+            toggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Impede cliques fantasmas
+
+                if (this.isAppMode) {
+                    this.exitAppMode();
+                } else {
+                    if (!this.isLoggedIn) {
+                        this.showAuthModal();
+                    } else {
+                        this.enterAppMode();
+                    }
+                }
+                updateTabState();
             });
-            setTimeout(() => {
-                if (this.isAppMode) { const appBtn = document.querySelector('.dock-item[data-target="app"]'); if(appBtn) updateIndicator(appBtn); } 
-                else { const homeBtn = document.querySelector('.dock-item[data-target="home"]'); if(homeBtn) updateIndicator(homeBtn); }
-            }, 100);
+
+            // Atualiza estado inicial
+            setTimeout(updateTabState, 100);
+            
+            // Garante que o estado atualize se mudarmos de modo por outros botões
+            const originalEnter = this.enterAppMode.bind(this);
+            this.enterAppMode = () => { originalEnter(); updateTabState(); };
+            
+            const originalExit = this.exitAppMode.bind(this);
+            this.exitAppMode = () => { originalExit(); updateTabState(); };
         },
 
         initDraggableDock() {

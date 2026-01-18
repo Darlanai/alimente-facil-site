@@ -2311,3 +2311,71 @@ body.app-mode .header { display: none !important; }
     box-shadow: 0 0 50px rgba(0, 0, 0, 1) !important;
     max-width: 90% !important;
 }
+/* --- NOVA ABA LATERAL (Substitui a Barra Inferior) --- */
+
+/* 1. Esconde a Barra Flutuante Antiga (Dock) */
+.glass-dock-container {
+    display: none !important;
+}
+
+/* 2. Estilo da Nova Aba Lateral */
+#side-panel-toggle {
+    position: fixed;
+    top: 20%; /* Altura confortável para o polegar */
+    right: 0;
+    z-index: 9999;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    
+    /* Formato de Aba */
+    width: 45px;
+    height: 120px; /* Mais alta para ser fácil de acertar */
+    border-radius: 12px 0 0 12px; /* Arredondado só na esquerda */
+    
+    /* Visual de Vidro */
+    background: rgba(20, 20, 20, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-right: none;
+    box-shadow: -4px 4px 15px rgba(0, 0, 0, 0.4);
+    
+    /* Texto/Ícone */
+    color: var(--glass-text-secondary);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    writing-mode: vertical-rl; /* Texto na vertical */
+    text-orientation: mixed;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Efeito Hover (Ao passar o mouse) */
+#side-panel-toggle:hover {
+    width: 55px; /* Cresce um pouco */
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    box-shadow: -4px 4px 20px rgba(0, 242, 234, 0.2);
+}
+
+/* Estado: Painel Aberto (Ativo) */
+#side-panel-toggle.active {
+    background: rgba(0, 242, 234, 0.15); /* Fundo Verde Neon suave */
+    border-color: var(--primary-color);
+    color: #fff;
+    text-shadow: 0 0 8px var(--glass-on-glow);
+    box-shadow: -4px 4px 25px rgba(0, 242, 234, 0.3);
+}
+
+/* Ícone dentro da aba */
+#side-panel-toggle i {
+    font-size: 1.1rem;
+    margin-bottom: 8px; /* Espaço entre icone e texto na vertical */
+    transform: rotate(0deg); /* Garante que o ícone fique em pé */
+}
