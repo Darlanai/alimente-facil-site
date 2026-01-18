@@ -1906,37 +1906,59 @@ renderOrcamento() {
             `}).join('');
         },
 
-        handleAddItem(type, formElement, listId = null) {
+handleAddItem(type, formElement, listId = null) {
             if (!formElement) return;
             const nameInput = formElement.querySelector('input[id*="nome"]');
             const qtdInput = formElement.querySelector('input[id*="qtd"]');
             const unidSelect = formElement.querySelector('select[id*="unid"]');
             const valorInput = formElement.querySelector('input[id*="valor"]');
-             const validadeInput = formElement.querySelector('input[id*="validade"]');
+            const validadeInput = formElement.querySelector('input[id*="validade"]');
             const name = nameInput.value.trim();
+            
             if (!name) { this.showNotification("Por favor, informe o nome do item.", "error"); nameInput.focus(); return; }
+            
             const itemData = { id: this.generateId(), name: name, qtd: parseFloat(qtdInput.value) || 1, unid: unidSelect.value || "un", valor: this.parseCurrency(valorInput.value).toFixed(2), };
+            
             if (type === 'lista') {
                  itemData.checked = false;
-                 let targetListId = listId === 'new' ? null : (listId || this.activeListId);
-                 if (targetListId === null) {
-                    const widgetInput = document.getElementById('widget-list-name-input');
-                    const mainInput = document.getElementById('active-list-name-input');
-                    const newName = widgetInput?.value.trim() || mainInput?.value.trim();
-                    if (!newName) { this.showNotification("Dê um nome para sua nova lista antes de adicionar itens.", "error"); widgetInput?.focus(); mainInput?.focus(); return; }
-                    this.handleSaveListaAtiva(true);
-                    targetListId = this.activeListId;
+                 // Correção: Garante que 'new' ou null force a criação imediata da lista
+                 let targetListId = (listId === 'new' || !listId) ? null : listId;
+                 
+                 // Se não tem ID, é uma lista nova. Cria sincronicamente para evitar o erro "Lista não encontrada".
+                 if (!targetListId) {
+                    // Tenta usar a lista ativa atual se ela existir
+                    if (this.activeListId && this.state.listas[this.activeListId] && listId !== 'new') {
+                        targetListId = this.activeListId;
+                    } else {
+                        // Criação IMEDIATA da nova lista
+                        const widgetInput = document.getElementById('widget-list-name-input');
+                        const mainInput = document.getElementById('active-list-name-input');
+                        const newName = widgetInput?.value.trim() || mainInput?.value.trim() || "Nova Lista";
+                        
+                        const newListId = this.generateId();
+                        this.state.listas[newListId] = { nome: newName, items: [] };
+                        this.activeListId = newListId;
+                        targetListId = newListId;
+                        this.renderListasSalvas(); // Atualiza sidebar na hora
+                    }
                  }
-                 if (!this.state.listas[targetListId]) { this.showNotification("Erro ao encontrar a lista. Tente novamente.", "error"); return; }
+
+                 if (!this.state.listas[targetListId]) { this.showNotification("Erro crítico: Lista não encontrada.", "error"); return; }
+                 
                  if (this.userPlan === 'free' && this.state.listas[targetListId].items.length >= 10) { this.showPlansModal("Limite de 10 itens por lista no plano Gratuito atingido. Faça upgrade para listas ilimitadas!"); return; }
-                  this.state.listas[targetListId].items.unshift(itemData);
-                  this.renderListaAtiva(targetListId); this.renderListaWidget(); this.renderOrcamento();
+                 
+                 this.state.listas[targetListId].items.unshift(itemData);
+                 this.renderListaAtiva(targetListId); 
+                 this.renderListaWidget(); 
+                 this.renderOrcamento();
+
             } else if (type === 'despensa') {
                  itemData.stock = 100; itemData.validade = validadeInput ? validadeInput.value : '';
                  this.state.despensa.unshift(itemData);
                  this.renderDespensaWidget();
                  if(this.activeModule === 'despensa') this.renderDespensa();
             } else { return; }
+            
             this.saveState();
             nameInput.value = ""; qtdInput.value = "1"; valorInput.value = ""; if(validadeInput) validadeInput.value = "";
             nameInput.focus();
