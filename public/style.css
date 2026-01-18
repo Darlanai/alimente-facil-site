@@ -543,42 +543,124 @@ body {
 .close-modal-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; color: var(--glass-text-secondary); cursor: pointer; transition: color 0.3s ease, transform 0.3s ease; z-index: 10; width: 32px; height: 32px; display: flex; justify-content: center; align-items: center; }
 .close-modal-btn:hover { color: var(--glass-text-primary); transform: rotate(90deg); }
 
-/* Correção: Layout com Margens e Limites (Estilo App Nativo) */
-.app-panel-container-standalone { 
-    display: none; 
-    
-    /* Tamanho e Posição */
-    width: 100%; 
-    height: 100vh; 
-    height: 100dvh; 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    z-index: 100; 
+/* === PAINEL DESLIZANTE (ESTILO GAVETA) === */
+.app-panel-container-standalone {
+    /* Posição Fixa cobrindo a tela */
+    position: fixed;
+    top: 0;
+    right: 0; /* Alinhado à direita */
+    bottom: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 10001; /* Acima de tudo */
     
     /* Estilo Visual */
-    font-family: var(--font-body); 
-    font-size: 14px; 
-    background: var(--glass-dark-bg); 
-    color: var(--glass-text-primary); 
-    overflow: hidden;
+    background: var(--glass-dark-bg);
+    color: var(--glass-text-primary);
     
-    /* --- A MÁGICA DA MARGEM --- */
-    /* No mobile, adicionamos um padding interno para o conteúdo não colar na borda */
-    padding: 0 10px; 
-    box-sizing: border-box;
+    /* ESTADO INICIAL: Escondido na direita (Slide Out) */
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    
+    /* Sombra na lateral esquerda para dar profundidade quando abrir */
+    box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+    
+    /* Margens Internas (Só o conteúdo respeita isso) */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-/* Em telas maiores (Tablet/PC), o App fica centralizado com margem preta em volta */
-@media (min-width: 600px) {
+/* Quando a classe .active é adicionada (via JS ou arraste), ele entra na tela */
+.app-panel-container-standalone.active {
+    transform: translateX(0);
+}
+
+/* --- AJUSTE DE MARGENS (PADDING) --- */
+/* No Mobile: Conteúdo estritamente dentro da margem */
+@media (max-width: 991px) {
     .app-panel-container-standalone {
-        max-width: 500px; /* Largura de um celular grande */
-        left: 50%;
-        transform: translateX(-50%); /* Centraliza */
-        border-left: 1px solid rgba(255,255,255,0.1);
-        border-right: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 0 50px rgba(0,0,0,0.8); /* Sombra para destacar */
+        /* Padding lateral para o conteúdo não colar na borda */
+        padding: 0 15px; 
     }
+    
+    /* Garante que o Header e o Footer respeitem essa margem visualmente */
+    .main-header, .card-footer, .modal-footer {
+        margin: 0 -15px; /* Compensa o padding do container para fundos full-width */
+        padding-left: 15px;
+        padding-right: 15px;
+        width: calc(100% + 30px);
+    }
+    
+    /* O conteúdo rolável fica dentro da margem */
+    .modules-area {
+        width: 100%;
+        margin: 0 auto;
+    }
+}
+
+/* No Desktop: Sem margens restritivas, layout fluido */
+@media (min-width: 992px) {
+    .app-panel-container-standalone {
+        padding: 0;
+        width: 100vw; /* Ocupa tudo */
+        max-width: none;
+        transform: translateX(0); /* Desktop sempre visível se ativado, ou controlamos via JS */
+        /* Nota: A lógica JS vai controlar se aparece ou não, mas sem efeito de arrastar no desktop */
+    }
+}
+
+/* === ALÇA DE ARRASTE (A ABA LATERAL) === */
+#drawer-handle {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 20px; /* Largura da área de pega */
+    height: 100%;
+    z-index: 10002;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Fundo sutil para indicar que algo está ali */
+    background: linear-gradient(to left, rgba(0, 242, 234, 0.1), transparent);
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+/* O "Neon Stick" visual dentro da alça */
+#drawer-handle::after {
+    content: '';
+    width: 4px;
+    height: 20%; /* Uma barrinha no meio */
+    background-color: var(--glass-text-secondary);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
+}
+
+#drawer-handle:hover, #drawer-handle:active {
+    width: 30px; /* Aumenta área de toque */
+    background: linear-gradient(to left, rgba(0, 242, 234, 0.3), transparent);
+}
+
+#drawer-handle:hover::after {
+    height: 30%;
+    background-color: var(--primary-color);
+    box-shadow: 0 0 15px var(--glass-on-glow);
+}
+
+/* Bloqueio para usuários deslogados (Preview Mode) */
+#guest-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.1); /* Quase invisível, só para bloquear cliques */
+    z-index: 9999;
+    cursor: pointer;
+    display: none; /* Ativo via JS */
 }
 
 .app-sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); width: var(--sidebar-width-desktop); height: 100%; background-color: var(--glass-color); border-right: 1px solid var(--glass-border); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur)); box-shadow: none; padding: 1rem; display: flex; flex-direction: column; z-index: 1100; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -2345,79 +2427,4 @@ body.app-mode .header { display: none !important; }
     border: 2px solid var(--red) !important; /* Borda vermelha para você ver que funcionou */
     box-shadow: 0 0 50px rgba(0, 0, 0, 1) !important;
     max-width: 90% !important;
-}
-/* --- NOVA ABA LATERAL (VERSÃO INVISÍVEL/ESCONDIDA) --- */
-
-/* 1. Esconde a Barra Flutuante Antiga */
-.glass-dock-container { display: none !important; }
-
-/* 2. Estilo da Aba Lateral */
-#side-panel-toggle {
-    position: fixed;
-    top: 30%; /* Posição confortável para o polegar */
-    right: -15px; /* TRUQUE: Esconde metade da aba para fora da tela */
-    z-index: 10002; /* Acima de quase tudo */
-    
-    display: flex;
-    align-items: center;
-    justify-content: flex-start; /* Alinha ícone à esquerda (parte visível) */
-    padding-left: 10px;
-    
-    /* Formato Pequeno e Discreto */
-    width: 40px; 
-    height: 50px;
-    border-radius: 8px 0 0 8px;
-    
-    /* Vidro Escuro (Quase Invisível quando inativo) */
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-right: none;
-    
-    color: rgba(255, 255, 255, 0.6);
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    
-    /* Sombra para destacar do fundo */
-    box-shadow: -2px 2px 10px rgba(0,0,0,0.5);
-    
-    /* Texto escondido por padrão */
-    overflow: hidden;
-    white-space: nowrap;
-    font-family: var(--font-display);
-    font-size: 0; /* Esconde o texto, mostra só o ícone */
-}
-
-#side-panel-toggle i {
-    font-size: 1.2rem;
-    transform: translateX(-2px); /* Ajuste fino do ícone */
-}
-
-/* 3. AÇÃO: Ao passar o mouse ou clicar (Hover/Active) */
-#side-panel-toggle:hover, 
-#side-panel-toggle:active {
-    right: 0; /* Entra na tela */
-    width: 110px; /* Cresce para mostrar o texto */
-    background: rgba(20, 20, 20, 0.9);
-    border-color: var(--primary-color);
-    color: #fff;
-    font-size: 0.8rem; /* Mostra o texto */
-    font-weight: 600;
-    gap: 8px;
-    box-shadow: 0 0 15px rgba(0, 242, 234, 0.3);
-}
-
-/* Estado Ativo (Quando no Painel) - Fica Verde */
-#side-panel-toggle.active {
-    border-left: 3px solid var(--primary-color);
-    color: var(--primary-color);
-}
-
-/* Ajuste fino para mobile: Área de toque maior, visual menor */
-@media (max-width: 600px) {
-    #side-panel-toggle {
-        top: 75%; /* Fica mais embaixo no celular, perto do dedão */
-        height: 45px;
-        opacity: 0.8;
-    }
 }
