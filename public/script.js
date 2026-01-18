@@ -163,16 +163,15 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
 initDockMenu() {
-            // Remove elementos antigos se existirem
+            // Remove a barra antiga se existir
             document.querySelector('.glass-dock-container')?.remove();
-            document.getElementById('side-panel-toggle')?.remove();
-
-            // 1. Cria a ALÇA (Handle) na lateral direita
+            
+            // 1. Cria a ALÇA (Aba Lateral)
             let handle = document.getElementById('drawer-handle');
             if (!handle) {
                 handle = document.createElement('div');
                 handle.id = 'drawer-handle';
-                handle.title = "Puxe para abrir o Painel";
+                handle.title = "Puxe para abrir";
                 document.body.appendChild(handle);
             }
 
@@ -182,120 +181,89 @@ initDockMenu() {
             if (!guestOverlay && panel) {
                 guestOverlay = document.createElement('div');
                 guestOverlay.id = 'guest-overlay';
-                guestOverlay.title = "Faça Login para interagir";
-                // Ao clicar no bloqueio, abre o login
                 guestOverlay.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Não deixa clicar nos botões embaixo
+                    e.preventDefault(); e.stopPropagation();
                     this.showAuthModal();
                 });
                 panel.appendChild(guestOverlay);
             }
 
-            // Variáveis de Controle do Arraste
+            // --- LÓGICA DE ARRASTE (TOUCH & MOUSE) ---
             let startX = 0;
             let currentX = 0;
             let isDragging = false;
-            const threshold = window.innerWidth * 0.3; // Precisa arrastar 30% da tela para abrir
+            const threshold = window.innerWidth * 0.25; // 25% da tela para ativar
 
-            // --- EVENTOS DE TOQUE (MOBILE) ---
-            
-            const onTouchStart = (e) => {
-                // Só permite arrastar se começar na borda direita (ou na alça)
-                const touchX = e.touches[0].clientX;
+            const onStart = (x) => {
                 const width = window.innerWidth;
-                
-                // Se o painel já está aberto (active), começamos o drag em qualquer lugar para fechar
                 const isOpen = panel.classList.contains('active');
                 
-                if (!isOpen && touchX < width - 40) return; // Se fechado, só pega na borda direita (40px)
+                // Se fechado, só pega na borda direita (40px) ou na alça
+                if (!isOpen && x < width - 50) return;
                 
-                startX = touchX;
+                startX = x;
                 isDragging = true;
-                panel.style.transition = 'none'; // Remove transição para arraste fluído
+                panel.style.transition = 'none'; // Desativa animação para seguir o dedo
             };
 
-            const onTouchMove = (e) => {
+            const onMove = (x) => {
                 if (!isDragging) return;
-                currentX = e.touches[0].clientX;
-                const delta = currentX - startX;
+                currentX = x;
                 const width = window.innerWidth;
-                
-                // Lógica: 
-                // Se fechado (delta < 0): Estamos puxando para a esquerda (Abrindo)
-                // Se aberto (delta > 0): Estamos puxando para a direita (Fechando)
-                
-                let translateVal = 100; // Padrão fechado (100%)
+                const delta = currentX - startX;
+                let translateX;
 
                 if (panel.classList.contains('active')) {
-                    // Está aberto, arrastando para fechar (direita)
-                    // Delta positivo (0 a width)
-                    let percent = (Math.max(0, delta) / width) * 100;
-                    translateVal = percent;
+                    // Aberto -> Arrastando p/ direita (Fechar)
+                    translateX = Math.max(0, delta); // Só permite valores positivos
                 } else {
-                    // Está fechado, arrastando para abrir (esquerda)
-                    // Delta negativo (0 a -width) -> Converter para 100% a 0%
-                    let percent = 100 - (Math.abs(Math.min(0, delta)) / width) * 100;
-                    translateVal = percent;
+                    // Fechado -> Arrastando p/ esquerda (Abrir)
+                    // Ex: width=400. start=400. current=350. delta=-50. translate=350.
+                    translateX = Math.max(0, width + delta);
                 }
-
-                requestAnimationFrame(() => {
-                    panel.style.transform = `translateX(${translateVal}%)`;
-                });
+                
+                panel.style.transform = `translateX(${translateX}px)`;
             };
 
-            const onTouchEnd = () => {
+            const onEnd = () => {
                 if (!isDragging) return;
                 isDragging = false;
-                panel.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'; // Devolve a animação suave
+                panel.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)';
                 
                 const width = window.innerWidth;
-                const movedDistance = currentX - startX;
-                
+                // Lê a posição atual real do elemento
+                const style = window.getComputedStyle(panel);
+                const matrix = new WebKitCSSMatrix(style.transform);
+                const currentPos = matrix.m41; 
+
                 if (panel.classList.contains('active')) {
-                    // Estava aberto. Se moveu muito pra direita, fecha.
-                    if (movedDistance > threshold) {
-                        this.exitAppMode(); // Fecha
-                    } else {
-                        panel.style.transform = 'translateX(0)'; // Volta a abrir (Snap back)
-                    }
+                    // Estava aberto: se moveu muito pra direita (> 100px), fecha
+                    if (currentPos > 100) { this.exitAppMode(); }
+                    else { panel.style.transform = 'translateX(0)'; } // Volta a abrir
                 } else {
-                    // Estava fechado. Se moveu muito pra esquerda, abre.
-                    if (movedDistance < -threshold) {
-                        this.enterAppMode(); // Abre
-                    } else {
-                        panel.style.transform = 'translateX(100%)'; // Volta a fechar (Snap back)
-                    }
+                    // Estava fechado: se moveu muito pra esquerda (< width - 100), abre
+                    if (currentPos < width - 100) { this.enterAppMode(); }
+                    else { panel.style.transform = 'translateX(100%)'; } // Volta a fechar
                 }
             };
 
-            // Adiciona listeners na Alça E no Painel (para poder fechar arrastando de volta)
-            handle.addEventListener('touchstart', onTouchStart, {passive: true});
-            handle.addEventListener('touchmove', onTouchMove, {passive: true});
-            handle.addEventListener('touchend', onTouchEnd);
+            // Eventos Touch
+            const touchStart = (e) => onStart(e.touches[0].clientX);
+            const touchMove = (e) => onMove(e.touches[0].clientX);
             
-            panel.addEventListener('touchstart', onTouchStart, {passive: true});
-            panel.addEventListener('touchmove', onTouchMove, {passive: true});
-            panel.addEventListener('touchend', onTouchEnd);
+            handle.addEventListener('touchstart', touchStart, {passive: true});
+            handle.addEventListener('touchmove', touchMove, {passive: true});
+            handle.addEventListener('touchend', onEnd);
             
-            // Suporte básico a Mouse para testar no PC
-            handle.addEventListener('mousedown', (e) => {
-                startX = e.clientX; isDragging = true; panel.style.transition = 'none';
-                const onMouseMove = (ev) => {
-                    if(!isDragging) return;
-                    currentX = ev.clientX;
-                    let delta = currentX - startX;
-                    let percent = 100 - (Math.abs(Math.min(0, delta)) / window.innerWidth) * 100;
-                    panel.style.transform = `translateX(${percent}%)`;
-                };
-                const onMouseUp = (ev) => {
-                    isDragging = false; panel.style.transition = '';
-                    if ((ev.clientX - startX) < -100) this.enterAppMode();
-                    else panel.style.transform = 'translateX(100%)';
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                };
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
+            // Também permite arrastar o painel para fechar
+            panel.addEventListener('touchstart', touchStart, {passive: true});
+            panel.addEventListener('touchmove', touchMove, {passive: true});
+            panel.addEventListener('touchend', onEnd);
+
+            // Clique na alça para abrir/fechar
+            handle.addEventListener('click', () => {
+                if (panel.classList.contains('active')) this.exitAppMode();
+                else this.enterAppMode();
             });
         },
 
@@ -748,38 +716,34 @@ updateStartButton() {
         },
         
 enterAppMode() {
-             // Lógica do Painel Deslizante
              const panel = document.querySelector('.app-panel-container-standalone');
              const guestOverlay = document.getElementById('guest-overlay');
              
-             // Se não estiver logado, ativamos o Overlay Transparente (Modo Preview)
+             // Lógica do Visitante: Se não logado, mostra overlay e bloqueia
              if (!this.isLoggedIn && guestOverlay) {
                  guestOverlay.style.display = 'block';
              } else if (guestOverlay) {
-                 guestOverlay.style.display = 'none'; // Logado? Remove o bloqueio
+                 guestOverlay.style.display = 'none';
              }
 
-             // Animação de entrada
              if (panel) {
                  panel.classList.add('active');
                  panel.style.transform = 'translateX(0)';
              }
 
-             this.isAppMode = true; // Mantemos o estado lógico
+             this.isAppMode = true;
              this.clearIntervals();
              this.updateBodyClasses();
-             // Não chamamos updateStartButton() aqui pois removemos o botão antigo
              this.activateModuleUI(this.activeModule);
              this.renderAllPanelContent();
              this.saveState();
-             // Não fazemos scroll to 0 no body, pois o painel é fixed overlay
         },
         
 exitAppMode() {
              const panel = document.querySelector('.app-panel-container-standalone');
              if (panel) {
                  panel.classList.remove('active');
-                 panel.style.transform = 'translateX(100%)'; // Esconde na direita
+                 panel.style.transform = 'translateX(100%)';
              }
 
              this.isAppMode = false;
@@ -787,7 +751,8 @@ exitAppMode() {
              this.updateBodyClasses();
              this.closeSidebar();
              this.saveState();
-             this.initLandingPage();
+             // Pequeno delay para reiniciar a landing page após a animação de fechar
+             setTimeout(() => this.initLandingPage(), 300);
         },
         
         handleLogout() {
