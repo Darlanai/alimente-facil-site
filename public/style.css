@@ -543,8 +543,43 @@ body {
 .close-modal-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; color: var(--glass-text-secondary); cursor: pointer; transition: color 0.3s ease, transform 0.3s ease; z-index: 10; width: 32px; height: 32px; display: flex; justify-content: center; align-items: center; }
 .close-modal-btn:hover { color: var(--glass-text-primary); transform: rotate(90deg); }
 
-/* Correção: height: 100dvh garante que o layout se ajuste à barra do navegador mobile */
-.app-panel-container-standalone { display: none; width: 100%; height: 100vh; height: 100dvh; position: fixed; top: 0; left: 0; z-index: 100; font-family: var(--font-body); font-size: 14px; background: var(--glass-dark-bg); color: var(--glass-text-primary); overflow: hidden; }
+/* Correção: Layout com Margens e Limites (Estilo App Nativo) */
+.app-panel-container-standalone { 
+    display: none; 
+    
+    /* Tamanho e Posição */
+    width: 100%; 
+    height: 100vh; 
+    height: 100dvh; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    z-index: 100; 
+    
+    /* Estilo Visual */
+    font-family: var(--font-body); 
+    font-size: 14px; 
+    background: var(--glass-dark-bg); 
+    color: var(--glass-text-primary); 
+    overflow: hidden;
+    
+    /* --- A MÁGICA DA MARGEM --- */
+    /* No mobile, adicionamos um padding interno para o conteúdo não colar na borda */
+    padding: 0 10px; 
+    box-sizing: border-box;
+}
+
+/* Em telas maiores (Tablet/PC), o App fica centralizado com margem preta em volta */
+@media (min-width: 600px) {
+    .app-panel-container-standalone {
+        max-width: 500px; /* Largura de um celular grande */
+        left: 50%;
+        transform: translateX(-50%); /* Centraliza */
+        border-left: 1px solid rgba(255,255,255,0.1);
+        border-right: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 0 50px rgba(0,0,0,0.8); /* Sombra para destacar */
+    }
+}
 
 .app-sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); width: var(--sidebar-width-desktop); height: 100%; background-color: var(--glass-color); border-right: 1px solid var(--glass-border); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur)); box-shadow: none; padding: 1rem; display: flex; flex-direction: column; z-index: 1100; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
 .app-sidebar.is-open { transform: translateX(0); }
@@ -2311,71 +2346,78 @@ body.app-mode .header { display: none !important; }
     box-shadow: 0 0 50px rgba(0, 0, 0, 1) !important;
     max-width: 90% !important;
 }
-/* --- NOVA ABA LATERAL (Substitui a Barra Inferior) --- */
+/* --- NOVA ABA LATERAL (VERSÃO INVISÍVEL/ESCONDIDA) --- */
 
-/* 1. Esconde a Barra Flutuante Antiga (Dock) */
-.glass-dock-container {
-    display: none !important;
-}
+/* 1. Esconde a Barra Flutuante Antiga */
+.glass-dock-container { display: none !important; }
 
-/* 2. Estilo da Nova Aba Lateral */
+/* 2. Estilo da Aba Lateral */
 #side-panel-toggle {
     position: fixed;
-    top: 20%; /* Altura confortável para o polegar */
-    right: 0;
-    z-index: 9999;
+    top: 30%; /* Posição confortável para o polegar */
+    right: -15px; /* TRUQUE: Esconde metade da aba para fora da tela */
+    z-index: 10002; /* Acima de quase tudo */
     
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
+    justify-content: flex-start; /* Alinha ícone à esquerda (parte visível) */
+    padding-left: 10px;
     
-    /* Formato de Aba */
-    width: 45px;
-    height: 120px; /* Mais alta para ser fácil de acertar */
-    border-radius: 12px 0 0 12px; /* Arredondado só na esquerda */
+    /* Formato Pequeno e Discreto */
+    width: 40px; 
+    height: 50px;
+    border-radius: 8px 0 0 8px;
     
-    /* Visual de Vidro */
-    background: rgba(20, 20, 20, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    /* Vidro Escuro (Quase Invisível quando inativo) */
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-right: none;
-    box-shadow: -4px 4px 15px rgba(0, 0, 0, 0.4);
     
-    /* Texto/Ícone */
-    color: var(--glass-text-secondary);
+    color: rgba(255, 255, 255, 0.6);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    writing-mode: vertical-rl; /* Texto na vertical */
-    text-orientation: mixed;
+    
+    /* Sombra para destacar do fundo */
+    box-shadow: -2px 2px 10px rgba(0,0,0,0.5);
+    
+    /* Texto escondido por padrão */
+    overflow: hidden;
+    white-space: nowrap;
     font-family: var(--font-display);
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    font-size: 0; /* Esconde o texto, mostra só o ícone */
 }
 
-/* Efeito Hover (Ao passar o mouse) */
-#side-panel-toggle:hover {
-    width: 55px; /* Cresce um pouco */
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    box-shadow: -4px 4px 20px rgba(0, 242, 234, 0.2);
+#side-panel-toggle i {
+    font-size: 1.2rem;
+    transform: translateX(-2px); /* Ajuste fino do ícone */
 }
 
-/* Estado: Painel Aberto (Ativo) */
-#side-panel-toggle.active {
-    background: rgba(0, 242, 234, 0.15); /* Fundo Verde Neon suave */
+/* 3. AÇÃO: Ao passar o mouse ou clicar (Hover/Active) */
+#side-panel-toggle:hover, 
+#side-panel-toggle:active {
+    right: 0; /* Entra na tela */
+    width: 110px; /* Cresce para mostrar o texto */
+    background: rgba(20, 20, 20, 0.9);
     border-color: var(--primary-color);
     color: #fff;
-    text-shadow: 0 0 8px var(--glass-on-glow);
-    box-shadow: -4px 4px 25px rgba(0, 242, 234, 0.3);
+    font-size: 0.8rem; /* Mostra o texto */
+    font-weight: 600;
+    gap: 8px;
+    box-shadow: 0 0 15px rgba(0, 242, 234, 0.3);
 }
 
-/* Ícone dentro da aba */
-#side-panel-toggle i {
-    font-size: 1.1rem;
-    margin-bottom: 8px; /* Espaço entre icone e texto na vertical */
-    transform: rotate(0deg); /* Garante que o ícone fique em pé */
+/* Estado Ativo (Quando no Painel) - Fica Verde */
+#side-panel-toggle.active {
+    border-left: 3px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Ajuste fino para mobile: Área de toque maior, visual menor */
+@media (max-width: 600px) {
+    #side-panel-toggle {
+        top: 75%; /* Fica mais embaixo no celular, perto do dedão */
+        height: 45px;
+        opacity: 0.8;
+    }
 }
