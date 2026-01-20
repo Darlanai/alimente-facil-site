@@ -780,7 +780,7 @@ updateThemeIcons() {
 
 initLandingPage() {
             this.clearIntervals();
-            this.initVideoRotator();
+            // this.initVideoRotator();
             
             // Chama a nova função da tarja
             this.initNewHeaderLogic();
