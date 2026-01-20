@@ -617,10 +617,22 @@ attachEventListeners() {
             });
         },
 
-        updateBodyClasses() { 
-            // Remove app-mode para não esconder o fundo
-            this.elements.body.classList.remove('app-mode'); 
-        },
+updateBodyClasses() {
+  const body = this.elements.body;
+  const landingVideo = document.getElementById('landing-video-container');
+  const panelVideo = document.getElementById('panel-video-container');
+
+  if (this.isAppMode) {
+    body.classList.add('app-mode');
+    if (landingVideo) landingVideo.style.display = 'none';
+    if (panelVideo) panelVideo.style.display = 'block';
+  } else {
+    body.classList.remove('app-mode');
+    if (landingVideo) landingVideo.style.display = 'block';
+    if (panelVideo) panelVideo.style.display = 'none';
+  }
+},
+
         
 updateStartButton() {
             const accessLink = this.elements.panelAccessLink;
