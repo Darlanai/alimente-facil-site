@@ -204,6 +204,96 @@ body {
 .scroll-down-indicator { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); color: var(--glass-text-secondary); font-family: var(--font-mono); font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; opacity: 0.7; animation: scroll-indicator-bob 2s ease-in-out infinite; z-index: 3; }
 .scroll-down-indicator i { font-size: 1.2rem; }
 
+/* =========================
+   PERF + UX: Vídeo no mobile
+   ========================= */
+@media (max-width: 768px) {
+  /* some o vídeo (economiza MUITO CPU/BAT) */
+  .video-container video { display: none !important; }
+
+  /* usa o poster como “fundo” no lugar */
+  #landing-video-container {
+    background: url("fundo_poster.jpg") center / cover no-repeat #000;
+  }
+  #panel-video-container {
+    background: url("videopainel_poster.jpg") center / cover no-repeat #000;
+  }
+}
+
+/* Preferência do usuário: menos animação */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* =========================
+   SECTION: Feature Strip (sem inline)
+   ========================= */
+.section-feature-strip {
+  min-height: auto;
+  padding: 4rem 2rem;
+  background: rgba(0,0,0,0.55);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.section-feature-strip .features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2.5rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.feature-item {
+  text-align: center;
+  padding: 1.6rem 1.4rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.feature-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(var(--primary-color-rgb), 0.35);
+  background: rgba(255,255,255,0.05);
+}
+
+.feature-item h3 {
+  color: #fff;
+  margin: 0.8rem 0 0.4rem 0;
+  font-size: 1.15rem;
+}
+
+.feature-item p {
+  color: #aaa;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* Glow “chique”: só no hover */
+.feature-icon {
+  font-size: 2.4rem;
+  margin-bottom: 0.6rem;
+  filter: none;
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+.feature-item:hover .feature-icon {
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.12));
+  transform: translateY(-1px);
+}
+
+/* Cores por var */
+.feature-icon.is-primary { color: var(--primary-color); }
+.feature-icon.is-green   { color: var(--green); }
+.feature-icon.is-purple  { color: var(--accent-purple); }
+
+.feature-item:hover .feature-icon.is-primary { filter: drop-shadow(0 0 12px rgba(0, 242, 234, 0.35)); }
+.feature-item:hover .feature-icon.is-green   { filter: drop-shadow(0 0 12px rgba(52, 199, 89, 0.30)); }
+.feature-item:hover .feature-icon.is-purple  { filter: drop-shadow(0 0 12px rgba(175, 82, 222, 0.30)); }
+
+
 /* ================= MENU HAMBURGUER PREMIUM (DROPDOWN) ================= */
 
 /* Esconde elementos antigos se ainda existirem */

@@ -912,19 +912,67 @@ initNewHeaderLogic() {
             }
         },
         
-        initVideoRotator() {
-             const container = document.getElementById('landing-video-container');
-             if (!container) return;
-             const videos = container.querySelectorAll('.background-video');
-             if (videos.length <= 1) return;
-             let currentIndex = 0;
-             const interval = setInterval(() => {
-                  videos[currentIndex]?.classList.remove('active');
-                  currentIndex = (currentIndex + 1) % videos.length;
-                  videos[currentIndex]?.classList.add('active');
-             }, 7000);
-             this.intervals.push(interval);
-        },
+initVideoRotator() {
+  const container = document.getElementById('landing-video-container');
+  if (!container) return;
+
+  // No mobile, a gente desativa rotação pra economizar bateria/CPU
+  const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+  if (isMobile) return;
+
+  const videos = Array.from(container.querySelectorAll('.background-video'));
+  if (videos.length <= 1) return;
+
+  const ensureLoadedAndPlay = async (videoEl) => {
+    // Lazy load: só seta src quando precisar
+    if (!videoEl.getAttribute('src')) {
+      const ds = videoEl.getAttribute('data-src');
+      if (ds) {
+        videoEl.setAttribute('src', ds);
+      }
+    }
+    try {
+      await videoEl.play();
+    } catch (e) {
+      // Se o navegador bloquear autoplay em algum cenário, segue sem travar
+    }
+  };
+
+  const pauseAndReset = (videoEl) => {
+    try {
+      videoEl.pause();
+      // Não zeramos currentTime pra evitar “piscada” em alguns browsers,
+      // mas se você quiser mais economia, pode descomentar:
+      // videoEl.currentTime = 0;
+    } catch (e) {}
+  };
+
+  let currentIndex = 0;
+
+  // garante que o ativo inicial esteja tocando
+  ensureLoadedAndPlay(videos[currentIndex]);
+
+  const interval = setInterval(() => {
+    const current = videos[currentIndex];
+    current?.classList.remove('active');
+    pauseAndReset(current);
+
+    currentIndex = (currentIndex + 1) % videos.length;
+    const next = videos[currentIndex];
+    next?.classList.add('active');
+    ensureLoadedAndPlay(next);
+
+    // Pré-carrega o próximo (bem leve) para não dar “delay” na troca
+    const preIndex = (currentIndex + 1) % videos.length;
+    const pre = videos[preIndex];
+    if (pre && !pre.getAttribute('src')) {
+      const ds = pre.getAttribute('data-src');
+      if (ds) pre.setAttribute('src', ds);
+    }
+  }, 7000);
+
+  this.intervals.push(interval);
+},
 
         async fetchWeather(){
              const now = new Date(); const hour = now.getHours(); let icon = 'fa-sun';
