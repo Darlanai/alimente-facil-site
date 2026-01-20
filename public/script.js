@@ -162,85 +162,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-initDockMenu() {
-            // Remove lixo antigo
-            document.querySelector('.glass-dock-container')?.remove();
-
-            // 1. Cria a Aba Lateral (Handle)
-            let handle = document.getElementById('drawer-handle');
-            if (!handle) {
-                handle = document.createElement('div');
-                handle.id = 'drawer-handle';
-                handle.title = "Puxar Painel";
-                document.body.appendChild(handle);
-            }
-
-            // 2. Cria o Bloqueio de Visitante
-            const panel = document.querySelector('.app-panel-container-standalone');
-            let guestOverlay = document.getElementById('guest-overlay');
-            if (!guestOverlay && panel) {
-                guestOverlay = document.createElement('div');
-                guestOverlay.id = 'guest-overlay';
-                guestOverlay.addEventListener('click', (e) => {
-                    e.preventDefault(); e.stopPropagation();
-                    this.showAuthModal();
+        initDockMenu() {
+            const dockItems = document.querySelectorAll('.dock-item');
+            const indicator = document.querySelector('.dock-indicator');
+            if (!dockItems.length || !indicator) return;
+            const updateIndicator = (targetBtn) => {
+                dockItems.forEach(btn => btn.classList.remove('active'));
+                targetBtn.classList.add('active');
+                requestAnimationFrame(() => {
+                    indicator.style.width = `${targetBtn.offsetWidth}px`;
+                    indicator.style.left = `${targetBtn.offsetLeft}px`;
                 });
-                panel.appendChild(guestOverlay);
-            }
-
-            // --- Lógica de Arrastar (Touch) ---
-            let startX = 0; let currentX = 0; let isDragging = false;
-            
-            const onStart = (x) => {
-                const width = window.innerWidth;
-                const isOpen = panel.classList.contains('active');
-                // Se fechado, só pega na borda direita (40px)
-                if (!isOpen && x < width - 40) return;
-                startX = x; isDragging = true;
-                panel.style.transition = 'none';
             };
-
-            const onMove = (x) => {
-                if (!isDragging) return;
-                currentX = x;
-                const width = window.innerWidth;
-                const delta = currentX - startX;
-                let translate = 0;
-                
-                if (panel.classList.contains('active')) {
-                    translate = Math.max(0, delta); // Fechando
-                } else {
-                    translate = Math.max(0, width + delta); // Abrindo
-                }
-                panel.style.transform = `translateX(${translate}px)`;
-            };
-
-            const onEnd = () => {
-                if (!isDragging) return;
-                isDragging = false;
-                panel.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)';
-                const width = window.innerWidth;
-                const style = window.getComputedStyle(panel);
-                const matrix = new WebKitCSSMatrix(style.transform);
-                const currentPos = matrix.m41;
-                
-                if (panel.classList.contains('active')) {
-                    if (currentPos > 100) this.exitAppMode(); // Fecha
-                    else panel.style.transform = 'translateX(0)';
-                } else {
-                    if (currentPos < width - 100) this.enterAppMode(); // Abre
-                    else panel.style.transform = 'translateX(100%)';
-                }
-            };
-
-            handle.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX), {passive: true});
-            handle.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX), {passive: true});
-            handle.addEventListener('touchend', onEnd);
-            handle.addEventListener('click', () => { if(panel.classList.contains('active')) this.exitAppMode(); else this.enterAppMode(); });
-
-            panel.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX), {passive: true});
-            panel.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX), {passive: true});
-            panel.addEventListener('touchend', onEnd);
+            dockItems.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    const target = btn.dataset.target;
+                    if (target === 'app') {
+                        if (!this.isLoggedIn) { this.showAuthModal(); } 
+                        else { this.enterAppMode(); updateIndicator(btn); }
+                    } else { this.exitAppMode(); updateIndicator(btn); }
+                });
+            });
+            setTimeout(() => {
+                if (this.isAppMode) { const appBtn = document.querySelector('.dock-item[data-target="app"]'); if(appBtn) updateIndicator(appBtn); } 
+                else { const homeBtn = document.querySelector('.dock-item[data-target="home"]'); if(homeBtn) updateIndicator(homeBtn); }
+            }, 100);
         },
 
         initDraggableDock() {
@@ -617,10 +564,7 @@ attachEventListeners() {
             });
         },
 
-        updateBodyClasses() { 
-            // Remove app-mode para não esconder o fundo
-            this.elements.body.classList.remove('app-mode'); 
-        },
+        updateBodyClasses() { this.elements.body.classList.toggle('app-mode', this.isAppMode); },
         
 updateStartButton() {
             const accessLink = this.elements.panelAccessLink;
@@ -661,40 +605,26 @@ updateStartButton() {
             this.enterAppMode(); 
         },
         
-enterAppMode() {
-             const panel = document.querySelector('.app-panel-container-standalone');
-             const guestOverlay = document.getElementById('guest-overlay');
-             
-             // Se não logado: Mostra painel mas com bloqueio
-             if (!this.isLoggedIn && guestOverlay) guestOverlay.style.display = 'block';
-             else if (guestOverlay) guestOverlay.style.display = 'none';
-
-             if (panel) {
-                 panel.classList.add('active');
-                 panel.style.transform = 'translateX(0)';
-             }
-
-             this.isAppMode = true;
+        enterAppMode() {
+             if (this.isAppMode) return;
              this.clearIntervals();
+             this.isAppMode = true;
              this.updateBodyClasses();
              this.activateModuleUI(this.activeModule);
              this.renderAllPanelContent();
              this.saveState();
+             window.scrollTo(0, 0);
         },
         
-exitAppMode() {
-             const panel = document.querySelector('.app-panel-container-standalone');
-             if (panel) {
-                 panel.classList.remove('active');
-                 panel.style.transform = 'translateX(100%)';
-             }
-
-             this.isAppMode = false;
+        exitAppMode() {
+             if (!this.isAppMode) return;
              this.clearIntervals();
+             this.isAppMode = false;
              this.updateBodyClasses();
              this.closeSidebar();
              this.saveState();
-             setTimeout(() => this.initLandingPage(), 300);
+             window.scrollTo(0, 0);
+             this.initLandingPage();
         },
         
         handleLogout() {
@@ -1976,59 +1906,37 @@ renderOrcamento() {
             `}).join('');
         },
 
-handleAddItem(type, formElement, listId = null) {
+        handleAddItem(type, formElement, listId = null) {
             if (!formElement) return;
             const nameInput = formElement.querySelector('input[id*="nome"]');
             const qtdInput = formElement.querySelector('input[id*="qtd"]');
             const unidSelect = formElement.querySelector('select[id*="unid"]');
             const valorInput = formElement.querySelector('input[id*="valor"]');
-            const validadeInput = formElement.querySelector('input[id*="validade"]');
+             const validadeInput = formElement.querySelector('input[id*="validade"]');
             const name = nameInput.value.trim();
-            
             if (!name) { this.showNotification("Por favor, informe o nome do item.", "error"); nameInput.focus(); return; }
-            
             const itemData = { id: this.generateId(), name: name, qtd: parseFloat(qtdInput.value) || 1, unid: unidSelect.value || "un", valor: this.parseCurrency(valorInput.value).toFixed(2), };
-            
             if (type === 'lista') {
                  itemData.checked = false;
-                 // Correção: Garante que 'new' ou null force a criação imediata da lista
-                 let targetListId = (listId === 'new' || !listId) ? null : listId;
-                 
-                 // Se não tem ID, é uma lista nova. Cria sincronicamente para evitar o erro "Lista não encontrada".
-                 if (!targetListId) {
-                    // Tenta usar a lista ativa atual se ela existir
-                    if (this.activeListId && this.state.listas[this.activeListId] && listId !== 'new') {
-                        targetListId = this.activeListId;
-                    } else {
-                        // Criação IMEDIATA da nova lista
-                        const widgetInput = document.getElementById('widget-list-name-input');
-                        const mainInput = document.getElementById('active-list-name-input');
-                        const newName = widgetInput?.value.trim() || mainInput?.value.trim() || "Nova Lista";
-                        
-                        const newListId = this.generateId();
-                        this.state.listas[newListId] = { nome: newName, items: [] };
-                        this.activeListId = newListId;
-                        targetListId = newListId;
-                        this.renderListasSalvas(); // Atualiza sidebar na hora
-                    }
+                 let targetListId = listId === 'new' ? null : (listId || this.activeListId);
+                 if (targetListId === null) {
+                    const widgetInput = document.getElementById('widget-list-name-input');
+                    const mainInput = document.getElementById('active-list-name-input');
+                    const newName = widgetInput?.value.trim() || mainInput?.value.trim();
+                    if (!newName) { this.showNotification("Dê um nome para sua nova lista antes de adicionar itens.", "error"); widgetInput?.focus(); mainInput?.focus(); return; }
+                    this.handleSaveListaAtiva(true);
+                    targetListId = this.activeListId;
                  }
-
-                 if (!this.state.listas[targetListId]) { this.showNotification("Erro crítico: Lista não encontrada.", "error"); return; }
-                 
+                 if (!this.state.listas[targetListId]) { this.showNotification("Erro ao encontrar a lista. Tente novamente.", "error"); return; }
                  if (this.userPlan === 'free' && this.state.listas[targetListId].items.length >= 10) { this.showPlansModal("Limite de 10 itens por lista no plano Gratuito atingido. Faça upgrade para listas ilimitadas!"); return; }
-                 
-                 this.state.listas[targetListId].items.unshift(itemData);
-                 this.renderListaAtiva(targetListId); 
-                 this.renderListaWidget(); 
-                 this.renderOrcamento();
-
+                  this.state.listas[targetListId].items.unshift(itemData);
+                  this.renderListaAtiva(targetListId); this.renderListaWidget(); this.renderOrcamento();
             } else if (type === 'despensa') {
                  itemData.stock = 100; itemData.validade = validadeInput ? validadeInput.value : '';
                  this.state.despensa.unshift(itemData);
                  this.renderDespensaWidget();
                  if(this.activeModule === 'despensa') this.renderDespensa();
             } else { return; }
-            
             this.saveState();
             nameInput.value = ""; qtdInput.value = "1"; valorInput.value = ""; if(validadeInput) validadeInput.value = "";
             nameInput.focus();
