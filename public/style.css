@@ -808,6 +808,20 @@ option {
 .saved-list-item .saved-list-actions { display: flex; gap: 0.2rem; flex-shrink: 0; }
 .saved-list-item .saved-list-actions .icon-button { font-size: 1rem; width: 30px; height: 30px; }
 .saved-list-item i.fa-chevron-right { display: none; }
+
+/* Quando Lista/Receita reutiliza o card padrão (.placeholder-item), zeramos os estilos antigos */
+.saved-list-item.placeholder-item,
+.recipe-list-item.placeholder-item {
+    display: block;
+    padding: 0;
+    background: transparent;
+    border: none;
+    margin-bottom: 0.75rem;
+}
+.saved-list-item.placeholder-item:hover,
+.recipe-list-item.placeholder-item:hover { background: transparent; }
+.recipe-list-item.placeholder-item .item-details-grid { grid-template-columns: 1fr; }
+.recipe-list-item.placeholder-item .item-details-grid div { white-space: normal; overflow: hidden; text-overflow: ellipsis; }
 .active-list-column { display: flex; flex-direction: column; }
 .active-list-column .card-header { background-color: transparent; }
 #active-list-title input { font: inherit; color: var(--glass-text-primary); background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); outline: none; flex-grow: 1; min-width: 100px; padding: 5px 8px; border-radius: 6px; box-shadow: none; }
@@ -2270,4 +2284,9 @@ body.app-mode .header { display: none !important; }
 @media (max-width: 600px) {
   .header-inner { padding: 10px 15px; }
   .menu-panel { right: 15px; width: calc(100% - 30px); }
+}
+/* === Ajuste de margens: Listas/Receitas igual Despensa === */
+#module-lista.module-container,
+#module-receitas.module-container {
+  padding: 1rem !important; /* mesmo padding padrão da .module-container (Despensa) */
 }

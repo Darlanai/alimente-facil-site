@@ -453,7 +453,24 @@ attachEventListeners() {
                     else if (isDespensa && closest('.item-stock-level')) { this.handleStockClick(closest('.item-stock-level'), e); }
                  }
 
-                 else if (closest('.btn-create-list')) { this.activeListId = null; this.renderListaAtiva(null); this.renderListaWidget(); if (window.innerWidth <= 991) { document.getElementById('list-manager')?.classList.add('view-active-list'); } }
+                 // Criar lista (somente no módulo de Listas) - evita conflito com botões de outros módulos
+                 else if (closest('#module-lista') && closest('.btn-create-list')) {
+                    const nome = prompt('Nome da nova lista:', 'Nova Lista');
+                    if (!nome) return;
+                    const listName = nome.trim();
+                    if (!listName) return;
+                    if (this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2) {
+                        this.showPlansModal('Limite de 2 listas atingido no plano Gratuito. Faça upgrade para criar listas ilimitadas!');
+                        return;
+                    }
+                    const newListId = this.generateId();
+                    this.state.listas[newListId] = { nome: listName, items: [] };
+                    this.activeListId = newListId;
+                    this.saveState();
+                    this.renderListasSalvas();
+                    this.showNotification(`Lista "${listName}" criada!`, 'success');
+                    this.handleOpenListViewModal(newListId);
+                 }
                  else if (closest('#list-back-btn')) { document.getElementById('list-manager')?.classList.remove('view-active-list'); }
                  else if (closest('#lista-save-changes-btn')) { this.handleSaveListaAtiva(); }
                  else if (closest('#lista-delete-btn')) { const listIdToDelete = document.getElementById('active-list-id-input')?.value; if(listIdToDelete) this.handleDeleteListaAtiva(listIdToDelete); }
@@ -462,9 +479,20 @@ attachEventListeners() {
                  if(savedListEl) {
                     const listId = savedListEl.dataset.listId;
                     if (closest('.delete-list-btn')) { this.handleDeleteListaAtiva(listId); }
-                    else if (closest('.select-list-btn')) { 
-                        this.activeListId = listId; this.saveState(); this.renderListasSalvas(); this.renderListaAtiva(listId); this.renderOrcamento(); 
-                        if (window.innerWidth <= 991) { document.getElementById('list-manager')?.classList.add('view-active-list'); } 
+                    else if (closest('.select-list-btn')) {
+                        const currentName = this.state.listas[listId]?.nome || 'Lista';
+                        const novoNome = prompt('Renomear lista:', currentName);
+                        if (novoNome === null) return;
+                        const finalName = novoNome.trim();
+                        if (!finalName) return;
+                        if (this.state.listas[listId]) {
+                            this.state.listas[listId].nome = finalName;
+                            this.activeListId = listId;
+                            this.saveState();
+                            this.renderListasSalvas();
+                            this.renderListaWidget();
+                            this.showNotification('Lista renomeada!', 'success');
+                        }
                     }
                     else { this.handleOpenListViewModal(listId); }
                  }
@@ -1148,42 +1176,30 @@ initNewHeaderLogic() {
 renderListas(container) {
              if (!container) container = document.getElementById('module-lista');
              if (!container) return;
+             // PADRÃO DESPENSA: um único dashboard-card, cards homogêneos e footer fixo
              container.innerHTML = `
-                 <div class="list-management-layout" id="list-manager">
-                     <div class="saved-lists-column">
-                         <button class="btn btn-secondary btn-create-list"><i class="fa-solid fa-plus" aria-hidden="true"></i> Criar Nova Lista</button>
-                         <div class="dashboard-card">
-                             <div class="card-header" style="cursor: default;">
-                                 <h3><i class="fa-solid fa-list-ul" aria-hidden="true"></i> Minhas Listas</h3>
-                             </div>
-                             <div class="card-content" id="saved-lists-container"></div>
-                         </div>
-                     </div>
-                     <div class="active-list-column">
-                         <div class="dashboard-card">
-                             <div class="card-header" style="cursor: default;">
-                                 <button class="icon-button mobile-back-btn" id="list-back-btn" title="Voltar" aria-label="Voltar para Minhas Listas"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
-                                 <h3 id="active-list-title"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> Carregando...</h3>
-                             </div>
-                             <div class="add-item-form-container">
-                                 <form class="add-item-form">
-                                     <input type="hidden" id="active-list-id-input" value="">
-                                     <div class="form-group form-group-flex"> <label for="lista-form-nome-full">Nome</label> <input type="text" id="lista-form-nome-full" placeholder="Ex: Arroz"> </div>
-                                     <div class="form-group form-group-small"> <label for="lista-form-qtd-full">Qtd</label> <input type="number" id="lista-form-qtd-full" value="1" min="0.1" step="any"> </div>
-                                     <div class="form-group form-group-small"> <label for="lista-form-unid-full">Unid</label> <select id="lista-form-unid-full" aria-label="Unidade do item">${['un','kg','g','L','ml','pct','cx'].map(u => `<option value="${u}">${u}</option>`).join('')}</select> </div>
-                                     <div class="form-group form-group-medium"> <label for="lista-form-valor-full">Valor</label> <input type="text" id="lista-form-valor-full" placeholder="0.00"> </div>
-                                     <button type="submit" class="btn btn-primary btn-add-item" id="lista-add-item-btn-full" title="Adicionar Item" aria-label="Adicionar Item"> <i class="fa-solid fa-plus" aria-hidden="true"></i> </button>
-                                 </form>
-                             </div>
-                             <div class="card-content no-padding-top" id="lista-items-full" data-group="shared-items" data-list-type="lista"></div>
-                             <div class="card-footer" id="active-list-actions"></div>
-                         </div>
-                     </div>
+                  <div class="dashboard-card">
+                      <div class="card-header" style="cursor: default;">
+                          <h3><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> Listas</h3>
+                      </div>
+                      <div class="card-content" id="listas-full">
+                          <button class="btn btn-secondary btn-create-list" style="margin-bottom: 1rem;">
+                              <i class="fa-solid fa-plus" aria-hidden="true"></i> Criar Nova Lista
+                          </button>
+                      </div>
+                      <div class="card-footer">
+                          <button class="btn btn-secondary pdf-btn" title="Gerar PDF das Listas"><i class="fa-solid fa-file-pdf"></i> Gerar Relatório</button>
+                      </div>
                  </div>
              `;
+
+             const listasFull = document.getElementById('listas-full');
+             if (!listasFull) return;
+             const listContainer = document.createElement('div');
+             listContainer.id = 'saved-lists-container';
+             listasFull.appendChild(listContainer);
+
              this.renderListasSalvas();
-             this.renderListaAtiva(this.activeListId);
-             this.initSortableItems('lista-items-full');
         },
 
         renderListaWidget() {
@@ -1378,20 +1394,25 @@ handleSavePantryEdit() {
             const listIds = Object.keys(this.state.listas);
             container.innerHTML = listIds.map(listId => { 
                 const lista = this.state.listas[listId]; 
-                const isActive = listId === this.activeListId; 
                 const itemCount = lista.items.length;
                 const totalValue = lista.items.reduce((acc, item) => acc + (parseFloat(item.valor || 0) * parseFloat(item.qtd || 0)), 0);
+                const listName = this.escapeHtml(lista.nome);
                 return `
-                <div class="saved-list-item ${isActive ? 'active' : ''}" data-list-id="${listId}">
-                    <div class="saved-list-info">
-                        <span class="saved-list-name">${this.escapeHtml(lista.nome)}</span>
-                        <span class="saved-list-meta">
-                            ${itemCount} item(s) • R$ ${totalValue.toFixed(2)}
-                        </span>
+                <div class="saved-list-item placeholder-item is-clickable" data-list-id="${listId}" role="button" tabindex="0">
+                    <div class="item-row">
+                        <div class="item-main-info">
+                            <i class="fa-solid fa-list-ul" aria-hidden="true" style="color: var(--glass-text-secondary);"></i>
+                            <span class="item-name">${listName}</span>
+                        </div>
+                        <div class="item-actions">
+                            <button class="icon-button select-list-btn" title="Editar" aria-label="Editar ${listName}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
+                            <button class="icon-button delete-list-btn" title="Excluir" aria-label="Excluir ${listName}"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+                        </div>
                     </div>
-                    <div class="saved-list-actions">
-                        <button class="icon-button select-list-btn" title="Editar Nome"><i class="fa-solid fa-pencil"></i></button>
-                        <button class="icon-button delete-list-btn" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    <div class="item-details-grid">
+                        <div>Itens: <span>${itemCount}</span></div>
+                        <div>Total: <span>R$ ${totalValue.toFixed(2)}</span></div>
+                        <div>Abrir: <span>Toque</span></div>
                     </div>
                 </div>`; 
             }).join('');
@@ -1440,55 +1461,52 @@ renderDespensa(container) {
 renderReceitas(container) {
              if (!container) container = document.getElementById('module-receitas');
              if (!container) return;
+             // PADRÃO DESPENSA: um único dashboard-card, cards homogêneos e footer fixo
              container.innerHTML = `
-                 <div class="recipe-layout">
-                     <div class="recipe-list-column" style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-                         <button class="btn btn-secondary btn-create-list add-recipe-btn">
-                             <i class="fa-solid fa-plus" aria-hidden="true"></i> Criar Nova Receita
-                         </button>
-                         <div class="dashboard-card">
-                             <div class="card-header" style="cursor: default;">
-                                 <h3><i class="fa-solid fa-utensils" aria-hidden="true"></i> Minhas Receitas</h3>
-                             </div>
-                             <div class="card-content" style="padding: 0 1rem 1rem 1rem;">
-                                 <div class="recipe-list" id="main-recipe-grid"></div>
-                             </div>
-                         </div>
-                     </div>
-                     <div class="recipe-detail-column">
-                         <div class="recipe-detail-header">
-                             <h3 id="recipe-detail-desktop-title">Detalhes da Receita</h3>
-                             <button class="icon-button" id="recipe-detail-close-btn" title="Fechar" aria-label="Fechar detalhes da receita"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
-                         </div>
-                         <div class="recipe-detail-content" id="recipe-detail-desktop-body">
-                             <div class="recipe-detail-placeholder">
-                                 <i class="fa-solid fa-utensils" aria-hidden="true"></i>
-                                 <p>Selecione uma receita da lista<br>para ver os detalhes aqui.</p>
-                             </div>
-                         </div>
-                         <div class="recipe-detail-footer" id="recipe-detail-desktop-footer" style="display: none;"></div>
-                     </div>
+                  <div class="dashboard-card">
+                      <div class="card-header" style="cursor: default;">
+                          <h3><i class="fa-solid fa-utensils" aria-hidden="true"></i> Receitas</h3>
+                      </div>
+                      <div class="card-content" id="receitas-full">
+                          <button class="btn btn-secondary add-recipe-btn" style="margin-bottom: 1rem;">
+                              <i class="fa-solid fa-plus" aria-hidden="true"></i> Criar Nova Receita
+                          </button>
+                      </div>
+                      <div class="card-footer">
+                          <button class="btn btn-secondary pdf-btn" title="Gerar PDF de Receitas"><i class="fa-solid fa-file-pdf"></i> Gerar Relatório</button>
+                      </div>
                  </div>
              `;
-             const recipeListContainer = document.getElementById('main-recipe-grid');
-             if (!recipeListContainer) return;
+
+             const receitasFull = document.getElementById('receitas-full');
+             if (!receitasFull) return;
+
+             let listContainer = document.createElement('div');
+             listContainer.id = 'main-recipe-grid';
+             receitasFull.appendChild(listContainer);
+
              const recipes = Object.values(this.state.receitas);
-             recipeListContainer.innerHTML = recipes.map(recipe => `
-                  <div class="recipe-list-item" data-recipe-id="${recipe.id}" data-recipe-name="${this.escapeHtml(recipe.name)}" role="button" tabindex="0">
-                        <div class="recipe-list-info">
-                            <h4>${this.escapeHtml(recipe.name)}</h4>
-                            <p>${this.escapeHtml(recipe.desc || 'Sem descrição')}</p>
-                       </div>
-                       <div class="recipe-list-actions">
-                            <button class="icon-button" data-module-target="planejador" title="Ir para o Planejador" aria-label="Adicionar ${this.escapeHtml(recipe.name)} ao Planejador"><i class="fa-solid fa-calendar-plus" aria-hidden="true"></i></button>
-                            <button class="icon-button share-btn" title="Compartilhar" aria-label="Compartilhar ${this.escapeHtml(recipe.name)}"><i class="fa-solid fa-share-alt" aria-hidden="true"></i></button>
-                            <button class="icon-button view-recipe-btn desktop-only" title="Ver" aria-label="Ver ${this.escapeHtml(recipe.name)}"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
-                            <button class="icon-button edit-recipe-btn" title="Editar" aria-label="Editar ${this.escapeHtml(recipe.name)}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
-                            <button class="icon-button delete-recipe-btn" title="Excluir" aria-label="Excluir ${this.escapeHtml(recipe.name)}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
-                       </div>
-                  </div>
-             `).join('');
-              if(recipes.length === 0){ recipeListContainer.innerHTML = '<p class="empty-list-message">Nenhuma receita criada.</p>'; }
+             listContainer.innerHTML = recipes.map(recipe => {
+                 const name = this.escapeHtml(recipe.name);
+                 const desc = this.escapeHtml(recipe.desc || 'Sem descrição');
+                 return `
+                 <div class="recipe-list-item placeholder-item is-clickable" data-recipe-id="${recipe.id}" data-recipe-name="${name}" role="button" tabindex="0">
+                    <div class="item-row">
+                        <div class="item-main-info">
+                            <i class="fa-solid fa-utensils" aria-hidden="true" style="color: var(--glass-text-secondary);"></i>
+                            <span class="item-name">${name}</span>
+                        </div>
+                        <div class="item-actions">
+                            <button class="icon-button edit-recipe-btn" title="Editar" aria-label="Editar ${name}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
+                            <button class="icon-button delete-recipe-btn" title="Excluir" aria-label="Excluir ${name}"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                    <div class="item-details-grid">
+                        <div>Desc: <span>${desc}</span></div>
+                    </div>
+                 </div>`;
+             }).join('');
+             if(recipes.length === 0){ listContainer.innerHTML = '<p class="empty-list-message">Nenhuma receita criada.</p>'; }
         },
 
         renderRecipeDetail(recipeId, targetElementId = 'recipe-detail-desktop-body', footerElementId = 'recipe-detail-desktop-footer') {
