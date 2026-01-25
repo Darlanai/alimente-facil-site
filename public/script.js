@@ -427,6 +427,34 @@ attachEventListeners() {
                     if(itemEl) { this.closeModal('item-details-modal'); this.handleOpenEditModal(itemEl); }
                  }
 
+// --- 1. RECEITAS (PRIORIDADE TOTAL) ---
+                 const recipeItemEl = closest('.recipe-list-item');
+                 if(recipeItemEl) {
+                      const recipeId = recipeItemEl.dataset.recipeId;
+                      if (closest('.delete-recipe-btn')) { this.handleDeleteRecipe(recipeId); } 
+                      else if (closest('.edit-recipe-btn')) { this.handleOpenRecipeEditModal(recipeId); } 
+                      else if (!closest('.icon-button')) { 
+                        if (window.innerWidth < 992) { 
+                            // Mobile: Modal
+                            this.showRecipeDetailModal(recipeId); 
+                        } else { 
+                            // Desktop: Coluna Direita
+                            this.renderRecipeDetail(recipeId); 
+                            document.querySelectorAll('.recipe-list-item').forEach(el => {
+                                el.classList.remove('active');
+                                el.style.borderColor = 'rgba(255,255,255,0.1)';
+                            });
+                            recipeItemEl.classList.add('active');
+                            recipeItemEl.style.borderColor = 'var(--primary-color)';
+                            
+                            const titleEl = document.getElementById('recipe-detail-title-desktop');
+                            if(titleEl) titleEl.innerHTML = `<i class="fa-solid fa-book-open"></i> ${this.escapeHtml(this.state.receitas[recipeId]?.name)}`;
+                        } 
+                    }
+                    return; // IMPEDE que o código continue e tente abrir como item comum
+                 }
+
+                 // --- 2. ITENS COMUNS (LISTA OU DESPENSA) ---
                  const itemEl = closest('.placeholder-item');
                  if (itemEl) {
                     const id = itemEl.dataset.id;
@@ -435,10 +463,20 @@ attachEventListeners() {
                     const isLista = closest('[id*="lista-items"]') || closest('#list-view-modal-body') ? true : false;
                     const isEssential = closest('#essentials-list-container') ? true : false;
 
+                    // Clique na Despensa (Abre detalhe)
                     if (isDespensa && !closest('.icon-button') && !closest('.item-stock-level') && !closest('.drag-handle')) {
-                        this.handleOpenPantryView(itemEl); return;
+                        const item = this.state.despensa.find(i => i.id.toString() === id);
+                        if (window.innerWidth >= 992 && item) {
+                            this.renderPantryDetailDesktop(item);
+                            document.querySelectorAll('#despensa-list-container .placeholder-item').forEach(el => el.style.borderColor = 'rgba(255,255,255,0.1)');
+                            itemEl.style.borderColor = 'var(--primary-color)';
+                        } else {
+                            this.handleOpenPantryView(itemEl); 
+                        }
+                        return;
                     }
 
+                    // Ações de Botões no Item
                     if (closest('.delete-btn')) { 
                         let message = `Tem certeza que deseja excluir "${itemName}"?`; 
                         let typeToDelete = isDespensa ? 'despensa' : (isLista ? 'lista' : (isEssential ? 'essencial' : null)); 
@@ -453,50 +491,56 @@ attachEventListeners() {
                     else if (isDespensa && closest('.item-stock-level')) { this.handleStockClick(closest('.item-stock-level'), e); }
                  }
 
-                 // Criar lista (somente no módulo de Listas) - evita conflito com botões de outros módulos
-                 else if (closest('#module-lista') && closest('.btn-create-list')) {
-                    const nome = prompt('Nome da nova lista:', 'Nova Lista');
-                    if (!nome) return;
-                    const listName = nome.trim();
-                    if (!listName) return;
-                    if (this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2) {
-                        this.showPlansModal('Limite de 2 listas atingido no plano Gratuito. Faça upgrade para criar listas ilimitadas!');
-                        return;
-                    }
-                    const newListId = this.generateId();
-                    this.state.listas[newListId] = { nome: listName, items: [] };
-                    this.activeListId = newListId;
-                    this.saveState();
-                    this.renderListasSalvas();
-                    this.showNotification(`Lista "${listName}" criada!`, 'success');
-                    this.handleOpenListViewModal(newListId);
-                 }
-                 else if (closest('#list-back-btn')) { document.getElementById('list-manager')?.classList.remove('view-active-list'); }
-                 else if (closest('#lista-save-changes-btn')) { this.handleSaveListaAtiva(); }
-                 else if (closest('#lista-delete-btn')) { const listIdToDelete = document.getElementById('active-list-id-input')?.value; if(listIdToDelete) this.handleDeleteListaAtiva(listIdToDelete); }
-                 
+                 // --- 3. LISTAS SALVAS (SELEÇÃO) ---
                  const savedListEl = closest('.saved-list-item');
                  if(savedListEl) {
                     const listId = savedListEl.dataset.listId;
+                    if (window.innerWidth >= 992 && !closest('.delete-list-btn') && !closest('.select-list-btn')) {
+                        this.activeListId = listId;
+                        this.renderListasSalvas();
+                        this.renderListaAtiva(listId);
+                        return;
+                    }
                     if (closest('.delete-list-btn')) { this.handleDeleteListaAtiva(listId); }
                     else if (closest('.select-list-btn')) {
                         const currentName = this.state.listas[listId]?.nome || 'Lista';
                         const novoNome = prompt('Renomear lista:', currentName);
-                        if (novoNome === null) return;
-                        const finalName = novoNome.trim();
-                        if (!finalName) return;
-                        if (this.state.listas[listId]) {
-                            this.state.listas[listId].nome = finalName;
-                            this.activeListId = listId;
-                            this.saveState();
-                            this.renderListasSalvas();
-                            this.renderListaWidget();
-                            this.showNotification('Lista renomeada!', 'success');
+                        if (novoNome) {
+                            const finalName = novoNome.trim();
+                            if (finalName && this.state.listas[listId]) {
+                                this.state.listas[listId].nome = finalName;
+                                this.activeListId = listId;
+                                this.saveState();
+                                this.renderListasSalvas();
+                                this.renderListaWidget();
+                                this.showNotification('Lista renomeada!', 'success');
+                            }
                         }
                     }
                     else { this.handleOpenListViewModal(listId); }
                  }
 
+                 // --- 4. BOTÕES GERAIS E OUTRAS AÇÕES ---
+                 if (closest('#module-lista') && closest('.btn-create-list')) {
+                    const nome = prompt('Nome da nova lista:', 'Nova Lista');
+                    if (nome && nome.trim()) {
+                        const listName = nome.trim();
+                        if (this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2) {
+                            this.showPlansModal('Limite de 2 listas atingido no plano Gratuito. Faça upgrade para criar listas ilimitadas!');
+                            return;
+                        }
+                        const newListId = this.generateId();
+                        this.state.listas[newListId] = { nome: listName, items: [] };
+                        this.activeListId = newListId;
+                        this.saveState();
+                        this.renderListasSalvas();
+                        this.showNotification(`Lista "${listName}" criada!`, 'success');
+                        this.handleOpenListViewModal(newListId);
+                    }
+                 }
+                 else if (closest('#list-back-btn')) { document.getElementById('list-manager')?.classList.remove('view-active-list'); }
+                 else if (closest('#lista-save-changes-btn')) { this.handleSaveListaAtiva(); }
+                 else if (closest('#lista-delete-btn')) { const listIdToDelete = document.getElementById('active-list-id-input')?.value; if(listIdToDelete) this.handleDeleteListaAtiva(listIdToDelete); }
                  else if (closest('.add-recipe-btn')) { this.handleOpenRecipeEditModal(null); }
                  
                  const recipeActionBtn = closest('.edit-recipe-btn, .delete-recipe-btn, .pdf-btn, .share-btn');
@@ -514,16 +558,6 @@ attachEventListeners() {
                     }
                  }
 
-                 const recipeItemEl = closest('.recipe-list-item');
-                 if(recipeItemEl) {
-                      const recipeId = recipeItemEl.dataset.recipeId;
-                      if (closest('.delete-recipe-btn')) { this.handleDeleteRecipe(recipeId); } 
-                      else if (closest('.edit-recipe-btn')) { this.handleOpenRecipeEditModal(recipeId); } 
-                      else if (!closest('.icon-button')) { 
-                        if (window.innerWidth < 992) { this.showRecipeDetailModal(recipeId); } 
-                        else { this.renderRecipeDetail(recipeId); document.querySelectorAll('.recipe-list-item.active').forEach(el => el.classList.remove('active')); recipeItemEl.classList.add('active'); document.getElementById('module-receitas')?.classList.add('detail-is-visible'); } 
-                    }
-                 }
                  else if (closest('#recipe-detail-close-btn')) { document.getElementById('module-receitas')?.classList.remove('detail-is-visible'); document.querySelectorAll('.recipe-list-item.active').forEach(el => el.classList.remove('active')); }
                  
                  else if (closest('.add-meal-btn')) { const button = closest('.add-meal-btn'); this.currentPlannerDayTarget = button.dataset.dayTarget; this.populateRecipePicker(); this.openModal('recipe-picker-modal'); }
@@ -564,10 +598,15 @@ attachEventListeners() {
 
             });
 
-            this.elements.body.addEventListener('submit', e => {
+this.elements.body.addEventListener('submit', e => {
                  e.preventDefault();
-                 if (e.target.closest('#module-lista-widget .add-item-form')) { this.handleAddItem('lista', e.target); }
-                 else if (e.target.closest('#module-lista .active-list-column .add-item-form')) { this.handleAddItem('lista', e.target, document.getElementById('active-list-id-input')?.value || this.activeListId); }
+                 if (e.target.closest('#module-lista-widget .add-item-form')) { 
+                     this.handleAddItem('lista', e.target); 
+                 }
+                 else if (e.target.closest('#module-lista .add-item-form')) { 
+                     // Funciona tanto para o Desktop (.md-detail-column) quanto Mobile
+                     this.handleAddItem('lista', e.target, document.getElementById('active-list-id-input')?.value || this.activeListId); 
+                 }
                  else if (e.target.closest('#login-form')) { this.handleLogin(); }
                  else if (e.target.closest('#signup-form')) { this.handleSignup(); }
              });
@@ -1174,33 +1213,51 @@ initNewHeaderLogic() {
         },
 
 renderListas(container) {
-             if (!container) container = document.getElementById('module-lista');
-             if (!container) return;
-             // PADRÃO DESPENSA: um único dashboard-card, cards homogêneos e footer fixo
-             container.innerHTML = `
-                  <div class="dashboard-card">
-                      <div class="card-header" style="cursor: default;">
-                          <h3><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> Listas</h3>
-                      </div>
-                      <div class="card-content" id="listas-full">
-                          <button class="btn btn-secondary btn-create-list" style="margin-bottom: 1rem;">
-                              <i class="fa-solid fa-plus" aria-hidden="true"></i> Criar Nova Lista
-                          </button>
-                      </div>
-                      <div class="card-footer">
-                          <button class="btn btn-secondary pdf-btn" title="Gerar PDF das Listas"><i class="fa-solid fa-file-pdf"></i> Gerar Relatório</button>
-                      </div>
+    if (!container) container = document.getElementById('module-lista');
+    if (!container) return;
+    
+    // Layout Master-Detail (Desktop) / Pilha (Mobile)
+    container.innerHTML = `
+        <div class="master-detail-layout">
+            <div class="md-list-column dashboard-card">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-list-ul"></i> Minhas Listas</h3>
+                </div>
+                <div class="card-content">
+                    <button class="btn btn-secondary btn-create-list" style="width:100%; margin-bottom: 1rem;">
+                        <i class="fa-solid fa-plus"></i> Nova Lista
+                    </button>
+                    <div id="saved-lists-container"></div>
+                </div>
+            </div>
+
+            <div class="md-detail-column dashboard-card" id="lista-detail-desktop">
+                 <div class="card-header">
+                    <h3 id="active-list-title"><i class="fa-solid fa-cart-shopping"></i> Selecione uma Lista</h3>
                  </div>
-             `;
-
-             const listasFull = document.getElementById('listas-full');
-             if (!listasFull) return;
-             const listContainer = document.createElement('div');
-             listContainer.id = 'saved-lists-container';
-             listasFull.appendChild(listContainer);
-
-             this.renderListasSalvas();
-        },
+                 <div class="add-item-form-container">
+                    <form class="add-item-form">
+                        <input type="hidden" id="active-list-id-input" value="">
+                        <div class="form-group form-group-flex"> <label>Nome</label> <input type="text" id="lista-form-nome-full" placeholder="Ex: Arroz"> </div>
+                        <div class="form-group form-group-small"> <label>Qtd</label> <input type="number" id="lista-form-qtd-full" value="1" min="0.1" step="any"> </div>
+                        <div class="form-group form-group-small"> <label>Unid</label> <select id="lista-form-unid-full"><option value="un">un</option><option value="kg">kg</option><option value="g">g</option><option value="L">L</option><option value="ml">ml</option><option value="pct">pct</option><option value="cx">cx</option></select> </div>
+                        <div class="form-group form-group-medium"> <label>Valor</label> <input type="text" id="lista-form-valor-full" placeholder="0.00"> </div>
+                        <button type="submit" class="btn btn-primary btn-add-item" id="lista-add-item-btn-full"> <i class="fa-solid fa-plus"></i> </button>
+                    </form>
+                </div>
+                 <div class="card-content no-padding-top" id="lista-items-full" data-group="shared-items" data-list-type="lista">
+                    <div class="empty-state-placeholder"><p>Selecione uma lista ao lado para ver os itens.</p></div>
+                 </div>
+                 <div class="card-footer" id="active-list-actions"></div>
+            </div>
+        </div>
+    `;
+    this.renderListasSalvas();
+    // Se estiver no desktop, carrega a lista ativa na direita
+    if(window.innerWidth >= 992 && this.activeListId) {
+        this.renderListaAtiva(this.activeListId);
+    }
+},
 
         renderListaWidget() {
             const container = document.getElementById('lista-items-inicio');
@@ -1420,35 +1477,46 @@ handleSavePantryEdit() {
         },
 
 renderDespensa(container) {
-             if (!container) container = document.getElementById('module-despensa');
-             if (!container) return;
-             container.innerHTML = `
-                  <div class="dashboard-card">
-                      <div class="card-header" style="cursor: default;">
-                          <h3><i class="fa-solid fa-box-archive" aria-hidden="true"></i> Despensa</h3>
-                      </div>
-                      <div class="card-content" id="despensa-items-full" data-group="shared-items" data-list-type="despensa">
-                          <button class="btn btn-secondary btn-create-list add-item-despensa-btn" style="margin-bottom: 1rem;">
-                              <i class="fa-solid fa-plus" aria-hidden="true"></i> Adicionar Item
-                          </button>
-                      </div>
-                      <div class="card-footer">
-                          <button class="btn btn-secondary pdf-btn" title="Gerar PDF Inventário"><i class="fa-solid fa-file-pdf"></i> Gerar Relatório</button>
-                      </div>
-                 </div>
-             `;
-             const despensaContainerFull = document.getElementById('despensa-items-full');
-             if (!despensaContainerFull) return;
-             
-             let listContainer = document.createElement('div');
-             listContainer.id = 'despensa-list-container';
-             despensaContainerFull.appendChild(listContainer);
+    if (!container) container = document.getElementById('module-despensa');
+    if (!container) return;
 
-             const sortedDespensa = [...this.state.despensa].sort((a, b) => { const dateA = a.validade ? new Date(a.validade + "T00:00:00-03:00").getTime() : Infinity; const dateB = b.validade ? new Date(b.validade + "T00:00:00-03:00").getTime() : Infinity; if (dateA !== dateB) return dateA - dateB; return a.name.localeCompare(b.name); });
-             listContainer.innerHTML = sortedDespensa.map(item => this.createDespensaItemHTML(item)).join('');
-             if(sortedDespensa.length === 0){ listContainer.innerHTML += '<p class="empty-list-message">Sua despensa está vazia.</p>'; }
-             this.initSortableItems('despensa-items-full'); 
-        },
+    container.innerHTML = `
+        <div class="master-detail-layout">
+            <div class="md-list-column dashboard-card">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-box-archive"></i> Despensa</h3>
+                </div>
+                <div class="card-content" id="despensa-items-full" data-group="shared-items" data-list-type="despensa">
+                     <button class="btn btn-secondary btn-create-list add-item-despensa-btn" style="width:100%; margin-bottom: 1rem;">
+                        <i class="fa-solid fa-plus"></i> Adicionar Item
+                     </button>
+                     <div id="despensa-list-container"></div>
+                </div>
+                 <div class="card-footer mobile-only">
+                    <button class="btn btn-secondary pdf-btn"><i class="fa-solid fa-file-pdf"></i> Relatório</button>
+                </div>
+            </div>
+
+            <div class="md-detail-column dashboard-card" id="despensa-detail-desktop">
+                <div class="empty-state-placeholder">
+                    <i class="fa-solid fa-arrow-left" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>Selecione um item da despensa para ver os detalhes e editar.</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const listContainer = document.getElementById('despensa-list-container');
+    const sortedDespensa = [...this.state.despensa].sort((a, b) => { 
+        const dateA = a.validade ? new Date(a.validade + "T00:00:00-03:00").getTime() : Infinity; 
+        const dateB = b.validade ? new Date(b.validade + "T00:00:00-03:00").getTime() : Infinity; 
+        return (dateA - dateB) || a.name.localeCompare(b.name); 
+    });
+    
+    listContainer.innerHTML = sortedDespensa.map(item => this.createDespensaItemHTML(item)).join('');
+    if(sortedDespensa.length === 0){ listContainer.innerHTML += '<p class="empty-list-message">Sua despensa está vazia.</p>'; }
+    this.initSortableItems('despensa-items-full'); 
+},
 
         renderDespensaWidget() {
              const container = document.getElementById('despensa-items-inicio');
@@ -1461,53 +1529,157 @@ renderDespensa(container) {
 renderReceitas(container) {
              if (!container) container = document.getElementById('module-receitas');
              if (!container) return;
-             // PADRÃO DESPENSA: um único dashboard-card, cards homogêneos e footer fixo
+
+             // Estrutura Master-Detail
              container.innerHTML = `
-                  <div class="dashboard-card">
-                      <div class="card-header" style="cursor: default;">
-                          <h3><i class="fa-solid fa-utensils" aria-hidden="true"></i> Receitas</h3>
-                      </div>
-                      <div class="card-content" id="receitas-full">
-                          <button class="btn btn-secondary add-recipe-btn" style="margin-bottom: 1rem;">
-                              <i class="fa-solid fa-plus" aria-hidden="true"></i> Criar Nova Receita
-                          </button>
-                      </div>
-                      <div class="card-footer">
-                          <button class="btn btn-secondary pdf-btn" title="Gerar PDF de Receitas"><i class="fa-solid fa-file-pdf"></i> Gerar Relatório</button>
-                      </div>
-                 </div>
+                <div class="master-detail-layout">
+                    <div class="md-list-column dashboard-card">
+                         <div class="card-header">
+                              <h3><i class="fa-solid fa-utensils"></i> Receitas</h3>
+                         </div>
+                         <div class="card-content">
+                              <button class="btn btn-secondary add-recipe-btn" style="width:100%; margin-bottom: 1rem;">
+                                  <i class="fa-solid fa-plus"></i> Nova Receita
+                              </button>
+                              <div id="main-recipe-grid"></div>
+                         </div>
+                         <div class="card-footer mobile-only">
+                            <button class="btn btn-secondary pdf-btn"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                         </div>
+                    </div>
+
+                    <div class="md-detail-column dashboard-card">
+                         <div class="card-header" style="background: rgba(255,255,255,0.05);">
+                              <h3 id="recipe-detail-title-desktop"><i class="fa-solid fa-book-open"></i> Detalhes</h3>
+                         </div>
+                         <div class="card-content" id="recipe-detail-desktop-body">
+                              <div class="empty-state-placeholder">
+                                   <i class="fa-solid fa-utensils" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                                   <p>Selecione uma receita para ver ingredientes e preparo.</p>
+                              </div>
+                         </div>
+                         <div class="card-footer" id="recipe-detail-desktop-footer" style="display:none;"></div>
+                    </div>
+                </div>
              `;
 
-             const receitasFull = document.getElementById('receitas-full');
-             if (!receitasFull) return;
-
-             let listContainer = document.createElement('div');
-             listContainer.id = 'main-recipe-grid';
-             receitasFull.appendChild(listContainer);
-
+             const listContainer = document.getElementById('main-recipe-grid');
              const recipes = Object.values(this.state.receitas);
+             
+             // Renderiza os cards IDÊNTICOS aos da Despensa
              listContainer.innerHTML = recipes.map(recipe => {
                  const name = this.escapeHtml(recipe.name);
-                 const desc = this.escapeHtml(recipe.desc || 'Sem descrição');
+                 const qtdIngredientes = recipe.ingredientes ? recipe.ingredientes.length : 0;
+                 
                  return `
                  <div class="recipe-list-item placeholder-item is-clickable" data-recipe-id="${recipe.id}" data-recipe-name="${name}" role="button" tabindex="0">
                     <div class="item-row">
                         <div class="item-main-info">
-                            <i class="fa-solid fa-utensils" aria-hidden="true" style="color: var(--glass-text-secondary);"></i>
-                            <span class="item-name">${name}</span>
+                            <div class="item-icon-wrapper" style="background: rgba(0, 242, 234, 0.1); color: var(--primary-color);">
+                                <i class="fa-solid fa-utensils"></i>
+                            </div>
+                            <div class="item-text-content">
+                                <span class="item-name">${name}</span>
+                                <span class="item-details-mini" style="font-size: 0.8em; opacity: 0.7;">${qtdIngredientes} ingr.</span>
+                            </div>
                         </div>
+
                         <div class="item-actions">
-                            <button class="icon-button edit-recipe-btn" title="Editar" aria-label="Editar ${name}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
-                            <button class="icon-button delete-recipe-btn" title="Excluir" aria-label="Excluir ${name}"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+                             <button class="icon-button edit-recipe-btn" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                             <button class="icon-button delete-recipe-btn" title="Excluir" style="color: var(--red); border-color: rgba(255,59,48,0.3);"><i class="fa-solid fa-trash"></i></button>
                         </div>
-                    </div>
-                    <div class="item-details-grid">
-                        <div>Desc: <span>${desc}</span></div>
                     </div>
                  </div>`;
              }).join('');
+             
              if(recipes.length === 0){ listContainer.innerHTML = '<p class="empty-list-message">Nenhuma receita criada.</p>'; }
         },
+
+renderPantryDetailDesktop(item) {
+    const container = document.getElementById('despensa-detail-desktop');
+    if(!container) return;
+    
+    // Lógica visual da validade
+    let validadeDisplay = "Não informada";
+    let validadeClass = "";
+    if (item.validade) {
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const [y, m, d] = item.validade.split('-').map(Number);
+        const dataVal = new Date(y, m - 1, d); dataVal.setHours(0,0,0,0);
+        const diffTime = dataVal - hoje; 
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) { validadeDisplay = `Vencido há ${Math.abs(diffDays)} dias`; validadeClass = "color: var(--red); font-weight: bold;"; }
+        else if (diffDays === 0) { validadeDisplay = "Vence Hoje!"; validadeClass = "color: var(--red); font-weight: bold;"; }
+        else if (diffDays <= 7) { validadeDisplay = `Vence em ${diffDays} dias`; validadeClass = "color: var(--accent-yellow);"; }
+        else { validadeDisplay = item.validade.split('-').reverse().join('/'); }
+    }
+
+    container.innerHTML = `
+        <div class="card-header">
+            <h3><i class="fa-solid fa-pencil"></i> Editar: ${this.escapeHtml(item.name)}</h3>
+            <div class="card-actions">
+                <button class="icon-button" style="color:var(--red); border-color:var(--red);" onclick="app.handleDeleteItem('despensa', '${item.id}')"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </div>
+        <div class="card-content">
+            <form id="pantry-desktop-form" onsubmit="return false;">
+                <input type="hidden" id="pantry-edit-id" value="${item.id}">
+                
+                <div class="form-group">
+                    <label>Nome do Item</label>
+                    <input type="text" id="pantry-edit-name" value="${this.escapeHtml(item.name)}" class="input-large">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantidade</label>
+                        <div class="stepper-control">
+                            <button type="button" class="stepper-btn minus"><i class="fa-solid fa-minus"></i></button>
+                            <input type="number" id="pantry-edit-qtd" value="${item.qtd || 1}">
+                            <button type="button" class="stepper-btn plus"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Unidade</label>
+                         <select id="pantry-edit-unid" class="input-large">
+                            ${['un','kg','g','L','ml','pct','cx'].map(u => `<option value="${u}" ${item.unid === u ? 'selected' : ''}>${u}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Validade <span style="font-size:0.8em; margin-left:10px; ${validadeClass}">(${validadeDisplay})</span></label>
+                    <input type="date" id="pantry-edit-validade" value="${item.validade || ''}" class="input-large">
+                </div>
+
+                <div class="form-group">
+                    <label>Nível de Estoque</label>
+                    <input type="range" id="pantry-edit-stock" min="0" max="100" step="25" class="stock-range" value="${item.stock || 100}">
+                    <div class="stock-labels"><span>Vazio</span><span>Baixo</span><span>Médio</span><span>Cheio</span></div>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-primary" id="pantry-save-btn" style="width:100%;"><i class="fa-solid fa-save"></i> Salvar Alterações</button>
+        </div>
+    `;
+    
+    // Reativar os listeners do stepper que foram injetados dinamicamente
+    const stockInput = document.getElementById('pantry-edit-stock');
+    if(stockInput) {
+        const updateLabels = (val) => {
+            const labels = container.querySelectorAll('.stock-labels span');
+            labels.forEach(l => l.style.color = '#666'); 
+            if(val < 25) labels[0].style.color = 'var(--red)';
+            else if(val < 50) labels[1].style.color = 'var(--accent-yellow)';
+            else if(val < 75) labels[2].style.color = 'var(--primary-color)';
+            else labels[3].style.color = 'var(--green)';
+        };
+        updateLabels(stockInput.value);
+        stockInput.oninput = (e) => updateLabels(e.target.value);
+    }
+},
 
         renderRecipeDetail(recipeId, targetElementId = 'recipe-detail-desktop-body', footerElementId = 'recipe-detail-desktop-footer') {
              const recipe = this.state.receitas[recipeId]; const bodyEl = document.getElementById(targetElementId); const footerEl = document.getElementById(footerElementId);
