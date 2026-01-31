@@ -597,6 +597,12 @@ body {
 .card-content { flex-grow: 1; overflow-y: auto; padding: 1.2rem; padding-right: 2px; }
 .card-content.no-padding-top { padding-top: 0; }
 .mobile-back-btn { display: none; }
+
+/* Tela cheia de edição de lista (desktop e mobile) */
+.list-management-layout.view-active-list .saved-lists-column { display: none; }
+.list-management-layout.view-active-list .active-list-column { display: flex; flex: 1; }
+.list-management-layout.view-active-list .mobile-back-btn { display: block; }
+
 .empty-list-message { text-align: center; color: var(--glass-text-secondary); padding: 2rem; font-style: italic; }
 .empty-list-message.error { color: var(--red); font-style: normal; font-weight: 500; }
 
@@ -2367,6 +2373,14 @@ body.app-mode .header { display: none !important; }
         height: auto;
         min-height: 100%;
     }
+    /* === MODO EDIÇÃO (MOBILE): quando abre uma lista, mostra a coluna da direita === */
+    #list-manager.view-active-list .md-detail-column {
+        display: flex !important;
+    }
+    #list-manager.view-active-list .md-list-column {
+        display: none !important;
+    }
+
 }
 
 /* === Mobile safety: mesmo em "modo desktop", força layout de 1 coluna em telas touch === */

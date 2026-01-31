@@ -364,9 +364,12 @@ attachEventListeners() {
             });
 
             // === EVENTOS GERAIS (ATUALIZADO COM OS NOVOS BOTÕES) ===
-            this.elements.body.addEventListener('click', e => {
-                 const target = e.target;
+this.elements.body.addEventListener('click', e => {
+                 const target = (e.target instanceof Element) ? e.target : e.target?.parentElement;
+                 if (!target) return;
                  const closest = (selector) => target.closest(selector);
+
+
 
                  // --- 1. Lógica do Stepper (+ / -) ---
                  const stepperBtn = closest('.stepper-btn');
@@ -491,49 +494,82 @@ attachEventListeners() {
                     else if (isDespensa && closest('.item-stock-level')) { this.handleStockClick(closest('.item-stock-level'), e); }
                  }
 
-                 // --- 3. LISTAS SALVAS (SELEÇÃO) ---
-                 const savedListEl = closest('.saved-list-item');
-                 if(savedListEl) {
+// --- 3. GESTÃO DE LISTAS SALVAS ---
+const savedListEl = closest('.saved-list-item');
+                 if (savedListEl) {
                     const listId = savedListEl.dataset.listId;
-                    if (window.innerWidth >= 992 && !closest('.delete-list-btn') && !closest('.select-list-btn')) {
+
+                    // Se clicou no ícone de lixeira
+                    if (closest('.delete-list-btn')) {
+                        this.handleDeleteListaAtiva(listId);
+                        return;
+                    }
+
+                    // Se clicou no ícone de lápis (EDITAR)
+                    if (closest('.select-list-btn')) {
                         this.activeListId = listId;
-                        this.renderListasSalvas();
+                        const listManager = document.getElementById('list-manager');
+                        if (listManager) listManager.classList.add('view-active-list');
                         this.renderListaAtiva(listId);
                         return;
                     }
-                    if (closest('.delete-list-btn')) { this.handleDeleteListaAtiva(listId); }
-                    else if (closest('.select-list-btn')) {
-                        // Editar: vai direto para a tela de edição (sem prompt)
-                        this.openListEditView(listId);
-                    }
-                    else { this.handleOpenListViewModal(listId); }
+
+                    // Se clicou no corpo da lista (VISUALIZAR APENAS)
+                    this.handleOpenListViewModal(listId);
+                    return;
                  }
 
                  // --- 4. BOTÕES GERAIS E OUTRAS AÇÕES ---
-                 if (closest('#module-lista') && closest('.btn-create-list')) {
+// Fluxo de Criar Nova Lista e entrar direto na Edição
+if (closest('#module-lista') && closest('.btn-create-list')) {
                     this.openListNameModal({
                         title: 'Nova lista',
-                        placeholder: 'Nome da nova lista',
-                        initialValue: 'Nova Lista',
-                        confirmText: 'Criar',
+                        placeholder: 'Ex: Compras de amanhã',
+                        initialValue: '',
+                        confirmText: 'Criar e Adicionar Itens',
                         onConfirm: (listName) => {
+                            const listNameFinal = String(listName).trim() || "Nova Lista";
+                            
+                            // Verificação de plano
+                            if (this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2) {
+                                this.showPlansModal('Limite de 2 listas atingido no plano Gratuito.');
+                                return;
+                            }
 
-                        const listNameFinal = String(listName).trim();
-                        if (this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2) {
-                            this.showPlansModal('Limite de 2 listas atingido no plano Gratuito. Faça upgrade para criar listas ilimitadas!');
-                            return;
+                            const newListId = this.generateId();
+                            
+                            // 1. Cria a lista no estado
+                            this.state.listas[newListId] = { nome: listNameFinal, items: [] };
+                            this.activeListId = newListId;
+                            this.saveState();
+                            
+                            // 2. Atualiza a barra lateral
+                            this.renderListasSalvas();
+                            
+                            // 3. FORÇA a abertura da interface de edição
+                            const listManager = document.getElementById('list-manager');
+                            if (listManager) {
+                                listManager.classList.add('view-active-list'); // Ativa a tela de edição
+                            }
+                            
+                            // 4. Renderiza os campos de inserção e foca no input
+                            this.renderListaAtiva(newListId);
+                            
+                            setTimeout(() => {
+                                const inputNome = document.getElementById('lista-form-nome-full');
+                                if (inputNome) inputNome.focus();
+                            }, 100);
+
+                            this.showNotification(`Lista "${listNameFinal}" criada!`, 'success');
                         }
-                        const newListId = this.generateId();
-                        this.state.listas[newListId] = { nome: listNameFinal, items: [] };
-                        this.activeListId = newListId;
-                        this.saveState();
-                        this.renderListasSalvas();
-                        this.showNotification(`Lista "${listNameFinal}" criada!`, 'success');
-                        this.openListEditView(newListId);
-                    }
                     });
                  }
-                 else if (closest('#list-back-btn')) { document.getElementById('list-manager')?.classList.remove('view-active-list'); }
+                 // Botão de voltar da edição de lista
+                 else if (closest('#list-back-btn')) { 
+                    document.getElementById('list-manager')?.classList.remove('view-active-list'); 
+                    this.renderListasSalvas();
+                 }
+
                  else if (closest('#lista-save-changes-btn')) { this.handleSaveListaAtiva(); }
                  else if (closest('#lista-delete-btn')) { const listIdToDelete = document.getElementById('active-list-id-input')?.value; if(listIdToDelete) this.handleDeleteListaAtiva(listIdToDelete); }
                  else if (closest('.add-recipe-btn')) { this.handleOpenRecipeEditModal(null); }
@@ -1213,7 +1249,7 @@ renderListas(container) {
     
     // Layout Master-Detail (Desktop) / Pilha (Mobile)
     container.innerHTML = `
-        <div class="master-detail-layout">
+        <div class="master-detail-layout" id="list-manager">
             <div class="md-list-column dashboard-card">
                 <div class="card-header">
                     <h3><i class="fa-solid fa-list-ul"></i> Minhas Listas</h3>
@@ -1227,9 +1263,13 @@ renderListas(container) {
             </div>
 
             <div class="md-detail-column dashboard-card" id="lista-detail-desktop">
-                 <div class="card-header">
-                    <h3 id="active-list-title"><i class="fa-solid fa-cart-shopping"></i> Selecione uma Lista</h3>
-                 </div>
+<div class="card-header">
+    <button id="list-back-btn" class="icon-button mobile-only" aria-label="Voltar">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+    </button>
+    <h3 id="active-list-title"><i class="fa-solid fa-cart-shopping"></i> Selecione uma Lista</h3>
+</div>
+
                  <div class="add-item-form-container">
                     <form class="add-item-form">
                         <input type="hidden" id="active-list-id-input" value="">
@@ -1465,8 +1505,8 @@ handleSavePantryEdit() {
                             <span class="item-name">${listName}</span>
                         </div>
                         <div class="item-actions">
-                            <button class="icon-button select-list-btn" title="Editar" aria-label="Editar ${listName}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
-                            <button class="icon-button delete-list-btn" title="Excluir" aria-label="Excluir ${listName}"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+<button type="button" class="icon-button select-list-btn" title="Editar" aria-label="Editar ${listName}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
+<button type="button" class="icon-button delete-list-btn" title="Excluir" aria-label="Excluir ${listName}"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
                         </div>
                     </div>
                     <div class="item-details-grid">
@@ -2818,10 +2858,12 @@ handleSaveRecipe() {
             const btnCancel = overlay.querySelector('[data-cancel]');
             const btnClose = overlay.querySelector('[data-close]');
 
-            const close = () => {
-                overlay.classList.remove('open');
+const close = () => {
+                overlay.classList.remove('active');
                 overlay.style.display = 'none';
-            };
+            }
+
+
 
             titleEl.textContent = title;
             input.placeholder = placeholder;
@@ -2843,19 +2885,31 @@ handleSaveRecipe() {
             btnCancel.onclick = close;
             btnClose.onclick = close;
 
-            overlay.style.display = 'flex';
-            overlay.classList.add('open');
+overlay.style.display = 'flex';
+            overlay.classList.add('active');
             setTimeout(() => input.focus(), 50);
+
+
         },
-        openListEditView(listId) {
-            // Abre a tela de edição (mobile) usando o painel de detalhes existente
+
+openListEditView(listId) {
             this.activeListId = listId;
             this.saveState();
             this.renderListasSalvas();
             this.renderListaAtiva(listId);
-            if (window.matchMedia('(hover: none) and (pointer: coarse)').matches || window.innerWidth <= 991) {
-                document.getElementById('list-manager')?.classList.add('view-active-list');
-            }
+
+            // Abre o container de edição (no mobile isso ativa a tela cheia)
+            const listManager = document.getElementById('list-manager');
+            if (listManager) listManager.classList.add('view-active-list');
+
+            // Foco imediato no campo de nome de item para agilizar o uso
+            setTimeout(() => {
+                const inputItem = document.getElementById('lista-form-nome-full');
+                if (inputItem) {
+                    inputItem.focus();
+                    inputItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 300);
         },
 
         createAutocompleteElement() {
