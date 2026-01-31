@@ -2368,3 +2368,9 @@ body.app-mode .header { display: none !important; }
         min-height: 100%;
     }
 }
+
+/* === Mobile safety: mesmo em "modo desktop", força layout de 1 coluna em telas touch === */
+@media (hover: none) and (pointer: coarse) {
+  .master-detail-layout { display: block !important; }
+  .md-detail-column { display: none !important; }
+}

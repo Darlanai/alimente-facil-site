@@ -503,40 +503,35 @@ attachEventListeners() {
                     }
                     if (closest('.delete-list-btn')) { this.handleDeleteListaAtiva(listId); }
                     else if (closest('.select-list-btn')) {
-                        const currentName = this.state.listas[listId]?.nome || 'Lista';
-                        const novoNome = prompt('Renomear lista:', currentName);
-                        if (novoNome) {
-                            const finalName = novoNome.trim();
-                            if (finalName && this.state.listas[listId]) {
-                                this.state.listas[listId].nome = finalName;
-                                this.activeListId = listId;
-                                this.saveState();
-                                this.renderListasSalvas();
-                                this.renderListaWidget();
-                                this.showNotification('Lista renomeada!', 'success');
-                            }
-                        }
+                        // Editar: vai direto para a tela de edição (sem prompt)
+                        this.openListEditView(listId);
                     }
                     else { this.handleOpenListViewModal(listId); }
                  }
 
                  // --- 4. BOTÕES GERAIS E OUTRAS AÇÕES ---
                  if (closest('#module-lista') && closest('.btn-create-list')) {
-                    const nome = prompt('Nome da nova lista:', 'Nova Lista');
-                    if (nome && nome.trim()) {
-                        const listName = nome.trim();
+                    this.openListNameModal({
+                        title: 'Nova lista',
+                        placeholder: 'Nome da nova lista',
+                        initialValue: 'Nova Lista',
+                        confirmText: 'Criar',
+                        onConfirm: (listName) => {
+
+                        const listNameFinal = String(listName).trim();
                         if (this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2) {
                             this.showPlansModal('Limite de 2 listas atingido no plano Gratuito. Faça upgrade para criar listas ilimitadas!');
                             return;
                         }
                         const newListId = this.generateId();
-                        this.state.listas[newListId] = { nome: listName, items: [] };
+                        this.state.listas[newListId] = { nome: listNameFinal, items: [] };
                         this.activeListId = newListId;
                         this.saveState();
                         this.renderListasSalvas();
-                        this.showNotification(`Lista "${listName}" criada!`, 'success');
-                        this.handleOpenListViewModal(newListId);
+                        this.showNotification(`Lista "${listNameFinal}" criada!`, 'success');
+                        this.openListEditView(newListId);
                     }
+                    });
                  }
                  else if (closest('#list-back-btn')) { document.getElementById('list-manager')?.classList.remove('view-active-list'); }
                  else if (closest('#lista-save-changes-btn')) { this.handleSaveListaAtiva(); }
@@ -1353,12 +1348,20 @@ renderListas(container) {
                 modalBody.setAttribute('data-list-id', listId);
                 modalBody.innerHTML = lista.items.map(item => this.createListaItemHTML(item)).join('');
                 if (lista.items.length === 0) {
-                    modalBody.innerHTML = '<p class="empty-list-message">Lista vazia. Adicione itens acima.</p>';
+                    modalBody.innerHTML = '<p class="empty-list-message">Lista vazia.</p>';
                 }
                 this.initSortableItems('list-view-modal-body');
             }
 
             this.openModal('list-view-modal');
+
+            const editBtn = document.getElementById('list-view-edit-btn');
+            if (editBtn) {
+                editBtn.onclick = () => {
+                    this.closeModal('list-view-modal');
+                    this.openListEditView(listId);
+                };
+            }
         },
 
 handleOpenPantryView(itemEl) {
@@ -2781,6 +2784,80 @@ handleSaveRecipe() {
              const savedOrder = JSON.parse(localStorage.getItem('moduleOrder')); if (savedOrder) { el.sortableInstanceModules.sort(savedOrder); }
         },
 
+        openListNameModal({ title = 'Nome da lista', placeholder = 'Digite...', initialValue = '', confirmText = 'Salvar', onConfirm }) {
+            // Modal reutilizável para criar/renomear lista (substitui prompt do Windows)
+            let overlay = document.getElementById('list-name-modal');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'list-name-modal';
+                overlay.className = 'modal-overlay';
+                overlay.innerHTML = `
+                    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="list-name-modal-title">
+                        <div class="modal-header">
+                            <h3 id="list-name-modal-title" style="margin:0;">${title}</h3>
+                            <button class="icon-button close-btn" data-close="1"><i class="fa-solid fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <input id="list-name-modal-input" type="text" placeholder="${placeholder}" style="width:100%;">
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end;">
+                            <button class="btn btn-secondary" data-cancel="1" type="button">Cancelar</button>
+                            <button class="btn btn-primary" id="list-name-modal-confirm" type="button">${confirmText}</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+            }
+
+            const titleEl = overlay.querySelector('#list-name-modal-title');
+            const input = overlay.querySelector('#list-name-modal-input');
+            const btnConfirm = overlay.querySelector('#list-name-modal-confirm');
+            const btnCancel = overlay.querySelector('[data-cancel]');
+            const btnClose = overlay.querySelector('[data-close]');
+
+            const close = () => {
+                overlay.classList.remove('open');
+                overlay.style.display = 'none';
+            };
+
+            titleEl.textContent = title;
+            input.placeholder = placeholder;
+            input.value = initialValue || '';
+
+            const confirm = () => {
+                const val = (input.value || '').trim();
+                if (!val) { this.showNotification('Digite um nome válido.', 'error'); input.focus(); return; }
+                close();
+                if (typeof onConfirm === 'function') onConfirm(val);
+            };
+
+            // garante listeners únicos
+            const newBtn = btnConfirm.cloneNode(true);
+            btnConfirm.parentNode.replaceChild(newBtn, btnConfirm);
+
+            newBtn.addEventListener('click', confirm);
+            input.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); confirm(); } };
+            btnCancel.onclick = close;
+            btnClose.onclick = close;
+
+            overlay.style.display = 'flex';
+            overlay.classList.add('open');
+            setTimeout(() => input.focus(), 50);
+        },
+        openListEditView(listId) {
+            // Abre a tela de edição (mobile) usando o painel de detalhes existente
+            this.activeListId = listId;
+            this.saveState();
+            this.renderListasSalvas();
+            this.renderListaAtiva(listId);
+            if (window.matchMedia('(hover: none) and (pointer: coarse)').matches || window.innerWidth <= 991) {
+                document.getElementById('list-manager')?.classList.add('view-active-list');
+            }
+        },
+
         createAutocompleteElement() {
             const el = document.createElement('div'); el.id = 'autocomplete-suggestions'; document.body.appendChild(el); this.elements.autocompleteSuggestions = el; this.activeAutocompleteInput = null;
         },
@@ -2788,21 +2865,39 @@ handleSaveRecipe() {
         handleAutocomplete(inputElement) {
             const query = inputElement.value.trim().toLowerCase();
             this.activeAutocompleteInput = inputElement; 
-            if (query.length < 2) { this.hideAutocomplete(); return; }
+            if (query.length < 1) { this.hideAutocomplete(); return; }
             const suggestions = ALL_ITEMS_DATA.filter(item => item.name.toLowerCase().includes(query)).slice(0, 10);
-            if (suggestions.length === 0) { this.hideAutocomplete(); return; }
+
+            if (suggestions.length === 0) {
+                // Opção de inserir manualmente o que foi digitado
+                this.showAutocomplete([{ name: `Insira manual: ${inputElement.value}` }], query, inputElement);
+                return;
+            }
+
             this.showAutocomplete(suggestions, query, inputElement);
         },
         showAutocomplete(suggestions, query, inputElement) {
             const suggestionsEl = this.elements.autocompleteSuggestions;
             if (!suggestionsEl) return;
-            suggestionsEl.innerHTML = suggestions.map(item => { const regex = new RegExp(`(${this.escapeRegExp(query)})`, 'gi'); const nameHtml = this.escapeHtml(item.name).replace(regex, '<strong>$1</strong>'); return ` <div class="autocomplete-item" data-name="${this.escapeHtml(item.name)}"> ${nameHtml} </div> `; }).join('');
+            suggestionsEl.innerHTML = suggestions.map(item => {
+                const isManual = String(item.name).startsWith('Insira manual:');
+                const safeName = this.escapeHtml(item.name);
+                const regex = new RegExp(`(${this.escapeRegExp(query)})`, 'gi');
+                const nameHtml = safeName.replace(regex, '<strong>$1</strong>');
+                return ` <div class="autocomplete-item" data-name="${safeName}" data-manual="${isManual ? '1' : '0'}"> ${nameHtml} </div> `;
+            }).join('');
             const rect = inputElement.getBoundingClientRect();
             suggestionsEl.style.left = `${rect.left}px`; suggestionsEl.style.top = `${rect.bottom + 5}px`; suggestionsEl.style.width = `${rect.width}px`; suggestionsEl.style.display = 'block';
         },
         hideAutocomplete() { if (this.elements.autocompleteSuggestions) { this.elements.autocompleteSuggestions.style.display = 'none'; } this.activeAutocompleteInput = null; },
         selectAutocompleteItem(itemName) {
             if (!this.activeAutocompleteInput) { this.hideAutocomplete(); return; }
+            if (String(itemName).startsWith('Insira manual:')) {
+                const manual = String(itemName).replace('Insira manual:', '').trim();
+                if (manual) this.activeAutocompleteInput.value = manual;
+                this.hideAutocomplete();
+                return;
+            }
             const itemData = ALL_ITEMS_DATA.find(item => item.name === itemName);
             if (!itemData) { this.hideAutocomplete(); return; }
             const inputId = this.activeAutocompleteInput.id;
