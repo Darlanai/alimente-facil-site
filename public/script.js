@@ -1434,7 +1434,7 @@ handleOpenPantryView(itemEl) {
             // Injetar botão de deletar no footer (lado esquerdo)
             const actionsContainer = document.getElementById('pantry-view-actions-container');
             if (actionsContainer) {
-                actionsContainer.innerHTML = `<button class="btn btn-danger delete-btn" data-item-id="${id}"><i class="fa-solid fa-trash"></i> Excluir</button>`;
+                actionsContainer.innerHTML = `<button class="btn btn-danger btn-icon delete-btn" title="Excluir" aria-label="Excluir" data-item-id="${id}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>`;
             }
             
             const nameInput = document.getElementById('pantry-edit-name');
@@ -1558,7 +1558,7 @@ renderDespensa(container) {
                      <div id="despensa-list-container"></div>
                 </div>
                  <div class="card-footer mobile-only">
-                    <button class="btn btn-secondary pdf-btn"><i class="fa-solid fa-file-pdf"></i> Relatório</button>
+                    <button class="btn btn-secondary btn-icon pdf-btn" title="Relatório" aria-label="Relatório"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
                 </div>
             </div>
 
@@ -1609,7 +1609,7 @@ renderReceitas(container) {
                               <div id="main-recipe-grid"></div>
                          </div>
                          <div class="card-footer mobile-only">
-                            <button class="btn btn-secondary pdf-btn"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                            <button class="btn btn-secondary btn-icon pdf-btn" title="PDF" aria-label="PDF"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
                          </div>
                     </div>
 
@@ -1751,10 +1751,10 @@ renderPantryDetailDesktop(item) {
              if (!recipe || !bodyEl || !footerEl) { if (bodyEl) bodyEl.innerHTML = '<div class="recipe-detail-placeholder"><i class="fa-solid fa-question-circle"></i><p>Receita não encontrada.</p></div>'; if (footerEl) footerEl.style.display = 'none'; return; }
              bodyEl.innerHTML = recipe.content;
             footerEl.innerHTML = `
-                <button class="btn btn-primary edit-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-pencil"></i> Editar</button> 
-                <button class="btn btn-secondary pdf-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-file-pdf"></i> PDF</button> 
-                <button class="btn btn-secondary share-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-share-alt"></i></button> 
-                <button class="btn btn-danger delete-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-trash"></i> Excluir</button>
+                <button class="btn btn-primary btn-icon edit-recipe-btn" title="Editar" aria-label="Editar" data-recipe-id="${recipeId}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
+                <button class="btn btn-secondary btn-icon pdf-btn" title="PDF" aria-label="PDF" data-recipe-id="${recipeId}"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
+                <button class="btn btn-secondary btn-icon share-btn" title="Compartilhar" aria-label="Compartilhar" data-recipe-id="${recipeId}"><i class="fa-solid fa-share-alt" aria-hidden="true"></i></button>
+                <button class="btn btn-danger btn-icon delete-recipe-btn" title="Excluir" aria-label="Excluir" data-recipe-id="${recipeId}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
             `;
              footerEl.style.display = 'flex';
         },
@@ -1766,9 +1766,9 @@ renderPantryDetailDesktop(item) {
              modalTitle.innerHTML = `<i class="fa-solid fa-utensils" aria-hidden="true"></i> ${this.escapeHtml(recipe.name)}`;
              modalBody.innerHTML = recipe.content;
              modalFooter.innerHTML = `
-                <button class="btn btn-primary edit-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-pencil"></i> Editar</button>
-                <button class="btn btn-secondary pdf-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                <button class="btn btn-danger delete-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-trash"></i> Excluir</button>
+                <button class="btn btn-primary btn-icon edit-recipe-btn" title="Editar" aria-label="Editar" data-recipe-id="${recipeId}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
+                <button class="btn btn-secondary btn-icon pdf-btn" title="PDF" aria-label="PDF" data-recipe-id="${recipeId}"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
+                <button class="btn btn-danger btn-icon delete-recipe-btn" title="Excluir" aria-label="Excluir" data-recipe-id="${recipeId}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
              `;
              this.openModal('recipe-detail-modal');
         },
@@ -1813,10 +1813,10 @@ renderPlanejador(container) {
                        </div>
                        <div class="card-footer" style="justify-content: space-between;">
                            <div style="display:flex; gap: 10px;">
-                                <button class="btn btn-secondary pdf-btn" title="Baixar PDF do Planejamento"><i class="fa-solid fa-file-pdf"></i> Exportar</button>
-                                <button class="btn btn-secondary share-btn" title="Compartilhar Planejamento"><i class="fa-solid fa-share-alt"></i> Compartilhar</button>
+                                <button class="btn btn-secondary btn-icon pdf-btn" title="Baixar PDF do Planejamento" aria-label="Baixar PDF do Planejamento"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
+                                <button class="btn btn-secondary btn-icon share-btn" title="Compartilhar Planejamento" aria-label="Compartilhar Planejamento"><i class="fa-solid fa-share-alt" aria-hidden="true"></i></button>
                            </div>
-                           <button class="btn btn-danger clear-plan-btn"><i class="fa-solid fa-eraser"></i> Limpar Tudo</button>
+                           <button class="btn btn-danger btn-icon clear-plan-btn" title="Limpar Planejamento" aria-label="Limpar Planejamento"><i class="fa-solid fa-eraser" aria-hidden="true"></i></button>
                        </div>
                   </div>
              `;
@@ -1995,7 +1995,7 @@ renderOrcamento() {
                          </div>
                       </div>
                       <div class="card-footer">
-                           <button class="btn btn-secondary pdf-btn" title="Exportar Relatório"><i class="fa-solid fa-file-pdf"></i> Exportar</button>
+                           <button class="btn btn-secondary btn-icon pdf-btn" title="Exportar Relatório" aria-label="Exportar Relatório"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
                       </div>
                   </div>
              `;

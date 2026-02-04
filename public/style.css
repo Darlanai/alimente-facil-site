@@ -1015,6 +1015,17 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
     text-transform: uppercase; letter-spacing: 0.5px; position: relative;
     overflow: hidden; box-shadow: none; text-decoration: none;
 }
+
+/* === NOVO: BOTÕES SOMENTE COM ÍCONE (PADRÃO DO RODAPÉ) === */
+.btn.btn-icon {
+    width: 46px;
+    padding: 0;
+    gap: 0;
+}
+
+.btn.btn-icon i {
+    font-size: 1.15rem;
+}
 .btn:active { transform: scale(0.96); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); background: rgba(255,255,255,0.05); }
 
