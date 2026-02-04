@@ -2388,3 +2388,35 @@ body.app-mode .header { display: none !important; }
   .master-detail-layout { display: block !important; }
   .md-detail-column { display: none !important; }
 }
+
+
+
+/* === UI/UX BUGFIX PATCH (SAFE) === */
+
+/* Evita scroll horizontal e cortes (muito comum com 100vw + scrollbar) */
+html, body { width: 100%; max-width: 100%; }
+body { overflow-x: hidden; }
+
+/* Dock não pode bloquear cliques fora dele */
+.glass-dock-container { pointer-events: none; }
+.glass-dock-container .glass-dock,
+.glass-dock-container .dock-item { pointer-events: auto; }
+
+/* Camadas previsíveis: dock abaixo de modais/sidebars */
+.glass-dock-container { z-index: 900; }
+
+/* Dá espaço real no conteúdo para o dock não cobrir inputs/botões */
+:root{
+  --dock-height: 74px;
+  --dock-safe-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+}
+body.app-mode .modules-area{
+  padding-bottom: calc(var(--dock-height) + var(--dock-safe-bottom) + 18px) !important;
+}
+
+/* Respeita quem prefere menos animação */
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+  .background-video{ display:none !important; }
+  .video-container{ background: #000 !important; }
+}

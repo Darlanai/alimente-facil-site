@@ -256,7 +256,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!this.state.listas[this.activeListId]) { this.activeListId = 'listaDaSemana'; }
                 } else {
                     this.state = JSON.parse(JSON.stringify(this.defaultState));
-                    this.isAppMode = false; this.isLoggedIn = false; this.userPlan = 'free';
+                    this.isAppMode = false;
+              this.setVideoPlayback('panel-video-container', false);
+              this.setVideoPlayback('landing-video-container', true); this.isLoggedIn = false; this.userPlan = 'free';
                     this.activeModule = 'inicio'; this.activeListId = 'listaDaSemana'; this.state.user = { nome: null }; 
                 }
             } catch (e) {
@@ -707,6 +709,8 @@ updateStartButton() {
              if (this.isAppMode) return;
              this.clearIntervals();
              this.isAppMode = true;
+              this.setVideoPlayback('landing-video-container', false);
+              this.setVideoPlayback('panel-video-container', true);
              this.updateBodyClasses();
              this.activateModuleUI(this.activeModule);
              this.renderAllPanelContent();
@@ -793,6 +797,24 @@ updateThemeIcons() {
             this.intervals.forEach(clearInterval);
             this.intervals = [];
         },
+
+        setVideoPlayback(containerId, shouldPlay) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const vids = container.querySelectorAll('video');
+            vids.forEach(v => {
+                try {
+                    if (shouldPlay) {
+                        const p = v.play();
+                        if (p && typeof p.catch === 'function') p.catch(() => {});
+                    } else {
+                        v.pause();
+                    }
+                } catch (_) {}
+            });
+        },
+
+
 
 initLandingPage() {
             this.clearIntervals();
