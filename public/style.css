@@ -997,6 +997,24 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
     gap: 12px; flex-shrink: 0;
 }
 
+/* Footer padronizado (ícones: compartilhar / imprimir / pdf) */
+.card-footer.module-actions-footer{
+    justify-content: flex-end;
+}
+.card-footer.module-actions-footer .icon-button{
+    width: 46px;
+    height: 46px;
+    font-size: 1.05rem;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+@media (max-width: 600px){
+    .card-footer.module-actions-footer{ padding: 0 12px; gap: 10px; }
+    .card-footer.module-actions-footer .icon-button{ width: 44px; height: 44px; }
+}
+
 /* Listas Fullscreen no Mobile */
 .list-fullscreen-box {
     max-width: 100% !important; width: 100vw !important;
@@ -1014,17 +1032,6 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
     gap: 8px; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
     text-transform: uppercase; letter-spacing: 0.5px; position: relative;
     overflow: hidden; box-shadow: none; text-decoration: none;
-}
-
-/* === NOVO: BOTÕES SOMENTE COM ÍCONE (PADRÃO DO RODAPÉ) === */
-.btn.btn-icon {
-    width: 46px;
-    padding: 0;
-    gap: 0;
-}
-
-.btn.btn-icon i {
-    font-size: 1.15rem;
 }
 .btn:active { transform: scale(0.96); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); background: rgba(255,255,255,0.05); }
@@ -2430,4 +2437,13 @@ body.app-mode .modules-area{
   *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
   .background-video{ display:none !important; }
   .video-container{ background: #000 !important; }
+}
+
+/* Receitas: segunda linha para igualar altura com Despensa */
+.recipe-list-item .item-details-grid{
+    padding-left: 56px; /* alinha com ícone da receita */
+    opacity: 0.85;
+}
+.recipe-list-item.placeholder-item{
+    min-height: 96px;
 }

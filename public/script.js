@@ -576,13 +576,14 @@ if (closest('#module-lista') && closest('.btn-create-list')) {
                  else if (closest('#lista-delete-btn')) { const listIdToDelete = document.getElementById('active-list-id-input')?.value; if(listIdToDelete) this.handleDeleteListaAtiva(listIdToDelete); }
                  else if (closest('.add-recipe-btn')) { this.handleOpenRecipeEditModal(null); }
                  
-                 const recipeActionBtn = closest('.edit-recipe-btn, .delete-recipe-btn, .pdf-btn, .share-btn');
+                 const recipeActionBtn = closest('.edit-recipe-btn, .delete-recipe-btn, .pdf-btn, .share-btn, .print-btn');
                  if (recipeActionBtn) {
                     const rId = recipeActionBtn.dataset.recipeId;
                     if (rId) {
                         if (recipeActionBtn.classList.contains('delete-recipe-btn')) { this.handleDeleteRecipe(rId); return; }
                         if (recipeActionBtn.classList.contains('edit-recipe-btn')) { this.handleOpenRecipeEditModal(rId); return; }
-                        if (recipeActionBtn.classList.contains('pdf-btn')) { this.handleRealPDF(); return; }
+                        if (recipeActionBtn.classList.contains('print-btn')) { this.handleRealPDF(); return; }
+                         if (recipeActionBtn.classList.contains('pdf-btn')) { this.handleRealPDF(); return; }
                         if (recipeActionBtn.classList.contains('share-btn')) { 
                             const recipeName = this.state.receitas[rId]?.name || "Receita";
                             this.handleRealShare("Alimente Fácil", `Veja esta receita: ${recipeName}`);
@@ -609,7 +610,8 @@ if (closest('#module-lista') && closest('.btn-create-list')) {
                  }
 
                  else if(closest('.save-btn, .save-plan-btn')) { this.showNotification("Dados salvos com sucesso!", "success"); }
-                 else if(closest('.pdf-btn')) { this.handleRealPDF(); }
+                 else if(closest('.print-btn')) { this.handleRealPDF(); }
+                  else if(closest('.pdf-btn')) { this.handleRealPDF(); }
                  else if(closest('.share-btn')) { this.handleRealShare("Alimente Fácil", "Minha organização!"); }
                  else if(closest('.generate-list-btn')) { this.handleGenerateListFromPlanner(); }
                  else if(closest('.import-recipe-btn')) { 
@@ -1367,6 +1369,7 @@ renderListas(container) {
                        if (lista.items.length === 0) { itemsHTML = '<p class="empty-list-message">Esta lista está vazia.</p>'; }
                        actionsHTML = `
                            <button class="btn btn-secondary share-btn" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+                           <button class="btn btn-secondary print-btn" title="Imprimir"><i class="fa-solid fa-print"></i></button>
                            <button class="btn btn-secondary pdf-btn" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
                            <button class="btn btn-danger" id="lista-delete-btn" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                            <button class="btn btn-primary" id="lista-save-changes-btn"><i class="fa-solid fa-save"></i> Salvar</button>
@@ -1434,7 +1437,7 @@ handleOpenPantryView(itemEl) {
             // Injetar botão de deletar no footer (lado esquerdo)
             const actionsContainer = document.getElementById('pantry-view-actions-container');
             if (actionsContainer) {
-                actionsContainer.innerHTML = `<button class="btn btn-danger btn-icon delete-btn" title="Excluir" aria-label="Excluir" data-item-id="${id}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>`;
+                actionsContainer.innerHTML = `<button class="btn btn-danger delete-btn" data-item-id="${id}"><i class="fa-solid fa-trash"></i> Excluir</button>`;
             }
             
             const nameInput = document.getElementById('pantry-edit-name');
@@ -1557,9 +1560,13 @@ renderDespensa(container) {
                      </button>
                      <div id="despensa-list-container"></div>
                 </div>
-                 <div class="card-footer mobile-only">
-                    <button class="btn btn-secondary btn-icon pdf-btn" title="Relatório" aria-label="Relatório"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
-                </div>
+
+                 <div class="card-footer module-actions-footer">
+                    <button class="icon-button share-btn" title="Compartilhar" aria-label="Compartilhar"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>
+                    <button class="icon-button print-btn" title="Imprimir" aria-label="Imprimir"><i class="fa-solid fa-print" aria-hidden="true"></i></button>
+                    <button class="icon-button pdf-btn" title="PDF" aria-label="PDF"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
+                 </div>
+
             </div>
 
             <div class="md-detail-column dashboard-card" id="despensa-detail-desktop">
@@ -1608,9 +1615,13 @@ renderReceitas(container) {
                               </button>
                               <div id="main-recipe-grid"></div>
                          </div>
-                         <div class="card-footer mobile-only">
-                            <button class="btn btn-secondary btn-icon pdf-btn" title="PDF" aria-label="PDF"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
-                         </div>
+
+                 <div class="card-footer module-actions-footer">
+                    <button class="icon-button share-btn" title="Compartilhar" aria-label="Compartilhar"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>
+                    <button class="icon-button print-btn" title="Imprimir" aria-label="Imprimir"><i class="fa-solid fa-print" aria-hidden="true"></i></button>
+                    <button class="icon-button pdf-btn" title="PDF" aria-label="PDF"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
+                 </div>
+
                     </div>
 
                     <div class="md-detail-column dashboard-card">
@@ -1634,7 +1645,8 @@ renderReceitas(container) {
              // Renderiza os cards IDÊNTICOS aos da Despensa
              listContainer.innerHTML = recipes.map(recipe => {
                  const name = this.escapeHtml(recipe.name);
-                 const qtdIngredientes = recipe.ingredientes ? recipe.ingredientes.length : 0;
+                 const ingredientesArr = recipe.ingredients || recipe.ingredientes || recipe.ingredientes?.items || [];
+                 const qtdIngredientes = Array.isArray(ingredientesArr) ? ingredientesArr.length : 0;
                  
                  return `
                  <div class="recipe-list-item placeholder-item is-clickable" data-recipe-id="${recipe.id}" data-recipe-name="${name}" role="button" tabindex="0">
@@ -1653,6 +1665,9 @@ renderReceitas(container) {
                              <button class="icon-button edit-recipe-btn" title="Editar"><i class="fa-solid fa-pencil"></i></button>
                              <button class="icon-button delete-recipe-btn" title="Excluir" style="color: var(--red); border-color: rgba(255,59,48,0.3);"><i class="fa-solid fa-trash"></i></button>
                         </div>
+                    </div>
+                    <div class="item-details-grid" aria-label="Detalhes da receita">
+                        <div>Ingredientes:<span> ${qtdIngredientes}</span></div>
                     </div>
                  </div>`;
              }).join('');
@@ -1751,10 +1766,10 @@ renderPantryDetailDesktop(item) {
              if (!recipe || !bodyEl || !footerEl) { if (bodyEl) bodyEl.innerHTML = '<div class="recipe-detail-placeholder"><i class="fa-solid fa-question-circle"></i><p>Receita não encontrada.</p></div>'; if (footerEl) footerEl.style.display = 'none'; return; }
              bodyEl.innerHTML = recipe.content;
             footerEl.innerHTML = `
-                <button class="btn btn-primary btn-icon edit-recipe-btn" title="Editar" aria-label="Editar" data-recipe-id="${recipeId}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
-                <button class="btn btn-secondary btn-icon pdf-btn" title="PDF" aria-label="PDF" data-recipe-id="${recipeId}"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
-                <button class="btn btn-secondary btn-icon share-btn" title="Compartilhar" aria-label="Compartilhar" data-recipe-id="${recipeId}"><i class="fa-solid fa-share-alt" aria-hidden="true"></i></button>
-                <button class="btn btn-danger btn-icon delete-recipe-btn" title="Excluir" aria-label="Excluir" data-recipe-id="${recipeId}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                <button class="btn btn-primary edit-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-pencil"></i> Editar</button> 
+                <button class="btn btn-secondary pdf-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-file-pdf"></i> PDF</button> 
+                <button class="btn btn-secondary share-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-share-alt"></i></button> 
+                <button class="btn btn-danger delete-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-trash"></i> Excluir</button>
             `;
              footerEl.style.display = 'flex';
         },
@@ -1766,9 +1781,9 @@ renderPantryDetailDesktop(item) {
              modalTitle.innerHTML = `<i class="fa-solid fa-utensils" aria-hidden="true"></i> ${this.escapeHtml(recipe.name)}`;
              modalBody.innerHTML = recipe.content;
              modalFooter.innerHTML = `
-                <button class="btn btn-primary btn-icon edit-recipe-btn" title="Editar" aria-label="Editar" data-recipe-id="${recipeId}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
-                <button class="btn btn-secondary btn-icon pdf-btn" title="PDF" aria-label="PDF" data-recipe-id="${recipeId}"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
-                <button class="btn btn-danger btn-icon delete-recipe-btn" title="Excluir" aria-label="Excluir" data-recipe-id="${recipeId}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                <button class="btn btn-primary edit-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-pencil"></i> Editar</button>
+                <button class="btn btn-secondary pdf-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button class="btn btn-danger delete-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-trash"></i> Excluir</button>
              `;
              this.openModal('recipe-detail-modal');
         },
@@ -1813,10 +1828,11 @@ renderPlanejador(container) {
                        </div>
                        <div class="card-footer" style="justify-content: space-between;">
                            <div style="display:flex; gap: 10px;">
-                                <button class="btn btn-secondary btn-icon pdf-btn" title="Baixar PDF do Planejamento" aria-label="Baixar PDF do Planejamento"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
-                                <button class="btn btn-secondary btn-icon share-btn" title="Compartilhar Planejamento" aria-label="Compartilhar Planejamento"><i class="fa-solid fa-share-alt" aria-hidden="true"></i></button>
+                                <button class="btn btn-secondary share-btn" title="Compartilhar Planejamento"><i class="fa-solid fa-share-alt"></i></button>
+                                <button class="btn btn-secondary print-btn" title="Imprimir Planejamento"><i class="fa-solid fa-print"></i></button>
+                                <button class="btn btn-secondary pdf-btn" title="Gerar PDF do Planejamento"><i class="fa-solid fa-file-pdf"></i></button>
                            </div>
-                           <button class="btn btn-danger btn-icon clear-plan-btn" title="Limpar Planejamento" aria-label="Limpar Planejamento"><i class="fa-solid fa-eraser" aria-hidden="true"></i></button>
+                           <button class="btn btn-danger clear-plan-btn"><i class="fa-solid fa-eraser"></i> Limpar Tudo</button>
                        </div>
                   </div>
              `;
@@ -1994,9 +2010,13 @@ renderOrcamento() {
                              <canvas id="dynamic-analysis-chart"></canvas>
                          </div>
                       </div>
-                      <div class="card-footer">
-                           <button class="btn btn-secondary btn-icon pdf-btn" title="Exportar Relatório" aria-label="Exportar Relatório"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
+                      
+                      <div class="card-footer module-actions-footer">
+                         <button class="icon-button share-btn" title="Compartilhar" aria-label="Compartilhar"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>
+                         <button class="icon-button print-btn" title="Imprimir" aria-label="Imprimir"><i class="fa-solid fa-print" aria-hidden="true"></i></button>
+                         <button class="icon-button pdf-btn" title="PDF" aria-label="PDF"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
                       </div>
+
                   </div>
              `;
              document.getElementById('analysis-data-select')?.addEventListener('change', () => this.updateDynamicChart());
@@ -2029,6 +2049,13 @@ renderOrcamento() {
                                <div class="form-group"> <label>Apagar todos os dados</label> <button class="btn btn-danger" id="config-delete-account-btn">Apagar Conta</button> </div>
                            </div>
                       </div>
+
+                      <div class="card-footer module-actions-footer">
+                         <button class="icon-button share-btn" title="Compartilhar" aria-label="Compartilhar"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>
+                         <button class="icon-button print-btn" title="Imprimir" aria-label="Imprimir"><i class="fa-solid fa-print" aria-hidden="true"></i></button>
+                         <button class="icon-button pdf-btn" title="PDF" aria-label="PDF"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
+                      </div>
+
                   </div>
               `;
              const deleteBtn = container.querySelector('#config-delete-account-btn');
