@@ -419,7 +419,7 @@ this.elements.body.addEventListener('click', e => {
                       const modalId = modalOpenBtn.dataset.modalOpen;
                       if (modalId === 'item-details-modal') { this.populateItemDetailsModal(modalOpenBtn); }
                       else if (modalId === 'recipe-picker-modal') { this.currentPlannerDayTarget = modalOpenBtn.dataset.dayTarget; this.populateRecipePicker(); }
-                      else if (modalId === 'ai-chat-modal') { this.setupChatbotModal(); }
+                      else if (modalId === 'ai-chat-modal') { this.setupChatbotModal(); if (modalOpenBtn.dataset.chefPrompt) { this.prefillChefPrompt(modalOpenBtn.dataset.chefPrompt, { autoSend: modalOpenBtn.dataset.chefAutosend === 'true' }); } }
                       else if (modalId === 'essentials-modal') { this.renderItensEssenciais(); }
                       this.openModal(modalId);
                  }
@@ -1127,6 +1127,25 @@ initNewHeaderLogic() {
         closeModal(modalId) {
              const modal = document.getElementById(modalId);
              if (modal) { modal.classList.remove('is-visible'); }
+        },
+
+        prefillChefPrompt(prompt, options = {}) {
+            const modal = document.getElementById('ai-chat-modal');
+            if (!modal) return;
+            const input = modal.querySelector('#ai-chat-input');
+            if (!input) return;
+
+            const text = String(prompt || '').trim();
+            if (text) input.value = text;
+
+            // Open first, then focus (works on mobile too)
+            setTimeout(() => {
+                try { input.focus(); input.setSelectionRange(input.value.length, input.value.length); } catch(e) {}
+                if (options.autoSend) {
+                    const btn = modal.querySelector('#ai-chat-send-btn');
+                    if (btn) btn.click();
+                }
+            }, 50);
         },
         closeAllModals() {
             this.elements.modalOverlays?.forEach(overlay => overlay.classList.remove('is-visible'));

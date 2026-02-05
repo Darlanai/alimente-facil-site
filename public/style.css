@@ -2447,3 +2447,100 @@ body.app-mode .modules-area{
 .recipe-list-item.placeholder-item{
     min-height: 96px;
 }
+
+
+
+/* =========================
+   Chef IA Hub (Landing)
+   ========================= */
+.chef-hub-section { padding: 5rem 2rem; }
+.chef-hub-section .section-container { max-width: 1100px; margin: 0 auto; }
+.chef-hub { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem; align-items: stretch; }
+.section-eyebrow { font-size: .85rem; letter-spacing: .12em; text-transform: uppercase; opacity: .8; margin-bottom: .75rem; }
+.section-title { font-size: clamp(1.6rem, 2.5vw, 2.2rem); margin: 0 0 .75rem; }
+.section-subtitle { opacity: .85; line-height: 1.6; margin: 0 0 1.25rem; }
+
+.chef-chips { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.25rem 0 1.5rem; }
+.chef-chip {
+  display: inline-flex; align-items: center; gap: .6rem;
+  padding: .85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: inherit;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.chef-chip:hover { transform: translateY(-1px); background: rgba(255,255,255,.085); border-color: rgba(255,255,255,.2); }
+.chef-chip i { opacity: .9; }
+
+.chef-cta-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: .5rem; }
+.chef-primary-cta {
+  display: inline-flex; align-items: center; gap: .65rem;
+  padding: .95rem 1.1rem;
+  border-radius: 14px;
+  text-decoration: none;
+  color: #111;
+  background: rgba(255,215,0,.95);
+  border: 1px solid rgba(255,215,0,.45);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  transition: transform .15s ease, filter .15s ease;
+}
+.chef-primary-cta:hover { transform: translateY(-1px); filter: brightness(1.03); }
+.chef-secondary-cta { text-decoration: none; opacity: .85; }
+.chef-secondary-cta:hover { opacity: 1; text-decoration: underline; }
+
+.chef-demo-card {
+  height: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  box-shadow: 0 20px 50px rgba(0,0,0,.45);
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chef-demo-header { display: flex; align-items: center; gap: .8rem; margin-bottom: 1rem; }
+.chef-demo-avatar {
+  width: 42px; height: 42px; border-radius: 14px;
+  display: grid; place-items: center;
+  background: rgba(255,215,0,.14);
+  border: 1px solid rgba(255,215,0,.28);
+}
+.chef-demo-title { font-weight: 700; }
+.chef-demo-sub { font-size: .85rem; opacity: .75; margin-top: .1rem; }
+
+.chef-demo-chat { display: flex; flex-direction: column; gap: .7rem; flex: 1; }
+.chef-demo-bubble {
+  padding: .75rem .85rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.28);
+  line-height: 1.35;
+  font-size: .95rem;
+}
+.chef-demo-bubble.me {
+  margin-left: auto;
+  background: rgba(255,215,0,.12);
+  border-color: rgba(255,215,0,.22);
+}
+.chef-demo-footer { margin-top: 1rem; display: flex; justify-content: flex-end; }
+.chef-demo-pill {
+  font-size: .85rem;
+  padding: .55rem .75rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  opacity: .9;
+}
+
+/* Hero secondary actions */
+.hero-secondary-actions { display: flex; gap: 1.25rem; justify-content: center; margin-top: 1.1rem; flex-wrap: wrap; }
+.hero-link { text-decoration: none; opacity: .85; display: inline-flex; align-items: center; gap: .5rem; }
+.hero-link:hover { opacity: 1; text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .chef-hub { grid-template-columns: 1fr; }
+  .chef-hub-right { order: -1; }
+}
