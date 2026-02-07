@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.setupSpeechRecognition();
             this.initDockMenu(); 
             this.initDraggableDock();
+            this.initPWA();
             this.initRoboAssistant();
 
             if (this.isAppMode) {
@@ -163,62 +164,219 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         initDockMenu() {
-            const dockItems = document.querySelectorAll('.dock-item');
+            const dock = document.querySelector('.glass-dock');
             const indicator = document.querySelector('.dock-indicator');
-            if (!dockItems.length || !indicator) return;
+            if (!dock || !indicator) return;
+
+            const viewDockItems = () => Array.from(dock.querySelectorAll('.dock-item:not(.dock-action)'));
+
             const updateIndicator = (targetBtn) => {
-                dockItems.forEach(btn => btn.classList.remove('active'));
-                targetBtn.classList.add('active');
+                const items = viewDockItems();
+                items.forEach(btn => btn.classList.remove('active'));
+                if (targetBtn) targetBtn.classList.add('active');
+                if (!targetBtn) return;
                 requestAnimationFrame(() => {
                     indicator.style.width = `${targetBtn.offsetWidth}px`;
                     indicator.style.left = `${targetBtn.offsetLeft}px`;
                 });
             };
-            dockItems.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault(); e.stopPropagation();
-                    const target = btn.dataset.target;
-                    if (target === 'app') {
-                        if (!this.isLoggedIn) { this.showAuthModal(); } 
-                        else { this.enterAppMode(); updateIndicator(btn); }
-                    } else { this.exitAppMode(); updateIndicator(btn); }
-                });
+
+            // Clique único (delegação) para evitar múltiplos listeners
+            dock.addEventListener('click', (e) => {
+                const btn = e.target.closest('.dock-item');
+                if (!btn) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Ação: Chef IA (não muda o indicador)
+                if (btn.classList.contains('dock-action') || btn.dataset.action === 'open-chef') {
+                    this.setupChatbotModal();
+                    this.openModal('ai-chat-modal');
+                    return;
+                }
+
+                const target = btn.dataset.target;
+                if (target === 'app') {
+                    if (!this.isLoggedIn) {
+                        this.showAuthModal();
+                        return;
+                    }
+                    this.enterAppMode();
+                    updateIndicator(btn);
+                    return;
+                }
+
+                // Home
+                this.exitAppMode();
+                updateIndicator(btn);
             });
+
+            // Estado inicial do indicador
             setTimeout(() => {
-                if (this.isAppMode) { const appBtn = document.querySelector('.dock-item[data-target="app"]'); if(appBtn) updateIndicator(appBtn); } 
-                else { const homeBtn = document.querySelector('.dock-item[data-target="home"]'); if(homeBtn) updateIndicator(homeBtn); }
-            }, 100);
+                if (this.isAppMode) {
+                    const appBtn = dock.querySelector('.dock-item[data-target="app"]');
+                    if (appBtn) updateIndicator(appBtn);
+                } else {
+                    const homeBtn = dock.querySelector('.dock-item[data-target="home"]');
+                    if (homeBtn) updateIndicator(homeBtn);
+                }
+            }, 120);
         },
 
         initDraggableDock() {
             const dockContainer = document.querySelector('.glass-dock-container');
-            if (!dockContainer) return;
-            let isDraggingDock = false; let startX, startY, initialLeft, initialTop;
+            const grip = document.querySelector('.dock-grip');
+            if (!dockContainer || !grip) return;
+
+            const POS_KEY = 'alimenteFacilDockPos_v5';
+            const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+            const margin = 8;
+
+            // Restaura posição salva (se houver)
+            try {
+                const saved = localStorage.getItem(POS_KEY);
+                if (saved) {
+                    const { left, top } = JSON.parse(saved) || {};
+                    if (Number.isFinite(left) && Number.isFinite(top)) {
+                        dockContainer.style.left = `${left}px`;
+                        dockContainer.style.top = `${top}px`;
+                        dockContainer.style.bottom = 'auto';
+                        dockContainer.style.transform = 'none';
+                    }
+                }
+            } catch (e) { /* ignore */ }
+
+            const resetDockPosition = () => {
+                dockContainer.style.left = '50%';
+                dockContainer.style.top = 'auto';
+                dockContainer.style.bottom = 'calc(1.25rem + var(--dock-safe-bottom))';
+                dockContainer.style.transform = 'translateX(-50%)';
+                try { localStorage.removeItem(POS_KEY); } catch(e) {}
+                this.showNotification('Dock reposicionado ✅', 'success');
+            };
+
+            // Duplo clique / duplo toque para resetar
+            grip.addEventListener('dblclick', (e) => { e.preventDefault(); e.stopPropagation(); resetDockPosition(); });
+            let lastTap = 0;
+            grip.addEventListener('touchend', (e) => {
+                const now = Date.now();
+                if (now - lastTap < 280) { e.preventDefault(); e.stopPropagation(); resetDockPosition(); }
+                lastTap = now;
+            }, { passive: false });
+
+            let isDraggingDock = false;
+            let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+
             const startDrag = (e) => {
-                if (e.target.closest('.dock-item')) return;
+                // Arrasta somente pela alça
+                if (!e.target.closest('.dock-grip')) return;
                 isDraggingDock = true;
                 const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
                 const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
                 const rect = dockContainer.getBoundingClientRect();
-                startX = clientX; startY = clientY; initialLeft = rect.left; initialTop = rect.top;
-                dockContainer.style.cursor = 'grabbing'; dockContainer.style.bottom = 'auto'; dockContainer.style.transform = 'none';
-                document.addEventListener('mousemove', moveDrag); document.addEventListener('touchmove', moveDrag, {passive: false});
-                document.addEventListener('mouseup', stopDrag); document.addEventListener('touchend', stopDrag);
+                startX = clientX;
+                startY = clientY;
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                dockContainer.style.bottom = 'auto';
+                dockContainer.style.transform = 'none';
+                grip.style.cursor = 'grabbing';
+                document.addEventListener('mousemove', moveDrag);
+                document.addEventListener('touchmove', moveDrag, { passive: false });
+                document.addEventListener('mouseup', stopDrag);
+                document.addEventListener('touchend', stopDrag);
+                e.preventDefault();
+                e.stopPropagation();
             };
+
             const moveDrag = (e) => {
                 if (!isDraggingDock) return;
                 e.preventDefault();
                 const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
                 const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-                const deltaX = clientX - startX; const deltaY = clientY - startY;
-                dockContainer.style.left = `${initialLeft + deltaX}px`; dockContainer.style.top = `${initialTop + deltaY}px`;
+                const deltaX = clientX - startX;
+                const deltaY = clientY - startY;
+                const newLeftRaw = initialLeft + deltaX;
+                const newTopRaw = initialTop + deltaY;
+
+                const maxLeft = window.innerWidth - dockContainer.offsetWidth - margin;
+                const maxTop = window.innerHeight - dockContainer.offsetHeight - margin;
+
+                const newLeft = clamp(newLeftRaw, margin, Math.max(margin, maxLeft));
+                const newTop = clamp(newTopRaw, margin, Math.max(margin, maxTop));
+
+                dockContainer.style.left = `${newLeft}px`;
+                dockContainer.style.top = `${newTop}px`;
             };
+
             const stopDrag = () => {
-                isDraggingDock = false; dockContainer.style.cursor = 'grab';
-                document.removeEventListener('mousemove', moveDrag); document.removeEventListener('touchmove', moveDrag);
-                document.removeEventListener('mouseup', stopDrag); document.removeEventListener('touchend', stopDrag);
+                if (!isDraggingDock) return;
+                isDraggingDock = false;
+                grip.style.cursor = 'grab';
+                document.removeEventListener('mousemove', moveDrag);
+                document.removeEventListener('touchmove', moveDrag);
+                document.removeEventListener('mouseup', stopDrag);
+                document.removeEventListener('touchend', stopDrag);
+
+                // Salva a posição final
+                const rect = dockContainer.getBoundingClientRect();
+                try { localStorage.setItem(POS_KEY, JSON.stringify({ left: Math.round(rect.left), top: Math.round(rect.top) })); } catch (e) { /* ignore */ }
             };
-            dockContainer.addEventListener('mousedown', startDrag); dockContainer.addEventListener('touchstart', startDrag, {passive: false});
+
+            grip.addEventListener('mousedown', startDrag);
+            grip.addEventListener('touchstart', startDrag, { passive: false });
+        },
+
+        initPWA() {
+            // Service Worker
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./service-worker.js').catch(() => { /* ignore */ });
+                });
+            }
+
+            // Prompt de instalação (Android/Chrome etc.)
+            let deferredPrompt = null;
+            const installMenu = document.getElementById('pwa-install-menu');
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                if (installMenu) installMenu.style.display = 'flex';
+            });
+
+            window.addEventListener('appinstalled', () => {
+                deferredPrompt = null;
+                if (installMenu) installMenu.style.display = 'none';
+                this.showNotification('Aplicativo instalado ✅', 'success');
+            });
+
+            // Ação no menu
+            if (installMenu) {
+                installMenu.addEventListener('click', async (ev) => {
+                    ev.preventDefault(); ev.stopPropagation();
+                    document.getElementById('menuItems')?.classList.remove('open');
+                    document.getElementById('hamburger')?.classList.remove('open');
+                    if (!deferredPrompt) {
+                        this.showNotification('No Chrome: Menu ⋮ → “Adicionar à tela inicial”.', 'info');
+                        return;
+                    }
+                    deferredPrompt.prompt();
+                    try { await deferredPrompt.userChoice; } catch (e) { /* ignore */ }
+                    deferredPrompt = null;
+                    installMenu.style.display = 'none';
+                });
+            }
+
+            // Abrir planos pelo menu
+            document.querySelectorAll('[data-action="open-plans"]').forEach((el) => {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    document.getElementById('menuItems')?.classList.remove('open');
+                    document.getElementById('hamburger')?.classList.remove('open');
+                    this.openModal('plans-modal');
+                });
+            });
         },
 
         saveState() {
@@ -354,6 +512,16 @@ attachEventListeners() {
             this.elements.logoutBtnPanel?.addEventListener('click', () => this.handleLogout());
             this.elements.themeToggleBtnPanel?.addEventListener('click', () => this.toggleTheme());
             this.elements.chefIaFab?.addEventListener('click', () => this.showChatbot());
+
+            // Acessibilidade: abre Chef IA pela tecla Enter/Espaço no card clicável da landing
+            document.addEventListener('keydown', (e) => {
+                const card = e.target.closest?.('.chef-demo-card.is-clickable');
+                if (!card) return;
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    card.click();
+                }
+            });
 
             this.elements.body.addEventListener('keydown', e => {
                 const savedListEl = e.target.closest('.saved-list-name');
@@ -1326,7 +1494,7 @@ renderListas(container) {
                  <div class="card-content no-padding-top" id="lista-items-full" data-group="shared-items" data-list-type="lista">
                     <div class="empty-state-placeholder"><p>Selecione uma lista ao lado para ver os itens.</p></div>
                  </div>
-                 <div class="card-footer" id="active-list-actions"></div>
+                 <div class="card-footer module-actions-footer" id="active-list-actions"></div>
             </div>
         </div>
     `;
@@ -1375,7 +1543,10 @@ renderListas(container) {
              if (!container || !titleEl || !actionsContainer || !idInput || !nameFormInput || !qtyFormInput || !valorFormInput) return;
              let itemsHTML = ''; let listName = 'Nova Lista'; let listNameEditable = '';
              let listNamePlaceholder = 'Nome da Lista...';
-             let actionsHTML = `<button class="btn btn-primary" id="lista-save-changes-btn"><i class="fa-solid fa-save"></i> Salvar</button>`;
+             let actionsHTML = `
+                 <span class="module-actions-spacer"></span>
+                 <button class="icon-button" id="lista-save-changes-btn" title="Salvar"><i class="fa-solid fa-floppy-disk"></i></button>
+             `;
              if (listId === null || listId === undefined || listId === 'new') {
                   idInput.value = 'new'; itemsHTML = '<p class="empty-list-message">Adicione itens à sua nova lista.</p>';
                   nameFormInput.value = ''; qtyFormInput.value = '1'; valorFormInput.value = '';
@@ -1387,11 +1558,12 @@ renderListas(container) {
                        itemsHTML = lista.items.map(item => this.createListaItemHTML(item)).join('');
                        if (lista.items.length === 0) { itemsHTML = '<p class="empty-list-message">Esta lista está vazia.</p>'; }
                        actionsHTML = `
-                           <button class="btn btn-secondary share-btn" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
-                           <button class="btn btn-secondary print-btn" title="Imprimir"><i class="fa-solid fa-print"></i></button>
-                           <button class="btn btn-secondary pdf-btn" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
-                           <button class="btn btn-danger" id="lista-delete-btn" title="Excluir"><i class="fa-solid fa-trash"></i></button>
-                           <button class="btn btn-primary" id="lista-save-changes-btn"><i class="fa-solid fa-save"></i> Salvar</button>
+                           <button class="icon-button share-btn" id="lista-share-btn" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+                           <button class="icon-button print-btn" id="lista-print-btn" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+                           <button class="icon-button pdf-btn" id="lista-pdf-btn" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+                           <span class="module-actions-spacer"></span>
+                           <button class="icon-button" id="lista-save-changes-btn" title="Salvar"><i class="fa-solid fa-floppy-disk"></i></button>
+                           <button class="icon-button danger" id="lista-delete-btn" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                        `;
                   } else { idInput.value = ''; listName = 'Erro: Lista não encontrada'; itemsHTML = '<p class="empty-list-message error">Erro ao carregar a lista.</p>'; actionsHTML = ''; }
              }

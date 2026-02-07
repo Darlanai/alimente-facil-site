@@ -1,0 +1,13 @@
+Resumo da sua nova rotina de mestre:
+Sempre que quiser mudar uma cor, um texto ou uma função na IA:
+
+Edite o código no seu computador e Salve.
+
+Abra o Terminal na pasta do projeto.
+
+Rode a Trindade do Git:
+
+Bash
+git add .
+git commit -m "Ajuste fino no visual"
+git push origin main

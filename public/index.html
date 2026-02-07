@@ -62,7 +62,9 @@
 
   <div class="menu-panel" id="menuItems">
     <div class="menu-item"><a href="#inicio"><span>Início</span></a></div>
+    <div class="menu-item" data-action="open-plans"><span>Planos</span></div>
     <div class="menu-item" data-action="open-calculator"><span>Calculadora</span></div>
+    <div class="menu-item" id="pwa-install-menu" data-action="pwa-install" style="display:none"><span>Adicionar à Tela Inicial</span></div>
     <div class="menu-item"><a href="#dicas-valiosas"><span>Dicas Valiosas</span></a></div>
     <div class="menu-item"><a href="#receitas-landing"><span>Receitas Rápidas</span></a></div>
     <div class="menu-item"><a href="#sobre"><span>Sobre & Contato</span></a></div>
@@ -88,12 +90,20 @@
                         <span class="btn-text">Começar Agora</span>
                         <span class="btn-icon-wrapper"><i class="fa-solid fa-arrow-right"></i></span>
                     </a>
-                    <div class="hero-secondary-actions">
-                        <a href="#chef-ia" class="hero-link"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Ver Chef IA</a>
-                        <a href="#" class="hero-link" data-modal-open="ai-chat-modal"
+                    <div class="hero-secondary-actions" aria-label="Ações rápidas">
+                        <button type="button" class="hero-pill" data-modal-open="ai-chat-modal"
                            data-chef-prompt="Quero testar o Chef IA. Me dê uma sugestão de refeição rápida e econômica para hoje.">
-                           <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> Testar agora
+                           <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                           <span>Chef IA</span>
+                        </button>
+                        <a href="#chef-ia" class="hero-pill hero-pill-ghost">
+                           <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                           <span>Como funciona</span>
                         </a>
+                        <button type="button" class="hero-pill hero-pill-ghost" data-modal-open="plans-modal">
+                           <i class="fa-solid fa-crown" aria-hidden="true"></i>
+                           <span>Planos</span>
+                        </button>
                     </div>
 
                 </div>
@@ -139,12 +149,14 @@
                                 <span>Experimentar o Chef IA</span>
                                 <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
                             </a>
-                            <a href="#planos" class="chef-secondary-cta">Ver planos</a>
+                            <a href="#" class="chef-secondary-cta" data-modal-open="plans-modal">Ver planos</a>
                         </div>
                     </div>
 
                     <div class="chef-hub-right" aria-hidden="true">
-                        <div class="chef-demo-card">
+                        <div class="chef-demo-card is-clickable" role="button" tabindex="0"
+                             data-modal-open="ai-chat-modal"
+                             data-chef-prompt="Tenho frango, arroz e cenoura. Me dê 3 ideias rápidas e econômicas, com passo a passo curto e substituições." aria-label="Abrir Chef IA">
                             <div class="chef-demo-header">
                                 <div class="chef-demo-avatar"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                                 <div>
@@ -770,9 +782,18 @@
 
 <div class="glass-dock-container">
     <div class="glass-dock">
+        <button class="dock-grip" type="button" aria-label="Arrastar dock" title="Arrastar dock">
+            <span class="dock-grip-dots" aria-hidden="true">
+                <span></span><span></span><span></span>
+                <span></span><span></span><span></span>
+            </span>
+        </button>
         <div class="dock-indicator"></div>
         <button class="dock-item active" data-target="home"><i class="fa-solid fa-house"></i><span>Início</span></button>
         <button class="dock-item" data-target="app"><i class="fa-solid fa-border-all"></i><span>Painel</span></button>
+        <button class="dock-item dock-action" type="button" data-action="open-chef" aria-label="Abrir Chef IA" title="Chef IA">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span>Chef IA</span>
+        </button>
     </div>
 </div>
 

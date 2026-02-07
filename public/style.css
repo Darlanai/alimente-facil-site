@@ -2544,3 +2544,100 @@ body.app-mode .modules-area{
   .chef-hub { grid-template-columns: 1fr; }
   .chef-hub-right { order: -1; }
 }
+
+/* =====================================================================
+   UX HOTFIX V5 (Mobile-first)
+   - Modais acima do header (z-index)
+   - Hero pills premium
+   - Dock mais baixo + alça de arrasto
+   - Scroll sempre dentro do "retângulo" (cards)
+   ===================================================================== */
+
+/* --- Modais: sempre acima do header fixo (header usa z-index 10000) --- */
+.modal-overlay{ z-index: 20000 !important; padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px calc(env(safe-area-inset-bottom, 0px) + 12px) !important; }
+.modal-box{
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px) !important;
+  overflow: hidden !important;
+}
+.modal-body{ overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
+
+/* --- Hero: pills premium (substitui links feios) --- */
+.hero-secondary-actions{ gap: .75rem !important; margin-top: 1.15rem !important; }
+.hero-pill{
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.28);
+  color: rgba(255,255,255,0.92);
+  border-radius: 999px;
+  padding: .65rem .95rem;
+  font-size: .92rem;
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.hero-pill i{ opacity: .9; }
+.hero-pill:hover{ transform: translateY(-1px); border-color: rgba(var(--primary-color-rgb), .55); box-shadow: 0 10px 26px rgba(0,0,0,0.35); }
+.hero-pill:active{ transform: translateY(0); }
+.hero-pill-ghost{ background: rgba(255,255,255,0.04); }
+.hero-pill-ghost:hover{ background: rgba(0,242,234,0.08); }
+
+/* --- Utilitários de footer (Listas etc.) --- */
+.module-actions-spacer{ flex: 1 1 auto; }
+.icon-button.danger{ border-color: rgba(255, 59, 48, 0.35) !important; color: rgba(255, 59, 48, 0.95) !important; }
+.icon-button.danger:hover{ background: rgba(255, 59, 48, 0.12) !important; }
+
+/* --- Chef demo card clicável --- */
+.chef-demo-card.is-clickable{ cursor: pointer; }
+.chef-demo-card.is-clickable:hover{ transform: translateY(-2px); }
+.chef-demo-card.is-clickable:focus{ outline: 2px solid rgba(var(--primary-color-rgb), .65); outline-offset: 4px; }
+
+/* --- Dock: mais curto + alça/"grip" para arrastar --- */
+:root{ --dock-height: 62px; }
+.glass-dock{ padding: 4px 6px !important; border-radius: 999px !important; gap: 6px !important; }
+.dock-indicator{ top: 4px !important; left: 4px !important; height: calc(100% - 8px) !important; border-radius: 999px !important; }
+.dock-item{ padding: 8px 14px !important; border-radius: 999px !important; }
+.dock-item span{ font-size: .9rem !important; }
+.dock-grip{
+  position: relative;
+  z-index: 3;
+  width: 34px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.05);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  padding: 0;
+}
+.dock-grip:active{ cursor: grabbing; }
+.dock-grip-dots{ display: grid; grid-template-columns: repeat(3, 4px); gap: 3px; }
+.dock-grip-dots span{ width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.38); }
+
+/* Dock action (Chef IA) não desloca indicador */
+.dock-action{ border: 1px solid rgba(var(--primary-color-rgb), .25) !important; }
+.dock-action:hover{ border-color: rgba(var(--primary-color-rgb), .55) !important; }
+
+/* Não mostrar o FAB antigo do Chef no app-mode (agora está no dock) */
+body.app-mode #chef-ia-fab-placeholder{ display: none !important; }
+
+/* --- Scroll sempre dentro do card: remove scroll extra fora do retângulo --- */
+body.app-mode .modules-area{ overflow: hidden !important; }
+body.app-mode .app-panel-container-standalone{ height: 100dvh !important; }
+body.app-mode .module-container{ overflow: hidden !important; }
+
+@media (max-width: 991px){
+  body.app-mode .module-container:not(#module-inicio) .dashboard-card,
+  body.app-mode .module-container:not(#module-inicio) .list-management-layout,
+  body.app-mode .module-container:not(#module-inicio) .recipe-layout{
+    height: calc(100dvh - var(--header-height) - var(--dock-height) - var(--dock-safe-bottom) - 18px) !important;
+  }
+  body.app-mode .active-list-column .dashboard-card{
+    height: calc(100dvh - var(--header-height) - var(--dock-height) - var(--dock-safe-bottom) - 18px) !important;
+  }
+}
