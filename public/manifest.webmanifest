@@ -1,0 +1,66 @@
+{
+  "name": "Alimente Fácil",
+  "short_name": "Alimente Fácil",
+  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#101012",
+  "theme_color": "#00f2ea",
+  "orientation": "portrait-primary",
+  "categories": [
+    "food",
+    "productivity",
+    "lifestyle"
+  ],
+  "description": "Organize, planeje e economize com IA: listas, despensa e cardápio em um app rápido e offline-first.",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Chef IA",
+      "short_name": "Chef IA",
+      "url": "/#chef-ia",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Minhas listas",
+      "short_name": "Listas",
+      "url": "/#painel",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
