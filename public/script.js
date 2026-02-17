@@ -170,6 +170,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const viewDockItems = () => Array.from(dock.querySelectorAll('.dock-item:not(.dock-action)'));
 
+            const homeBtn = () => dock.querySelector('.dock-item[data-target="home"]');
+            const appBtn  = () => dock.querySelector('.dock-item[data-target="app"]');
+
+            // Borda azul no botão "oposto" (Início ↔ Painel), como dica de navegação
+            const updateHint = () => {
+                const h = homeBtn();
+                const a = appBtn();
+                if (!h || !a) return;
+                // Se está no Painel (app mode), destaca Início. Se está no Início, destaca Painel.
+                h.classList.toggle('hint', !!this.isAppMode);
+                a.classList.toggle('hint', !this.isAppMode);
+            };
+
             const updateIndicator = (targetBtn) => {
                 const items = viewDockItems();
                 items.forEach(btn => btn.classList.remove('active'));
@@ -179,7 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     indicator.style.width = `${targetBtn.offsetWidth}px`;
                     indicator.style.left = `${targetBtn.offsetLeft}px`;
                 });
-            };
+            
+                updateHint();
+};
 
             // Clique único (delegação) para evitar múltiplos listeners
             dock.addEventListener('click', (e) => {
@@ -224,6 +239,9 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         initDraggableDock() {
+            // Dock fixo no rodapé (mobile-first). Arrastar desativado.
+            return;
+
             const dockContainer = document.querySelector('.glass-dock-container');
             const grip = document.querySelector('.dock-grip');
             if (!dockContainer || !grip) return;

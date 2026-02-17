@@ -2641,3 +2641,129 @@ body.app-mode .module-container{ overflow: hidden !important; }
     height: calc(100dvh - var(--header-height) - var(--dock-height) - var(--dock-safe-bottom) - 18px) !important;
   }
 }
+
+
+
+/* =========================================================
+   DOCK V2 (MOBILE-FIRST) - fixo, compacto e elegante
+   - Remove "grip" de pontinhos
+   - Remove preenchimento azul claro (indicator)
+   - Mostra "Início" e "Painel" completos
+   - Borda azul brilhante apenas no botão "oposto" (classe .hint)
+   ========================================================= */
+
+:root{
+  --dock-height: 58px; /* altura real do dock no mobile */
+  --dock-safe-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  --dock-max-width: 440px;
+  --dock-border-blue: rgba(0, 140, 255, 0.95);
+  --dock-border-blue-soft: rgba(0, 140, 255, 0.35);
+}
+
+/* Espaço no conteúdo para não cortar cards no final */
+.modules-area{
+  padding-bottom: calc(var(--dock-height) + var(--dock-safe-bottom) + 18px) !important;
+}
+
+/* Container do dock: fixo no rodapé e centralizado, sem ocupar a tela inteira */
+.glass-dock-container{
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: var(--dock-safe-bottom) !important;
+  transform: none !important;
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  padding: 0 12px !important;
+  pointer-events: none; /* não bloqueia o conteúdo */
+  z-index: 900 !important;
+}
+
+/* Dock */
+.glass-dock{
+  width: min(var(--dock-max-width), 100%) !important;
+  height: var(--dock-height) !important;
+  padding: 6px 8px !important;
+  border-radius: 16px !important;
+  gap: 8px !important;
+  cursor: default !important;
+  box-shadow: 0 16px 38px rgba(0,0,0,0.45) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  background: rgba(16, 16, 16, 0.70) !important;
+  backdrop-filter: blur(18px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
+  pointer-events: auto;
+}
+
+/* Remove a alça com pontinhos */
+.dock-grip{ display:none !important; }
+.dock-grip-dots{ display:none !important; }
+
+/* Remove o indicador preenchido azul claro */
+.dock-indicator{
+  display: none !important;
+}
+
+/* Botões */
+.dock-item{
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  height: calc(var(--dock-height) - 12px) !important;
+  padding: 0 10px !important;
+  border-radius: 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+
+/* Ícone */
+.dock-item i{
+  font-size: 1.05rem !important;
+}
+
+/* Texto: sem cortar, sem "..." */
+.dock-item span{
+  display: inline !important;
+  font-size: 0.88rem !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+}
+
+/* Ativo: levemente destacado, SEM preenchimento colorido */
+.dock-item.active{
+  background: rgba(255,255,255,0.09) !important;
+  border-color: rgba(255,255,255,0.20) !important;
+  color: rgba(255,255,255,0.96) !important;
+  font-weight: 700 !important;
+}
+
+/* Dica: borda azul escuro brilhante (apenas nas bordas) */
+.dock-item.hint{
+  background: rgba(0,0,0,0.12) !important;
+  border-color: var(--dock-border-blue) !important;
+  box-shadow:
+    0 0 0 1px var(--dock-border-blue-soft) inset,
+    0 0 14px rgba(0,140,255,0.35) !important;
+  color: rgba(255,255,255,0.98) !important;
+}
+
+/* Chef IA: mantém estilo coerente e compacto */
+.dock-item.dock-action{
+  flex: 1 1 0 !important;
+}
+
+/* Pequenos ajustes para telas bem estreitas */
+@media (max-width: 360px){
+  :root{ --dock-height: 56px; }
+  .dock-item span{ font-size: 0.82rem !important; }
+  .dock-item{ gap: 6px !important; padding: 0 8px !important; }
+}
+
