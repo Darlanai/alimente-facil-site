@@ -2767,3 +2767,91 @@ body.app-mode .module-container{ overflow: hidden !important; }
   .dock-item{ gap: 6px !important; padding: 0 8px !important; }
 }
 
+/* --- PADRONIZAÇÃO VISUAL: CANTOS ARREDONDADOS (6px) --- */
+.dashboard-card {
+    border-radius: 6px !important;
+    overflow: hidden !important; /* O SEGREDO: Corta qualquer recheio ou rodapé que tente ficar reto! */
+}
+
+.card-header {
+    border-radius: 6px 6px 0 0 !important;
+}
+
+.card-footer {
+    border-radius: 0 0 6px 6px !important;
+}
+
+.card-content:last-child {
+    border-radius: 0 0 6px 6px !important;
+}
+
+/* Oculta de vez TODOS os rodapés soltos com botões de Compartilhar/Imprimir que sobraram no seu JS */
+.md-list-column .card-footer,
+#module-planejador .card-footer,
+#module-analises .card-footer,
+#module-configuracoes .card-footer {
+    display: none !important;
+}
+/* --- BANNER DE INSTALAÇÃO PWA (APP NATIVO) --- */
+.pwa-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--glass-color);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 8px 32px rgba(0, 242, 234, 0.2);
+    z-index: 10000;
+    width: 90%;
+    max-width: 400px;
+    animation: slideUpPwa 0.5s ease-out forwards;
+}
+
+.pwa-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.pwa-icon i {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+.pwa-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.pwa-text strong {
+    color: var(--glass-text-primary);
+    font-size: 1rem;
+}
+
+.pwa-text span {
+    color: var(--glass-text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.2;
+}
+
+@keyframes slideUpPwa {
+    from { bottom: -100px; opacity: 0; }
+    to { bottom: 20px; opacity: 1; }
+}
+/* --- AJUSTE DE POSIÇÃO DO ÍCONE DO ASSISTENTE (CHEF IA) --- */
+#af-chatbot-toggle {
+    bottom: 90px !important; /* Distância do fundo da tela. Aumente se quiser subir mais! */
+    z-index: 9999 !important; /* Garante que ele fique sempre por cima de tudo */
+}
+
+/* Garante que a janela do chat também abra numa altura confortável quando clicada */
+#af-chatbot.af-open {
+    bottom: 150px !important; 
+}

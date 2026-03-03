@@ -345,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
             grip.addEventListener('touchstart', startDrag, { passive: false });
         },
 
-        initPWA() {
+initPWA() {
             // Service Worker
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
@@ -353,38 +353,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // Prompt de instalação (Android/Chrome etc.)
             let deferredPrompt = null;
             const installMenu = document.getElementById('pwa-install-menu');
+            const floatingBanner = document.getElementById('pwa-floating-banner');
+            const closeBannerBtn = document.getElementById('pwa-banner-close-btn');
 
+            // O navegador avisa que o app pode ser instalado
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
                 if (installMenu) installMenu.style.display = 'flex';
+                // Mostra o nosso novo banner flutuante
+                if (floatingBanner) floatingBanner.style.display = 'flex';
             });
 
+            // O usuário concluiu a instalação
             window.addEventListener('appinstalled', () => {
                 deferredPrompt = null;
                 if (installMenu) installMenu.style.display = 'none';
-                this.showNotification('Aplicativo instalado ✅', 'success');
+                if (floatingBanner) floatingBanner.style.display = 'none';
+                this.showNotification('Alimente Fácil instalado com sucesso! ✅', 'success');
             });
 
-            // Ação no menu
-            if (installMenu) {
-                installMenu.addEventListener('click', async (ev) => {
+            // O usuário clicou no "X" para fechar o banner
+            if (closeBannerBtn) {
+                closeBannerBtn.addEventListener('click', () => {
+                    floatingBanner.style.display = 'none';
+                });
+            }
+
+            // O usuário clicou em "Instalar"
+            document.querySelectorAll('.btn-install-pwa, #pwa-install-menu').forEach(btn => {
+                btn.addEventListener('click', async (ev) => {
                     ev.preventDefault(); ev.stopPropagation();
                     document.getElementById('menuItems')?.classList.remove('open');
                     document.getElementById('hamburger')?.classList.remove('open');
+                    
                     if (!deferredPrompt) {
-                        this.showNotification('No Chrome: Menu ⋮ → “Adicionar à tela inicial”.', 'info');
+                        this.showNotification('Para instalar: Vá no menu do navegador ⋮ e clique em "Adicionar à tela inicial".', 'info');
                         return;
                     }
+                    
                     deferredPrompt.prompt();
                     try { await deferredPrompt.userChoice; } catch (e) { /* ignore */ }
+                    
                     deferredPrompt = null;
-                    installMenu.style.display = 'none';
+                    if (installMenu) installMenu.style.display = 'none';
+                    if (floatingBanner) floatingBanner.style.display = 'none';
                 });
-            }
+            });
 
             // Abrir planos pelo menu
             document.querySelectorAll('[data-action="open-plans"]').forEach((el) => {
@@ -396,7 +413,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         },
-
         saveState() {
             try {
                 const stateToSave = {
@@ -1575,14 +1591,13 @@ renderListas(container) {
                        idInput.value = listId; listName = this.escapeHtml(lista.nome); listNameEditable = lista.nome; listNamePlaceholder = 'Nome da Lista...';
                        itemsHTML = lista.items.map(item => this.createListaItemHTML(item)).join('');
                        if (lista.items.length === 0) { itemsHTML = '<p class="empty-list-message">Esta lista está vazia.</p>'; }
-                       actionsHTML = `
-                           <button class="icon-button share-btn" id="lista-share-btn" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
-                           <button class="icon-button print-btn" id="lista-print-btn" title="Imprimir"><i class="fa-solid fa-print"></i></button>
-                           <button class="icon-button pdf-btn" id="lista-pdf-btn" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
-                           <span class="module-actions-spacer"></span>
-                           <button class="icon-button" id="lista-save-changes-btn" title="Salvar"><i class="fa-solid fa-floppy-disk"></i></button>
-                           <button class="icon-button danger" id="lista-delete-btn" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+actionsHTML = `
+                           <div style="display: flex; gap: 10px; width: 100%; justify-content: flex-end;">
+                               <button class="icon-button" id="lista-save-changes-btn" title="Salvar" style="color: var(--primary-color); border-color: var(--primary-color);"><i class="fa-solid fa-floppy-disk"></i></button>
+                               <button class="icon-button danger" id="lista-delete-btn" title="Excluir" style="color: var(--red); border-color: rgba(255,59,48,0.3);"><i class="fa-solid fa-trash"></i></button>
+                           </div>
                        `;
+
                   } else { idInput.value = ''; listName = 'Erro: Lista não encontrada'; itemsHTML = '<p class="empty-list-message error">Erro ao carregar a lista.</p>'; actionsHTML = ''; }
              }
              titleEl.innerHTML = `<i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> <input type="text" id="active-list-name-input" value="${listNameEditable}" placeholder="${listNamePlaceholder}" aria-label="Nome da lista ativa">`;
@@ -1769,13 +1784,6 @@ renderDespensa(container) {
                      </button>
                      <div id="despensa-list-container"></div>
                 </div>
-
-                 <div class="card-footer module-actions-footer">
-                    <button class="icon-button share-btn" title="Compartilhar" aria-label="Compartilhar"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>
-                    <button class="icon-button print-btn" title="Imprimir" aria-label="Imprimir"><i class="fa-solid fa-print" aria-hidden="true"></i></button>
-                    <button class="icon-button pdf-btn" title="PDF" aria-label="PDF"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
-                 </div>
-
             </div>
 
             <div class="md-detail-column dashboard-card" id="despensa-detail-desktop">
@@ -1824,12 +1832,6 @@ renderReceitas(container) {
                               </button>
                               <div id="main-recipe-grid"></div>
                          </div>
-
-                 <div class="card-footer module-actions-footer">
-                    <button class="icon-button share-btn" title="Compartilhar" aria-label="Compartilhar"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>
-                    <button class="icon-button print-btn" title="Imprimir" aria-label="Imprimir"><i class="fa-solid fa-print" aria-hidden="true"></i></button>
-                    <button class="icon-button pdf-btn" title="PDF" aria-label="PDF"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
-                 </div>
 
                     </div>
 
@@ -1974,13 +1976,15 @@ renderPantryDetailDesktop(item) {
              const recipe = this.state.receitas[recipeId]; const bodyEl = document.getElementById(targetElementId); const footerEl = document.getElementById(footerElementId);
              if (!recipe || !bodyEl || !footerEl) { if (bodyEl) bodyEl.innerHTML = '<div class="recipe-detail-placeholder"><i class="fa-solid fa-question-circle"></i><p>Receita não encontrada.</p></div>'; if (footerEl) footerEl.style.display = 'none'; return; }
              bodyEl.innerHTML = recipe.content;
-            footerEl.innerHTML = `
-                <button class="btn btn-primary edit-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-pencil"></i> Editar</button> 
-                <button class="btn btn-secondary pdf-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-file-pdf"></i> PDF</button> 
-                <button class="btn btn-secondary share-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-share-alt"></i></button> 
-                <button class="btn btn-danger delete-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-trash"></i> Excluir</button>
-            `;
+footerEl.classList.add('module-actions-footer');
+footerEl.innerHTML = `
+                <div style="display: flex; gap: 10px; width: 100%; justify-content: flex-end;">
+                    <button class="icon-button edit-recipe-btn" data-recipe-id="${recipeId}" title="Editar" style="color: var(--primary-color); border-color: var(--primary-color);"><i class="fa-solid fa-pencil"></i></button> 
+                    <button class="icon-button delete-recipe-btn" data-recipe-id="${recipeId}" title="Excluir" style="color: var(--red); border-color: rgba(255,59,48,0.3);"><i class="fa-solid fa-trash"></i></button>
+                </div>
+             `;
              footerEl.style.display = 'flex';
+             footerEl.style.justifyContent = 'space-between';
         },
 
         showRecipeDetailModal(recipeId) {
@@ -2027,21 +2031,16 @@ renderPlanejador(container) {
                  almoco: '<i class="fa-solid fa-utensils" style="margin-right:8px; color: var(--green);"></i>',
                  jantar: '<i class="fa-solid fa-bowl-rice" style="margin-right:8px; color: var(--accent-purple);"></i>' 
              };
-             container.innerHTML = `
+container.innerHTML = `
                   <div class="dashboard-card">
                        <div class="card-header" style="cursor: default;">
                            <h3><i class="fa-solid fa-calendar-week" aria-hidden="true"></i> Planejador Semanal</h3>
+                           <div class="card-actions">
+                               <button class="btn btn-danger clear-plan-btn" style="height: 32px; padding: 0 12px; font-size: 0.8rem;"><i class="fa-solid fa-eraser"></i> Limpar Tudo</button>
+                           </div>
                        </div>
                        <div class="card-content">
                             <div class="planner-grid" id="planner-grid-full"></div>
-                       </div>
-                       <div class="card-footer" style="justify-content: space-between;">
-                           <div style="display:flex; gap: 10px;">
-                                <button class="btn btn-secondary share-btn" title="Compartilhar Planejamento"><i class="fa-solid fa-share-alt"></i></button>
-                                <button class="btn btn-secondary print-btn" title="Imprimir Planejamento"><i class="fa-solid fa-print"></i></button>
-                                <button class="btn btn-secondary pdf-btn" title="Gerar PDF do Planejamento"><i class="fa-solid fa-file-pdf"></i></button>
-                           </div>
-                           <button class="btn btn-danger clear-plan-btn"><i class="fa-solid fa-eraser"></i> Limpar Tudo</button>
                        </div>
                   </div>
              `;
@@ -2196,35 +2195,33 @@ renderOrcamento() {
                           <h3><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Análises Configuráveis</h3>
                       </div>
                       <div class="card-content">
-                         <div class="analysis-config-panel">
-                             <div class="form-group">
-                                 <label for="analysis-data-select">Analisar:</label>
-                                 <select id="analysis-data-select">
-                                     <option value="gastos_categoria">Gastos por Categoria (Listas)</option>
-                                     <option value="validade_despensa">Itens por Validade (Despensa)</option>
-                                     <option value="uso_receitas">Receitas Usadas (Planejador)</option>
-                                 </select>
+<details style="margin-bottom: 1rem; border: 1px solid var(--glass-border); border-radius: 6px; padding: 0.5rem 1rem; background: rgba(0,0,0,0.1); cursor: pointer;">
+                             <summary style="font-weight: 600; color: var(--primary-color); outline: none;"><i class="fa-solid fa-sliders" style="margin-right: 8px;"></i> Opções do Gráfico</summary>
+                             <div class="analysis-config-panel" style="margin-top: 1rem; cursor: default;">
+                                 <div class="form-group">
+                                     <label for="analysis-data-select">Analisar:</label>
+                                     <select id="analysis-data-select">
+                                         <option value="gastos_categoria">Gastos por Categoria (Listas)</option>
+                                         <option value="validade_despensa">Itens por Validade (Despensa)</option>
+                                         <option value="uso_receitas">Receitas Usadas (Planejador)</option>
+                                     </select>
+                                 </div>
+                                 <div class="form-group">
+                                     <label for="analysis-type-select">Tipo de Gráfico:</label>
+                                     <select id="analysis-type-select">
+                                         <option value="pie">Pizza</option>
+                                         <option value="doughnut">Rosca</option>
+                                         <option value="bar">Barras</option>
+                                         <option value="line">Linha</option>
+                                     </select>
+                                 </div>
                              </div>
-                             <div class="form-group">
-                                 <label for="analysis-type-select">Tipo de Gráfico:</label>
-                                 <select id="analysis-type-select">
-                                     <option value="pie">Pizza</option>
-                                     <option value="doughnut">Rosca</option>
-                                     <option value="bar">Barras</option>
-                                     <option value="line">Linha</option>
-                                 </select>
-                             </div>
-                         </div>
+                         </details>
                          <div class="chart-canvas-container">
                              <canvas id="dynamic-analysis-chart"></canvas>
                          </div>
                       </div>
-                      
-                      <div class="card-footer module-actions-footer">
-                         <button class="icon-button share-btn" title="Compartilhar" aria-label="Compartilhar"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>
-                         <button class="icon-button print-btn" title="Imprimir" aria-label="Imprimir"><i class="fa-solid fa-print" aria-hidden="true"></i></button>
-                         <button class="icon-button pdf-btn" title="PDF" aria-label="PDF"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
-                      </div>
+                     
 
                   </div>
              `;
@@ -2257,12 +2254,6 @@ renderOrcamento() {
                                <div class="form-group"> <label>Exportar meus dados (JSON)</label> <button class="btn btn-secondary">Exportar</button> </div>
                                <div class="form-group"> <label>Apagar todos os dados</label> <button class="btn btn-danger" id="config-delete-account-btn">Apagar Conta</button> </div>
                            </div>
-                      </div>
-
-                      <div class="card-footer module-actions-footer">
-                         <button class="icon-button share-btn" title="Compartilhar" aria-label="Compartilhar"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>
-                         <button class="icon-button print-btn" title="Imprimir" aria-label="Imprimir"><i class="fa-solid fa-print" aria-hidden="true"></i></button>
-                         <button class="icon-button pdf-btn" title="PDF" aria-label="PDF"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></button>
                       </div>
 
                   </div>
