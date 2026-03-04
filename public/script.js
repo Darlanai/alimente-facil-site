@@ -38,8 +38,15 @@ document.addEventListener('DOMContentLoaded', () => {
             essenciais: [
                 { id: 100, name: "Arroz", preco: 8.50, unid: "kg" }
             ],
-            orcamento: {
+
+orcamento: {
                 total: 500.00
+            },
+            aiUsage: {
+                tokensThisMonth: 0,
+                dailyMsgs: 0,
+                lastMsgDate: null,
+                minuteHistory: []
             },
             receitas: {
                 1: { id: 1, name: "Molho Rústico de Tomate", desc: "Perfeito para usar tomates maduros.", content: "<h4>Ingredientes</h4><ul><li>5 tomates maduros</li><li>2 dentes de alho</li><li>Azeite</li><li>Manjericão</li></ul><h4>Preparo</h4><p>Pique os tomates e o alho. Refogue no azeite. Adicione manjericão e cozinhe por 20 minutos.</p>", ingredients: [{name: "Tomate", qty: "5", unit: "un"},{name: "Alho", qty: "2", unit: "dentes"},{name: "Azeite", qty: "fio", unit: ""},{name: "Manjericão", qty: "a gosto", unit: ""}] },
@@ -3288,22 +3295,77 @@ openListEditView(listId) {
              this.activeListId = newListId; this.saveState(); this.showNotification(`Lista "${listName}" criada pela IA.`, "success"); this.activateModuleAndRender('lista');
         },
 
-        async triggerChefIAAnalysis(prompt) { 
-            if (this.isIAProcessing) return; 
-            this.isIAProcessing = true; 
-            const messagesContainer = document.getElementById('ai-chat-messages-container'); 
-            const thinkingMessage = document.createElement('div'); 
-            thinkingMessage.className = 'chat-message ia'; 
-            thinkingMessage.innerHTML = '<div class="bubble">Analisando... <i class="fa-solid fa-spinner fa-spin"></i></div>'; 
-            messagesContainer.appendChild(thinkingMessage); 
-            messagesContainer.scrollTop = messagesContainer.scrollHeight; 
-            try { 
-                const apiResponse = await this.callGeminiAPI(prompt); 
-                this.processIAResponse(apiResponse.json, apiResponse.html, thinkingMessage); 
-            } catch (error) { 
-                console.error("Erro no Chef IA:", error); 
+async triggerChefIAAnalysis(prompt) {
+            if (this.isIAProcessing) return;
+
+            // --- FILTRO DE ESCOPO ESTRITO ---
+            const forbiddenWords = ['matemática', 'equação', 'código', 'política', 'criptomoeda', 'direito', 'medicina', 'programação'];
+            const lowerPrompt = prompt.toLowerCase();
+            if (forbiddenWords.some(word => lowerPrompt.includes(word))) {
+                const messagesContainer = document.getElementById('ai-chat-messages-container');
+                const filterMessage = document.createElement('div');
+                filterMessage.className = 'chat-message ia';
+                filterMessage.innerHTML = '<div class="bubble">Sou especializado em alimentação, receitas e organização de compras. Posso ajudar com isso 😊</div>';
+                messagesContainer.appendChild(filterMessage);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                return;
+            }
+
+            // --- CONTROLE DE RATE LIMIT (BACKEND-LIKE) ---
+            const now = new Date();
+            const todayStr = now.toDateString();
+            if (!this.state.aiUsage) this.state.aiUsage = { tokensThisMonth: 0, dailyMsgs: 0, lastMsgDate: null, minuteHistory: [] };
+            
+            if (this.state.aiUsage.lastMsgDate !== todayStr) {
+                this.state.aiUsage.dailyMsgs = 0;
+                this.state.aiUsage.lastMsgDate = todayStr;
+            }
+            
+            const oneMinAgo = now.getTime() - 60000;
+            this.state.aiUsage.minuteHistory = this.state.aiUsage.minuteHistory.filter(time => time > oneMinAgo);
+            
+            if (this.state.aiUsage.minuteHistory.length >= 5) {
+                this.showNotification("Limite de mensagens por minuto atingido. Aguarde um instante.", "error");
+                return;
+            }
+            if (this.state.aiUsage.dailyMsgs >= 30) {
+                this.showNotification("Limite diário de uso da IA atingido.", "error");
+                return;
+            }
+
+            this.isIAProcessing = true;
+            
+            // UI Feedback
+            const sendBtn = document.getElementById('ai-chat-send-btn');
+            if (sendBtn) {
+                sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                sendBtn.disabled = true;
+            }
+
+            const messagesContainer = document.getElementById('ai-chat-messages-container');
+            const thinkingMessage = document.createElement('div');
+            thinkingMessage.className = 'chat-message ia';
+            thinkingMessage.innerHTML = '<div class="bubble typing-indicator"><span></span><span></span><span></span></div>';
+            messagesContainer.appendChild(thinkingMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            try {
+                this.state.aiUsage.minuteHistory.push(now.getTime());
+                this.state.aiUsage.dailyMsgs++;
+                
+                const apiResponse = await this.callGeminiAPI(prompt);
+                this.processIAResponse(apiResponse.json, apiResponse.html, thinkingMessage);
+            } catch (error) {
+                console.error("Erro no Chef IA:", error);
                 thinkingMessage.innerHTML = `<div class="bubble" style="color:var(--red)">Ocorreu um erro de conexão. Tente novamente.</div>`;
-            } finally { this.isIAProcessing = false; } 
+            } finally {
+                this.isIAProcessing = false;
+                if (sendBtn) {
+                    sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i>';
+                    sendBtn.disabled = false;
+                }
+                this.saveState();
+            }
         },
 
         async callGeminiAPI(userText) {
@@ -3314,6 +3376,24 @@ openListEditView(listId) {
                 receitasSalvas: Object.values(this.state.receitas).map(r => ({id: r.id, name: r.name})),
                 planejador: this.state.planejador
             };
+
+            // --- CONTROLE FINANCEIRO E TOKENS (TETO R$8) ---
+            const TOKEN_LIMIT_MONTH = 300000;
+            let currentTokens = this.state.aiUsage.tokensThisMonth || 0;
+            const usagePercent = currentTokens / TOKEN_LIMIT_MONTH;
+            let maxTokens = 600;
+            let econModePrompt = "";
+
+            if (usagePercent >= 1.0) {
+                maxTokens = 150;
+                econModePrompt = "MODO RESTRITO: Responda da forma mais curta, direta e objetiva possível. Sem explicações adicionais.";
+            } else if (usagePercent >= 0.9) {
+                maxTokens = 250;
+                econModePrompt = "MODO ECONÔMICO: Responda de forma sucinta e direta.";
+            } else if (usagePercent >= 0.7) {
+                maxTokens = 400;
+            }
+
             const systemPersona = `
             VOCÊ É O "CHEF IA" DO ALIMENTE FÁCIL.
             SUA ESPECIALIDADE: Gastronomia, Nutrição, Economia Doméstica.
@@ -3321,16 +3401,26 @@ openListEditView(listId) {
             REGRA DE RESPOSTA (JSON OBRIGATÓRIO): Responda APENAS um objeto JSON cru.
             Formato: { "intent": "NOME_DA_ACAO", "data": { ... }, "response_text_html": "HTML da resposta falada." }
             CONTEXTO: ${JSON.stringify(context)}
+            ${econModePrompt}
             `;
             const fullPrompt = `${systemPersona}\n\nPERGUNTA DO USUÁRIO: "${userText}"`;
+
             try {
                 const response = await fetch('/api/chef-ia', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: fullPrompt })
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: fullPrompt, max_tokens: maxTokens })
                 });
+
                 if (!response.ok) { const errData = await response.json(); throw new Error(errData.error || `Erro Servidor: ${response.status}`); }
                 const data = await response.json();
+                
+                // Atualização estimada de uso (backend validation simulada)
+                this.state.aiUsage.tokensThisMonth += (fullPrompt.length + (data.candidates?.[0]?.content?.parts?.[0]?.text.length || 0)) / 4;
+
                 let textResponse = data.candidates[0].content.parts[0].text;
                 textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+                
                 try {
                     let parsed = JSON.parse(textResponse);
                     if (parsed.intent === 'create_shopping_list') { parsed.response_text_html += `<br><button class='af-option-btn' style='margin-top:10px; width:100%;' data-action='view-list' data-list-id='[NEW_LIST_ID]'><i class="fa-solid fa-eye"></i> Ver Lista</button>`; }
@@ -3346,7 +3436,6 @@ openListEditView(listId) {
                 return { json: { intent: "answer_question", data: {} }, html: `<span style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i> Ocorreu um erro: ${e.message}. Tente novamente.</span>` };
             }
         },
-
         processIAResponse(jsonResponse, htmlResponse, thinkingMessageElement) { 
             let newRecipeId, newListId; 
             let finalHtml = htmlResponse || jsonResponse.response_text_html;

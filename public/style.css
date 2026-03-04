@@ -25,14 +25,21 @@
     --glass-on-glow: 0 0 12px rgba(0, 242, 234, 0.6);
     --glass-on-text: #000;
     
-    /* --- DIMENSÕES GLOBAIS (NOVO SYSTEM) --- */
-    --header-height: 60px;
-    --footer-height: 70px; /* Altura fixa para Footer de Ações */
-    --input-height: 48px; /* Altura unificada para Inputs e Botões */
+/* --- DIMENSÕES GLOBAIS (NOVO SYSTEM ESTRUTURADO) --- */
+    --header-height: 64px;
+    --footer-height: 64px;
+    --input-height: 48px;
     --radius-sm: 8px;
     --radius-md: 12px;
-    --radius-lg: 20px;
-    --sidebar-width-desktop: 230px;
+    --radius-lg: 16px;
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --sidebar-width-desktop: 260px;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0,0,0,0.2);
+    --card-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0,242,234,0.15);
+    --standard-transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 
     /* --- FONTES --- */
     --font-display: 'Exo 2', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -1528,31 +1535,100 @@ body.landing-lua-mode #landing-theme-toggle {
     border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
-/* 3. CARTÕES e ITENS: AQUI ESTÁ A "LINHAZINHA BRANCA" */
+/* --- PADRONIZAÇÃO ABSOLUTA DE CARDS E ITENS --- */
 .dashboard-card,
 .saved-list-item,
 .planner-day-card,
 .recipe-list-item, 
 .chart-widget,
-.modal-box,
 .placeholder-item, 
-.planner-meal-slot {
-    background-color: #222327 !important;
-    /* Borda branca fina e visível (20% de opacidade) */
-    border: 1px solid rgba(255, 255, 255, 0.2) !important; 
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8) !important;
-    transition: border-color 0.3s ease, transform 0.2s ease !important;
+.planner-meal-slot,
+.action-card {
+    background-color: #1e1f22 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important; 
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--card-shadow) !important;
+    transition: var(--standard-transition) !important;
+    margin-bottom: var(--spacing-sm);
+    box-sizing: border-box;
 }
 
-/* 4. EFEITO HOVER (Passar o mouse): Vira VERDE */
+/* Removendo padding duplo para respeitar o grid interno */
+.dashboard-card, .modal-box { padding: 0 !important; margin-bottom: 0 !important; display: flex; flex-direction: column; overflow: hidden; }
+.dashboard-card .card-content, .modal-box .modal-body { padding: var(--spacing-lg) !important; flex: 1; overflow-y: auto; }
+
+/* Cabeçalhos padronizados */
+.card-header, .planner-day-header, .modal-header {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: var(--spacing-md) var(--spacing-lg) !important;
+    min-height: var(--header-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+/* Footer padronizado */
+.card-footer, .modal-footer {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: var(--spacing-md) var(--spacing-lg) !important;
+    min-height: var(--footer-height);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+/* Efeito Hover Consistente */
 .placeholder-item:hover, 
 .recipe-list-item:hover, 
-.nav-item:hover,
-.saved-list-item:hover {
-    background-color: #303136 !important;
-    /* A borda fica verde neon do seu tema */
+.saved-list-item:hover,
+.action-card:hover {
+    background-color: #2b2d31 !important;
     border-color: var(--primary-color) !important; 
-    transform: translateX(2px);
+    transform: translateY(-2px) !important;
+    box-shadow: var(--card-hover-shadow) !important;
+}
+
+/* --- FEEDBACK VISUAL: BOTÕES E FOCUS --- */
+.btn, .icon-button {
+    transition: var(--standard-transition) !important;
+}
+
+.btn:active, .icon-button:active {
+    transform: scale(0.95) !important;
+}
+
+.btn:focus-visible, .icon-button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px rgba(0, 242, 234, 0.2) !important;
+}
+
+/* Loader IA Elegante */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+}
+
+.typing-indicator span {
+    width: 6px;
+    height: 6px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out both;
+}
+
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px var(--primary-color); }
 }
 
 /* 5. Cabeçalhos */

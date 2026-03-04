@@ -1,37 +1,29 @@
-require('dotenv').config(); // Carrega as variáveis do arquivo .env
+require('dotenv').config(); 
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const rateLimit = require('express-rate-limit'); // Importa a proteção contra abuso
+const rateLimit = require('express-rate-limit'); 
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configurações básicas
-app.use(cors()); // Permite conexões do front-end
-app.use(express.json()); // Permite leitura de JSON no corpo das requisições
-
-// Serve os arquivos estáticos (HTML, CSS, JS, Imagens) da pasta 'public'
+app.use(cors()); 
+app.use(express.json()); 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ----------------------------------------------------
-// CONFIGURAÇÃO DE LIMITE (RATE LIMIT)
-// Impede que um usuário faça muitas perguntas seguidas
-// ----------------------------------------------------
+// Limite de segurança do seu servidor
 const chefIALimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // Janela de 15 minutos
-    max: 20, // Máximo de 20 perguntas por IP nessa janela
+    windowMs: 15 * 60 * 1000, 
+    max: 30, 
     message: { 
-        error: "Você atingiu o limite de perguntas ao Chef IA. Aguarde alguns minutos e tente novamente." 
+        error: "Você atingiu o limite de perguntas ao Chef IA. Aguarde alguns minutos." 
     },
-    standardHeaders: true, // Retorna info de limite nos headers `RateLimit-*`
-    legacyHeaders: false, // Desativa os headers `X-RateLimit-*`
+    standardHeaders: true, 
+    legacyHeaders: false, 
 });
 
 // ----------------------------------------------------
-// ROTA: Chef IA (Proxy para o Google Gemini)
-// O front-end chama essa rota, e o servidor chama o Google
-// Adicionamos 'chefIALimiter' aqui para proteger a rota
+// ROTA: Chef IA (Agora usando GROQ / LLaMA 3.3 70B)
 // ----------------------------------------------------
 app.post('/api/chef-ia', chefIALimiter, async (req, res) => {
     const { prompt } = req.body;
@@ -40,54 +32,66 @@ app.post('/api/chef-ia', chefIALimiter, async (req, res) => {
         return res.status(400).json({ error: 'O prompt é obrigatório.' });
     }
 
-    // Pega a chave do arquivo .env (seguro)
-    const API_KEY = process.env.GEMINI_API_KEY;
+    // Pega a chave nova da Groq
+    const GROQ_API_KEY = process.env.GROQ_API_KEY;
     
-    if (!API_KEY) {
-        console.error("ERRO: Chave GEMINI_API_KEY não encontrada no .env");
+    if (!GROQ_API_KEY) {
+        console.error("ERRO: Chave GROQ_API_KEY não encontrada no .env");
         return res.status(500).json({ error: "Erro de configuração no servidor." });
     }
 
-    // Modelo configurado.
-    // Se você cadastrar o cartão e quiser usar o 2.0, mude aqui para "gemini-2.0-flash"
-    const MODEL = "gemini-flash-latest"; 
-    
-    const URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+    const URL = "https://api.groq.com/openai/v1/chat/completions";
 
     try {
         const response = await fetch(URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${GROQ_API_KEY}`
+            },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
+                // O modelo mais atual, poderoso e veloz da Groq
+                model: "llama-3.3-70b-versatile", 
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.3 
             })
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.error?.message || 'Erro na resposta do Google Gemini');
+            throw new Error(data.error?.message || 'Erro na resposta da IA');
         }
 
-        // Devolve a resposta do Google para o seu front-end
-        res.json(data);
+        // Isso aqui "engana" seu front-end pra ele achar que ainda é o Gemini
+        const fakeGeminiFormat = {
+            candidates: [
+                {
+                    content: {
+                        parts: [
+                            { text: data.choices[0].message.content }
+                        ]
+                    }
+                }
+            ]
+        };
+
+        return res.json(fakeGeminiFormat);
 
     } catch (error) {
         console.error("Erro no servidor Chef IA:", error.message);
-        res.status(500).json({ 
-            error: "Erro ao processar a solicitação da IA.",
+        return res.status(500).json({ 
+            error: "A Inteligência Artificial falhou ao processar o pedido.",
             details: error.message 
         });
     }
 });
 
-// Rota padrão para entregar o index.html em qualquer outra URL
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Inicia o servidor
 app.listen(port, () => {
     console.log(`✅ Servidor rodando em http://localhost:${port}`);
-    console.log(`🔐 Modo: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🚀 Motor IA Atual: GROQ (LLaMA 3.3 70B)`);
 });
