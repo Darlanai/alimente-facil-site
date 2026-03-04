@@ -13,10 +13,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Limite de segurança do seu servidor
 const chefIALimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
-    max: 30, 
+    windowMs: 1 * 60 * 1000, // Diminui para apenas 1 minuto
+    max: 60, // Aumenta para 60 chamadas (uma por segundo)
     message: { 
-        error: "Você atingiu o limite de perguntas ao Chef IA. Aguarde alguns minutos." 
+        error: "Calma aí! O Chef IA precisa de um respiro. Tente de novo em um minuto." 
     },
     standardHeaders: true, 
     legacyHeaders: false, 
