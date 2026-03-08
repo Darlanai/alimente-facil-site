@@ -1,69 +1,292 @@
 :root {
-    /* --- CORES PRINCIPAIS (NEON/FUTURISTA) --- */
-    --primary-color: #00f2ea;
-    --primary-color-light: #00fff4;
-    --primary-color-dark: #00c4bd;
-    --primary-color-rgb: 0, 242, 234;
+    /* --- CORES SEMÂNTICAS (NOVO PADRÃO) --- */
+    --color-primary: #00f2ea;
+    --color-primary-dark: #00c4bd;
+    --color-primary-light: #00fff4;
+    --color-secondary: #fceb9a;
+    --color-accent-purple: #af52de;
+    --color-success: #34c759;
+    --color-warning: #ffcc00;
+    --color-danger: #ff3b30;
+    --color-danger-dark: #ff0055;
     
-    /* --- CORES DE ESTADO --- */
-    --accent-yellow: #fceb9a;
-    --accent-purple: #af52de;
-    --red: #ff3b30;
-    --green: #34c759;
-    --danger-color: #ff0055;
+    /* --- FUNDOS (NOVO PADRÃO) --- */
+    --bg-primary: #000000;
+    --bg-secondary: #121212;
+    --bg-card: #1e1f22;
+    --bg-card-hover: #2b2d31;
+    --bg-input: #000000;
+    
+    /* --- BORDAS (NOVO PADRÃO) --- */
+    --border-color: rgba(255, 255, 255, 0.12);
+    --border-color-hover: var(--color-primary);
+    --border-color-input: rgba(255, 255, 255, 0.3);
+    
+    /* --- TEXTOS (NOVO PADRÃO) --- */
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1a1;
+    --text-tertiary: #69f0ae;
 
-    /* --- VIDRO & FUNDOS --- */
-    --glass-dark-bg: #1A1C1E;
-    --glass-color: rgba(35, 38, 41, 0.75);
-    --glass-border: rgba(255, 255, 255, 0.15);
-    --glass-blur: 15px;
-    --glass-text-primary: #EAEAEA;
-    --glass-text-secondary: #A1A1A1;
-    
-    /* --- GLOWS & TEXTOS --- */
-    --glass-on-color: var(--primary-color);
-    --glass-on-glow: 0 0 12px rgba(0, 242, 234, 0.6);
-    --glass-on-text: #000;
-    
-/* --- DIMENSÕES GLOBAIS (NOVO SYSTEM ESTRUTURADO) --- */
-    --header-height: 64px;
-    --footer-height: 64px;
-    --input-height: 48px;
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
+    /* --- SOMBRAS (NOVO PADRÃO) --- */
+    --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-card-hover: 0 8px 16px rgba(0, 242, 234, 0.15);
+
+    /* --- ESPAÇAMENTOS (NOVO PADRÃO) --- */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
     --spacing-lg: 24px;
-    --sidebar-width-desktop: 260px;
-    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0,0,0,0.2);
-    --card-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0,242,234,0.15);
-    --standard-transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --spacing-xl: 32px;
 
-    /* --- FONTES --- */
-    --font-display: 'Exo 2', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    /* --- TIPOGRAFIA (NOVO PADRÃO) --- */
+    --font-family: 'Exo 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'Roboto Mono', monospace;
     --font-body: 'Roboto', -apple-system, sans-serif;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-md: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
 
-    /* --- LEGADO (MANTIDO PARA NÃO QUEBRAR) --- */
-    --bg-neve: #303030;
-    --text-neve-primary: #f5f5f7;
-    --text-neve-secondary: #a0a0a0;
-    --card-neve: #4A4A4A;
-    --border-neve: #5a5a5a;
-    --hamburger-bg: var(--text-neve-primary);
-    --node-cluster-bg: rgba(40, 40, 40, 0.95);
-    --node-cluster-text: var(--text-neve-primary);
+    /* --- BORDAS ARREDONDADAS (NOVO PADRÃO) --- */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-full: 9999px;
+
+    /* --- TRANSIÇÕES (NOVO PADRÃO) --- */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ========================================================= */
+    /* --- LEGADO (MANTIDO TEMPORARIAMENTE PARA NÃO QUEBRAR O APP) --- */
+    --primary-color: var(--color-primary);
+    --primary-color-light: var(--color-primary-light);
+    --primary-color-dark: var(--color-primary-dark);
+    --primary-color-rgb: 0, 242, 234;
+    --accent-yellow: var(--color-secondary);
+    --accent-purple: var(--color-accent-purple);
+    --red: var(--color-danger);
+    --green: var(--color-success);
+    --danger-color: var(--color-danger-dark);
+    --glass-dark-bg: #1A1C1E;
+    --glass-color: rgba(35, 38, 41, 0.75);
+    --glass-border: var(--border-color);
+    --glass-blur: 15px;
+    --glass-text-primary: var(--text-primary);
+    --glass-text-secondary: var(--text-secondary);
+    --glass-on-color: var(--color-primary);
+    --glass-on-glow: 0 0 12px rgba(0, 242, 234, 0.6);
+    --glass-on-text: #000;
+    --header-height: 64px;
+    --footer-height: 64px;
+    --input-height: 48px;
+    --sidebar-width-desktop: 260px;
+    --card-shadow-legacy: 0 4px 12px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0,0,0,0.2);
+    --card-hover-shadow-legacy: 0 8px 24px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0,242,234,0.15);
+    --standard-transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --font-display: var(--font-family);
     --card-border-radius: 12px;
     --soft-bezier: cubic-bezier(0.25, 0.8, 0.25, 1);
-    --validity-green: #28a745;
-    --validity-yellow: #ffc107;
-    --validity-red: #dc3545;
-    --danger-bg-transparent: rgba(220, 53, 69, 0.1);
-    --highlight: var(--primary-color);
+    --validity-green: var(--color-success);
+    --validity-yellow: var(--color-warning);
+    --validity-red: var(--color-danger);
+    --highlight: var(--color-primary);
     --highlight-glow: var(--glass-on-glow);
 }
+
+/* ========================================================= */
+/* --- COMPONENTE UNIVERSAL DE CARD (NOVO DESIGN SYSTEM) --- */
+/* ========================================================= */
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-base);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.card--clickable {
+  cursor: pointer;
+}
+
+/* Efeito de Hover protegido: só ativa se o dispositivo tiver mouse, evitando que o card fique preso após o toque */
+@media (hover: hover) {
+  .card--clickable:hover {
+    background-color: var(--bg-card-hover);
+    border-color: var(--border-color-hover);
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-2px);
+    z-index: 2;
+  }
+}
+
+/* Feedback tátil rápido para o momento do clique (funciona perfeito no celular e desktop) */
+.card--clickable:active {
+  transform: translateY(0) scale(0.98);
+  border-color: var(--border-color-hover);
+}
+
+.card--clickable:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-md) 0 var(--spacing-md);
+}
+
+.card__drag-handle {
+  color: var(--text-secondary);
+  cursor: grab;
+  font-size: var(--font-size-md);
+  opacity: 0.5;
+  transition: opacity var(--transition-fast);
+}
+
+.card:hover .card__drag-handle {
+  opacity: 1;
+}
+
+.card__title {
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1.05rem;
+  letter-spacing: 0.3px;
+}
+
+.card__badge {
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+}
+
+.card__content {
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card__details {
+  display: flex;
+  gap: 15px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  padding-left: 28px;
+}
+
+.card__details span {
+  color: #ccc;
+  font-weight: 600;
+}
+
+.card__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-md) var(--spacing-md) var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--spacing-md);
+  margin-top: auto;
+}
+
+.card__action {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.card__action:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.card__action--danger:hover {
+  background-color: rgba(255, 59, 48, 0.1);
+  color: var(--color-danger);
+}
+
+.card__action:active {
+  transform: scale(0.95);
+}
+
+/* Checkbox (Listas) */
+.card__checkbox input[type="checkbox"] {
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px;
+  border: 2px solid #555 !important;
+  border-radius: 6px !important;
+  background-color: transparent !important;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  padding: 0 !important;
+}
+
+.card__checkbox input[type="checkbox"]:checked {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.card__checkbox input[type="checkbox"]:checked::after {
+  content: '✔'; font-size: 14px; color: #000; font-weight: 800;
+}
+
+.card--checked .card__title {
+  color: #555; text-decoration: line-through;
+}
+.card--checked .card__details {
+  opacity: 0.4; text-decoration: line-through;
+}
+
+/* Elementos do Card - Extras */
+.card__validade { font-family: var(--font-mono); font-size: var(--font-size-xs); color: #666; margin-left: auto; }
+.card__validade--expired { color: var(--color-danger); font-weight: bold; background: rgba(255, 59, 48, 0.1); padding: 2px 6px; border-radius: 4px; }
+
+.card__stock { display: flex; gap: 3px; cursor: pointer; }
+.card__stock-bar { width: 8px; height: 16px; background: #333; border-radius: 2px; }
+.card__stock-bar.active { background: var(--color-success); }
+
+.card__checked-actions.hidden { display: none; }
+.card__checked-actions.visible {
+  display: flex; margin-top: 10px; background: rgba(0,0,0,0.3);
+  padding: 10px; border-radius: 8px; align-items: center;
+  justify-content: space-between; gap: 10px;
+}
+.card__confirm-group { display: flex; gap: 10px; }
+.card__confirm-group .card__action { font-size: 1.4rem; width: 40px; height: 40px; }
 
 body.lua-mode {
     --highlight: var(--primary-color);

@@ -467,9 +467,138 @@ initPWA() {
             }
         },
 
-        generateId: () => Date.now().toString(36) + Math.random().toString(36).substring(2),
+generateId: () => Date.now().toString(36) + Math.random().toString(36).substring(2),
+
+        // ==============================================================================
+        // COMPONENTE UNIVERSAL DE CARD (NOVO PADRÃO DE CLASSE MUNDIAL)
+        // ==============================================================================
+        renderUniversalCard({ type, data, actions = [], isClickable = false, status = '' }) {
+            const content = this.renderCardContent(type, data);
+            const actionButtons = actions.map(action => 
+                `<button type="button" class="card__action card__action--${action.type} ${action.class || ''}" data-action="${action.type}" data-id="${data.id}" aria-label="${action.label}"><i class="${action.icon}"></i></button>`
+            ).join('');
+            
+            const isChecked = data.checked ? 'card--checked is-checked' : '';
+            const statusClass = status ? `card--${status}` : isChecked;
+            const clickableClass = isClickable ? 'card--clickable' : '';
+            const badgeHTML = data.badge ? `<span class="card__badge">${data.badge}</span>` : '';
+
+            // Incluímos 'placeholder-item' temporariamente para compatibilidade com os eventos de clique antigos
+            return `
+                <div class="card card--${type} ${statusClass} ${clickableClass} placeholder-item" data-id="${data.id}" data-name="${this.escapeHtml(data.name)}">
+                    <div class="card__header">
+                        <div class="card__drag-handle drag-handle" aria-label="Arrastar item"><i class="fa-solid fa-grip-vertical"></i></div>
+                        <div class="card__title">${this.escapeHtml(data.name)}</div>
+                        ${badgeHTML}
+                    </div>
+                    <div class="card__content">
+                        ${content}
+                    </div>
+                    ${actions.length ? `<div class="card__footer">${actionButtons}</div>` : ''}
+                </div>
+            `;
+        },
+
+        renderCardContent(type, data) {
+            switch (type) {
+                case 'list': return this.renderListContent(data);
+                case 'pantry': return this.renderPantryContent(data);
+                case 'recipe': return this.renderRecipeContent(data);
+                case 'saved-list': return this.renderSavedListContent(data);
+                case 'essential': return this.renderEssentialContent(data);
+                default: return '';
+            }
+        },
+
+        renderListContent(data) {
+            const checked = data.checked ? 'checked' : '';
+            return `
+                <div class="card__row">
+                    <label class="card__checkbox">
+                        <input type="checkbox" ${checked} data-id="${data.id}">
+                        <span class="card__checkmark"></span>
+                    </label>
+                </div>
+                <div class="card__details">
+                    <span>Qtd: <strong>${data.qtd}</strong></span>
+                    <span>Un: <strong>${data.unid}</strong></span>
+                    <span>R$ <strong>${parseFloat(data.valor || 0).toFixed(2)}</strong></span>
+                </div>
+                <div class="card__checked-actions ${data.checked ? 'visible' : 'hidden'}">
+                    <div class="card__validade-group" style="display:flex; flex-direction:column;">
+                        <label for="validade-${data.id}" style="font-size:0.75rem; color:var(--text-secondary);">Validade</label>
+                        <input type="date" id="validade-${data.id}" class="card__input validade-input-capture" value="${data.validade || ''}" style="height:32px !important; padding:0 8px !important;">
+                    </div>
+                    <div class="card__confirm-group">
+                        <button type="button" class="card__action card__action--cancel cancel-move-btn" data-id="${data.id}" aria-label="Cancelar"><i class="fa-solid fa-times-circle" style="color:var(--color-danger);"></i></button>
+                        <button type="button" class="card__action card__action--confirm move-to-despensa-btn" data-id="${data.id}" aria-label="Confirmar"><i class="fa-solid fa-check-circle" style="color:var(--color-success);"></i></button>
+                    </div>
+                </div>
+            `;
+        },
+
+        renderPantryContent(data) {
+            const stock = data.stock || 100;
+            const stockBars = Array(4).fill().map((_, i) => `<div class="card__stock-bar ${i < Math.round(stock / 25) ? 'active' : ''}"></div>`).join('');
+            
+            let validadeDisplay = "Não informada";
+            let validadeClass = "";
+            if (data.validade) {
+                const hoje = new Date().toISOString().split('T')[0];
+                if (data.validade < hoje) { validadeDisplay = "Vencido"; validadeClass = "card__validade--expired"; }
+                else { validadeDisplay = data.validade.split('-').reverse().join('/'); }
+            }
+
+            return `
+                <div class="card__row">
+                    <div class="card__stock item-stock-level" title="Nível de estoque: ${stock}%">
+                        ${stockBars}
+                    </div>
+                </div>
+                <div class="card__details">
+                    <span>Qtd: <strong>${data.qtd}</strong> ${data.unid}</span>
+                    <span>R$ <strong>${parseFloat(data.valor || 0).toFixed(2)}</strong></span>
+                </div>
+                <div class="card__validade ${validadeClass}">
+                    Val: <span>${validadeDisplay}</span>
+                </div>
+            `;
+        },
+
+        renderRecipeContent(data) {
+            const ingredientsCount = Array.isArray(data.ingredients) ? data.ingredients.length : 0;
+            return `
+                <div class="card__row">
+                    <span class="card__badge">${ingredientsCount} ingr.</span>
+                </div>
+                <div class="card__details">
+                    <span>⏱️ ${data.prepTime || '30 min'}</span>
+                </div>
+            `;
+        },
+
+        renderSavedListContent(data) {
+            const itemCount = Array.isArray(data.items) ? data.items.length : 0;
+            const total = Array.isArray(data.items) ? data.items.reduce((acc, item) => acc + (parseFloat(item.valor || 0) * parseFloat(item.qtd || 0)), 0) : 0;
+            return `
+                <div class="card__details">
+                    <span>📦 ${itemCount} itens</span>
+                    <span>💰 R$ ${total.toFixed(2)}</span>
+                </div>
+            `;
+        },
+
+        renderEssentialContent(data) {
+            return `
+                <div class="card__details">
+                    <span>💰 R$ ${parseFloat(data.preco || 0).toFixed(2)} / ${data.unid}</span>
+                </div>
+            `;
+        },
+        // ==============================================================================
 
         cacheDOMElements() {
+
              this.elements = {
                  body: document.body,
                  mainContainer: document.querySelector('.main-container'),
@@ -526,13 +655,31 @@ attachEventListeners() {
             this.elements.hamburgerMenuWrapper?.addEventListener('click', toggleHamburgerMenu);
             this.elements.hamburgerMenuWrapper?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleHamburgerMenu(e); } });
 
-            document.addEventListener('click', (e) => { 
+document.addEventListener('click', (e) => { 
+                // Fecha o node cluster superior (legado)
                 if (this.elements.nodeCluster?.classList.contains('is-open') && !e.target.closest('.node-cluster') && !e.target.closest('.hamburger-menu-wrapper')) { 
                     this.elements.nodeCluster?.classList.remove('is-open'); 
                     this.elements.hamburgerMenuWrapper?.classList.remove('is-open');
                     this.elements.hamburgerMenuWrapper?.setAttribute('aria-expanded', 'false');
                 } 
+
+                // NOVO: Força o Menu Lateral (Sidebar) a encolher/fechar se clicar fora dele
+                if (this.elements.appSidebar && this.elements.appSidebar.classList.contains('is-open')) {
+                    if (!e.target.closest('.app-sidebar') && !e.target.closest('#menu-toggle-btn')) {
+                        this.closeSidebar();
+                    }
+                }
             });
+
+            // NOVO: Previne o efeito "Hover Travado" do menu lateral e dos cards em telas Touch
+            document.addEventListener('touchstart', (e) => {
+                if (!e.target.closest('.app-sidebar') && !e.target.closest('.card')) {
+                    // Se tocou fora do menu, retira o foco fantasma que mantém as coisas abertas
+                    if (document.activeElement && document.activeElement !== document.body) {
+                        document.activeElement.blur();
+                    }
+                }
+            }, { passive: true });
             
             this.elements.nodeCluster?.addEventListener('click', (e) => { 
                 const link = e.target.closest('a');
