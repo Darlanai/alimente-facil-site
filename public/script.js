@@ -789,9 +789,9 @@ this.elements.body.addEventListener('click', e => {
                  }
 
 // --- 1. RECEITAS (PRIORIDADE TOTAL) ---
-                 const recipeItemEl = closest('.recipe-list-item');
+                 const recipeItemEl = closest('.recipe-list-item') || closest('.card--recipe');
                  if(recipeItemEl) {
-                      const recipeId = recipeItemEl.dataset.recipeId;
+                      const recipeId = recipeItemEl.dataset.recipeId || recipeItemEl.dataset.id;
                       if (closest('.delete-recipe-btn')) { this.handleDeleteRecipe(recipeId); } 
                       else if (closest('.edit-recipe-btn')) { this.handleOpenRecipeEditModal(recipeId); } 
                       else if (!closest('.icon-button')) { 
@@ -853,9 +853,9 @@ this.elements.body.addEventListener('click', e => {
                  }
 
 // --- 3. GESTÃO DE LISTAS SALVAS ---
-const savedListEl = closest('.saved-list-item');
+const savedListEl = closest('.saved-list-item') || closest('.card--saved-list');
                  if (savedListEl) {
-                    const listId = savedListEl.dataset.listId;
+                    const listId = savedListEl.dataset.listId || savedListEl.dataset.id;
 
                     // Se clicou no ícone de lixeira
                     if (closest('.delete-list-btn')) {
@@ -1850,78 +1850,137 @@ handleOpenPantryView(itemEl) {
         },
 
 handleSavePantryEdit() {
-             // 1. Feedback Visual (Loading)
              const btn = document.getElementById('pantry-save-btn');
              const originalText = btn ? btn.innerHTML : 'Salvar';
-             if(btn) { 
-                 btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...'; 
-                 btn.disabled = true; 
-             }
+             if(btn) { btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...'; btn.disabled = true; }
 
-             // 2. Delay Simulado para sensação de processamento (600ms)
              setTimeout(() => {
                  const id = document.getElementById('pantry-edit-id').value;
                  if (!id) { if(btn){btn.innerHTML = originalText; btn.disabled = false;} return; }
+                 
+                 const type = document.getElementById('pantry-edit-form-fullscreen')?.dataset.editType || 'despensa';
+                 const listId = document.getElementById('pantry-edit-form-fullscreen')?.dataset.listId;
                  
                  const updatedData = { 
                      name: document.getElementById('pantry-edit-name').value.trim() || "Item sem nome", 
                      qtd: parseFloat(document.getElementById('pantry-edit-qtd').value) || 1, 
                      unid: document.getElementById('pantry-edit-unid').value, 
-                     stock: parseInt(document.getElementById('pantry-edit-stock').value) || 100,
-                     validade: document.getElementById('pantry-edit-validade').value || null
                  };
 
-                 const itemIndex = this.state.despensa.findIndex(i => i.id.toString() === id);
-                 if (itemIndex > -1) { 
-                     const originalItem = this.state.despensa[itemIndex];
-                     this.state.despensa[itemIndex] = { ...originalItem, ...updatedData }; 
-                     this.renderDespensaWidget(); 
-                     if(this.activeModule === 'despensa') this.renderDespensa(); 
-                     this.showNotification("Item atualizado com sucesso!", "success");
+                 if (type === 'despensa') {
+                     updatedData.stock = parseInt(document.getElementById('pantry-edit-stock').value) || 100;
+                     updatedData.validade = document.getElementById('pantry-edit-validade').value || null;
+                     const itemIndex = this.state.despensa.findIndex(i => i.id.toString() === id);
+                     if (itemIndex > -1) { 
+                         this.state.despensa[itemIndex] = { ...this.state.despensa[itemIndex], ...updatedData }; 
+                         this.renderDespensaWidget(); 
+                         if(this.activeModule === 'despensa') this.renderDespensa(); 
+                         this.showNotification("Item atualizado com sucesso!", "success");
+                     }
+                 } else if (type === 'lista' && listId && this.state.listas[listId]) {
+                     const itemIndex = this.state.listas[listId].items.findIndex(i => i.id.toString() === id);
+                     if (itemIndex > -1) { 
+                         this.state.listas[listId].items[itemIndex] = { ...this.state.listas[listId].items[itemIndex], ...updatedData }; 
+                         const modalBody = document.querySelector(`#list-view-modal-body[data-list-id="${listId}"]`);
+                         if (modalBody && document.getElementById('list-view-modal').classList.contains('is-visible')) { const lista = this.state.listas[listId]; modalBody.innerHTML = lista.items.map(item => this.createListaItemHTML(item)).join(''); } 
+                         else { this.renderListaAtiva(listId); }
+                         this.renderListaWidget(); this.renderOrcamento();
+                         this.showNotification("Item atualizado com sucesso!", "success");
+                     }
                  }
                  
                  this.saveState(); 
                  this.closeModal('pantry-view-modal');
 
-                 // 3. Restaura o botão
-                 if(btn) { 
-                     btn.innerHTML = originalText; 
-                     btn.disabled = false; 
-                 }
+                 if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
              }, 600);
         },
 
-        renderListasSalvas() {
+        renderListItemDetailDesktop(item, listId) {
+            const container = document.getElementById('lista-detail-desktop');
+            if(!container) return;
+            container.innerHTML = `
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-pencil"></i> Editar: ${this.escapeHtml(item.name)}</h3>
+                    <div class="card-actions">
+                        <button class="icon-button" style="color:var(--red); border-color:var(--red);" onclick="app.handleDeleteItem('lista', '${item.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <form id="list-item-desktop-form" onsubmit="return false;" style="max-width: 600px; margin: 0 auto;">
+                        <div class="form-group">
+                            <label>Nome do Item</label>
+                            <input type="text" id="edit-item-name-dt" value="${this.escapeHtml(item.name)}" class="input-large">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Quantidade</label>
+                                <div class="stepper-control">
+                                    <button type="button" class="stepper-btn minus" onclick="this.nextElementSibling.value = Math.max(0.1, parseFloat(this.nextElementSibling.value) - 1)"><i class="fa-solid fa-minus"></i></button>
+                                    <input type="number" id="edit-item-qtd-dt" value="${item.qtd || 1}" step="any" style="width: 70px !important; text-align: center; font-size: 1.3rem !important; font-weight: bold; background: transparent !important; border: none !important; box-shadow: none !important;">
+                                    <button type="button" class="stepper-btn plus" onclick="this.previousElementSibling.value = parseFloat(this.previousElementSibling.value) + 1"><i class="fa-solid fa-plus"></i></button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Unidade</label>
+                                 <select id="edit-item-unid-dt" class="input-large">
+                                    ${['un','kg','g','L','ml','pct','cx'].map(u => `<option value="${u}" ${item.unid === u ? 'selected' : ''}>${u}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Valor (R$)</label>
+                            <input type="number" id="edit-item-valor-dt" value="${parseFloat(item.valor || 0).toFixed(2)}" class="input-large" step="0.01">
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-primary" id="list-item-save-btn-dt" style="width:100%;"><i class="fa-solid fa-save"></i> Salvar Alterações</button>
+                </div>
+            `;
+            
+            document.getElementById('list-item-save-btn-dt').addEventListener('click', () => {
+                const name = document.getElementById('edit-item-name-dt').value.trim();
+                const qtd = parseFloat(document.getElementById('edit-item-qtd-dt').value) || 1;
+                const unid = document.getElementById('edit-item-unid-dt').value;
+                const valor = parseFloat(document.getElementById('edit-item-valor-dt').value) || 0;
+                
+                if(this.state.listas[listId]) {
+                    const itemIndex = this.state.listas[listId].items.findIndex(i => i.id.toString() === item.id.toString());
+                    if (itemIndex > -1) {
+                        this.state.listas[listId].items[itemIndex] = { ...this.state.listas[listId].items[itemIndex], name, qtd, unid, valor: valor.toFixed(2) };
+                        this.saveState();
+                        this.renderListaAtiva(listId);
+                        this.renderListaWidget();
+                        this.renderOrcamento();
+                        this.showNotification("Item da lista atualizado!", "success");
+                    }
+                }
+            });
+        },
+
+renderListasSalvas() {
             const container = document.getElementById('saved-lists-container'); 
             if(!container) return;
             const listIds = Object.keys(this.state.listas);
             container.innerHTML = listIds.map(listId => { 
                 const lista = this.state.listas[listId]; 
-                const itemCount = lista.items.length;
-                const totalValue = lista.items.reduce((acc, item) => acc + (parseFloat(item.valor || 0) * parseFloat(item.qtd || 0)), 0);
-                const listName = this.escapeHtml(lista.nome);
-                return `
-                <div class="saved-list-item placeholder-item is-clickable" data-list-id="${listId}" role="button" tabindex="0">
-                    <div class="item-row">
-                        <div class="item-main-info">
-                            <i class="fa-solid fa-list-ul" aria-hidden="true" style="color: var(--glass-text-secondary);"></i>
-                            <span class="item-name">${listName}</span>
-                        </div>
-                        <div class="item-actions">
-<button type="button" class="icon-button select-list-btn" title="Editar" aria-label="Editar ${listName}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
-<button type="button" class="icon-button delete-list-btn" title="Excluir" aria-label="Excluir ${listName}"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
-                        </div>
-                    </div>
-                    <div class="item-details-grid">
-                        <div>Itens: <span>${itemCount}</span></div>
-                        <div>Total: <span>R$ ${totalValue.toFixed(2)}</span></div>
-                        <div>Abrir: <span>Toque</span></div>
-                    </div>
-                </div>`; 
+                return this.renderUniversalCard({
+                    type: 'saved-list',
+                    data: {
+                        id: listId,
+                        name: lista.nome,
+                        items: lista.items || []
+                    },
+                    actions: [
+                        { type: 'edit select-list-btn', icon: 'fa-solid fa-pencil', label: 'Editar' },
+                        { type: 'danger delete-list-btn', icon: 'fa-solid fa-trash', label: 'Excluir' }
+                    ],
+                    isClickable: true
+                });
             }).join('');
             if(listIds.length === 0) { container.innerHTML = '<p class="empty-list-message">Nenhuma lista salva. Crie uma nova acima!</p>'; }
         },
-
 renderDespensa(container) {
     if (!container) container = document.getElementById('module-despensa');
     if (!container) return;
@@ -2004,43 +2063,30 @@ renderReceitas(container) {
                 </div>
              `;
 
-             const listContainer = document.getElementById('main-recipe-grid');
+const listContainer = document.getElementById('main-recipe-grid');
              const recipes = Object.values(this.state.receitas);
              
-             // Renderiza os cards IDÊNTICOS aos da Despensa
              listContainer.innerHTML = recipes.map(recipe => {
-                 const name = this.escapeHtml(recipe.name);
-                 const ingredientesArr = recipe.ingredients || recipe.ingredientes || recipe.ingredientes?.items || [];
-                 const qtdIngredientes = Array.isArray(ingredientesArr) ? ingredientesArr.length : 0;
-                 
-                 return `
-                 <div class="recipe-list-item placeholder-item is-clickable" data-recipe-id="${recipe.id}" data-recipe-name="${name}" role="button" tabindex="0">
-                    <div class="item-row">
-                        <div class="item-main-info">
-                            <div class="item-icon-wrapper" style="background: rgba(0, 242, 234, 0.1); color: var(--primary-color);">
-                                <i class="fa-solid fa-utensils"></i>
-                            </div>
-                            <div class="item-text-content">
-                                <span class="item-name">${name}</span>
-                                <span class="item-details-mini" style="font-size: 0.8em; opacity: 0.7;">${qtdIngredientes} ingr.</span>
-                            </div>
-                        </div>
-
-                        <div class="item-actions">
-                             <button class="icon-button edit-recipe-btn" title="Editar"><i class="fa-solid fa-pencil"></i></button>
-                             <button class="icon-button delete-recipe-btn" title="Excluir" style="color: var(--red); border-color: rgba(255,59,48,0.3);"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                    <div class="item-details-grid" aria-label="Detalhes da receita">
-                        <div>Ingredientes:<span> ${qtdIngredientes}</span></div>
-                    </div>
-                 </div>`;
+                 return this.renderUniversalCard({
+                     type: 'recipe',
+                     data: {
+                         id: recipe.id,
+                         name: recipe.name,
+                         ingredients: recipe.ingredients || recipe.ingredientes || recipe.ingredientes?.items || []
+                     },
+                     actions: [
+                         { type: 'edit edit-recipe-btn', icon: 'fa-solid fa-pencil', label: 'Editar' },
+                         { type: 'danger delete-recipe-btn', icon: 'fa-solid fa-trash', label: 'Excluir' }
+                     ],
+                     isClickable: true
+                 });
              }).join('');
              
-             if(recipes.length === 0){ listContainer.innerHTML = '<p class="empty-list-message">Nenhuma receita criada.</p>'; }
+if(recipes.length === 0){ listContainer.innerHTML = '<p class="empty-list-message">Nenhuma receita criada.</p>'; }
         },
 
-renderPantryDetailDesktop(item) {
+        renderPantryDetailDesktop(item) {
+
     const container = document.getElementById('despensa-detail-desktop');
     if(!container) return;
     
@@ -2205,14 +2251,14 @@ container.innerHTML = `
              let gridHTML = '';
              for (const dayKey in days) {
                   gridHTML += `
-                       <div class="planner-day-card">
-                            <div class="planner-day-header">
-                                <span>${days[dayKey]}</span>
+<div class="planner-day-card dashboard-card">
+                            <div class="planner-day-header card-header">
+                                <h3>${days[dayKey]}</h3>
                                 <div class="card-actions">
                                     <button class="icon-button day-clear-btn" data-day="${dayKey}" title="Limpar Dia" aria-label="Limpar ${days[dayKey]}"><i class="fa-solid fa-eraser" aria-hidden="true"></i></button>
                                 </div>
                             </div>
-                            <div class="planner-meal-slots">`;
+                            <div class="planner-meal-slots card-content">`;
                   for (const mealKey in meals) {
                        const iconHTML = mealIcons[mealKey] || '';
                        gridHTML += `
@@ -2226,12 +2272,17 @@ container.innerHTML = `
                            const checkBtnColor = isCompleted ? 'color: var(--green);' : 'color: var(--glass-text-secondary);';
                            const mealName = this.escapeHtml(mealData.name);
                            gridHTML += `
-                           <div class="planner-meal-item ${completedClass}" data-recipe-id="${mealData.id}" data-day="${dayKey}" data-meal="${mealKey}">
-                               <span class="meal-item-name" style="color: #fff; font-weight: 700;">${mealName}</span>
-                               <div class="meal-item-actions">
-                                   <button class="icon-button meal-view-btn" title="Ver Receita"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
-                                   <button class="icon-button meal-complete-btn" title="Marcar como Concluído" style="${checkBtnColor}"><i class="fa-solid fa-check" aria-hidden="true"></i></button>
-                                   <button class="icon-button meal-delete-btn" title="Remover Refeição"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+                           <div class="placeholder-item is-clickable planner-meal-item ${completedClass}" data-recipe-id="${mealData.id}" data-day="${dayKey}" data-meal="${mealKey}">
+                               <div class="item-row">
+                                   <div class="item-main-info">
+                                        <i class="fa-solid fa-utensils" aria-hidden="true" style="color: var(--glass-text-secondary);"></i>
+                                        <span class="item-name" style="${isCompleted ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${mealName}</span>
+                                   </div>
+                                   <div class="item-actions">
+                                       <button class="icon-button meal-view-btn" title="Ver Receita"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                                       <button class="icon-button meal-complete-btn" title="Marcar como Concluído" style="${checkBtnColor}"><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                                       <button class="icon-button meal-delete-btn" title="Remover Refeição"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+                                   </div>
                                </div>
                            </div>`;
                        }
@@ -2717,7 +2768,7 @@ handleSaveListaAtiva(forceCreate = false) {
              });
         },
 
-        handleOpenEditModal(itemEl) {
+handleOpenEditModal(itemEl) {
             const id = itemEl.dataset.id;
             const isDespensa = itemEl.closest('[id*="despensa-items"]') ? true : false;
             const isLista = itemEl.closest('[id*="lista-items"]') || itemEl.closest('#list-view-modal-body') ? true : false;
@@ -2730,54 +2781,65 @@ handleSaveListaAtiva(forceCreate = false) {
             else if (isLista) { item = this.state.listas[targetListId]?.items.find(i => i.id.toString() === id); }
             else { return; }
             if (!item) { return; }
-            const typeInput = document.getElementById('edit-item-type');
-            document.getElementById('edit-item-id').value = item.id;
-            typeInput.value = isDespensa ? 'despensa' : 'lista';
-            document.getElementById('item-edit-title').innerHTML = `<i class="fa-solid fa-pencil" aria-hidden="true"></i> Editar ${item.name}`;
-            document.getElementById('edit-item-name').value = item.name;
-            document.getElementById('edit-item-qtd').value = item.qtd;
-            document.getElementById('edit-item-unid').value = item.unid;
-            document.getElementById('edit-item-valor').value = parseFloat(item.valor || 0).toFixed(2);
-            if (isLista) { typeInput.dataset.listId = targetListId; }
-            const despensaFields = document.getElementById('edit-item-despensa-fields');
+            
+            // Fluxo Desktop Master-Detail (Como na Despensa)
+            if (window.innerWidth >= 992) {
+                if (isDespensa) {
+                    this.renderPantryDetailDesktop(item);
+                    document.querySelectorAll('#despensa-list-container .placeholder-item').forEach(el => el.style.borderColor = 'rgba(255,255,255,0.1)');
+                    itemEl.style.borderColor = 'var(--primary-color)';
+                } else if (isLista) {
+                    this.renderListItemDetailDesktop(item, targetListId);
+                    document.querySelectorAll('#lista-items-full .placeholder-item').forEach(el => el.style.borderColor = 'rgba(255,255,255,0.1)');
+                    itemEl.style.borderColor = 'var(--primary-color)';
+                }
+                return;
+            }
+
+            // Fluxo Mobile: Reutiliza o pantry-view-modal para listas e despensa (sem duplicar modais)
+            const nameInput = document.getElementById('pantry-edit-name');
+            const qtdInput = document.getElementById('pantry-edit-qtd');
+            const unidSelect = document.getElementById('pantry-edit-unid');
+            const validadeInput = document.getElementById('pantry-edit-validade');
+            const stockInput = document.getElementById('pantry-edit-stock');
+            const idHidden = document.getElementById('pantry-edit-id');
+            
+            document.getElementById('pantry-view-title').innerHTML = isDespensa ? "Editar Despensa" : "Editar Item";
+            
+            if(nameInput) nameInput.value = item.name;
+            if(qtdInput) qtdInput.value = item.qtd || 1;
+            if(unidSelect) unidSelect.value = item.unid || 'un';
+            if(idHidden) idHidden.value = item.id;
+            
+            const form = document.getElementById('pantry-edit-form-fullscreen');
+            if (form) {
+                form.dataset.editType = isDespensa ? 'despensa' : 'lista';
+                form.dataset.listId = isLista ? targetListId : '';
+            }
+
+            const stockGroup = stockInput ? stockInput.closest('.form-group') : null;
+            const valGroup = validadeInput ? validadeInput.closest('.form-group') : null;
+
             if (isDespensa) {
-                 document.getElementById('edit-item-validade').value = item.validade || '';
-                 document.getElementById('edit-item-stock').value = item.stock !== undefined ? item.stock : 100;
-                 despensaFields.style.display = 'block';
-            } else { despensaFields.style.display = 'none'; }
-            this.openModal('item-edit-modal');
+                if(stockGroup) stockGroup.style.display = 'block';
+                if(valGroup) valGroup.style.display = 'block';
+                if(stockInput) { stockInput.value = item.stock || 100; stockInput.dispatchEvent(new Event('input')); }
+                if(validadeInput) validadeInput.value = item.validade || '';
+            } else {
+                if(stockGroup) stockGroup.style.display = 'none';
+                if(valGroup) valGroup.style.display = 'none';
+            }
+
+            const actionsContainer = document.getElementById('pantry-view-actions-container');
+            if (actionsContainer) {
+                actionsContainer.innerHTML = `<button class="btn btn-danger delete-btn" data-item-id="${id}"><i class="fa-solid fa-trash"></i> Excluir</button>`;
+            }
+            
+            this.openModal('pantry-view-modal');
         },
 
         handleSaveEditModal() {
-             const id = document.getElementById('edit-item-id').value;
-             const typeInput = document.getElementById('edit-item-type');
-             const type = typeInput.value;
-             if (!id || !type) {
-                this.handleAddItem('despensa', document.getElementById('item-edit-modal'));
-                this.closeModal('item-edit-modal'); return;
-             }
-             const updatedData = { name: document.getElementById('edit-item-name').value.trim() || "Item sem nome", qtd: parseFloat(document.getElementById('edit-item-qtd').value) || 1, unid: document.getElementById('edit-item-unid').value, valor: this.parseCurrency(document.getElementById('edit-item-valor').value).toFixed(2) };
-             if (type === 'despensa') {
-                  updatedData.validade = document.getElementById('edit-item-validade').value || null;
-                  updatedData.stock = parseInt(document.getElementById('edit-item-stock').value);
-                  if (isNaN(updatedData.stock) || updatedData.stock < 0 || updatedData.stock > 100) { updatedData.stock = 100; }
-                  const itemIndex = this.state.despensa.findIndex(i => i.id.toString() === id);
-                  if (itemIndex > -1) { this.state.despensa[itemIndex] = { ...this.state.despensa[itemIndex], ...updatedData }; this.renderDespensaWidget(); if(this.activeModule === 'despensa') this.renderDespensa(); }
-             } else {
-                  const targetListId = typeInput.dataset.listId;
-                  if (!targetListId) return;
-                  if (this.state.listas[targetListId]) {
-                       const itemIndex = this.state.listas[targetListId].items.findIndex(i => i.id.toString() === id);
-                       if (itemIndex > -1) { 
-                           this.state.listas[targetListId].items[itemIndex] = { ...this.state.listas[targetListId].items[itemIndex], ...updatedData }; 
-                           const modalBody = document.querySelector(`#list-view-modal-body[data-list-id="${targetListId}"]`);
-                           if (modalBody && document.getElementById('list-view-modal').classList.contains('is-visible')) { const lista = this.state.listas[targetListId]; modalBody.innerHTML = lista.items.map(item => this.createListaItemHTML(item)).join(''); } 
-                           else { this.renderListaAtiva(targetListId); }
-                           this.renderListaWidget(); this.renderOrcamento(); 
-                       }
-                  }
-             }
-             this.saveState(); this.closeModal('item-edit-modal');
+             // Opcional caso seja chamado de outro lugar antigo (Essentials)
         },
 
         handleMoveToDespensa(itemEl) {

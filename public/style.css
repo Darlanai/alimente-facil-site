@@ -3067,21 +3067,29 @@ body.app-mode .module-container{ overflow: hidden !important; }
 }
 
 /* --- PADRONIZAÇÃO VISUAL: CANTOS ARREDONDADOS (6px) --- */
-.dashboard-card {
+.dashboard-card, .modal-box, .saved-list-item, .recipe-list-item, .planner-day-card {
     border-radius: 6px !important;
     overflow: hidden !important; /* O SEGREDO: Corta qualquer recheio ou rodapé que tente ficar reto! */
 }
 
-.card-header {
+.card-header, .modal-header, .planner-day-header {
     border-radius: 6px 6px 0 0 !important;
 }
 
-.card-footer {
+.card-footer, .modal-footer {
     border-radius: 0 0 6px 6px !important;
 }
 
-.card-content:last-child {
+.card-content:last-child, .modal-body:last-child {
     border-radius: 0 0 6px 6px !important;
+}
+
+/* Correção Definitiva de Z-Index para Modais */
+.modal-overlay {
+    z-index: 20000 !important; 
+}
+#autocomplete-suggestions { 
+    z-index: 20001 !important; 
 }
 
 /* Oculta de vez TODOS os rodapés soltos com botões de Compartilhar/Imprimir que sobraram no seu JS */
