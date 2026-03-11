@@ -773,25 +773,19 @@
                     <div class="chat-message ia"><div class="bubble">Olá! Como posso te ajudar hoje com suas receitas ou planejamento?</div></div> 
                 </div> 
             </div>
-            <div class="modal-footer ai-chat-footer" style="justify-content: space-between;"> 
+<div class="modal-footer ai-chat-footer" style="justify-content: space-between;"> 
                  <div class="form-group" style="width: 100%; display: flex; gap: 8px;"> 
+                     <button class="icon-button" id="ai-voice-btn" style="width: 45px; height: 45px; flex-shrink: 0;" aria-label="Falar com o Chef IA" title="Ditar mensagem"><i class="fa-solid fa-microphone"></i></button>
                      <label for="ai-chat-input" class="sr-only">Digite sua mensagem para o Chef IA</label>
-                     <input type="text" id="ai-chat-input" placeholder="Digite sua mensagem..."> 
+                     <input type="text" id="ai-chat-input" placeholder="Digite ou fale sua mensagem..."> 
                      <button class="btn btn-primary" id="ai-chat-send-btn" style="padding: 0 1rem;" aria-label="Enviar mensagem"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button> 
                  </div> 
-            </div> 
+            </div>
         </div> 
     </div>
 
 <div class="glass-dock-container">
     <div class="glass-dock">
-        <button class="dock-grip" type="button" aria-label="Arrastar dock" title="Arrastar dock">
-            <span class="dock-grip-dots" aria-hidden="true">
-                <span></span><span></span><span></span>
-                <span></span><span></span><span></span>
-            </span>
-        </button>
-        <div class="dock-indicator"></div>
         <button class="dock-item active" data-target="home"><i class="fa-solid fa-house"></i><span>Início</span></button>
         <button class="dock-item" data-target="app"><i class="fa-solid fa-border-all"></i><span>Painel</span></button>
         <button class="dock-item dock-action" type="button" data-action="open-chef" aria-label="Abrir Chef IA" title="Chef IA">

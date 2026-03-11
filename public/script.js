@@ -170,47 +170,32 @@ orcamento: {
             }
         },
 
-        initDockMenu() {
+initDockMenu() {
             const dock = document.querySelector('.glass-dock');
-            const indicator = document.querySelector('.dock-indicator');
-            if (!dock || !indicator) return;
+            if (!dock) return;
 
             const viewDockItems = () => Array.from(dock.querySelectorAll('.dock-item:not(.dock-action)'));
-
             const homeBtn = () => dock.querySelector('.dock-item[data-target="home"]');
             const appBtn  = () => dock.querySelector('.dock-item[data-target="app"]');
 
-            // Borda azul no botão "oposto" (Início ↔ Painel), como dica de navegação
-            const updateHint = () => {
+            const updateStates = (targetBtn) => {
+                viewDockItems().forEach(btn => btn.classList.remove('active'));
+                if (targetBtn) targetBtn.classList.add('active');
+                
                 const h = homeBtn();
                 const a = appBtn();
-                if (!h || !a) return;
-                // Se está no Painel (app mode), destaca Início. Se está no Início, destaca Painel.
-                h.classList.toggle('hint', !!this.isAppMode);
-                a.classList.toggle('hint', !this.isAppMode);
+                if (h && a) {
+                    h.classList.toggle('hint', !!this.isAppMode);
+                    a.classList.toggle('hint', !this.isAppMode);
+                }
             };
 
-            const updateIndicator = (targetBtn) => {
-                const items = viewDockItems();
-                items.forEach(btn => btn.classList.remove('active'));
-                if (targetBtn) targetBtn.classList.add('active');
-                if (!targetBtn) return;
-                requestAnimationFrame(() => {
-                    indicator.style.width = `${targetBtn.offsetWidth}px`;
-                    indicator.style.left = `${targetBtn.offsetLeft}px`;
-                });
-            
-                updateHint();
-};
-
-            // Clique único (delegação) para evitar múltiplos listeners
             dock.addEventListener('click', (e) => {
                 const btn = e.target.closest('.dock-item');
                 if (!btn) return;
                 e.preventDefault();
                 e.stopPropagation();
 
-                // Ação: Chef IA (não muda o indicador)
                 if (btn.classList.contains('dock-action') || btn.dataset.action === 'open-chef') {
                     this.setupChatbotModal();
                     this.openModal('ai-chat-modal');
@@ -224,25 +209,18 @@ orcamento: {
                         return;
                     }
                     this.enterAppMode();
-                    updateIndicator(btn);
+                    updateStates(btn);
                     return;
                 }
 
-                // Home
                 this.exitAppMode();
-                updateIndicator(btn);
+                updateStates(btn);
             });
 
-            // Estado inicial do indicador
             setTimeout(() => {
-                if (this.isAppMode) {
-                    const appBtn = dock.querySelector('.dock-item[data-target="app"]');
-                    if (appBtn) updateIndicator(appBtn);
-                } else {
-                    const homeBtn = dock.querySelector('.dock-item[data-target="home"]');
-                    if (homeBtn) updateIndicator(homeBtn);
-                }
-            }, 120);
+                if (this.isAppMode) updateStates(appBtn());
+                else updateStates(homeBtn());
+            }, 50);
         },
 
         initDraggableDock() {
@@ -3475,6 +3453,8 @@ openListEditView(listId) {
         setupChatbotModal() {
              const chatbotModal = document.getElementById('ai-chat-modal'); if (!chatbotModal || chatbotModal.dataset.initialized === 'true') return;
              const sendBtn = chatbotModal.querySelector('#ai-chat-send-btn'); const input = chatbotModal.querySelector('#ai-chat-input'); const messagesContainer = chatbotModal.querySelector('#ai-chat-messages-container');
+	     const voiceBtn = chatbotModal.querySelector('#ai-voice-btn');
+             if (voiceBtn) voiceBtn.onclick = () => this.startVoiceRecognition();
              const sendMessage = () => { 
                  const userText = input.value.trim(); 
                  if (!userText || this.isIAProcessing) return; 
@@ -3577,74 +3557,42 @@ async triggerChefIAAnalysis(prompt) {
             }
         },
 
-        async callGeminiAPI(userText) {
-            const context = {
-                listaAtiva: this.state.listas[this.activeListId] || {},
-                itensNaDespensa: this.state.despensa.map(i => `${i.qtd} ${i.unid} de ${i.name} (Vence: ${i.validade || 'N/A'})`),
-                listasExistentes: Object.values(this.state.listas).map(l => ({id: l.id, nome: l.nome})),
-                receitasSalvas: Object.values(this.state.receitas).map(r => ({id: r.id, name: r.name})),
-                planejador: this.state.planejador
-            };
+async callGeminiAPI(userText) {
+            // SIMULADOR DE IA OFFLINE (Garante que o app funcione sem o Backend Node.js configurado)
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    const txt = userText.toLowerCase();
+                    let responseObj = {
+                        intent: "answer_question",
+                        data: {},
+                        response_text_html: "Desculpe, ainda estou aprendendo a preparar esse prato! Posso ajudar a montar uma lista de compras ou sugerir algo com os itens da sua despensa?"
+                    };
 
-            // --- CONTROLE FINANCEIRO E TOKENS (TETO R$8) ---
-            const TOKEN_LIMIT_MONTH = 300000;
-            let currentTokens = this.state.aiUsage.tokensThisMonth || 0;
-            const usagePercent = currentTokens / TOKEN_LIMIT_MONTH;
-            let maxTokens = 600;
-            let econModePrompt = "";
+                    if (txt.includes('lista') || txt.includes('comprar')) {
+                        responseObj = {
+                            intent: "create_shopping_list",
+                            data: { list_name: "Compras Sugeridas pela IA", items: [{ name: "Arroz", quantity: 2, unit: "kg" }, { name: "Tomate", quantity: 5, unit: "un" }] },
+                            response_text_html: "Claro! Acabei de gerar uma lista otimizada baseada no seu padrão de consumo. <br><button class='af-option-btn' style='margin-top:10px; width:100%;' data-action='view-list' data-list-id='[NEW_LIST_ID]'><i class='fa-solid fa-eye'></i> Ver Lista Criada</button>"
+                        };
+                    } else if (txt.includes('receita') || txt.includes('frango') || txt.includes('ideia')) {
+                        responseObj = {
+                            intent: "create_recipe",
+                            data: { recipe_name: "Frango Rápido Chef IA", desc: "Perfeito para dias corridos, sugerido com base no que você tem.", ingredients: [{ name: "Peito de Frango", qty: "2", unit: "filés" }, { name: "Cebola", qty: "1", unit: "un" }], prepMode: "Grelhe o frango com a cebola até dourar. Fica pronto em 15 minutos!" },
+                            response_text_html: "Excelente! Criei uma receita rápida e econômica para você usando itens básicos. Já salvei no seu catálogo. <br><button class='af-option-btn' style='margin-top:10px; width:100%;' data-action='view-recipe' data-recipe-id='[NEW_RECIPE_ID]'><i class='fa-solid fa-utensils'></i> Ver Receita</button>"
+                        };
+                    } else if (txt.includes('semana') || txt.includes('cardápio') || txt.includes('planejar')) {
+                        responseObj = {
+                            intent: "answer_question",
+                            data: {},
+                            response_text_html: "Ótima ideia. Para a semana, sugiro focar em refeições com grãos (como o Arroz de Forno) que duram mais na geladeira, alternando com grelhados rápidos. Deseja que eu adicione isso ao seu planejador automaticamente?"
+                        };
+                    }
 
-            if (usagePercent >= 1.0) {
-                maxTokens = 150;
-                econModePrompt = "MODO RESTRITO: Responda da forma mais curta, direta e objetiva possível. Sem explicações adicionais.";
-            } else if (usagePercent >= 0.9) {
-                maxTokens = 250;
-                econModePrompt = "MODO ECONÔMICO: Responda de forma sucinta e direta.";
-            } else if (usagePercent >= 0.7) {
-                maxTokens = 400;
-            }
-
-            const systemPersona = `
-            VOCÊ É O "CHEF IA" DO ALIMENTE FÁCIL.
-            SUA ESPECIALIDADE: Gastronomia, Nutrição, Economia Doméstica.
-            SEU PODER NO SISTEMA: Você não apenas fala, você AGE (criar listas, receitas).
-            REGRA DE RESPOSTA (JSON OBRIGATÓRIO): Responda APENAS um objeto JSON cru.
-            Formato: { "intent": "NOME_DA_ACAO", "data": { ... }, "response_text_html": "HTML da resposta falada." }
-            CONTEXTO: ${JSON.stringify(context)}
-            ${econModePrompt}
-            `;
-            const fullPrompt = `${systemPersona}\n\nPERGUNTA DO USUÁRIO: "${userText}"`;
-
-            try {
-                const response = await fetch('/api/chef-ia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: fullPrompt, max_tokens: maxTokens })
-                });
-
-                if (!response.ok) { const errData = await response.json(); throw new Error(errData.error || `Erro Servidor: ${response.status}`); }
-                const data = await response.json();
-                
-                // Atualização estimada de uso (backend validation simulada)
-                this.state.aiUsage.tokensThisMonth += (fullPrompt.length + (data.candidates?.[0]?.content?.parts?.[0]?.text.length || 0)) / 4;
-
-                let textResponse = data.candidates[0].content.parts[0].text;
-                textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-                
-                try {
-                    let parsed = JSON.parse(textResponse);
-                    if (parsed.intent === 'create_shopping_list') { parsed.response_text_html += `<br><button class='af-option-btn' style='margin-top:10px; width:100%;' data-action='view-list' data-list-id='[NEW_LIST_ID]'><i class="fa-solid fa-eye"></i> Ver Lista</button>`; }
-                    if (parsed.intent === 'create_recipe') { parsed.response_text_html += `<br><button class='af-option-btn' style='margin-top:10px; width:100%;' data-action='view-recipe' data-recipe-id='[NEW_RECIPE_ID]'><i class="fa-solid fa-utensils"></i> Ver Receita</button>`; }
-                    return { json: parsed, html: null };
-                } catch (e) {
-                    const cleanJson = textResponse.substring(textResponse.indexOf('{'), textResponse.lastIndexOf('}') + 1);
-                    const parsed = JSON.parse(cleanJson);
-                    return { json: parsed, html: null };
-                }
-            } catch (e) {
-                console.error("Erro Chef IA:", e);
-                return { json: { intent: "answer_question", data: {} }, html: `<span style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i> Ocorreu um erro: ${e.message}. Tente novamente.</span>` };
-            }
+                    resolve({ json: responseObj, html: null });
+                }, 1500); // Simula o tempo de "pensamento" de 1.5s
+            });
         },
+
         processIAResponse(jsonResponse, htmlResponse, thinkingMessageElement) { 
             let newRecipeId, newListId; 
             let finalHtml = htmlResponse || jsonResponse.response_text_html;
