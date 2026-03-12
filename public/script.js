@@ -3484,17 +3484,20 @@ openListEditView(listId) {
              this.activeListId = newListId; this.saveState(); this.showNotification(`Lista "${listName}" criada pela IA.`, "success"); this.activateModuleAndRender('lista');
         },
 
+        getChefIACapabilitiesText() {
+            return "Você é o Chef IA do Alimente Fácil. Atua como especialista completo em alimentação, gastronomia, compras, orçamento doméstico, aproveitamento integral, organização de despensa, listas, receitas, planejamento semanal e operação do próprio sistema. Você entende ingredientes, unidades, rendimento, conservação, rotina de supermercado, precificação, experiência do usuário e fluxos do app. Seja cordial, objetivo, extremamente competente e sempre tente executar ações úteis dentro do sistema quando o pedido permitir.";
+        },
+
 async triggerChefIAAnalysis(prompt) {
             if (this.isIAProcessing) return;
 
-            // --- FILTRO DE ESCOPO ESTRITO ---
-            const forbiddenWords = ['matemática', 'equação', 'código', 'política', 'criptomoeda', 'direito', 'medicina', 'programação'];
-            const lowerPrompt = prompt.toLowerCase();
-            if (forbiddenWords.some(word => lowerPrompt.includes(word))) {
+            const lowerPrompt = String(prompt || '').toLowerCase();
+            const outOfScopeWords = ['criptomoeda', 'aposta esportiva', 'partido político', 'eleição', 'programação avançada'];
+            if (outOfScopeWords.some(word => lowerPrompt.includes(word))) {
                 const messagesContainer = document.getElementById('ai-chat-messages-container');
                 const filterMessage = document.createElement('div');
                 filterMessage.className = 'chat-message ia';
-                filterMessage.innerHTML = '<div class="bubble">Sou especializado em alimentação, receitas e organização de compras. Posso ajudar com isso 😊</div>';
+                filterMessage.innerHTML = '<div class="bubble">Posso ir muito fundo em alimentação, receitas, listas, despensa, planejamento, economia doméstica e também operar recursos do Alimente Fácil. Para outros temas fora desse universo, meu foco é limitado.</div>';
                 messagesContainer.appendChild(filterMessage);
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 return;
@@ -3558,38 +3561,81 @@ async triggerChefIAAnalysis(prompt) {
         },
 
 async callGeminiAPI(userText) {
-            // SIMULADOR DE IA OFFLINE (Garante que o app funcione sem o Backend Node.js configurado)
+            // SIMULADOR DE IA OFFLINE PREMIUM
             return new Promise((resolve) => {
                 setTimeout(() => {
-                    const txt = userText.toLowerCase();
+                    const txt = String(userText || '').toLowerCase();
+                    const pantryItems = Object.values(this.state.estoque || {}).slice(0, 8).map(item => item.name || item.nome).filter(Boolean);
+                    const activeList = this.state.listas[this.activeListId] || null;
+                    const activeListName = activeList?.nome || 'sua lista atual';
+                    const inferredBudget = Number(this.state?.orcamento?.total || 0);
+                    const capText = this.getChefIACapabilitiesText();
+
                     let responseObj = {
                         intent: "answer_question",
                         data: {},
-                        response_text_html: "Desculpe, ainda estou aprendendo a preparar esse prato! Posso ajudar a montar uma lista de compras ou sugerir algo com os itens da sua despensa?"
+                        response_text_html: `<strong>Chef IA pronto.</strong><br>${capText}<br><br>Posso montar receitas, criar listas, sugerir economia, reaproveitar alimentos, organizar sua rotina alimentar e orientar você dentro do sistema.`
                     };
 
-                    if (txt.includes('lista') || txt.includes('comprar')) {
+                    const makeListItems = (names) => names.map(name => ({ name, quantity: 1, unit: 'un' }));
+
+                    if (txt.includes('lista') || txt.includes('comprar') || txt.includes('mercado') || txt.includes('supermercado')) {
+                        let items = [
+                            { name: 'Arroz', quantity: 2, unit: 'kg' },
+                            { name: 'Feijão Preto', quantity: 1, unit: 'kg' },
+                            { name: 'Tomate', quantity: 6, unit: 'un' },
+                            { name: 'Cebola', quantity: 3, unit: 'un' },
+                            { name: 'Alho', quantity: 1, unit: 'un' }
+                        ];
+
+                        if (txt.includes('café da manhã')) items = makeListItems(['Ovos', 'Pão de Forma', 'Banana', 'Leite']);
+                        if (txt.includes('fitness') || txt.includes('saud') || txt.includes('dieta')) items = makeListItems(['Peito de Frango', 'Batata Doce', 'Ovos', 'Brócolis', 'Aveia']);
+                        if (txt.includes('barata') || txt.includes('econ') || txt.includes('econom')) items = makeListItems(['Arroz', 'Feijão Preto', 'Macarrão', 'Ovos', 'Tomate', 'Cebola']);
+                        if (txt.includes('churrasco')) items = makeListItems(['Carne Bovina', 'Linguiça', 'Pão Francês', 'Vinagre', 'Tomate', 'Cebola']);
+
                         responseObj = {
                             intent: "create_shopping_list",
-                            data: { list_name: "Compras Sugeridas pela IA", items: [{ name: "Arroz", quantity: 2, unit: "kg" }, { name: "Tomate", quantity: 5, unit: "un" }] },
-                            response_text_html: "Claro! Acabei de gerar uma lista otimizada baseada no seu padrão de consumo. <br><button class='af-option-btn' style='margin-top:10px; width:100%;' data-action='view-list' data-list-id='[NEW_LIST_ID]'><i class='fa-solid fa-eye'></i> Ver Lista Criada</button>"
+                            data: { list_name: txt.includes('semana') ? 'Lista da Semana Chef IA' : 'Compras Inteligentes Chef IA', items },
+                            response_text_html: `Montei uma lista estratégica com foco em praticidade, economia e boa cobertura de refeições.<br><small style='opacity:.8'>Base atual: orçamento alvo de R$ ${inferredBudget.toFixed(2)} e contexto do app.</small><br><button class='af-option-btn' style='margin-top:10px; width:100%;' data-action='view-list' data-list-id='[NEW_LIST_ID]'><i class='fa-solid fa-eye'></i> Abrir lista criada</button>`
                         };
-                    } else if (txt.includes('receita') || txt.includes('frango') || txt.includes('ideia')) {
+                    } else if (txt.includes('adicion') && (txt.includes('lista') || txt.includes('compras'))) {
+                        responseObj = {
+                            intent: "update_shopping_list",
+                            data: { list_id: this.activeListId, changes: { add: [{ name: 'Banana', quantity: 6, unit: 'un' }, { name: 'Leite', quantity: 2, unit: 'l' }] } },
+                            response_text_html: `Adicionei itens úteis em <strong>${activeListName}</strong> e mantive a estrutura pronta para edição.`
+                        };
+                    } else if (txt.includes('receita') || txt.includes('frango') || txt.includes('ideia') || txt.includes('cozinhar') || txt.includes('jantar') || txt.includes('almoço')) {
+                        const usePantry = pantryItems.length ? pantryItems.slice(0, 3) : ['Peito de Frango', 'Cebola', 'Tomate'];
                         responseObj = {
                             intent: "create_recipe",
-                            data: { recipe_name: "Frango Rápido Chef IA", desc: "Perfeito para dias corridos, sugerido com base no que você tem.", ingredients: [{ name: "Peito de Frango", qty: "2", unit: "filés" }, { name: "Cebola", qty: "1", unit: "un" }], prepMode: "Grelhe o frango com a cebola até dourar. Fica pronto em 15 minutos!" },
-                            response_text_html: "Excelente! Criei uma receita rápida e econômica para você usando itens básicos. Já salvei no seu catálogo. <br><button class='af-option-btn' style='margin-top:10px; width:100%;' data-action='view-recipe' data-recipe-id='[NEW_RECIPE_ID]'><i class='fa-solid fa-utensils'></i> Ver Receita</button>"
+                            data: {
+                                recipe_name: `Receita Chef IA • ${usePantry[0] || 'Prato Rápido'}`,
+                                desc: "Receita pensada para rotina real: sabor, custo equilibrado e execução simples.",
+                                ingredients: [
+                                    { name: usePantry[0] || 'Peito de Frango', qty: '2', unit: 'porções' },
+                                    { name: usePantry[1] || 'Cebola', qty: '1', unit: 'un' },
+                                    { name: usePantry[2] || 'Tomate', qty: '2', unit: 'un' }
+                                ],
+                                prepMode: 'Tempere a proteína ou base principal. Refogue aromáticos, una os ingredientes e finalize em fogo médio até ganhar textura e sabor. Sirva com acompanhamento simples.'
+                            },
+                            response_text_html: "Criei uma receita com pegada profissional, simples de executar e boa para o dia a dia. Já deixei salva no sistema.<br><button class='af-option-btn' style='margin-top:10px; width:100%;' data-action='view-recipe' data-recipe-id='[NEW_RECIPE_ID]'><i class='fa-solid fa-utensils'></i> Abrir receita criada</button>"
                         };
-                    } else if (txt.includes('semana') || txt.includes('cardápio') || txt.includes('planejar')) {
+                    } else if (txt.includes('semana') || txt.includes('cardápio') || txt.includes('planejar') || txt.includes('planejador')) {
                         responseObj = {
                             intent: "answer_question",
                             data: {},
-                            response_text_html: "Ótima ideia. Para a semana, sugiro focar em refeições com grãos (como o Arroz de Forno) que duram mais na geladeira, alternando com grelhados rápidos. Deseja que eu adicione isso ao seu planejador automaticamente?"
+                            response_text_html: "Posso estruturar sua semana com lógica de produção, reaproveitamento e economia: base de grãos, proteína em dois ciclos, legumes versáteis e refeições com encaixe entre almoço e jantar. Me peça algo como <strong>monte uma lista da semana</strong> ou <strong>crie uma receita rápida</strong> que eu já executo dentro do sistema."
+                        };
+                    } else if (txt.includes('despensa') || txt.includes('geladeira') || txt.includes('armário')) {
+                        responseObj = {
+                            intent: "answer_question",
+                            data: {},
+                            response_text_html: `Enxergo a cozinha como sistema: compras, estoque, validade, organização e fluxo de uso. Hoje encontrei estes itens como referência: <strong>${pantryItems.join(', ') || 'nenhum item catalogado ainda'}</strong>. Posso sugerir o que priorizar, o que comprar menos e o que reaproveitar primeiro.`
                         };
                     }
 
                     resolve({ json: responseObj, html: null });
-                }, 1500); // Simula o tempo de "pensamento" de 1.5s
+                }, 1200);
             });
         },
 

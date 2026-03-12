@@ -3162,3 +3162,207 @@ body.app-mode .module-container{ overflow: hidden !important; }
 #af-chatbot.af-open {
     bottom: 150px !important; 
 }
+
+
+/* =========================================================
+   HOTFIX V6 — acabamento premium mobile + landing + listas
+   ========================================================= */
+
+:root{
+  --panel-radius-premium: 24px;
+  --panel-radius-inner: 20px;
+  --panel-shadow-premium: 0 24px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.05) inset;
+}
+
+.dashboard-card{
+  border-radius: var(--panel-radius-premium) !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025)),
+    linear-gradient(180deg, rgba(10,12,16,.92), rgba(18,20,26,.92)) !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  box-shadow: var(--panel-shadow-premium) !important;
+}
+
+.card-header{
+  background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015)) !important;
+}
+
+.card-content{
+  background: linear-gradient(180deg, rgba(255,255,255,.012), rgba(255,255,255,0)) !important;
+}
+
+.card-footer,
+.modal-footer{
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.28)) !important;
+  border-top: 1px solid rgba(255,255,255,.08) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.card-footer::before,
+.modal-footer::before{
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,242,234,.45), transparent);
+}
+
+#active-list-actions{
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+}
+
+#active-list-actions .icon-button,
+.card-footer .icon-button{
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+#active-list-actions .icon-button:hover,
+.card-footer .icon-button:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+#lista-items-full{
+  padding-bottom: 28px !important;
+}
+
+/* cards de item mais premium */
+.placeholder-item,
+.saved-list-item,
+.recipe-list-item{
+  border-radius: 18px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)),
+    rgba(18,20,24,.88) !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.25) !important;
+}
+
+/* Landing mais premium sem mexer na estrutura */
+.chef-hub-section,
+#calculadora.page-section,
+.page-section:not(#inicio){
+  background:
+    radial-gradient(circle at top left, rgba(0,242,234,.08), transparent 30%),
+    radial-gradient(circle at top right, rgba(175,82,222,.08), transparent 28%),
+    linear-gradient(180deg, rgba(8,10,14,.88), rgba(11,12,16,.9)) !important;
+}
+
+.features-grid > .feature-item{
+  position: relative;
+  overflow: hidden;
+  padding: 1.6rem 1.35rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,.10);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025)),
+    rgba(12,14,18,.84);
+  box-shadow: 0 22px 48px rgba(0,0,0,.32);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+.features-grid > .feature-item::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background: linear-gradient(135deg, rgba(0,242,234,.08), transparent 38%, rgba(255,255,255,.02) 65%, transparent 100%);
+  pointer-events:none;
+}
+.chef-demo-card,
+.chef-primary-cta,
+.hero-pill,
+.modern-start-btn{
+  box-shadow: 0 18px 40px rgba(0,0,0,.32) !important;
+}
+
+@media (max-width: 991px){
+  #module-lista.module-container{
+    padding: 12px 12px calc(var(--dock-height) + var(--dock-safe-bottom) + 26px) !important;
+  }
+
+  .list-management-layout,
+  .active-list-column{
+    min-height: 0;
+  }
+
+  .active-list-column .dashboard-card,
+  body.app-mode .active-list-column .dashboard-card{
+    height: calc(100dvh - var(--header-height) - var(--dock-height) - var(--dock-safe-bottom) - 44px) !important;
+    border-radius: 26px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+  }
+
+  .active-list-column .card-header{
+    border-radius: 26px 26px 0 0 !important;
+    padding: .9rem 1rem !important;
+  }
+
+  #active-list-actions,
+  .active-list-column .card-footer{
+    border-radius: 0 0 26px 26px !important;
+  }
+
+  .add-item-form-container{
+    padding: 1rem .9rem !important;
+  }
+
+  .add-item-form{
+    display: grid !important;
+    grid-template-columns: minmax(0, 2.25fr) minmax(56px, .78fr) minmax(64px, .9fr) minmax(76px, 1fr) 48px !important;
+    grid-template-areas: "nome qtd unid valor btn" !important;
+    align-items: end !important;
+    gap: .55rem !important;
+  }
+
+  .add-item-form .form-group-flex{ grid-area: nome !important; min-width: 0 !important; }
+  .add-item-form .form-group-small:nth-of-type(2){ grid-area: qtd !important; min-width: 0 !important; }
+  .add-item-form .form-group-small:nth-of-type(3){ grid-area: unid !important; min-width: 0 !important; }
+  .add-item-form .form-group-medium{ grid-area: valor !important; min-width: 0 !important; }
+  .add-item-form .btn-add-item{ grid-area: btn !important; width: 48px !important; height: 48px !important; border-radius: 14px !important; }
+
+  .add-item-form .form-group{ min-width: 0 !important; }
+  .add-item-form label{
+    display: block !important;
+    font-size: .68rem !important;
+    letter-spacing: .01em;
+    margin-bottom: 6px !important;
+    white-space: nowrap !important;
+  }
+  .add-item-form input,
+  .add-item-form select{
+    height: 48px !important;
+    padding: 0 10px !important;
+    font-size: .96rem !important;
+    border-radius: 12px !important;
+  }
+}
+
+@media (max-width: 520px){
+  .add-item-form{
+    grid-template-columns: minmax(0, 1.95fr) minmax(46px, .68fr) minmax(58px, .82fr) minmax(66px, .92fr) 44px !important;
+    gap: .45rem !important;
+  }
+  .add-item-form label{ font-size: .64rem !important; }
+  .add-item-form input,
+  .add-item-form select{ height: 44px !important; padding: 0 8px !important; font-size: .9rem !important; }
+  .add-item-form .btn-add-item{ width: 44px !important; height: 44px !important; }
+}
+
+@media (max-width: 400px){
+  .add-item-form{
+    grid-template-columns: minmax(0, 1.7fr) 44px 54px 62px 42px !important;
+    gap: .35rem !important;
+  }
+  .add-item-form label{ font-size: .6rem !important; }
+}
