@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -84,9 +83,15 @@
                 
                 <h2 class="hero-tagline">O FUTURO DA SUA COZINHA AGORA</h2>
                 
-                <p class="simple-subtitle">
+                <p class="simple-subtitle scroll-reveal">
                     Organize, planeje e economize com a inteligência artificial que transforma sua rotina alimentar.
                 </p>
+
+                <div class="hero-stats scroll-reveal" aria-label="Indicadores do produto">
+                    <div class="hero-stat"><strong>+10k</strong><span>usuários</span></div>
+                    <div class="hero-stat"><strong>30%</strong><span>economia média</span></div>
+                    <div class="hero-stat"><strong>Zero</strong><span>desperdício como meta</span></div>
+                </div>
                 
                 <div style="margin-top: 2.5rem;">
                     <a href="#" class="modern-start-btn" onclick="if(window.app){window.app.handleStartButtonClick(); return false;}">
@@ -177,6 +182,68 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="page-section landing-resources-section" id="recursos" aria-labelledby="recursos-title">
+            <div class="section-content">
+                <div class="section-heading scroll-reveal">
+                    <div class="section-eyebrow">Recursos centrais</div>
+                    <h2 id="recursos-title" class="page-title">Tudo conectado em uma experiência só</h2>
+                    <p class="page-subtitle">Listas, despensa, receitas e planejamento funcionando como um único sistema.</p>
+                </div>
+                <div class="landing-feature-grid">
+                    <article class="landing-feature-card scroll-reveal">
+                        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+                        <h3>Listas Inteligentes</h3>
+                        <p>Crie listas limpas, editáveis e prontas para virar estoque real sem fricção.</p>
+                    </article>
+                    <article class="landing-feature-card scroll-reveal">
+                        <i class="fa-solid fa-box-archive" aria-hidden="true"></i>
+                        <h3>Despensa Gerenciada</h3>
+                        <p>Validade, quantidade e nível de estoque em um fluxo visual simples e rápido.</p>
+                    </article>
+                    <article class="landing-feature-card scroll-reveal">
+                        <i class="fa-solid fa-utensils" aria-hidden="true"></i>
+                        <h3>Receitas Personalizadas</h3>
+                        <p>Transforme ingredientes disponíveis em refeições úteis para a rotina de verdade.</p>
+                    </article>
+                    <article class="landing-feature-card scroll-reveal">
+                        <i class="fa-solid fa-calendar-week" aria-hidden="true"></i>
+                        <h3>Planejador Semanal</h3>
+                        <p>Monte a semana, reaproveite ingredientes e gere compras com mais inteligência.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="page-section testimonials-section" id="depoimentos" aria-labelledby="depoimentos-title">
+            <div class="section-content">
+                <div class="section-heading scroll-reveal">
+                    <div class="section-eyebrow">Depoimentos</div>
+                    <h2 id="depoimentos-title" class="page-title">Parece tecnologia. Funciona como rotina.</h2>
+                    <p class="page-subtitle">Provas sociais posicionadas para transmitir confiança e sofisticação logo na entrada.</p>
+                </div>
+                <div class="testimonials-grid">
+                    <article class="testimonial-card scroll-reveal">
+                        <div class="testimonial-avatar">AM</div>
+                        <p>“Passei a comprar menos por impulso e finalmente comecei a usar o que já tinha em casa.”</p>
+                        <strong>Ana Maria</strong>
+                        <span>Usuária doméstica</span>
+                    </article>
+                    <article class="testimonial-card scroll-reveal">
+                        <div class="testimonial-avatar">RL</div>
+                        <p>“A sensação é de produto premium. Tudo conversa entre si e o fluxo ficou muito mais claro.”</p>
+                        <strong>Rafael Lima</strong>
+                        <span>Early adopter</span>
+                    </article>
+                    <article class="testimonial-card scroll-reveal">
+                        <div class="testimonial-avatar">CS</div>
+                        <p>“O Chef IA e o planejador juntos me fizeram economizar tempo, dinheiro e desperdício na semana.”</p>
+                        <strong>Carla Souza</strong>
+                        <span>Família de 3 pessoas</span>
+                    </article>
                 </div>
             </div>
         </section>
@@ -694,6 +761,18 @@
             <div class="modal-body" id="recipe-detail-modal-body"></div>
             <div class="modal-footer" style="background-color: #121212;">
                 </div>
+        </div>
+    </div>
+
+    <div id="detail-modal" class="modal-overlay detail-modal-overlay">
+        <div class="modal-box detail-modal-box" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+            <div class="modal-header detail-modal-header">
+                <button class="icon-button close-btn" data-modal-close="detail-modal" aria-label="Voltar"><i class="fa-solid fa-arrow-left"></i></button>
+                <h3 id="detail-modal-title">Detalhes</h3>
+                <div class="detail-modal-header-actions" id="detail-modal-header-actions"></div>
+            </div>
+            <div class="modal-body detail-modal-body" id="detail-modal-body"></div>
+            <div class="modal-footer detail-modal-footer" id="detail-modal-footer"></div>
         </div>
     </div>
     

@@ -932,13 +932,17 @@ if (closest('#module-lista') && closest('.btn-create-list')) {
                  else if (closest('.add-meal-slot-btn')) { const button = closest('.add-meal-slot-btn'); this.currentPlannerDayTarget = button.dataset.dayTarget; this.populateRecipePicker(); this.openModal('recipe-picker-modal'); }
                  else if (closest('.clear-plan-btn')) { this.openConfirmModal("Limpar Semana", "Deseja remover todas as refeições planejadas para esta semana?", this.executeClearPlannerWeek.bind(this)); }
                  else if (closest('.day-clear-btn')) { const dayKey = closest('.day-clear-btn').dataset.day; this.openConfirmModal("Limpar Dia", `Deseja remover todas as refeições de ${dayKey}?`, () => this.executeClearPlannerDay({day: dayKey})); }
+                 else if (closest('.planner-day-nav')) { const btn = closest('.planner-day-nav'); if (window.innerWidth >= 992) { this.renderPlannerDetailDesktop(btn.dataset.day); this.setActiveModuleNav('.planner-day-nav', btn); } else { this.openPlannerDayDetailModal(btn.dataset.day); } return; }
+                 else if (closest('.analysis-nav-item')) { const btn = closest('.analysis-nav-item'); if (window.innerWidth >= 992) { this.renderAnalysisDetailDesktop(btn.dataset.analysisKey); this.setActiveModuleNav('.analysis-nav-item', btn); } else { this.openAnalysisDetailModal(btn.dataset.analysisKey); } return; }
+                 else if (closest('.analysis-mobile-open-btn')) { const btn = closest('.analysis-mobile-open-btn'); this.openAnalysisDetailModal(btn.dataset.analysisKey || document.getElementById('analysis-data-select')?.value || 'gastos_categoria'); return; }
+                 else if (closest('.config-nav-item')) { const btn = closest('.config-nav-item'); if (window.innerWidth >= 992) { this.renderConfigDetailDesktop(btn.dataset.configSection); this.setActiveModuleNav('.config-nav-item', btn); } else { this.openConfigSectionModal(btn.dataset.configSection); } return; }
                  
                  const mealItem = closest('.planner-meal-item');
                  if (mealItem) {
                       const recipeId = mealItem.dataset.recipeId;
                       const day = mealItem.dataset.day;
                       const meal = mealItem.dataset.meal;
-                      if (closest('.meal-view-btn') || closest('.meal-item-name')) { if (window.innerWidth < 992) { this.showRecipeDetailModal(recipeId); } else { if (this.activeModule === 'receitas') { this.renderRecipeDetail(recipeId); document.querySelectorAll('.recipe-list-item.active').forEach(el => el.classList.remove('active')); document.querySelector(`.recipe-list-item[data-recipe-id="${recipeId}"]`)?.classList.add('active'); document.getElementById('module-receitas')?.classList.add('detail-is-visible'); } else { this.showRecipeDetailModal(recipeId); } } } 
+                      if (closest('.meal-view-btn') || closest('.meal-item-name')) { if (window.innerWidth < 992) { this.showRecipeDetailModal(recipeId); } else { this.showRecipeDetailModal(recipeId); } } 
                       else if (closest('.meal-complete-btn')) { this.handleToggleCompleteMeal(day, meal); } 
                       else if (closest('.meal-delete-btn')) { this.handleDeleteMeal(day, meal); }
                  }
@@ -1183,6 +1187,29 @@ initLandingPage() {
             if(btnReceitas) {
                 btnReceitas.removeEventListener('click', handleAiCtaClick);
                 btnReceitas.addEventListener('click', handleAiCtaClick);
+            }
+
+            const header = document.getElementById('landing-header');
+            const syncHeader = () => header?.classList.toggle('is-scrolled', window.scrollY > 18);
+            syncHeader();
+            window.addEventListener('scroll', syncHeader, { passive: true });
+
+            const revealEls = document.querySelectorAll('.scroll-reveal');
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (prefersReducedMotion) {
+                revealEls.forEach(el => el.classList.add('is-visible'));
+            } else if ('IntersectionObserver' in window) {
+                const revealObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            revealObserver.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.12 });
+                revealEls.forEach(el => revealObserver.observe(el));
+            } else {
+                revealEls.forEach(el => el.classList.add('is-visible'));
             }
         },
 
@@ -1461,6 +1488,42 @@ initNewHeaderLogic() {
         closeModal(modalId) {
              const modal = document.getElementById(modalId);
              if (modal) { modal.classList.remove('is-visible'); }
+        },
+
+        openDetailModal({ title = 'Detalhes', content = '', actions = [], headerActions = '' } = {}) {
+             const titleEl = document.getElementById('detail-modal-title');
+             const bodyEl = document.getElementById('detail-modal-body');
+             const footerEl = document.getElementById('detail-modal-footer');
+             const headerActionsEl = document.getElementById('detail-modal-header-actions');
+             if (!titleEl || !bodyEl || !footerEl || !headerActionsEl) return;
+             titleEl.innerHTML = title;
+             bodyEl.innerHTML = `<div class="detail-rich-content">${content}</div>`;
+             headerActionsEl.innerHTML = headerActions || '';
+             footerEl.innerHTML = (actions || []).map((action, index) => `<button type="button" class="btn ${action.className || 'btn-secondary'} detail-action-btn" data-detail-action-index="${index}">${action.icon ? `<i class="${action.icon}"></i>` : ''}${action.label}</button>`).join('');
+             footerEl.querySelectorAll('[data-detail-action-index]').forEach(btn => {
+                 btn.addEventListener('click', () => {
+                     const cfg = actions[Number(btn.dataset.detailActionIndex)];
+                     if (cfg && typeof cfg.onClick === 'function') cfg.onClick();
+                 });
+             });
+             this.openModal('detail-modal');
+        },
+
+        setActiveModuleNav(selector, activeElement) {
+             document.querySelectorAll(selector).forEach(el => el.classList.remove('active'));
+             activeElement?.classList.add('active');
+        },
+
+        getPlannerDaysMap() {
+             return { seg: 'Segunda', ter: 'Terça', qua: 'Quarta', qui: 'Quinta', sex: 'Sexta', sab: 'Sábado', dom: 'Domingo' };
+        },
+
+        getAnalysisOptions() {
+             return {
+                gastos_categoria: { icon: 'fa-solid fa-layer-group', label: 'Gastos por categoria', note: 'Agrupa os itens das listas por categoria para mostrar o peso financeiro de cada grupo.' },
+                validade_despensa: { icon: 'fa-solid fa-hourglass-half', label: 'Validade da despensa', note: 'Exibe risco de perda por vencimento com foco no que precisa de atenção imediata.' },
+                uso_receitas: { icon: 'fa-solid fa-utensils', label: 'Uso de receitas', note: 'Mostra quais receitas estão guiando seu planejamento semanal.' }
+             };
         },
 
         prefillChefPrompt(prompt, options = {}) {
@@ -2167,16 +2230,15 @@ footerEl.innerHTML = `
 
         showRecipeDetailModal(recipeId) {
              const recipe = this.state.receitas[recipeId]; if (!recipe) return;
-             const modalTitle = document.getElementById('recipe-detail-modal-title'); const modalBody = document.getElementById('recipe-detail-modal-body'); const modalFooter = document.querySelector('#recipe-detail-modal .modal-footer');
-             if (!modalTitle || !modalBody || !modalFooter) return;
-             modalTitle.innerHTML = `<i class="fa-solid fa-utensils" aria-hidden="true"></i> ${this.escapeHtml(recipe.name)}`;
-             modalBody.innerHTML = recipe.content;
-             modalFooter.innerHTML = `
-                <button class="btn btn-primary edit-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-pencil"></i> Editar</button>
-                <button class="btn btn-secondary pdf-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                <button class="btn btn-danger delete-recipe-btn" data-recipe-id="${recipeId}"><i class="fa-solid fa-trash"></i> Excluir</button>
-             `;
-             this.openModal('recipe-detail-modal');
+             this.openDetailModal({
+                 title: `<i class="fa-solid fa-utensils"></i> ${this.escapeHtml(recipe.name)}` ,
+                 content: recipe.content,
+                 actions: [
+                    { label: 'Editar', className: 'btn-primary edit-recipe-btn', icon: 'fa-solid fa-pencil', onClick: () => { this.closeModal('detail-modal'); this.handleOpenRecipeEditModal(recipeId); } },
+                    { label: 'PDF', className: 'btn-secondary', icon: 'fa-solid fa-file-pdf', onClick: () => this.handleRealPDF() },
+                    { label: 'Excluir', className: 'btn-danger', icon: 'fa-solid fa-trash', onClick: () => { this.closeModal('detail-modal'); this.handleDeleteRecipe(recipeId); } }
+                 ]
+             });
         },
 
         renderPlannerWidget() {
@@ -2204,73 +2266,89 @@ footerEl.innerHTML = `
 renderPlanejador(container) {
              if (!container) container = document.getElementById('module-planejador');
              if (!container) return;
-             const mealIcons = {
-                 cafe: '<i class="fa-solid fa-mug-hot" style="margin-right:8px; color: var(--accent-yellow);"></i>',
-                 almoco: '<i class="fa-solid fa-utensils" style="margin-right:8px; color: var(--green);"></i>',
-                 jantar: '<i class="fa-solid fa-bowl-rice" style="margin-right:8px; color: var(--accent-purple);"></i>' 
-             };
-container.innerHTML = `
-                  <div class="dashboard-card">
-                       <div class="card-header" style="cursor: default;">
-                           <h3><i class="fa-solid fa-calendar-week" aria-hidden="true"></i> Planejador Semanal</h3>
-                           <div class="card-actions">
-                               <button class="btn btn-danger clear-plan-btn" style="height: 32px; padding: 0 12px; font-size: 0.8rem;"><i class="fa-solid fa-eraser"></i> Limpar Tudo</button>
+             const days = this.getPlannerDaysMap();
+             const dayButtons = Object.entries(days).map(([dayKey, dayLabel]) => {
+                 const meals = this.state.planejador[dayKey] || {};
+                 const totalMeals = ['cafe','almoco','jantar'].filter(key => meals[key]).length;
+                 return `<button type="button" class="module-nav-item planner-day-nav ${dayKey === 'seg' ? 'active' : ''}" data-day="${dayKey}"><strong>${dayLabel}</strong><span>${totalMeals ? `${totalMeals} refeição(ões)` : 'Sem refeições'}</span></button>`;
+             }).join('');
+
+             container.innerHTML = `
+                  <div class="master-detail-layout">
+                       <div class="md-list-column dashboard-card">
+                           <div class="card-header">
+                               <h3><i class="fa-solid fa-calendar-week" aria-hidden="true"></i> Planejador</h3>
+                               <div class="card-actions">
+                                   <button class="btn btn-danger clear-plan-btn"><i class="fa-solid fa-eraser"></i> Limpar tudo</button>
+                               </div>
+                           </div>
+                           <div class="card-content">
+                               <div class="module-nav-list">${dayButtons}</div>
                            </div>
                        </div>
-                       <div class="card-content">
-                            <div class="planner-grid" id="planner-grid-full"></div>
-                       </div>
+                       <div class="md-detail-column dashboard-card" id="planner-detail-desktop"></div>
                   </div>
              `;
-             const plannerGrid = document.getElementById('planner-grid-full');
-             if (!plannerGrid) return;
-             const days = { seg: "Segunda", ter: "Terça", qua: "Quarta", qui: "Quinta", sex: "Sexta", sab: "Sábado", dom: "Domingo" };
-             const meals = { cafe: "Café da Manhã", almoco: "Almoço", jantar: "Jantar" };
-             let gridHTML = '';
-             for (const dayKey in days) {
-                  gridHTML += `
-<div class="planner-day-card dashboard-card">
-                            <div class="planner-day-header card-header">
-                                <h3>${days[dayKey]}</h3>
-                                <div class="card-actions">
-                                    <button class="icon-button day-clear-btn" data-day="${dayKey}" title="Limpar Dia" aria-label="Limpar ${days[dayKey]}"><i class="fa-solid fa-eraser" aria-hidden="true"></i></button>
-                                </div>
-                            </div>
-                            <div class="planner-meal-slots card-content">`;
-                  for (const mealKey in meals) {
-                       const iconHTML = mealIcons[mealKey] || '';
-                       gridHTML += `
-                            <div class="planner-meal-slot">
-                                <strong>${iconHTML} ${meals[mealKey]}</strong>
-                                <div class="planner-meal-items" id="planner-full-${dayKey}-${mealKey}">`;
-                       const mealData = this.state.planejador[dayKey]?.[mealKey];
-                       if (mealData) { 
-                           const isCompleted = mealData.completed || false;
-                           const completedClass = isCompleted ? 'completed' : '';
-                           const checkBtnColor = isCompleted ? 'color: var(--green);' : 'color: var(--glass-text-secondary);';
-                           const mealName = this.escapeHtml(mealData.name);
-                           gridHTML += `
-                           <div class="placeholder-item is-clickable planner-meal-item ${completedClass}" data-recipe-id="${mealData.id}" data-day="${dayKey}" data-meal="${mealKey}">
-                               <div class="item-row">
-                                   <div class="item-main-info">
-                                        <i class="fa-solid fa-utensils" aria-hidden="true" style="color: var(--glass-text-secondary);"></i>
-                                        <span class="item-name" style="${isCompleted ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${mealName}</span>
-                                   </div>
-                                   <div class="item-actions">
-                                       <button class="icon-button meal-view-btn" title="Ver Receita"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
-                                       <button class="icon-button meal-complete-btn" title="Marcar como Concluído" style="${checkBtnColor}"><i class="fa-solid fa-check" aria-hidden="true"></i></button>
-                                       <button class="icon-button meal-delete-btn" title="Remover Refeição"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
-                                   </div>
-                               </div>
-                           </div>`;
-                       }
-                       gridHTML += `</div>
-                                <button class="add-meal-slot-btn" data-modal-open="recipe-picker-modal" data-day-target="planner-full-${dayKey}-${mealKey}"><i class="fa-solid fa-plus" aria-hidden="true"></i> Adicionar</button>
-                            </div>`;
-                  }
-                  gridHTML += `</div></div>`;
-             }
-             plannerGrid.innerHTML = gridHTML;
+
+             if (window.innerWidth >= 992) this.renderPlannerDetailDesktop('seg');
+        },
+
+        renderPlannerDetailDesktop(dayKey = 'seg') {
+             const container = document.getElementById('planner-detail-desktop');
+             if (!container) return;
+             const days = this.getPlannerDaysMap();
+             const mealsMap = { cafe: 'Café da Manhã', almoco: 'Almoço', jantar: 'Jantar' };
+             const dayMeals = this.state.planejador[dayKey] || {};
+             const mealRows = Object.entries(mealsMap).map(([mealKey, mealLabel]) => {
+                 const meal = dayMeals[mealKey];
+                 if (!meal) {
+                     return `<div class="detail-listing-item"><div><strong>${mealLabel}</strong><p class="detail-note">Nenhuma receita planejada.</p></div><button type="button" class="btn btn-secondary add-meal-slot-btn" data-day-target="planner-full-${dayKey}-${mealKey}"><i class="fa-solid fa-plus"></i> Adicionar</button></div>`;
+                 }
+                 return `<div class="detail-listing-item planner-meal-item" data-recipe-id="${meal.id}" data-day="${dayKey}" data-meal="${mealKey}"><div><strong class="meal-item-name">${this.escapeHtml(mealLabel)} • ${this.escapeHtml(meal.name)}</strong><p class="detail-note">Toque em visualizar para abrir a receita ou use as ações para concluir/remover.</p></div><div class="module-detail-actions"><button type="button" class="btn btn-secondary meal-view-btn"><i class="fa-solid fa-eye"></i> Ver</button><button type="button" class="btn btn-secondary meal-complete-btn"><i class="fa-solid fa-check"></i> Concluir</button><button type="button" class="btn btn-danger meal-delete-btn"><i class="fa-solid fa-trash"></i> Remover</button></div></div>`;
+             }).join('');
+
+             container.innerHTML = `
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-calendar-day"></i> ${days[dayKey] || 'Dia'}</h3>
+                    <div class="card-actions">
+                        <button class="icon-button day-clear-btn" data-day="${dayKey}" title="Limpar dia"><i class="fa-solid fa-eraser"></i></button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="detail-kpi-grid">
+                        <div class="detail-kpi"><strong>${Object.values(dayMeals).filter(Boolean).length}</strong><span>refeições planejadas</span></div>
+                        <div class="detail-kpi"><strong>${Object.values(dayMeals).filter(m => m && m.completed).length}</strong><span>concluídas</span></div>
+                    </div>
+                    <div class="detail-stack" style="margin-top:1rem;">
+                        ${mealRows}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-primary add-meal-btn" data-day-target="${dayKey}"><i class="fa-solid fa-plus"></i> Adicionar refeição</button>
+                    <button class="btn btn-secondary generate-list-btn"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerar lista</button>
+                </div>
+             `;
+        },
+
+        openPlannerDayDetailModal(dayKey) {
+             const days = this.getPlannerDaysMap();
+             const mealsMap = { cafe: 'Café da Manhã', almoco: 'Almoço', jantar: 'Jantar' };
+             const dayMeals = this.state.planejador[dayKey] || {};
+             const content = Object.entries(mealsMap).map(([mealKey, mealLabel]) => {
+                 const meal = dayMeals[mealKey];
+                 return `<div class="detail-listing-item">
+                    <div><strong>${mealLabel}</strong><p class="detail-note">${meal ? this.escapeHtml(meal.name) : 'Nenhuma receita planejada.'}</p></div>
+                    <div class="module-detail-actions">${meal ? `<button type="button" class="btn btn-secondary meal-view-btn planner-modal-meal" data-recipe-id="${meal.id}"><i class="fa-solid fa-eye"></i> Ver</button><button type="button" class="btn btn-danger meal-delete-btn planner-modal-meal" data-day="${dayKey}" data-meal="${mealKey}"><i class="fa-solid fa-trash"></i> Remover</button>` : `<button type="button" class="btn btn-secondary add-meal-slot-btn" data-day-target="planner-full-${dayKey}-${mealKey}"><i class="fa-solid fa-plus"></i> Adicionar</button>`}</div>
+                 </div>`;
+             }).join('');
+             this.openDetailModal({
+                title: `<i class="fa-solid fa-calendar-day"></i> ${days[dayKey] || 'Dia'}`,
+                content,
+                actions: [
+                    { label: 'Adicionar refeição', className: 'btn-primary', icon: 'fa-solid fa-plus', onClick: () => { this.closeModal('detail-modal'); this.currentPlannerDayTarget = dayKey; this.populateRecipePicker(); this.openModal('recipe-picker-modal'); } },
+                    { label: 'Gerar lista', className: 'btn-secondary', icon: 'fa-solid fa-wand-magic-sparkles', onClick: () => this.handleGenerateListFromPlanner() }
+                ]
+             });
         },
 
         renderInicio(container) {
@@ -2372,42 +2450,73 @@ renderOrcamento() {
         renderAnalises(container) {
              if (!container) container = document.getElementById('module-analises');
              if (!container) return;
+             const analysisOptions = this.getAnalysisOptions();
+             const nav = Object.entries(analysisOptions).map(([key, cfg], index) => `<button type="button" class="module-nav-item analysis-nav-item ${index === 0 ? 'active' : ''}" data-analysis-key="${key}"><strong>${cfg.label}</strong><span>${cfg.note}</span></button>`).join('');
              container.innerHTML = `
-                  <div class="dashboard-card">
-                      <div class="card-header" style="cursor: default;">
-                          <h3><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Análises Configuráveis</h3>
-                      </div>
-                      <div class="card-content">
-<details style="margin-bottom: 1rem; border: 1px solid var(--glass-border); border-radius: 6px; padding: 0.5rem 1rem; background: rgba(0,0,0,0.1); cursor: pointer;">
-                             <summary style="font-weight: 600; color: var(--primary-color); outline: none;"><i class="fa-solid fa-sliders" style="margin-right: 8px;"></i> Opções do Gráfico</summary>
-                             <div class="analysis-config-panel" style="margin-top: 1rem; cursor: default;">
-                                 <div class="form-group">
-                                     <label for="analysis-data-select">Analisar:</label>
-                                     <select id="analysis-data-select">
-                                         <option value="gastos_categoria">Gastos por Categoria (Listas)</option>
-                                         <option value="validade_despensa">Itens por Validade (Despensa)</option>
-                                         <option value="uso_receitas">Receitas Usadas (Planejador)</option>
-                                     </select>
-                                 </div>
-                                 <div class="form-group">
-                                     <label for="analysis-type-select">Tipo de Gráfico:</label>
-                                     <select id="analysis-type-select">
-                                         <option value="pie">Pizza</option>
-                                         <option value="doughnut">Rosca</option>
-                                         <option value="bar">Barras</option>
-                                         <option value="line">Linha</option>
-                                     </select>
-                                 </div>
-                             </div>
-                         </details>
-                         <div class="chart-canvas-container">
-                             <canvas id="dynamic-analysis-chart"></canvas>
-                         </div>
-                      </div>
-                     
-
+                  <div class="master-detail-layout">
+                       <div class="md-list-column dashboard-card">
+                           <div class="card-header"><h3><i class="fa-solid fa-chart-line"></i> Análises</h3></div>
+                           <div class="card-content"><div class="module-nav-list">${nav}</div></div>
+                       </div>
+                       <div class="md-detail-column dashboard-card" id="analises-detail-desktop"></div>
                   </div>
              `;
+             const firstKey = Object.keys(analysisOptions)[0];
+             if (window.innerWidth >= 992) this.renderAnalysisDetailDesktop(firstKey);
+             else {
+                 const select = document.getElementById('analysis-data-select');
+                 if (select) select.value = firstKey;
+             }
+        },
+
+        renderAnalysisDetailDesktop(analysisKey = 'gastos_categoria') {
+             const container = document.getElementById('analises-detail-desktop');
+             if (!container) return;
+             const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+             container.innerHTML = `
+                <div class="card-header">
+                    <h3><i class="${cfg.icon}"></i> ${cfg.label}</h3>
+                    <div class="card-actions"><button class="btn btn-secondary change-chart-btn"><i class="fa-solid fa-repeat"></i> Trocar tipo</button></div>
+                </div>
+                <div class="card-content">
+                    <div class="detail-note" style="margin-bottom:1rem;">${cfg.note}</div>
+                    <div class="analysis-config-panel">
+                        <div class="form-group">
+                            <label for="analysis-data-select">Analisar</label>
+                            <select id="analysis-data-select">
+                                <option value="gastos_categoria">Gastos por Categoria (Listas)</option>
+                                <option value="validade_despensa">Itens por Validade (Despensa)</option>
+                                <option value="uso_receitas">Receitas Usadas (Planejador)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="analysis-type-select">Tipo de gráfico</label>
+                            <select id="analysis-type-select">
+                                <option value="pie">Pizza</option>
+                                <option value="doughnut">Rosca</option>
+                                <option value="bar">Barras</option>
+                                <option value="line">Linha</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-canvas-container" style="margin-top:1rem;"><canvas id="dynamic-analysis-chart"></canvas></div>
+                </div>
+                <div class="card-footer"><button class="btn btn-primary analysis-mobile-open-btn" data-analysis-key="${analysisKey}"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> Abrir detalhe completo</button></div>
+             `;
+             document.getElementById('analysis-data-select')?.addEventListener('change', (e) => this.renderAnalysisDetailDesktop(e.target.value));
+             document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+             document.getElementById('analysis-data-select').value = analysisKey;
+             this.updateDynamicChart();
+        },
+
+        openAnalysisDetailModal(analysisKey = 'gastos_categoria') {
+             const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+             this.openDetailModal({
+                 title: `<i class="${cfg.icon}"></i> ${cfg.label}`,
+                 content: `<p class="detail-note">${cfg.note}</p><div class="analysis-config-panel"><div class="form-group"><label for="analysis-data-select">Analisar</label><select id="analysis-data-select"><option value="gastos_categoria">Gastos por Categoria (Listas)</option><option value="validade_despensa">Itens por Validade (Despensa)</option><option value="uso_receitas">Receitas Usadas (Planejador)</option></select></div><div class="form-group"><label for="analysis-type-select">Tipo de gráfico</label><select id="analysis-type-select"><option value="pie">Pizza</option><option value="doughnut">Rosca</option><option value="bar">Barras</option><option value="line">Linha</option></select></div></div><div class="chart-canvas-container" style="margin-top:1rem;"><canvas id="dynamic-analysis-chart"></canvas></div>`,
+                 actions: [{ label: 'Fechar', className: 'btn-secondary', onClick: () => this.closeModal('detail-modal') }]
+             });
+             document.getElementById('analysis-data-select').value = analysisKey;
              document.getElementById('analysis-data-select')?.addEventListener('change', () => this.updateDynamicChart());
              document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
              this.updateDynamicChart();
@@ -2416,33 +2525,64 @@ renderOrcamento() {
         renderConfiguracoes(container) {
              if (!container) container = document.getElementById('module-configuracoes');
              if (!container) return;
-             container.innerHTML = `
-                  <div class="dashboard-card">
-                      <div class="card-header" style="cursor: default;"><h3><i class="fa-solid fa-sliders" aria-hidden="true"></i> Configurações</h3></div>
-                      <div class="card-content">
-                           <div class="config-section">
-                               <h4><i class="fa-solid fa-user" aria-hidden="true"></i> Perfil</h4>
-                               <div class="form-group"> <label for="config-name">Nome</label> <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}"> </div>
-                               <div class="form-group"> <label for="config-email">Email</label> <input type="text" id="config-email" value="user@email.com" disabled> </div>
-                               <button class="btn btn-primary">Salvar Alterações</button>
-                           </div>
-                           <div class="config-section">
-                               <h4><i class="fa-solid fa-bell" aria-hidden="true"></i> Notificações</h4>
-                               <div class="form-group inline"> <label for="notif-validade">Notificar sobre validade</label> <label class="toggle-switch"> <input type="checkbox" id="notif-validade" checked> <span class="toggle-slider"></span> </label> </div>
-                               <div class="form-group inline"> <label for="notif-ia">Sugestões da IA</label> <label class="toggle-switch"> <input type="checkbox" id="notif-ia" checked> <span class="toggle-slider"></span> </label> </div>
-                               <div class="form-group inline"> <label for="notif-email">Notificações por Email</label> <label class="toggle-switch"> <input type="checkbox" id="notif-email"> <span class="toggle-slider"></span> </label> </div>
-                           </div>
-                           <div class="config-section">
-                               <h4><i class="fa-solid fa-database" aria-hidden="true"></i> Gerenciamento de Dados</h4>
-                               <div class="form-group"> <label>Exportar meus dados (JSON)</label> <button class="btn btn-secondary">Exportar</button> </div>
-                               <div class="form-group"> <label>Apagar todos os dados</label> <button class="btn btn-danger" id="config-delete-account-btn">Apagar Conta</button> </div>
-                           </div>
-                      </div>
+             const nav = [
+                { key: 'perfil', label: 'Perfil', note: 'Identidade básica do usuário e preferências principais.' },
+                { key: 'notificacoes', label: 'Notificações', note: 'Alertas de validade, IA e lembretes.' },
+                { key: 'dados', label: 'Dados', note: 'Exportação, limpeza e manutenção das informações do app.' }
+             ].map((item, index) => `<button type="button" class="module-nav-item config-nav-item ${index === 0 ? 'active' : ''}" data-config-section="${item.key}"><strong>${item.label}</strong><span>${item.note}</span></button>`).join('');
 
+             container.innerHTML = `
+                  <div class="master-detail-layout">
+                      <div class="md-list-column dashboard-card">
+                          <div class="card-header"><h3><i class="fa-solid fa-sliders"></i> Configurações</h3></div>
+                          <div class="card-content"><div class="module-nav-list">${nav}</div></div>
+                      </div>
+                      <div class="md-detail-column dashboard-card" id="config-detail-desktop"></div>
                   </div>
-              `;
-             const deleteBtn = container.querySelector('#config-delete-account-btn');
-             deleteBtn?.addEventListener('click', () => { this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => { this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.'); this.handleLogout(); }); });
+             `;
+             if (window.innerWidth >= 992) this.renderConfigDetailDesktop('perfil');
+        },
+
+        renderConfigDetailDesktop(section = 'perfil') {
+             const container = document.getElementById('config-detail-desktop');
+             if (!container) return;
+             let title = 'Configurações';
+             let content = '';
+             let footer = '';
+             if (section === 'perfil') {
+                 title = 'Perfil';
+                 content = `<div class="detail-stack"><div class="form-group"><label for="config-name">Nome</label><input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}"></div><div class="form-group"><label for="config-email">Email</label><input type="text" id="config-email" value="user@email.com" disabled></div><p class="detail-note">Mantenha os dados básicos consistentes para reforçar a sensação de produto confiável.</p></div>`;
+                 footer = `<button class="btn btn-primary">Salvar alterações</button>`;
+             } else if (section === 'notificacoes') {
+                 title = 'Notificações';
+                 content = `<div class="detail-stack"><div class="form-group inline"><label for="notif-validade">Notificar sobre validade</label><label class="toggle-switch"><input type="checkbox" id="notif-validade" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-ia">Sugestões da IA</label><label class="toggle-switch"><input type="checkbox" id="notif-ia" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-email">Notificações por e-mail</label><label class="toggle-switch"><input type="checkbox" id="notif-email"><span class="toggle-slider"></span></label></div></div>`;
+                 footer = `<button class="btn btn-primary">Salvar preferências</button>`;
+             } else {
+                 title = 'Gerenciamento de Dados';
+                 content = `<div class="detail-stack"><div class="detail-listing-item"><div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div><button class="btn btn-secondary">Exportar</button></div><div class="detail-listing-item"><div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div><button class="btn btn-danger" id="config-delete-account-btn">Apagar conta</button></div></div>`;
+             }
+             container.innerHTML = `<div class="card-header"><h3><i class="fa-solid fa-sliders"></i> ${title}</h3></div><div class="card-content">${content}</div><div class="card-footer">${footer}</div>`;
+             container.querySelector('#config-delete-account-btn')?.addEventListener('click', () => { this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => { this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.'); this.handleLogout(); }); });
+        },
+
+        openConfigSectionModal(section = 'perfil') {
+             let title = 'Configurações';
+             let content = '';
+             let actions = [{ label: 'Fechar', className: 'btn-secondary', onClick: () => this.closeModal('detail-modal') }];
+             if (section === 'perfil') {
+                 title = 'Perfil';
+                 content = `<div class="detail-stack"><div class="form-group"><label for="config-name-modal">Nome</label><input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}"></div><div class="form-group"><label for="config-email-modal">Email</label><input type="text" id="config-email-modal" value="user@email.com" disabled></div></div>`;
+                 actions.unshift({ label: 'Salvar alterações', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
+             } else if (section === 'notificacoes') {
+                 title = 'Notificações';
+                 content = `<div class="detail-stack"><div class="form-group inline"><label for="notif-validade-modal">Notificar sobre validade</label><label class="toggle-switch"><input type="checkbox" id="notif-validade-modal" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-ia-modal">Sugestões da IA</label><label class="toggle-switch"><input type="checkbox" id="notif-ia-modal" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-email-modal">Notificações por e-mail</label><label class="toggle-switch"><input type="checkbox" id="notif-email-modal"><span class="toggle-slider"></span></label></div></div>`;
+                 actions.unshift({ label: 'Salvar preferências', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
+             } else {
+                 title = 'Gerenciamento de Dados';
+                 content = `<div class="detail-stack"><div class="detail-listing-item"><div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div><button class="btn btn-secondary">Exportar</button></div><div class="detail-listing-item"><div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div><button class="btn btn-danger" id="config-delete-account-btn-modal">Apagar conta</button></div></div>`;
+             }
+             this.openDetailModal({ title: `<i class="fa-solid fa-sliders"></i> ${title}`, content, actions });
+             document.getElementById('config-delete-account-btn-modal')?.addEventListener('click', () => { this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => { this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.'); this.handleLogout(); }); });
         },
 
         parseCurrency(value) {
