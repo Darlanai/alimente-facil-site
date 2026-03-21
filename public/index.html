@@ -81,15 +81,13 @@
 <div class="identity-container">
                 <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
                 
-                <h2 class="hero-tagline">O FUTURO DA SUA COZINHA AGORA</h2>
+                <h2 class="hero-tagline">Organização alimentar premium, sem ruído</h2>
                 
                 <p class="simple-subtitle scroll-reveal">
                     Organize, planeje e economize com a inteligência artificial que transforma sua rotina alimentar.
                 </p>
-
-                <div class="hero-stats scroll-reveal" aria-label="Indicadores do produto">
-                    <div class="hero-stat"><strong>+10k</strong><span>usuários</span></div>
-                    <div class="hero-stat"><strong>30%</strong><span>economia média</span></div>
+                <div class="hero-signature scroll-reveal" aria-label="Resumo do produto">Listas • Despensa • Receitas • Planejamento com IA</div>
+                <div class="hero-stat"><strong>30%</strong><span>economia média</span></div>
                     <div class="hero-stat"><strong>Zero</strong><span>desperdício como meta</span></div>
                 </div>
                 
@@ -218,58 +216,6 @@
             </div>
         </section>
 
-        <section class="page-section testimonials-section" id="depoimentos" aria-labelledby="depoimentos-title">
-            <div class="section-content">
-                <div class="section-heading scroll-reveal">
-                    <div class="section-eyebrow">Depoimentos</div>
-                    <h2 id="depoimentos-title" class="page-title">Parece tecnologia. Funciona como rotina.</h2>
-                    <p class="page-subtitle">Provas sociais posicionadas para transmitir confiança e sofisticação logo na entrada.</p>
-                </div>
-                <div class="testimonials-grid">
-                    <article class="testimonial-card scroll-reveal">
-                        <div class="testimonial-avatar">AM</div>
-                        <p>“Passei a comprar menos por impulso e finalmente comecei a usar o que já tinha em casa.”</p>
-                        <strong>Ana Maria</strong>
-                        <span>Usuária doméstica</span>
-                    </article>
-                    <article class="testimonial-card scroll-reveal">
-                        <div class="testimonial-avatar">RL</div>
-                        <p>“A sensação é de produto premium. Tudo conversa entre si e o fluxo ficou muito mais claro.”</p>
-                        <strong>Rafael Lima</strong>
-                        <span>Early adopter</span>
-                    </article>
-                    <article class="testimonial-card scroll-reveal">
-                        <div class="testimonial-avatar">CS</div>
-                        <p>“O Chef IA e o planejador juntos me fizeram economizar tempo, dinheiro e desperdício na semana.”</p>
-                        <strong>Carla Souza</strong>
-                        <span>Família de 3 pessoas</span>
-                    </article>
-                </div>
-            </div>
-        </section>
-
-    <section class="page-section" style="min-height: auto; padding: 4rem 2rem; background: rgba(0,0,0,0.6); border-bottom: 1px solid rgba(255,255,255,0.05);">
-        <div class="section-content">
-            <div class="features-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; width: 100%; max-width: 1200px;">
-                <div class="feature-item" style="text-align: center;">
-                    <i class="fa-solid fa-brain" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 1rem; filter: drop-shadow(0 0 10px rgba(0, 242, 234, 0.4));"></i>
-                    <h3 style="color: #fff; margin-bottom: 0.5rem; font-size: 1.2rem;">IA Inteligente</h3>
-                    <p style="color: #aaa; font-size: 0.95rem; line-height: 1.5;">Receitas e listas criadas automaticamente para você com base no que você já tem.</p>
-                </div>
-                <div class="feature-item" style="text-align: center;">
-                    <i class="fa-solid fa-wallet" style="font-size: 2.5rem; color: var(--green); margin-bottom: 1rem; filter: drop-shadow(0 0 10px rgba(52, 199, 89, 0.4));"></i>
-                    <h3 style="color: #fff; margin-bottom: 0.5rem; font-size: 1.2rem;">Economia Real</h3>
-                    <p style="color: #aaa; font-size: 0.95rem; line-height: 1.5;">Evite desperdícios e controle seu orçamento mensal com precisão.</p>
-                </div>
-                <div class="feature-item" style="text-align: center;">
-                    <i class="fa-solid fa-mobile-screen" style="font-size: 2.5rem; color: var(--accent-purple); margin-bottom: 1rem; filter: drop-shadow(0 0 10px rgba(175, 82, 222, 0.4));"></i>
-                    <h3 style="color: #fff; margin-bottom: 0.5rem; font-size: 1.2rem;">100% Mobile</h3>
-                    <p style="color: #aaa; font-size: 0.95rem; line-height: 1.5;">Leve sua organização no bolso. Funciona perfeitamente em qualquer dispositivo.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-        
         <section id="calculadora" class="page-section" aria-labelledby="calc-title">
             <div class="section-content">
                 <h1 id="calc-title" class="page-title">Calculadora de Desperdício</h1>
@@ -691,7 +637,7 @@
     </div>
     
 <div id="pantry-view-modal" class="modal-overlay">
-        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="pantry-view-title">
+        <div class="modal-box list-fullscreen-box" role="dialog" aria-modal="true" aria-labelledby="pantry-view-title">
             <div class="modal-header">
                 <button class="icon-button close-btn" data-modal-close="pantry-view-modal" aria-label="Voltar"><i class="fa-solid fa-arrow-left"></i></button>
                 <h3 id="pantry-view-title">Editar Despensa</h3>
@@ -741,25 +687,18 @@
                     </div>
                 </form>
             </div>
-            <div class="modal-footer" style="justify-content: space-between;">
-                 <div id="pantry-view-actions-container">
-                     </div>
-                 <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-secondary" data-modal-close="pantry-view-modal">Cancelar</button>
-                    <button class="btn btn-primary" id="pantry-save-btn">Salvar</button>
-                 </div>
-            </div>
+            <div class="modal-footer" id="pantry-view-footer"></div>
         </div>
     </div>
     
     <div id="recipe-detail-modal" class="modal-overlay">
-        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="recipe-detail-modal-title">
+        <div class="modal-box list-fullscreen-box" role="dialog" aria-modal="true" aria-labelledby="recipe-detail-modal-title">
             <div class="modal-header">
                 <button class="icon-button close-btn" id="recipe-detail-close-btn" data-modal-close="recipe-detail-modal"><i class="fa-solid fa-arrow-left"></i></button>
                 <h3 id="recipe-detail-modal-title">Detalhes</h3>
             </div>
             <div class="modal-body" id="recipe-detail-modal-body"></div>
-            <div class="modal-footer" style="background-color: #121212;">
+            <div class="modal-footer" id="recipe-detail-modal-footer" style="background-color: #121212;">
                 </div>
         </div>
     </div>

@@ -1309,7 +1309,33 @@ initNewHeaderLogic() {
                     }
                 });
 
-                document.addEventListener('click', (e) => {
+            
+
+    const originalRenderAnalysisDetailDesktop = app.renderAnalysisDetailDesktop.bind(app);
+    app.renderAnalysisDetailDesktop = function(analysisKey = 'gastos_categoria') {
+        originalRenderAnalysisDetailDesktop(analysisKey);
+        document.querySelectorAll('.module-actions-footer .share-btn, .module-actions-footer .print-btn, .module-actions-footer .pdf-btn').forEach(btn => btn.classList.add('minimal-export-btn'));
+    };
+
+    app.openAnalysisDetailModal = function(analysisKey = 'gastos_categoria') {
+        const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+        this.openDetailModal({
+            title: `<i class="${cfg.icon}"></i> ${cfg.label}`,
+            content: `<p class="detail-note">${cfg.note}</p><div class="analysis-config-panel"><div class="form-group"><label for="analysis-data-select">Analisar</label><select id="analysis-data-select"><option value="gastos_categoria">Gastos por Categoria (Listas)</option><option value="validade_despensa">Itens por Validade (Despensa)</option><option value="uso_receitas">Receitas Usadas (Planejador)</option></select></div><div class="form-group"><label for="analysis-type-select">Tipo de gráfico</label><select id="analysis-type-select"><option value="pie">Pizza</option><option value="doughnut">Rosca</option><option value="bar">Barras</option><option value="line">Linha</option></select></div></div><div class="chart-canvas-container" style="margin-top:1rem;"><canvas id="dynamic-analysis-chart"></canvas></div>`,
+            actions: []
+        });
+        const footer = document.getElementById('detail-modal-footer');
+        if (footer) {
+            footer.className = 'modal-footer detail-modal-footer';
+            footer.innerHTML = `<button type="button" class="icon-button minimal-export-btn share-btn" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button><button type="button" class="icon-button minimal-export-btn print-btn" title="Imprimir"><i class="fa-solid fa-print"></i></button><button type="button" class="icon-button minimal-export-btn pdf-btn" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
+        }
+        document.getElementById('analysis-data-select').value = analysisKey;
+        document.getElementById('analysis-data-select')?.addEventListener('change', () => this.updateDynamicChart());
+        document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+        this.updateDynamicChart();
+    };
+
+    document.addEventListener('click', (e) => {
                     if (menu.classList.contains('active') && !menu.contains(e.target) && !newHamburger.contains(e.target)) {
                         menu.classList.remove('active');
                         newHamburger.classList.remove('active');
@@ -1591,6 +1617,7 @@ initNewHeaderLogic() {
         openConfirmModal(title, message, onConfirm) {
              const confirmModal = document.getElementById('custom-confirm-modal');
              if (!confirmModal) return;
+             confirmModal.classList.remove('recipe-editor-modal');
              confirmModal.querySelector('#confirm-title').textContent = title;
              confirmModal.querySelector('#confirm-message').innerHTML = message;
              const confirmOkBtn = confirmModal.querySelector('#confirm-ok-btn');
@@ -1610,6 +1637,7 @@ initNewHeaderLogic() {
         showInfoModal(title, message) {
              const confirmModal = document.getElementById('custom-confirm-modal');
              if (!confirmModal) return;
+             confirmModal.classList.remove('recipe-editor-modal');
              confirmModal.querySelector('#confirm-title').textContent = title;
              confirmModal.querySelector('#confirm-message').innerHTML = message;
              const confirmOkBtn = confirmModal.querySelector('#confirm-ok-btn');
@@ -1821,6 +1849,7 @@ actionsHTML = `
             if (modalFooter) {
                 modalFooter.innerHTML = `
                     <button class="icon-button share-btn" data-list-id="${listId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+                    <button class="icon-button print-btn" data-list-id="${listId}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
                     <button class="icon-button pdf-btn" data-list-id="${listId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
                     <button class="icon-button delete-list-btn" data-list-id="${listId}" title="Excluir"><i class="fa-solid fa-trash" style="color: var(--red);"></i></button>
                 `;
@@ -2214,29 +2243,48 @@ if(recipes.length === 0){ listContainer.innerHTML = '<p class="empty-list-messag
 },
 
         renderRecipeDetail(recipeId, targetElementId = 'recipe-detail-desktop-body', footerElementId = 'recipe-detail-desktop-footer') {
-             const recipe = this.state.receitas[recipeId]; const bodyEl = document.getElementById(targetElementId); const footerEl = document.getElementById(footerElementId);
-             if (!recipe || !bodyEl || !footerEl) { if (bodyEl) bodyEl.innerHTML = '<div class="recipe-detail-placeholder"><i class="fa-solid fa-question-circle"></i><p>Receita não encontrada.</p></div>'; if (footerEl) footerEl.style.display = 'none'; return; }
-             bodyEl.innerHTML = recipe.content;
-footerEl.classList.add('module-actions-footer');
-footerEl.innerHTML = `
-                <div style="display: flex; gap: 10px; width: 100%; justify-content: flex-end;">
-                    <button class="icon-button edit-recipe-btn" data-recipe-id="${recipeId}" title="Editar" style="color: var(--primary-color); border-color: var(--primary-color);"><i class="fa-solid fa-pencil"></i></button> 
-                    <button class="icon-button delete-recipe-btn" data-recipe-id="${recipeId}" title="Excluir" style="color: var(--red); border-color: rgba(255,59,48,0.3);"><i class="fa-solid fa-trash"></i></button>
-                </div>
+             const recipe = this.state.receitas[recipeId];
+             const bodyEl = document.getElementById(targetElementId);
+             const footerEl = document.getElementById(footerElementId);
+             if (!recipe || !bodyEl || !footerEl) {
+                 if (bodyEl) bodyEl.innerHTML = '<div class="recipe-detail-placeholder"><i class="fa-solid fa-question-circle"></i><p>Receita não encontrada.</p></div>';
+                 if (footerEl) footerEl.style.display = 'none';
+                 return;
+             }
+             bodyEl.innerHTML = `<div class="detail-rich-content recipe-rich-content">${recipe.content}</div>`;
+             footerEl.classList.add('module-actions-footer', 'unified-detail-actions');
+             footerEl.innerHTML = `
+                <button type="button" class="icon-button share-btn" data-recipe-id="${recipeId}" title="Compartilhar" aria-label="Compartilhar receita">
+                    <i class="fa-solid fa-share-nodes"></i><span>Compartilhar</span>
+                </button>
+                <button type="button" class="icon-button print-btn" data-recipe-id="${recipeId}" title="Imprimir" aria-label="Imprimir receita">
+                    <i class="fa-solid fa-print"></i><span>Imprimir</span>
+                </button>
+                <button type="button" class="icon-button pdf-btn" data-recipe-id="${recipeId}" title="PDF" aria-label="Gerar PDF da receita">
+                    <i class="fa-solid fa-file-pdf"></i><span>PDF</span>
+                </button>
+                <button type="button" class="icon-button edit-recipe-btn" data-recipe-id="${recipeId}" title="Editar" aria-label="Editar receita">
+                    <i class="fa-solid fa-pen"></i><span>Editar</span>
+                </button>
+                <button type="button" class="icon-button delete-recipe-btn danger" data-recipe-id="${recipeId}" title="Excluir" aria-label="Excluir receita">
+                    <i class="fa-solid fa-trash"></i><span>Excluir</span>
+                </button>
              `;
-             footerEl.style.display = 'flex';
-             footerEl.style.justifyContent = 'space-between';
+             footerEl.style.display = 'grid';
         },
 
         showRecipeDetailModal(recipeId) {
-             const recipe = this.state.receitas[recipeId]; if (!recipe) return;
+             const recipe = this.state.receitas[recipeId];
+             if (!recipe) return;
              this.openDetailModal({
-                 title: `<i class="fa-solid fa-utensils"></i> ${this.escapeHtml(recipe.name)}` ,
-                 content: recipe.content,
+                 title: `<i class="fa-solid fa-utensils"></i> ${this.escapeHtml(recipe.name)}`,
+                 content: `<div class="recipe-rich-content">${recipe.content}</div>`,
                  actions: [
-                    { label: 'Editar', className: 'btn-primary edit-recipe-btn', icon: 'fa-solid fa-pencil', onClick: () => { this.closeModal('detail-modal'); this.handleOpenRecipeEditModal(recipeId); } },
-                    { label: 'PDF', className: 'btn-secondary', icon: 'fa-solid fa-file-pdf', onClick: () => this.handleRealPDF() },
-                    { label: 'Excluir', className: 'btn-danger', icon: 'fa-solid fa-trash', onClick: () => { this.closeModal('detail-modal'); this.handleDeleteRecipe(recipeId); } }
+                    { label: 'Compartilhar', className: 'btn btn-secondary detail-action-btn share-btn', icon: 'fa-solid fa-share-nodes', onClick: () => this.handleRealShare(recipe.name, `Veja esta receita: ${recipe.name}`) },
+                    { label: 'Imprimir', className: 'btn btn-secondary detail-action-btn print-btn', icon: 'fa-solid fa-print', onClick: () => this.handleRealPDF() },
+                    { label: 'PDF', className: 'btn btn-secondary detail-action-btn pdf-btn', icon: 'fa-solid fa-file-pdf', onClick: () => this.handleRealPDF() },
+                    { label: 'Editar', className: 'btn btn-primary detail-action-btn edit-recipe-btn', icon: 'fa-solid fa-pen', onClick: () => { this.closeModal('detail-modal'); this.handleOpenRecipeEditModal(recipeId); } },
+                    { label: 'Excluir', className: 'btn btn-danger detail-action-btn delete-recipe-btn', icon: 'fa-solid fa-trash', onClick: () => { this.closeModal('detail-modal'); this.handleDeleteRecipe(recipeId); } }
                  ]
              });
         },
@@ -2696,16 +2744,22 @@ renderOrcamento() {
         renderModalIngredientList() {
             const container = document.getElementById('recipe-ingredients-list');
             if (!container) return;
-            if (this.tempRecipeIngredients.length === 0) { container.innerHTML = '<p class="empty-list-message" style="padding: 1rem 0;">Nenhum ingrediente adicionado.</p>'; return; }
+            if (this.tempRecipeIngredients.length === 0) {
+                container.innerHTML = '<p class="empty-list-message recipe-ingredient-empty">Nenhum ingrediente adicionado.</p>';
+                return;
+            }
             container.innerHTML = this.tempRecipeIngredients.map((ing, index) => {
                 const ingName = this.escapeHtml(ing.name);
-                let qtyDisplay = ing.unit === 'a gosto' ? 'a gosto' : `${this.escapeHtml(ing.qty || '')} ${this.escapeHtml(ing.unit || '')}`;
+                const qtyDisplay = ing.unit === 'a gosto' ? 'a gosto' : `${this.escapeHtml(ing.qty || '')} ${this.escapeHtml(ing.unit || '')}`.trim();
                 return `
                 <div class="recipe-ing-item" data-index="${index}">
-                    <span><strong>${qtyDisplay}</strong> - ${ingName}</span>
+                    <div class="recipe-ing-copy">
+                        <strong>${qtyDisplay}</strong>
+                        <span>${ingName}</span>
+                    </div>
                     <div class="recipe-ing-actions">
                         <button type="button" class="icon-button edit-ing-btn" title="Editar" aria-label="Editar ${ingName}"><i class="fa-solid fa-pencil" aria-hidden="true"></i></button>
-                        <button type="button" class="icon-button delete-ing-btn" title="Excluir" aria-label="Excluir ${ingName}"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+                        <button type="button" class="icon-button delete-ing-btn danger" title="Excluir" aria-label="Excluir ${ingName}"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
                     </div>
                 </div>
             `}).join('');
@@ -3082,9 +3136,12 @@ handleOpenRecipeEditModal(recipeId) {
               this.openConfirmModal(title, content, () => this.handleSaveRecipe());
               const okButton = document.getElementById('confirm-ok-btn');
               if (okButton) { okButton.textContent = 'Salvar Receita'; okButton.classList.remove('btn-danger'); okButton.classList.add('btn-primary'); }
-              this.renderModalIngredientList();
               const modal = document.getElementById('custom-confirm-modal');
               if (!modal) return;
+              modal.classList.add('recipe-editor-modal');
+              const titleEl = modal.querySelector('#confirm-title');
+              if (titleEl) titleEl.innerHTML = `${id ? '<i class="fa-solid fa-pen"></i> ' : '<i class="fa-solid fa-plus"></i> '}${this.escapeHtml(title)}`;
+              this.renderModalIngredientList();
               const addIngBtn = modal.querySelector('#recipe-add-ing-btn');
               const ingListContainer = modal.querySelector('#recipe-ingredients-list');
               const addIngFormContainer = modal.querySelector('#recipe-ing-form');
@@ -3340,38 +3397,64 @@ handleSaveRecipe() {
             this.showInfoModal(title, message);
         },
 
-        handleAddMealToPlanner(recipeName, targetContainerId) {
-             const targetContainer = document.getElementById(targetContainerId); if (!targetContainer) return;
-             const match = targetContainerId.match(/planner-(?:full|day)-(\w+)(?:-(\w+))?/); if (!match) return;
-             const dayKey = match[1]; const mealKey = match[2];
-             const recipe = Object.values(this.state.receitas).find(r => r.name === recipeName);
-             if (!recipe) { this.showNotification(`Receita "${recipeName}" não encontrada.`, "error"); return; }
+        handleAddMealToPlanner(recipeRef, targetContainerId) {
+             const resolvedTargetId = targetContainerId && targetContainerId.startsWith('planner-') ? targetContainerId : `planner-full-${targetContainerId}`;
+             const match = resolvedTargetId.match(/planner-(?:full|day)-(\w+)(?:-(\w+))?/);
+             if (!match) return;
+             const dayKey = match[1];
+             const mealKey = match[2];
+             const recipe = this.state.receitas[recipeRef] || Object.values(this.state.receitas).find(r => r.name === recipeRef);
+             if (!recipe) { this.showNotification('Receita não encontrada.', 'error'); return; }
              if (!this.state.planejador[dayKey]) { this.state.planejador[dayKey] = {}; }
-             if(mealKey) { this.state.planejador[dayKey][mealKey] = { id: recipe.id, name: recipe.name }; }
-             else { this.state.planejador[dayKey] = { cafe: { id: recipe.id, name: recipe.name }, almoco: { id: recipe.id, name: recipe.name }, jantar: { id: recipe.id, name: recipe.name } }; }
+             const plannerEntry = { id: recipe.id, name: recipe.name, completed: false };
+             if (mealKey) {
+                 this.state.planejador[dayKey][mealKey] = plannerEntry;
+             } else {
+                 this.state.planejador[dayKey] = {
+                     cafe: { ...plannerEntry },
+                     almoco: { ...plannerEntry },
+                     jantar: { ...plannerEntry }
+                 };
+             }
              this.saveState();
-             if (this.activeModule === 'planejador') { this.renderPlanejador(); } else { this.renderPlannerWidget(); }
+             this.renderPlannerWidget();
+             if (this.activeModule === 'planejador') this.renderPlanejador();
+             this.showNotification(`"${recipe.name}" adicionada ao planejador.`, 'success');
         },
 
         populateRecipePicker() {
-             const container = document.getElementById('recipe-picker-list-container'); if (!container) return;
+             const container = document.getElementById('recipe-picker-list-container');
+             if (!container) return;
              const recipes = Object.values(this.state.receitas);
-             container.innerHTML = recipes.map(recipe => {
-                const recipeName = this.escapeHtml(recipe.name);
-                return `<div class="recipe-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--glass-border);"> <span>${recipeName}</span> <button class="btn btn-primary btn-add-recipe" data-recipe-name="${recipeName}" aria-label="Adicionar ${recipeName}"><i class="fa-solid fa-plus" aria-hidden="true"></i></button> </div>`
-             }).join('');
-             if (recipes.length === 0) { container.innerHTML = '<p class="empty-list-message">Nenhuma receita cadastrada.</p>'; }
-             container.removeEventListener('click', this.handleRecipePickerAdd);
-             container.addEventListener('click', this.handleRecipePickerAdd.bind(this));
+             if (recipes.length === 0) {
+                 container.innerHTML = '<p class="empty-list-message">Nenhuma receita cadastrada.</p>';
+                 return;
+             }
+             container.innerHTML = recipes.map(recipe => `
+                <div class="recipe-picker-item">
+                    <div class="recipe-picker-copy">
+                        <strong>${this.escapeHtml(recipe.name)}</strong>
+                        <span>${this.escapeHtml(recipe.desc || 'Receita salva no app.')}</span>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-add-recipe" data-recipe-id="${recipe.id}" aria-label="Adicionar ${this.escapeHtml(recipe.name)}">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        <span>Adicionar</span>
+                    </button>
+                </div>
+             `).join('');
+             if (!this.boundHandleRecipePickerAdd) {
+                 this.boundHandleRecipePickerAdd = this.handleRecipePickerAdd.bind(this);
+             }
+             container.removeEventListener('click', this.boundHandleRecipePickerAdd);
+             container.addEventListener('click', this.boundHandleRecipePickerAdd);
         },
 
          handleRecipePickerAdd(e) {
               const addBtn = e.target.closest('.btn-add-recipe');
-              if (addBtn && this.currentPlannerDayTarget) {
-                   const recipeName = addBtn.dataset.recipeName;
-                   this.handleAddMealToPlanner(recipeName, this.currentPlannerDayTarget);
-                   this.closeModal('recipe-picker-modal'); this.currentPlannerDayTarget = null;
-              }
+              if (!addBtn || !this.currentPlannerDayTarget) return;
+              this.handleAddMealToPlanner(addBtn.dataset.recipeId, this.currentPlannerDayTarget);
+              this.closeModal('recipe-picker-modal');
+              this.currentPlannerDayTarget = null;
          },
 
         initSortableItems(containerId) {
@@ -3974,8 +4057,3230 @@ const ALL_ITEMS_DATA = [
     { name: 'Zimbro', price: 1.00, unit_desc: 'baga de zimbro', icon: 'icone-zimbro.png' }
 ];
 
+
+
+// === PATCH OBRIGATÓRIO ALIMENTE FÁCIL ===
+(() => {
+    const originalLoadState = app.loadState.bind(app);
+    app.loadState = function() {
+        originalLoadState();
+        this.listSortMode = this.listSortMode || 'date_desc';
+        this.autocompleteTimeout = null;
+        this.inlineListEdit = null;
+        this.pendingCustomMeal = null;
+        Object.entries(this.state?.listas || {}).forEach(([listId, lista]) => {
+            if (!lista.createdAt) lista.createdAt = listId === 'listaDaSemana' ? '2026-01-01T00:00:00.000Z' : new Date().toISOString();
+        });
+    };
+
+    app.saveState = function() {
+        try {
+            const stateToSave = {
+                isAppMode: this.isAppMode,
+                isLoggedIn: this.isLoggedIn,
+                userPlan: this.userPlan,
+                activeModule: this.activeModule,
+                activeListId: this.activeListId,
+                listSortMode: this.listSortMode || 'date_desc',
+                data: this.state
+            };
+            localStorage.setItem('alimenteFacilState_vFinal', JSON.stringify(stateToSave));
+            localStorage.setItem('themePreference', document.body.classList.contains('lua-mode') ? 'lua' : 'sol');
+        } catch (e) { console.error('Erro ao salvar estado', e); }
+    };
+
+    app.sortSavedLists = function(lists = []) {
+        const getTotal = (lista) => (lista.items || []).reduce((acc, item) => acc + ((parseFloat(item.valor) || 0) * (parseFloat(item.qtd) || 0)), 0);
+        const getCount = (lista) => (lista.items || []).length;
+        const sorted = [...lists];
+        switch (this.listSortMode) {
+            case 'name_asc':
+                sorted.sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
+                break;
+            case 'total_desc':
+                sorted.sort((a, b) => getTotal(b) - getTotal(a) || String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
+                break;
+            case 'items_desc':
+                sorted.sort((a, b) => getCount(b) - getCount(a) || String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
+                break;
+            case 'date_desc':
+            default:
+                sorted.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                break;
+        }
+        return sorted;
+    };
+
+    app.renderListas = function(container) {
+        if (!container) container = document.getElementById('module-lista');
+        if (!container) return;
+        container.innerHTML = `
+            <div class="master-detail-layout" id="list-manager">
+                <div class="md-list-column dashboard-card">
+                    <div class="card-header"><h3><i class="fa-solid fa-list-ul"></i> Minhas Listas</h3></div>
+                    <div class="card-content">
+                        <div style="display:flex; gap:.65rem; align-items:center; margin-bottom:1rem;">
+                            <button class="btn btn-secondary btn-create-list" style="flex:1; margin:0;"><i class="fa-solid fa-plus"></i> Nova Lista</button>
+                            <select id="list-sort-select" class="input-large" style="max-width:190px;">
+                                <option value="name_asc">Nome (A-Z)</option>
+                                <option value="date_desc">Data de criação</option>
+                                <option value="total_desc">Valor total</option>
+                                <option value="items_desc">Quantidade de itens</option>
+                            </select>
+                        </div>
+                        <div id="saved-lists-container"></div>
+                    </div>
+                </div>
+                <div class="md-detail-column dashboard-card" id="lista-detail-desktop">
+                    <div class="card-header">
+                        <button id="list-back-btn" class="icon-button mobile-only" aria-label="Voltar"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h3 id="active-list-title"><i class="fa-solid fa-cart-shopping"></i> Selecione uma Lista</h3>
+                    </div>
+                    <div class="add-item-form-container">
+                        <form class="add-item-form">
+                            <input type="hidden" id="active-list-id-input" value="">
+                            <div class="form-group form-group-flex"><label>Nome</label><input type="text" id="lista-form-nome-full" placeholder="Ex: Arroz"></div>
+                            <div class="form-group form-group-small"><label>Qtd</label><input type="number" id="lista-form-qtd-full" value="1" min="0.1" step="any"></div>
+                            <div class="form-group form-group-small"><label>Unid</label><select id="lista-form-unid-full"><option value="un">un</option><option value="kg">kg</option><option value="g">g</option><option value="L">L</option><option value="ml">ml</option><option value="pct">pct</option><option value="cx">cx</option></select></div>
+                            <div class="form-group form-group-medium"><label>Valor</label><input type="text" id="lista-form-valor-full" placeholder="0.00"></div>
+                            <button type="submit" class="btn btn-primary btn-add-item" id="lista-add-item-btn-full"><i class="fa-solid fa-plus"></i></button>
+                        </form>
+                    </div>
+                    <div class="card-content no-padding-top" id="lista-items-full" data-group="shared-items" data-list-type="lista"><div class="empty-state-placeholder"><p>Selecione uma lista ao lado para ver os itens.</p></div></div>
+                    <div class="card-footer module-actions-footer" id="active-list-actions"></div>
+                </div>
+            </div>`;
+        const sortSelect = document.getElementById('list-sort-select');
+        if (sortSelect) sortSelect.value = this.listSortMode || 'date_desc';
+        this.renderListasSalvas();
+        if (this.activeListId) this.renderListaAtiva(this.activeListId);
+    };
+
+    app.renderListasSalvas = function() {
+        const container = document.getElementById('saved-lists-container');
+        if (!container) return;
+        const lists = this.sortSavedLists(Object.entries(this.state.listas).map(([listId, lista]) => ({ listId, ...lista })));
+        container.innerHTML = lists.map(lista => this.renderUniversalCard({
+            type: 'saved-list',
+            data: { id: lista.listId, name: lista.nome, items: lista.items || [] },
+            actions: [
+                { type: 'edit select-list-btn', icon: 'fa-solid fa-pencil', label: 'Editar' },
+                { type: 'danger delete-list-btn', icon: 'fa-solid fa-trash', label: 'Excluir' }
+            ],
+            isClickable: true
+        })).join('') || '<p class="empty-list-message">Nenhuma lista salva. Crie uma nova acima!</p>';
+    };
+
+    app.renderListaAtiva = function(listId) {
+        const container = document.getElementById('lista-items-full');
+        const titleEl = document.getElementById('active-list-title');
+        const actionsContainer = document.getElementById('active-list-actions');
+        const idInput = document.getElementById('active-list-id-input');
+        const nameFormInput = document.getElementById('lista-form-nome-full');
+        const qtyFormInput = document.getElementById('lista-form-qtd-full');
+        const valorFormInput = document.getElementById('lista-form-valor-full');
+        if (!container || !titleEl || !actionsContainer || !idInput || !nameFormInput || !qtyFormInput || !valorFormInput) return;
+        const lista = this.state.listas[listId];
+        if (!lista) return;
+        idInput.value = listId;
+        titleEl.innerHTML = `<i class="fa-solid fa-cart-shopping"></i> <input type="text" id="active-list-name-input" value="${this.escapeHtml(lista.nome)}" placeholder="Nome da lista" aria-label="Nome da lista ativa">`;
+        container.innerHTML = (lista.items || []).map(item => this.createListaItemHTML(item)).join('') || '<p class="empty-list-message">Esta lista está vazia.</p>';
+        actionsContainer.innerHTML = `<button class="icon-button" id="lista-save-changes-btn" title="Salvar"><i class="fa-solid fa-floppy-disk"></i></button><button class="icon-button danger" id="lista-delete-btn" title="Excluir"><i class="fa-solid fa-trash"></i></button>`;
+        this.initSortableItems('lista-items-full');
+    };
+
+    app.getListIdFromItemElement = function(itemEl) {
+        const modalBody = itemEl?.closest('#list-view-modal-body');
+        if (modalBody?.dataset.listId) return modalBody.dataset.listId;
+        return document.getElementById('active-list-id-input')?.value || this.activeListId;
+    };
+
+    app.refreshListContexts = function(listId) {
+        if (this.activeModule === 'lista' && listId === (document.getElementById('active-list-id-input')?.value || this.activeListId)) this.renderListaAtiva(listId);
+        const modalBody = document.getElementById('list-view-modal-body');
+        if (modalBody && modalBody.dataset.listId === listId && document.getElementById('list-view-modal')?.classList.contains('is-visible')) {
+            const lista = this.state.listas[listId];
+            modalBody.innerHTML = (lista?.items || []).map(item => this.createListaItemHTML(item)).join('') || '<p class="empty-list-message">Lista vazia.</p>';
+            this.initSortableItems('list-view-modal-body');
+        }
+        this.renderListaWidget();
+        this.renderOrcamento();
+    };
+
+    app.startInlineListEdit = function(itemEl) {
+        const listId = this.getListIdFromItemElement(itemEl);
+        const itemId = itemEl?.dataset.id;
+        const item = this.state.listas[listId]?.items.find(i => i.id.toString() === String(itemId));
+        if (!item) return;
+        this.inlineListEdit = { listId, itemId: item.id, draft: { name: item.name, qtd: item.qtd, unid: item.unid, valor: parseFloat(item.valor || 0).toFixed(2) } };
+        this.refreshListContexts(listId);
+    };
+    app.cancelInlineListEdit = function() {
+        const listId = this.inlineListEdit?.listId;
+        this.inlineListEdit = null;
+        if (listId) this.refreshListContexts(listId);
+    };
+    app.handleSaveInlineListEdit = function(itemEl) {
+        const listId = this.getListIdFromItemElement(itemEl) || this.inlineListEdit?.listId;
+        const itemId = itemEl?.dataset.id || this.inlineListEdit?.itemId;
+        const itemIndex = this.state.listas[listId]?.items.findIndex(i => i.id.toString() === String(itemId));
+        if (itemIndex == null || itemIndex < 0) return;
+        const name = itemEl.querySelector('.inline-edit-name')?.value.trim();
+        const qtd = parseFloat(itemEl.querySelector('.inline-edit-qtd')?.value) || 1;
+        const unid = itemEl.querySelector('.inline-edit-unid')?.value || 'un';
+        const valor = parseFloat(itemEl.querySelector('.inline-edit-valor')?.value) || 0;
+        if (!name) return this.showNotification('Informe o nome do item.', 'error');
+        this.state.listas[listId].items[itemIndex] = { ...this.state.listas[listId].items[itemIndex], name, qtd, unid, valor: valor.toFixed(2) };
+        this.inlineListEdit = null;
+        this.saveState();
+        this.refreshListContexts(listId);
+        this.showNotification('Item da lista atualizado!', 'success');
+    };
+
+    app.createListaItemHTML = function(item) {
+        const itemName = this.escapeHtml(item.name);
+        const isEditing = this.inlineListEdit && String(this.inlineListEdit.itemId) === String(item.id);
+        const draft = isEditing ? (this.inlineListEdit.draft || {}) : null;
+        if (isEditing) {
+            return `<div class="placeholder-item inline-editing" data-id="${item.id}" data-name="${this.escapeHtml(item.name)}"><div class="item-inline-edit-grid"><div class="inline-field inline-name-field"><label>Nome</label><input type="text" class="inline-edit-name" value="${this.escapeHtml(draft.name ?? item.name)}"></div><div class="inline-field"><label>Qtd</label><input type="number" class="inline-edit-qtd" value="${draft.qtd ?? item.qtd}" min="0.1" step="any"></div><div class="inline-field"><label>Unid</label><select class="inline-edit-unid">${['un','kg','g','L','ml','pct','cx'].map(u => `<option value="${u}" ${(draft.unid ?? item.unid) === u ? 'selected' : ''}>${u}</option>`).join('')}</select></div><div class="inline-field"><label>Valor</label><input type="number" class="inline-edit-valor" value="${parseFloat(draft.valor ?? item.valor ?? 0).toFixed(2)}" min="0" step="0.01"></div><div class="item-actions inline-edit-actions"><button class="icon-button save-inline-edit-btn" title="Salvar"><i class="fa-solid fa-check"></i></button><button class="icon-button cancel-inline-edit-btn" title="Cancelar"><i class="fa-solid fa-xmark"></i></button></div></div></div>`;
+        }
+        return `<div class="placeholder-item ${item.checked ? 'is-checked' : ''}" data-id="${item.id}" data-name="${item.name}" data-qtd="${item.qtd}" data-unid="${item.unid}" data-valor="${item.valor}"><div class="item-row"><div class="item-main-info"><i class="fa-solid fa-grip-vertical drag-handle" title="Arrastar item"></i><input type="checkbox" ${item.checked ? 'checked' : ''} aria-label="Marcar ${itemName}"><span class="item-name">${itemName}</span></div><div class="item-actions"><button class="icon-button edit-btn" title="Editar"><i class="fa-solid fa-pencil"></i></button><button class="icon-button delete-btn" title="Excluir"><i class="fa-solid fa-times"></i></button></div></div><div class="item-details-grid"><div>Qtd: <span>${item.qtd}</span></div><div>Un: <span>${item.unid}</span></div><div>Preço: <span>R$ ${parseFloat(item.valor || 0).toFixed(2)}</span></div></div><div class="item-checked-actions"><div class="form-group-checked"><label for="validade-${item.id}">Validade (Opcional)</label><input type="date" id="validade-${item.id}" class="item-validade-input"></div><div class="confirm-actions-group"><small class="confirm-pantry-text">Deseja enviar para a despensa?</small><div class="confirm-buttons"><button class="icon-button cancel-move-btn" title="Não"><i class="fa-solid fa-times-circle" style="color: var(--red);"></i></button><button class="icon-button move-to-despensa-btn" title="Sim"><i class="fa-solid fa-check-circle" style="color: var(--green);"></i></button></div></div></div></div>`;
+    };
+
+    app.handleAutocomplete = function(inputElement) {
+        const query = inputElement.value.trim().toLowerCase();
+        this.activeAutocompleteInput = inputElement;
+        if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
+        if (this.elements.autocompleteSuggestions) this.elements.autocompleteSuggestions.innerHTML = '';
+        if (query.length < 1) return this.hideAutocomplete();
+        this.autocompleteTimeout = setTimeout(() => {
+            const unique = new Map();
+            ALL_ITEMS_DATA.forEach(item => {
+                if (item.name.toLowerCase().includes(query) && !unique.has(item.name.toLowerCase())) unique.set(item.name.toLowerCase(), item);
+            });
+            const suggestions = Array.from(unique.values()).slice(0, 10);
+            if (!suggestions.length) return this.showAutocomplete([{ name: `Insira manual: ${inputElement.value}` }], query, inputElement);
+            this.showAutocomplete(suggestions, query, inputElement);
+        }, 180);
+    };
+    app.hideAutocomplete = function() {
+        if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
+        if (this.elements.autocompleteSuggestions) {
+            this.elements.autocompleteSuggestions.style.display = 'none';
+            this.elements.autocompleteSuggestions.innerHTML = '';
+        }
+        this.activeAutocompleteInput = null;
+    };
+
+    app.handleOpenListViewModal = function(listId) {
+        const lista = this.state.listas[listId];
+        if (!lista) return;
+        const header = document.querySelector('#list-view-modal .modal-header');
+        const body = document.getElementById('list-view-modal-body');
+        const footer = document.getElementById('list-view-modal-footer');
+        const idInput = document.getElementById('modal-list-id-input');
+        if (header) header.innerHTML = `<button class="icon-button" data-modal-close="list-view-modal"><i class="fa-solid fa-arrow-left"></i></button><h3 id="list-view-modal-title" style="flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">${this.escapeHtml(lista.nome)}</h3><button class="icon-button" id="list-view-edit-btn" title="Editar"><i class="fa-solid fa-pencil"></i></button>`;
+        if (footer) footer.innerHTML = `<button class="icon-button pdf-btn" data-list-id="${listId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button><button class="icon-button print-btn" data-list-id="${listId}" title="Imprimir"><i class="fa-solid fa-print"></i></button><button class="icon-button share-btn" data-list-id="${listId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>`;
+        if (idInput) idInput.value = listId;
+        if (body) {
+            body.dataset.listId = listId;
+            body.innerHTML = (lista.items || []).map(item => this.createListaItemHTML(item)).join('') || '<p class="empty-list-message">Lista vazia.</p>';
+            this.initSortableItems('list-view-modal-body');
+        }
+        this.openModal('list-view-modal');
+        document.getElementById('list-view-edit-btn')?.addEventListener('click', () => { this.closeModal('list-view-modal'); this.openListEditView(listId); }, { once: true });
+    };
+
+    app.handleOpenPantryView = function(itemEl) {
+        const id = itemEl?.dataset.id;
+        const item = this.state.despensa.find(i => i.id.toString() === String(id));
+        if (!item) return;
+        const titleEl = document.getElementById('pantry-view-title');
+        const bodyEl = document.getElementById('pantry-view-body');
+        const footerEl = document.getElementById('pantry-view-footer');
+        if (!titleEl || !bodyEl || !footerEl) return;
+        titleEl.textContent = item.name;
+        const stock = parseInt(item.stock || 0, 10);
+        const stockBars = Array.from({ length: 4 }, (_, i) => `<div class="card__stock-bar ${i < Math.round(stock / 25) ? 'active' : ''}"></div>`).join('');
+        bodyEl.innerHTML = `<div class="pantry-view-readonly"><div class="detail-kpi-grid"><div class="detail-kpi"><strong>${this.escapeHtml(item.name)}</strong><span>Item da despensa</span></div><div class="detail-kpi"><strong>${item.qtd}</strong><span>Quantidade</span></div><div class="detail-kpi"><strong>${this.escapeHtml(item.unid || 'un')}</strong><span>Unidade</span></div><div class="detail-kpi"><strong>R$ ${parseFloat(item.valor || 0).toFixed(2)}</strong><span>Valor unitário</span></div></div><div class="detail-stack" style="margin-top:1rem;"><div class="detail-listing-item"><div><strong>Validade</strong><p class="detail-note">${item.validade ? item.validade.split('-').reverse().join('/') : 'Não informada'}</p></div></div><div class="detail-listing-item"><div><strong>Nível de estoque</strong><p class="detail-note">${stock}%</p></div><div class="card__stock">${stockBars}</div></div></div></div>`;
+        footerEl.innerHTML = `<button class="icon-button share-btn" data-item-id="${item.id}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button><button class="icon-button print-btn" data-item-id="${item.id}" title="Imprimir"><i class="fa-solid fa-print"></i></button><button class="icon-button pdf-btn" data-item-id="${item.id}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
+        this.openModal('pantry-view-modal');
+    };
+
+    app.handleOpenDespensaEditModal = function(itemEl) {
+        const id = itemEl?.dataset.id;
+        const item = this.state.despensa.find(i => i.id.toString() === String(id));
+        if (!item) return;
+        document.getElementById('edit-item-id').value = item.id;
+        document.getElementById('edit-item-type').value = 'despensa';
+        document.getElementById('item-edit-title').innerHTML = `<i class="fa-solid fa-pencil"></i> Editar Item da Despensa`;
+        document.getElementById('edit-item-name').value = item.name;
+        document.getElementById('edit-item-qtd').value = item.qtd || 1;
+        document.getElementById('edit-item-unid').value = item.unid || 'un';
+        document.getElementById('edit-item-valor').value = parseFloat(item.valor || 0).toFixed(2);
+        document.getElementById('edit-item-validade').value = item.validade || '';
+        document.getElementById('edit-item-stock').value = item.stock || 100;
+        document.getElementById('edit-item-despensa-fields').style.display = 'block';
+        const footer = document.querySelector('#item-edit-modal .modal-footer');
+        if (footer) footer.innerHTML = `<button class="icon-button" data-modal-close="item-edit-modal" aria-label="Cancelar"><i class="fa-solid fa-xmark"></i></button><button class="icon-button" id="item-edit-save-btn" aria-label="Salvar"><i class="fa-solid fa-floppy-disk"></i></button>`;
+        document.getElementById('item-edit-save-btn')?.addEventListener('click', () => this.handleSaveEditModal(), { once: true });
+        this.openModal('item-edit-modal');
+    };
+
+    app.handleSaveEditModal = function() {
+        const id = document.getElementById('edit-item-id')?.value;
+        const type = document.getElementById('edit-item-type')?.value;
+        if (!id || type !== 'despensa') return;
+        const idx = this.state.despensa.findIndex(i => i.id.toString() === String(id));
+        if (idx < 0) return;
+        this.state.despensa[idx] = {
+            ...this.state.despensa[idx],
+            name: document.getElementById('edit-item-name')?.value.trim() || 'Item sem nome',
+            qtd: parseFloat(document.getElementById('edit-item-qtd')?.value) || 1,
+            unid: document.getElementById('edit-item-unid')?.value || 'un',
+            valor: (parseFloat(document.getElementById('edit-item-valor')?.value) || 0).toFixed(2),
+            validade: document.getElementById('edit-item-validade')?.value || '',
+            stock: parseInt(document.getElementById('edit-item-stock')?.value || '100', 10)
+        };
+        this.saveState();
+        this.renderDespensaWidget();
+        if (this.activeModule === 'despensa') this.renderDespensa();
+        this.closeModal('item-edit-modal');
+        this.showNotification('Item da despensa atualizado!', 'success');
+    };
+
+    app.showRecipeDetailModal = function(recipeId) {
+        const recipe = this.state.receitas[recipeId];
+        if (!recipe) return;
+        const titleEl = document.getElementById('recipe-detail-modal-title');
+        const bodyEl = document.getElementById('recipe-detail-modal-body');
+        const footerEl = document.getElementById('recipe-detail-modal-footer');
+        if (!titleEl || !bodyEl || !footerEl) return;
+        titleEl.textContent = recipe.name;
+        bodyEl.innerHTML = `<div class="recipe-rich-content"><div class="detail-stack" style="margin-bottom:1rem;"><div class="detail-listing-item"><div><strong>Descrição</strong><p class="detail-note">${this.escapeHtml(recipe.desc || 'Receita salva no app.')}</p></div></div></div>${recipe.content}</div>`;
+        footerEl.innerHTML = `<button type="button" class="icon-button share-btn" data-recipe-id="${recipeId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button><button type="button" class="icon-button pdf-btn" data-recipe-id="${recipeId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button><button type="button" class="icon-button print-btn" data-recipe-id="${recipeId}" title="Imprimir"><i class="fa-solid fa-print"></i></button>`;
+        this.openModal('recipe-detail-modal');
+    };
+
+    app.handleOpenRecipeEditModal = function(recipeId, options = {}) {
+        this.closeModal('recipe-detail-modal');
+        const isEditing = recipeId !== null && recipeId !== undefined;
+        const recipe = isEditing ? this.state.receitas[recipeId] : null;
+        if (isEditing && !recipe) return this.showNotification('Receita não encontrada para edição.', 'error');
+        if (this.userPlan === 'free' && !isEditing && Object.keys(this.state.receitas).length >= 5) return this.showPlansModal('Limite de 5 receitas atingido no plano Gratuito.');
+        this.tempRecipeIngredients = recipe?.ingredients ? JSON.parse(JSON.stringify(recipe.ingredients)) : [];
+        const initialName = options.initialName || recipe?.name || '';
+        const prepText = recipe?.content?.replace(/<h4>Ingredientes<\/h4>/gi, '').replace(/<ul>[\s\S]*?<\/ul>/i, '').replace(/<h4>Preparo<\/h4>/gi, '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim() || '';
+        const content = `<form id="recipe-edit-form" onsubmit="return false;"><input type="hidden" id="recipe-edit-id" value="${recipeId || ''}"><div class="form-group"><label for="recipe-edit-name">Nome da Receita</label><input type="text" id="recipe-edit-name" value="${this.escapeHtml(initialName)}" required></div><div class="form-group"><label for="recipe-edit-desc">Descrição Curta</label><input type="text" id="recipe-edit-desc" value="${this.escapeHtml(recipe?.desc || '')}"></div><hr class="divider"><label style="display:block; font-size:.9rem; font-weight:500; color:var(--glass-text-primary); margin-bottom:.5rem;">Ingredientes</label><div id="recipe-ing-form" class="add-item-form-container" style="padding:0; border:none; background:rgba(0,0,0,0.2); border-radius:8px; margin-bottom:1rem;"><div class="add-item-form" style="padding:.75rem;"><div class="form-group form-group-flex"><label for="recipe-ing-name">Nome</label><input type="text" id="recipe-ing-name" placeholder="Ex: Arroz"></div><div class="form-group form-group-small"><label for="recipe-ing-qtd">Qtd</label><input type="text" id="recipe-ing-qtd" value="1"></div><div class="form-group form-group-small"><label for="recipe-ing-unid">Unid</label><select id="recipe-ing-unid">${['un','kg','g','L','ml','pct','cx','xícara','colher','pitada','dentes','a gosto','fio'].map(u => `<option value="${u}">${u}</option>`).join('')}</select></div><button type="button" class="btn-add-item" id="recipe-add-ing-btn"><i class="fa-solid fa-plus"></i></button></div></div><div id="recipe-ingredients-list"></div><hr class="divider"><div class="form-group"><label for="recipe-edit-content">Modo de Preparo</label><textarea id="recipe-edit-content" rows="7">${this.escapeHtml(prepText)}</textarea></div></form>`;
+        this.openConfirmModal(isEditing ? 'Editar Receita' : 'Criar Receita', content, () => this.handleSaveRecipe());
+        const modal = document.getElementById('custom-confirm-modal');
+        if (!modal) return;
+        modal.classList.add('recipe-editor-modal');
+        const footer = modal.querySelector('.modal-footer');
+        if (footer) {
+            footer.innerHTML = `${isEditing ? `<button type="button" class="icon-button danger" id="recipe-editor-delete-btn"><i class="fa-solid fa-trash"></i></button>` : ''}<button type="button" class="icon-button" id="recipe-editor-save-btn"><i class="fa-solid fa-floppy-disk"></i></button>`;
+            footer.querySelector('#recipe-editor-save-btn')?.addEventListener('click', () => this.handleSaveRecipe(), { once: true });
+            footer.querySelector('#recipe-editor-delete-btn')?.addEventListener('click', () => { this.closeModal('custom-confirm-modal'); this.handleDeleteRecipe(recipeId); }, { once: true });
+        }
+        this.renderModalIngredientList();
+        const addIngBtn = modal.querySelector('#recipe-add-ing-btn');
+        const ingListContainer = modal.querySelector('#recipe-ingredients-list');
+        const addIngFormContainer = modal.querySelector('#recipe-ing-form');
+        addIngBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const nameInput = addIngFormContainer.querySelector('#recipe-ing-name');
+            const qtdInput = addIngFormContainer.querySelector('#recipe-ing-qtd');
+            const unidSelect = addIngFormContainer.querySelector('#recipe-ing-unid');
+            const name = nameInput.value.trim();
+            if (!name) return;
+            this.tempRecipeIngredients.push({ name, qty: qtdInput.value.trim() || '1', unit: unidSelect.value });
+            this.renderModalIngredientList();
+            nameInput.value = ''; qtdInput.value = '1'; unidSelect.value = 'un'; nameInput.focus();
+        });
+        ingListContainer?.addEventListener('click', (e) => {
+            const itemEl = e.target.closest('.recipe-ing-item');
+            if (!itemEl) return;
+            const index = parseInt(itemEl.dataset.index, 10);
+            const ingredient = this.tempRecipeIngredients[index];
+            if (!ingredient) return;
+            if (e.target.closest('.delete-ing-btn')) { this.tempRecipeIngredients.splice(index, 1); this.renderModalIngredientList(); }
+            else if (e.target.closest('.edit-ing-btn')) {
+                addIngFormContainer.querySelector('#recipe-ing-name').value = ingredient.name;
+                addIngFormContainer.querySelector('#recipe-ing-qtd').value = ingredient.qty;
+                addIngFormContainer.querySelector('#recipe-ing-unid').value = ingredient.unit;
+                this.tempRecipeIngredients.splice(index, 1);
+                this.renderModalIngredientList();
+            }
+        });
+    };
+
+    app.getPlannerDaysMap = function() { return { seg: 'Segunda', ter: 'Terça', qua: 'Quarta', qui: 'Quinta', sex: 'Sexta', sab: 'Sábado', dom: 'Domingo' }; };
+    app.getPlannerMealsForDay = function(dayKey) {
+        const dayMeals = this.state.planejador[dayKey] || {};
+        const items = [];
+        [['cafe','Café da Manhã'], ['almoco','Almoço'], ['jantar','Jantar']].forEach(([key, label]) => { if (dayMeals[key]) items.push({ key, mealLabel: label, recipeId: dayMeals[key].recipeId || dayMeals[key].id, ...dayMeals[key] }); });
+        (dayMeals.extras || []).forEach(extra => items.push({ key: `extra:${extra.key}`, mealLabel: extra.mealLabel || 'Refeição', recipeId: extra.recipeId || extra.id, ...extra }));
+        return items;
+    };
+    app.renderPlanejador = function(container) {
+        if (!container) container = document.getElementById('module-planejador');
+        if (!container) return;
+        const days = this.getPlannerDaysMap();
+        const cards = Object.entries(days).map(([dayKey, dayLabel]) => {
+            const meals = this.getPlannerMealsForDay(dayKey);
+            const preview = meals.length ? meals.slice(0, 3).map(meal => `<div class="planner-meal-slot"><strong>${this.escapeHtml(meal.mealLabel)}</strong><div class="detail-note">${this.escapeHtml(meal.name)}</div></div>`).join('') : '<div class="planner-meal-slot"><div class="detail-note">Nenhuma refeição planejada.</div></div>';
+            return `<div class="planner-day-card" data-day="${dayKey}"><div class="planner-day-header"><span>${dayLabel}</span><div style="display:flex; gap:.45rem;"><button type="button" class="icon-button day-clear-btn" data-day="${dayKey}" title="Limpar dia"><i class="fa-solid fa-eraser"></i></button><button type="button" class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button></div></div><div class="planner-meal-slots">${preview}</div></div>`;
+        }).join('');
+        container.innerHTML = `<div class="dashboard-card"><div class="card-header"><h3><i class="fa-solid fa-calendar-week"></i> Planejador</h3><div class="card-actions"><button class="icon-button clear-plan-btn" title="Limpar tudo"><i class="fa-solid fa-eraser"></i></button></div></div><div class="card-content"><div class="planner-grid">${cards}</div></div><div class="card-footer module-actions-footer"><button class="icon-button share-btn" title="Compartilhar planejamento"><i class="fa-solid fa-share-alt"></i></button><button class="icon-button print-btn" title="Imprimir planejamento"><i class="fa-solid fa-print"></i></button><button class="icon-button pdf-btn" title="Gerar PDF do planejamento"><i class="fa-solid fa-file-pdf"></i></button></div></div>`;
+    };
+    app.openPlannerDayDetailModal = function(dayKey) {
+        const titleEl = document.getElementById('detail-modal-title');
+        const bodyEl = document.getElementById('detail-modal-body');
+        const footerEl = document.getElementById('detail-modal-footer');
+        const headerActionsEl = document.getElementById('detail-modal-header-actions');
+        const meals = this.getPlannerMealsForDay(dayKey);
+        titleEl.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${this.getPlannerDaysMap()[dayKey] || 'Dia'}`;
+        headerActionsEl.innerHTML = `<button class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>`;
+        bodyEl.innerHTML = `<div class="detail-rich-content"><div class="detail-kpi-grid"><div class="detail-kpi"><strong>${meals.length}</strong><span>refeições planejadas</span></div><div class="detail-kpi"><strong>${meals.filter(meal => meal.completed).length}</strong><span>marcadas como usadas</span></div></div><div class="detail-stack" style="margin-top:1rem;">${meals.length ? meals.map(meal => `<div class="detail-listing-item planner-meal-item ${meal.completed ? 'completed' : ''}" data-recipe-id="${meal.recipeId || meal.id}" data-day="${dayKey}" data-meal="${meal.key}"><div><strong class="meal-item-name">${this.escapeHtml(meal.mealLabel)} • ${this.escapeHtml(meal.name)}</strong><p class="detail-note">${meal.time ? `Horário: ${this.escapeHtml(meal.time)}` : 'Toque em visualizar para abrir a receita.'}</p></div><div class="module-detail-actions meal-item-actions"><button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i></button><button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i></button><button type="button" class="icon-button meal-complete-btn ${meal.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i></button></div></div>`).join('') : '<div class="detail-listing-item"><div><strong>Nenhuma refeição planejada.</strong><p class="detail-note">Use o botão inserir para escolher uma receita.</p></div></div>'}</div></div>`;
+        footerEl.className = 'modal-footer detail-modal-footer unified-detail-actions';
+        footerEl.innerHTML = `<button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button><button type="button" class="icon-button share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i><span>Compartilhar</span></button><button type="button" class="icon-button print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i><span>Imprimir</span></button><button type="button" class="icon-button pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i><span>PDF</span></button>`;
+        this.openModal('detail-modal');
+    };
+    app.openPlannerMealTypeMenu = function(dayKey) {
+        this.openDetailModal({ title: `<i class="fa-solid fa-plus"></i> Inserir refeição`, content: `<div class="detail-stack"><button type="button" class="btn btn-secondary planner-type-option" data-day="${dayKey}" data-meal="cafe">Café da manhã</button><button type="button" class="btn btn-secondary planner-type-option" data-day="${dayKey}" data-meal="almoco">Almoço</button><button type="button" class="btn btn-secondary planner-type-option" data-day="${dayKey}" data-meal="jantar">Jantar</button><button type="button" class="btn btn-primary planner-custom-meal-option" data-day="${dayKey}">Criar refeição</button></div>`, actions: [] });
+        document.querySelectorAll('.planner-type-option').forEach(btn => btn.addEventListener('click', () => { this.closeModal('detail-modal'); this.currentPlannerDayTarget = `planner-full-${btn.dataset.day}-${btn.dataset.meal}`; this.pendingCustomMeal = null; this.populateRecipePicker(); this.openModal('recipe-picker-modal'); }));
+        document.querySelector('.planner-custom-meal-option')?.addEventListener('click', () => { const day = document.querySelector('.planner-custom-meal-option').dataset.day; this.closeModal('detail-modal'); this.openPlannerCustomMealModal(day); });
+    };
+    app.openPlannerCustomMealModal = function(dayKey) {
+        const formHtml = `<div class="form-group"><label for="planner-custom-name">Nome da refeição</label><input type="text" id="planner-custom-name" placeholder="Ex: Lanche da tarde"></div><div class="form-group"><label for="planner-custom-time">Horário</label><input type="time" id="planner-custom-time"></div>`;
+        this.openConfirmModal('Criar refeição', formHtml, () => {
+            const mealLabel = document.getElementById('planner-custom-name')?.value.trim();
+            const time = document.getElementById('planner-custom-time')?.value || '';
+            if (!mealLabel) return this.showNotification('Digite o nome da refeição.', 'error');
+            this.pendingCustomMeal = { dayKey, mealLabel, time };
+            this.closeModal('custom-confirm-modal');
+            this.populateRecipePicker();
+            this.openModal('recipe-picker-modal');
+        });
+    };
+    app.handleAddMealToPlanner = function(recipeRef, targetContainerId) {
+        const recipe = this.state.receitas[recipeRef] || Object.values(this.state.receitas).find(r => r.name === recipeRef);
+        if (!recipe) return this.showNotification('Receita não encontrada.', 'error');
+        if (this.pendingCustomMeal) {
+            const { dayKey, mealLabel, time } = this.pendingCustomMeal;
+            if (!this.state.planejador[dayKey]) this.state.planejador[dayKey] = {};
+            if (!Array.isArray(this.state.planejador[dayKey].extras)) this.state.planejador[dayKey].extras = [];
+            this.state.planejador[dayKey].extras.push({ key: this.generateId(), id: recipe.id, recipeId: recipe.id, name: recipe.name, mealLabel, time, completed: false });
+            this.pendingCustomMeal = null;
+        } else {
+            const match = String(targetContainerId || '').match(/planner-(?:full|day)-(\w+)(?:-(\w+))?/);
+            if (!match) return;
+            const [, dayKey, mealKey] = match;
+            if (!this.state.planejador[dayKey]) this.state.planejador[dayKey] = {};
+            this.state.planejador[dayKey][mealKey] = { id: recipe.id, recipeId: recipe.id, name: recipe.name, completed: false };
+        }
+        this.saveState();
+        this.renderPlannerWidget();
+        if (this.activeModule === 'planejador') this.renderPlanejador();
+        this.showNotification(`"${recipe.name}" adicionada ao planejador.`, 'success');
+    };
+    app.populateRecipePicker = function() {
+        const container = document.getElementById('recipe-picker-list-container');
+        if (!container) return;
+        const recipes = Object.values(this.state.receitas);
+        const helper = this.pendingCustomMeal ? `<p class="detail-note" style="margin-bottom:1rem;">Selecione a receita para <strong>${this.escapeHtml(this.pendingCustomMeal.mealLabel)}</strong>${this.pendingCustomMeal.time ? ` às ${this.escapeHtml(this.pendingCustomMeal.time)}` : ''}.</p>` : '';
+        if (!recipes.length) {
+            container.innerHTML = '<p class="empty-list-message">Nenhuma receita cadastrada.</p><button type="button" class="btn btn-primary add-recipe-btn" style="width:100%; margin-top:1rem;"><i class="fa-solid fa-plus"></i> Criar nova receita</button>';
+            return;
+        }
+        container.innerHTML = `${helper}${recipes.map(recipe => `<div class="recipe-picker-item"><div class="recipe-picker-copy"><strong>${this.escapeHtml(recipe.name)}</strong><span>${this.escapeHtml(recipe.desc || 'Receita salva no app.')}</span></div><button type="button" class="btn btn-primary btn-add-recipe" data-recipe-id="${recipe.id}"><i class="fa-solid fa-plus"></i><span>Adicionar</span></button></div>`).join('')}<button type="button" class="btn btn-secondary add-recipe-btn" style="width:100%; margin-top:1rem;"><i class="fa-solid fa-plus"></i> Criar nova receita</button>`;
+        if (!this.boundHandleRecipePickerAdd) this.boundHandleRecipePickerAdd = this.handleRecipePickerAdd.bind(this);
+        container.removeEventListener('click', this.boundHandleRecipePickerAdd);
+        container.addEventListener('click', this.boundHandleRecipePickerAdd);
+    };
+    app.handleRecipePickerAdd = function(e) {
+        const addBtn = e.target.closest('.btn-add-recipe');
+        if (!addBtn || (!this.currentPlannerDayTarget && !this.pendingCustomMeal)) return;
+        this.handleAddMealToPlanner(addBtn.dataset.recipeId, this.currentPlannerDayTarget);
+        this.closeModal('recipe-picker-modal');
+        this.currentPlannerDayTarget = null;
+    };
+    app.handleDeleteMeal = function(day, meal) {
+        const dayState = this.state.planejador[day] || {};
+        const mealData = String(meal).startsWith('extra:') ? (dayState.extras || []).find(extra => extra.key === meal.replace('extra:', '')) : dayState[meal];
+        if (!mealData) return;
+        this.openConfirmModal('Remover Refeição', `Deseja remover "${mealData.name}" do planejamento?`, () => {
+            if (String(meal).startsWith('extra:')) dayState.extras = (dayState.extras || []).filter(extra => extra.key !== meal.replace('extra:', ''));
+            else delete dayState[meal];
+            this.saveState();
+            if (this.activeModule === 'planejador') this.renderPlanejador();
+            this.renderPlannerWidget();
+            if (document.getElementById('detail-modal')?.classList.contains('is-visible')) this.openPlannerDayDetailModal(day);
+            this.showNotification('Refeição removida.', 'info');
+        });
+    };
+    app.handleToggleCompleteMeal = function(day, meal) {
+        const dayState = this.state.planejador[day] || {};
+        const mealData = String(meal).startsWith('extra:') ? (dayState.extras || []).find(extra => extra.key === meal.replace('extra:', '')) : dayState[meal];
+        if (!mealData) return;
+        mealData.completed = !mealData.completed;
+        this.saveState();
+        if (this.activeModule === 'planejador') this.renderPlanejador();
+        this.renderPlannerWidget();
+        if (document.getElementById('detail-modal')?.classList.contains('is-visible')) this.openPlannerDayDetailModal(day);
+    };
+
+    app.renderAnalysisDetailDesktop = function(analysisKey = 'gastos_categoria') {
+        const container = document.getElementById('analises-detail-desktop');
+        if (!container) return;
+        const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+        container.innerHTML = `<div class="card-header"><h3><i class="${cfg.icon}"></i> ${cfg.label}</h3><div class="card-actions"><button class="icon-button analysis-mobile-open-btn" data-analysis-key="${analysisKey}" title="Abrir detalhe"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button></div></div><div class="card-content"><div class="detail-note" style="margin-bottom:1rem;">${cfg.note}</div><div class="analysis-config-panel"><div class="form-group"><label for="analysis-data-select">Analisar</label><select id="analysis-data-select"><option value="gastos_categoria">Gastos por Categoria (Listas)</option><option value="validade_despensa">Itens por Validade (Despensa)</option><option value="uso_receitas">Receitas Usadas (Planejador)</option></select></div><div class="form-group"><label for="analysis-type-select">Tipo de gráfico</label><select id="analysis-type-select"><option value="pie">Pizza</option><option value="doughnut">Rosca</option><option value="bar">Barras</option><option value="line">Linha</option></select></div></div><div class="chart-canvas-container" style="margin-top:1rem;"><canvas id="dynamic-analysis-chart"></canvas></div></div><div class="card-footer module-actions-footer"><button class="icon-button share-btn" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button><button class="icon-button print-btn" title="Imprimir"><i class="fa-solid fa-print"></i></button><button class="icon-button pdf-btn" title="PDF"><i class="fa-solid fa-file-pdf"></i></button></div>`;
+        document.getElementById('analysis-data-select').value = analysisKey;
+        document.getElementById('analysis-data-select')?.addEventListener('change', (e) => this.renderAnalysisDetailDesktop(e.target.value));
+        document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+        this.updateDynamicChart();
+    };
+
+    app.openAnalysisDetailModal = function(analysisKey = 'gastos_categoria') {
+        const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+        this.openDetailModal({
+            title: `<i class="${cfg.icon}"></i> ${cfg.label}`,
+            content: `<p class="detail-note">${cfg.note}</p><div class="analysis-config-panel"><div class="form-group"><label for="analysis-data-select">Analisar</label><select id="analysis-data-select"><option value="gastos_categoria">Gastos por Categoria (Listas)</option><option value="validade_despensa">Itens por Validade (Despensa)</option><option value="uso_receitas">Receitas Usadas (Planejador)</option></select></div><div class="form-group"><label for="analysis-type-select">Tipo de gráfico</label><select id="analysis-type-select"><option value="pie">Pizza</option><option value="doughnut">Rosca</option><option value="bar">Barras</option><option value="line">Linha</option></select></div></div><div class="chart-canvas-container" style="margin-top:1rem;"><canvas id="dynamic-analysis-chart"></canvas></div>`,
+            actions: [
+                { label: 'Compartilhar', className: 'btn-secondary', icon: 'fa-solid fa-share-alt', onClick: () => this.handleRealShare('Análises', cfg.label) },
+                { label: 'Imprimir', className: 'btn-secondary', icon: 'fa-solid fa-print', onClick: () => this.handleRealPDF() },
+                { label: 'PDF', className: 'btn-secondary', icon: 'fa-solid fa-file-pdf', onClick: () => this.handleRealPDF() }
+            ]
+        });
+        document.getElementById('analysis-data-select').value = analysisKey;
+        document.getElementById('analysis-data-select')?.addEventListener('change', () => this.updateDynamicChart());
+        document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+        this.updateDynamicChart();
+    };
+
+    app.installMandatoryPatches = function() {
+        if (this._mandatoryPatchesInstalled) return;
+        this._mandatoryPatchesInstalled = true;
+        const clickHandler = (e) => {
+            const target = e.target;
+            const closest = (sel) => target.closest(sel);
+            const itemEl = closest('.placeholder-item');
+            const recipeCard = closest('.recipe-list-item, .card--recipe');
+            const savedList = closest('.saved-list-item, .card--saved-list');
+            if (closest('#module-lista .btn-create-list')) {
+                e.preventDefault(); e.stopImmediatePropagation();
+                this.openListNameModal({ title: 'Nova lista', placeholder: 'Ex: Compras de amanhã', confirmText: 'Criar e Adicionar Itens', onConfirm: (listName) => {
+                    if (this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2) return this.showPlansModal('Limite de 2 listas atingido no plano Gratuito.');
+                    const newListId = this.generateId();
+                    this.state.listas[newListId] = { nome: String(listName).trim() || 'Nova Lista', items: [], createdAt: new Date().toISOString() };
+                    this.activeListId = newListId; this.saveState(); this.renderListasSalvas(); this.renderListaAtiva(newListId); document.getElementById('list-manager')?.classList.add('view-active-list'); setTimeout(() => document.getElementById('lista-form-nome-full')?.focus(), 60);
+                }});
+                return;
+            }
+            if (closest('.add-recipe-btn')) {
+                e.preventDefault(); e.stopImmediatePropagation();
+                this.openListNameModal({ title: 'Nova Receita', placeholder: 'Digite o nome da receita', confirmText: 'Continuar', onConfirm: (recipeName) => this.handleOpenRecipeEditModal(null, { initialName: recipeName }) });
+                return;
+            }
+            if (savedList) {
+                const listId = savedList.dataset.listId || savedList.dataset.id;
+                if (closest('.select-list-btn')) { e.preventDefault(); e.stopImmediatePropagation(); this.openListEditView(listId); return; }
+                if (closest('.delete-list-btn')) return;
+                if (!closest('.icon-button')) { e.preventDefault(); e.stopImmediatePropagation(); this.handleOpenListViewModal(listId); return; }
+            }
+            if (recipeCard) {
+                const recipeId = recipeCard.dataset.recipeId || recipeCard.dataset.id;
+                if (closest('.edit-recipe-btn') || closest('.delete-recipe-btn')) return;
+                if (!closest('.icon-button')) { e.preventDefault(); e.stopImmediatePropagation(); this.showRecipeDetailModal(recipeId); return; }
+            }
+            if (itemEl) {
+                const isDespensa = !!closest('#despensa-list-container, [id*="despensa-items"]');
+                const isLista = !!closest('#lista-items-full, #list-view-modal-body, #lista-items-inicio');
+                if (isDespensa && !closest('.icon-button') && !closest('.item-stock-level') && !closest('.drag-handle')) { e.preventDefault(); e.stopImmediatePropagation(); this.handleOpenPantryView(itemEl); return; }
+                if (isLista && closest('.edit-btn')) { e.preventDefault(); e.stopImmediatePropagation(); this.startInlineListEdit(itemEl); return; }
+                if (isLista && closest('.save-inline-edit-btn')) { e.preventDefault(); e.stopImmediatePropagation(); this.handleSaveInlineListEdit(itemEl); return; }
+                if (isLista && closest('.cancel-inline-edit-btn')) { e.preventDefault(); e.stopImmediatePropagation(); this.cancelInlineListEdit(); return; }
+                if (isDespensa && closest('.edit-btn')) { e.preventDefault(); e.stopImmediatePropagation(); this.handleOpenDespensaEditModal(itemEl); return; }
+            }
+            if (closest('.planner-day-card') && !closest('.icon-button')) { e.preventDefault(); e.stopImmediatePropagation(); this.openPlannerDayDetailModal(closest('.planner-day-card').dataset.day); return; }
+            if (closest('.add-meal-btn')) { e.preventDefault(); e.stopImmediatePropagation(); this.openPlannerMealTypeMenu(closest('.add-meal-btn').dataset.dayTarget); return; }
+            if (closest('.analysis-nav-item')) { e.preventDefault(); e.stopImmediatePropagation(); this.openAnalysisDetailModal(closest('.analysis-nav-item').dataset.analysisKey); return; }
+            if (closest('.analysis-mobile-open-btn')) { e.preventDefault(); e.stopImmediatePropagation(); this.openAnalysisDetailModal(closest('.analysis-mobile-open-btn').dataset.analysisKey || document.getElementById('analysis-data-select')?.value || 'gastos_categoria'); return; }
+            if (closest('.generate-list-btn')) { e.preventDefault(); e.stopImmediatePropagation(); this.handleGenerateListFromPlanner(closest('.generate-list-btn').dataset.day || null); return; }
+        };
+        document.body.addEventListener('click', clickHandler, true);
+        document.body.addEventListener('change', (e) => {
+            if (e.target.id === 'list-sort-select') { this.listSortMode = e.target.value || 'date_desc'; this.saveState(); this.renderListasSalvas(); }
+        }, true);
+        if (this.isAppMode) this.activateModuleAndRender(this.activeModule);
+    };
+})();
+
+
+
+// === PATCH VISUAL LUXURY + SORT PREMIUM ===
+(() => {
+    const baseLoadStatePremium = app.loadState.bind(app);
+    app.loadState = function() {
+        baseLoadStatePremium();
+        let parsedSortState = null;
+        try { parsedSortState = JSON.parse(localStorage.getItem('alimenteFacilState_vFinal') || '{}'); } catch (e) {}
+        this.recipeSortMode = parsedSortState?.recipeSortMode || this.recipeSortMode || 'name_asc';
+        this.pantrySortMode = parsedSortState?.pantrySortMode || this.pantrySortMode || 'validade_asc';
+    };
+
+    app.saveState = function() {
+        try {
+            const stateToSave = {
+                isAppMode: this.isAppMode,
+                isLoggedIn: this.isLoggedIn,
+                userPlan: this.userPlan,
+                activeModule: this.activeModule,
+                activeListId: this.activeListId,
+                listSortMode: this.listSortMode || 'date_desc',
+                recipeSortMode: this.recipeSortMode || 'name_asc',
+                pantrySortMode: this.pantrySortMode || 'validade_asc',
+                data: this.state
+            };
+            localStorage.setItem('alimenteFacilState_vFinal', JSON.stringify(stateToSave));
+            localStorage.setItem('themePreference', document.body.classList.contains('lua-mode') ? 'lua' : 'sol');
+        } catch (e) { console.error('Erro ao salvar estado', e); }
+    };
+
+    app.getSortMeta = function(type, mode) {
+        const maps = {
+            list: {
+                name_asc: { label: 'Nome A–Z', icon: 'fa-arrow-up-a-z' },
+                date_desc: { label: 'Mais recentes', icon: 'fa-arrow-down-wide-short' },
+                total_desc: { label: 'Maior valor', icon: 'fa-arrow-down-wide-short' },
+                items_desc: { label: 'Mais itens', icon: 'fa-arrow-down-wide-short' }
+            },
+            recipe: {
+                name_asc: { label: 'Nome A–Z', icon: 'fa-arrow-up-a-z' },
+                ingredients_desc: { label: 'Mais ingredientes', icon: 'fa-arrow-down-wide-short' },
+                name_desc: { label: 'Nome Z–A', icon: 'fa-arrow-down-z-a' }
+            },
+            pantry: {
+                validade_asc: { label: 'Validade próxima', icon: 'fa-arrow-up-short-wide' },
+                name_asc: { label: 'Nome A–Z', icon: 'fa-arrow-up-a-z' },
+                stock_desc: { label: 'Maior estoque', icon: 'fa-arrow-down-wide-short' }
+            }
+        };
+        return maps[type]?.[mode] || { label: 'Ordenar', icon: 'fa-arrow-down-wide-short' };
+    };
+
+    app.cycleSortMode = function(type) {
+        const orderMap = {
+            list: ['date_desc', 'name_asc', 'total_desc', 'items_desc'],
+            recipe: ['name_asc', 'ingredients_desc', 'name_desc'],
+            pantry: ['validade_asc', 'name_asc', 'stock_desc']
+        };
+        const propMap = { list: 'listSortMode', recipe: 'recipeSortMode', pantry: 'pantrySortMode' };
+        const prop = propMap[type];
+        if (!prop) return;
+        const order = orderMap[type] || [];
+        const current = this[prop] || order[0];
+        const next = order[(order.indexOf(current) + 1) % order.length] || order[0];
+        this[prop] = next;
+        this.saveState();
+        if (type === 'list' && this.activeModule === 'lista') this.renderListas();
+        if (type === 'recipe' && this.activeModule === 'receitas') this.renderReceitas();
+        if (type === 'pantry' && this.activeModule === 'despensa') this.renderDespensa();
+    };
+
+    app.sortRecipesCollection = function(recipes = []) {
+        const sorted = [...recipes];
+        const getCount = recipe => Array.isArray(recipe.ingredients) ? recipe.ingredients.length : 0;
+        switch (this.recipeSortMode) {
+            case 'name_desc':
+                sorted.sort((a, b) => String(b.name || '').localeCompare(String(a.name || ''), 'pt-BR'));
+                break;
+            case 'ingredients_desc':
+                sorted.sort((a, b) => getCount(b) - getCount(a) || String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR'));
+                break;
+            case 'name_asc':
+            default:
+                sorted.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR'));
+                break;
+        }
+        return sorted;
+    };
+
+    app.sortPantryCollection = function(items = []) {
+        const sorted = [...items];
+        const validityValue = item => item.validade ? new Date(item.validade + 'T00:00:00-03:00').getTime() : Number.POSITIVE_INFINITY;
+        switch (this.pantrySortMode) {
+            case 'name_asc':
+                sorted.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR'));
+                break;
+            case 'stock_desc':
+                sorted.sort((a, b) => (parseInt(b.stock || 0, 10) - parseInt(a.stock || 0, 10)) || String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR'));
+                break;
+            case 'validade_asc':
+            default:
+                sorted.sort((a, b) => (validityValue(a) - validityValue(b)) || String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR'));
+                break;
+        }
+        return sorted;
+    };
+
+    app.renderListas = function(container) {
+        if (!container) container = document.getElementById('module-lista');
+        if (!container) return;
+        const sortMeta = this.getSortMeta('list', this.listSortMode || 'date_desc');
+        container.innerHTML = `
+            <div class="master-detail-layout" id="list-manager">
+                <div class="md-list-column dashboard-card">
+                    <div class="card-header"><h3><i class="fa-solid fa-list-ul"></i> Minhas Listas</h3></div>
+                    <div class="card-content">
+                        <div class="module-toolbar">
+                            <button class="btn btn-secondary btn-create-list luxury-create-btn"><i class="fa-solid fa-plus"></i><span>Nova Lista</span></button>
+                            <button class="icon-button luxury-sort-btn list-cycle-sort-btn" title="Organizar listas"><i class="fa-solid ${sortMeta.icon}"></i></button>
+                            <div class="sort-chip"><strong>${sortMeta.label}</strong></div>
+                        </div>
+                        <div id="saved-lists-container"></div>
+                    </div>
+                </div>
+                <div class="md-detail-column dashboard-card" id="lista-detail-desktop">
+                    <div class="card-header">
+                        <button id="list-back-btn" class="icon-button mobile-only" aria-label="Voltar"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h3 id="active-list-title"><i class="fa-solid fa-cart-shopping"></i> Selecione uma Lista</h3>
+                    </div>
+                    <div class="add-item-form-container">
+                        <form class="add-item-form">
+                            <input type="hidden" id="active-list-id-input" value="">
+                            <div class="form-group form-group-flex"><label>Nome</label><input type="text" id="lista-form-nome-full" placeholder="Ex: Arroz"></div>
+                            <div class="form-group form-group-small"><label>Qtd</label><input type="number" id="lista-form-qtd-full" value="1" min="0.1" step="any"></div>
+                            <div class="form-group form-group-small"><label>Unid</label><select id="lista-form-unid-full"><option value="un">un</option><option value="kg">kg</option><option value="g">g</option><option value="L">L</option><option value="ml">ml</option><option value="pct">pct</option><option value="cx">cx</option></select></div>
+                            <div class="form-group form-group-medium"><label>Valor</label><input type="text" id="lista-form-valor-full" placeholder="0.00"></div>
+                            <button type="submit" class="btn btn-primary btn-add-item" id="lista-add-item-btn-full"><i class="fa-solid fa-plus"></i></button>
+                        </form>
+                    </div>
+                    <div class="card-content no-padding-top" id="lista-items-full" data-group="shared-items" data-list-type="lista"><div class="empty-state-placeholder"><p>Selecione uma lista ao lado para ver os itens.</p></div></div>
+                    <div class="card-footer module-actions-footer" id="active-list-actions"></div>
+                </div>
+            </div>`;
+        this.renderListasSalvas();
+        if (this.activeListId) this.renderListaAtiva(this.activeListId);
+    };
+
+    app.renderDespensa = function(container) {
+        if (!container) container = document.getElementById('module-despensa');
+        if (!container) return;
+        const sortMeta = this.getSortMeta('pantry', this.pantrySortMode || 'validade_asc');
+        container.innerHTML = `
+            <div class="master-detail-layout">
+                <div class="md-list-column dashboard-card">
+                    <div class="card-header"><h3><i class="fa-solid fa-box-archive"></i> Despensa</h3></div>
+                    <div class="card-content">
+                        <div class="module-toolbar">
+                            <button class="btn btn-secondary btn-create-list add-item-despensa-btn luxury-create-btn"><i class="fa-solid fa-plus"></i><span>Novo Item</span></button>
+                            <button class="icon-button luxury-sort-btn pantry-cycle-sort-btn" title="Organizar despensa"><i class="fa-solid ${sortMeta.icon}"></i></button>
+                            <div class="sort-chip"><strong>${sortMeta.label}</strong></div>
+                        </div>
+                        <div id="despensa-list-container" data-group="shared-items" data-list-type="despensa"></div>
+                    </div>
+                </div>
+                <div class="md-detail-column dashboard-card" id="despensa-detail-desktop">
+                    <div class="empty-state-placeholder">
+                        <i class="fa-solid fa-box-open" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.45;"></i>
+                        <p>Selecione um item da despensa para abrir um visual limpo e detalhado.</p>
+                    </div>
+                </div>
+            </div>`;
+        const listContainer = document.getElementById('despensa-list-container');
+        const sortedDespensa = this.sortPantryCollection(this.state.despensa || []);
+        listContainer.innerHTML = sortedDespensa.map(item => this.createDespensaItemHTML(item)).join('') || '<p class="empty-list-message">Sua despensa está vazia.</p>';
+        this.initSortableItems('despensa-list-container');
+    };
+
+    app.renderReceitas = function(container) {
+        if (!container) container = document.getElementById('module-receitas');
+        if (!container) return;
+        const sortMeta = this.getSortMeta('recipe', this.recipeSortMode || 'name_asc');
+        container.innerHTML = `
+            <div class="master-detail-layout">
+                <div class="md-list-column dashboard-card">
+                    <div class="card-header"><h3><i class="fa-solid fa-utensils"></i> Receitas</h3></div>
+                    <div class="card-content">
+                        <div class="module-toolbar">
+                            <button class="btn btn-secondary add-recipe-btn luxury-create-btn"><i class="fa-solid fa-plus"></i><span>Nova Receita</span></button>
+                            <button class="icon-button luxury-sort-btn recipe-cycle-sort-btn" title="Organizar receitas"><i class="fa-solid ${sortMeta.icon}"></i></button>
+                            <div class="sort-chip"><strong>${sortMeta.label}</strong></div>
+                        </div>
+                        <div id="main-recipe-grid"></div>
+                    </div>
+                </div>
+                <div class="md-detail-column dashboard-card">
+                    <div class="card-header"><h3 id="recipe-detail-title-desktop"><i class="fa-solid fa-book-open"></i> Detalhes</h3></div>
+                    <div class="card-content" id="recipe-detail-desktop-body">
+                        <div class="empty-state-placeholder">
+                            <i class="fa-solid fa-utensils" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.45;"></i>
+                            <p>Selecione uma receita para ver ingredientes e preparo.</p>
+                        </div>
+                    </div>
+                    <div class="card-footer" id="recipe-detail-desktop-footer" style="display:none;"></div>
+                </div>
+            </div>`;
+        const listContainer = document.getElementById('main-recipe-grid');
+        const recipes = this.sortRecipesCollection(Object.values(this.state.receitas || {}));
+        listContainer.innerHTML = recipes.map(recipe => this.renderUniversalCard({
+            type: 'recipe',
+            data: { id: recipe.id, name: recipe.name, ingredients: recipe.ingredients || recipe.ingredientes || recipe.ingredientes?.items || [] },
+            actions: [
+                { type: 'edit edit-recipe-btn', icon: 'fa-solid fa-pencil', label: 'Editar' },
+                { type: 'danger delete-recipe-btn', icon: 'fa-solid fa-trash', label: 'Excluir' }
+            ],
+            isClickable: true
+        })).join('') || '<p class="empty-list-message">Nenhuma receita criada.</p>';
+    };
+
+    app.renderPlanejador = function(container) {
+        if (!container) container = document.getElementById('module-planejador');
+        if (!container) return;
+        const days = this.getPlannerDaysMap();
+        const cards = Object.entries(days).map(([dayKey, dayLabel]) => {
+            const meals = this.getPlannerMealsForDay(dayKey);
+            const preview = meals.length
+                ? meals.slice(0, 3).map(meal => `<div class="planner-mini-meal ${meal.completed ? 'is-complete' : ''}"><small>${this.escapeHtml(meal.mealLabel)}</small><strong>${this.escapeHtml(meal.name)}</strong></div>`).join('')
+                : '<div class="planner-mini-empty">Nenhuma refeição planejada.</div>';
+            return `
+                <article class="planner-day-card" data-day="${dayKey}">
+                    <div class="planner-day-header">
+                        <div class="planner-day-copy">
+                            <strong>${dayLabel}</strong>
+                            <span>${meals.length ? `${meals.length} refeição(ões)` : 'Pronto para planejar'}</span>
+                        </div>
+                        <div class="planner-day-actions">
+                            <button type="button" class="icon-button day-clear-btn" data-day="${dayKey}" title="Limpar dia"><i class="fa-solid fa-eraser"></i></button>
+                            <button type="button" class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="planner-preview-list">${preview}</div>
+                </article>`;
+        }).join('');
+        container.innerHTML = `
+            <div class="dashboard-card planner-shell">
+                <div class="card-header">
+                    <div>
+                        <h3><i class="fa-solid fa-calendar-week"></i> Planejador</h3>
+                        <div class="planner-subtitle">Semana limpa, visual premium e ações rápidas.</div>
+                    </div>
+                    <div class="card-actions"><button class="icon-button clear-plan-btn" title="Limpar tudo"><i class="fa-solid fa-eraser"></i></button></div>
+                </div>
+                <div class="card-content"><div class="planner-grid">${cards}</div></div>
+                <div class="card-footer module-actions-footer">
+                    <button class="icon-button minimal-export-btn share-btn" title="Compartilhar planejamento"><i class="fa-solid fa-share-alt"></i></button>
+                    <button class="icon-button minimal-export-btn print-btn" title="Imprimir planejamento"><i class="fa-solid fa-print"></i></button>
+                    <button class="icon-button minimal-export-btn pdf-btn" title="Gerar PDF do planejamento"><i class="fa-solid fa-file-pdf"></i></button>
+                </div>
+            </div>`;
+    };
+
+    const originalHandleOpenListViewModal = app.handleOpenListViewModal.bind(app);
+    app.handleOpenListViewModal = function(listId) {
+        originalHandleOpenListViewModal(listId);
+        const footer = document.getElementById('list-view-modal-footer');
+        if (footer) {
+            footer.innerHTML = `<button class="icon-button minimal-export-btn pdf-btn" data-list-id="${listId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button><button class="icon-button minimal-export-btn print-btn" data-list-id="${listId}" title="Imprimir"><i class="fa-solid fa-print"></i></button><button class="icon-button minimal-export-btn share-btn" data-list-id="${listId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>`;
+        }
+    };
+
+    const originalOpenPantryView = app.handleOpenPantryView.bind(app);
+    app.handleOpenPantryView = function(itemEl) {
+        originalOpenPantryView(itemEl);
+        const id = itemEl?.dataset.id;
+        const footer = document.getElementById('pantry-view-footer');
+        if (footer && id) {
+            footer.innerHTML = `<button class="icon-button minimal-export-btn pdf-btn" data-item-id="${id}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button><button class="icon-button minimal-export-btn print-btn" data-item-id="${id}" title="Imprimir"><i class="fa-solid fa-print"></i></button><button class="icon-button minimal-export-btn share-btn" data-item-id="${id}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>`;
+        }
+    };
+
+    const originalShowRecipeDetailModal = app.showRecipeDetailModal.bind(app);
+    app.showRecipeDetailModal = function(recipeId) {
+        originalShowRecipeDetailModal(recipeId);
+        const footer = document.getElementById('recipe-detail-modal-footer');
+        if (footer) {
+            footer.innerHTML = `<button type="button" class="icon-button minimal-export-btn share-btn" data-recipe-id="${recipeId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button><button type="button" class="icon-button minimal-export-btn print-btn" data-recipe-id="${recipeId}" title="Imprimir"><i class="fa-solid fa-print"></i></button><button type="button" class="icon-button minimal-export-btn pdf-btn" data-recipe-id="${recipeId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
+        }
+    };
+
+    const originalOpenPlannerDayDetailModal = app.openPlannerDayDetailModal.bind(app);
+    app.openPlannerDayDetailModal = function(dayKey) {
+        originalOpenPlannerDayDetailModal(dayKey);
+        const footer = document.getElementById('detail-modal-footer');
+        if (footer) {
+            footer.innerHTML = `<button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button><button type="button" class="icon-button minimal-export-btn share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button><button type="button" class="icon-button minimal-export-btn print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i></button><button type="button" class="icon-button minimal-export-btn pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
+        }
+    };
+
+    const originalRenderAnalises = app.renderAnalises.bind(app);
+    app.renderAnalises = function(container) {
+        originalRenderAnalises(container);
+        document.querySelectorAll('.module-actions-footer .share-btn, .module-actions-footer .print-btn, .module-actions-footer .pdf-btn').forEach(btn => btn.classList.add('minimal-export-btn'));
+    };
+
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.list-cycle-sort-btn, .recipe-cycle-sort-btn, .pantry-cycle-sort-btn');
+        if (!btn) return;
+        e.preventDefault();
+        if (btn.classList.contains('list-cycle-sort-btn')) app.cycleSortMode('list');
+        if (btn.classList.contains('recipe-cycle-sort-btn')) app.cycleSortMode('recipe');
+        if (btn.classList.contains('pantry-cycle-sort-btn')) app.cycleSortMode('pantry');
+    }, true);
+})();
+
+
+
+// === PATCH FINAL UX/LUXO 2026-03-21 ===
+(() => {
+    const unitOptions = ['un','kg','g','L','ml','pct','cx'];
+
+    app.createListaItemHTML = function(item) {
+        const itemName = this.escapeHtml(item.name || 'Item sem nome');
+        const isEditing = this.inlineListEdit && String(this.inlineListEdit.itemId) === String(item.id);
+        const draft = isEditing ? (this.inlineListEdit.draft || {}) : null;
+
+        if (isEditing) {
+            return `
+                <div class="placeholder-item inline-editing" data-id="${item.id}" data-name="${itemName}">
+                    <div class="item-inline-edit-grid">
+                        <div class="inline-field inline-name-field">
+                            <label>Nome</label>
+                            <input type="text" class="inline-edit-name" value="${this.escapeHtml(draft?.name ?? item.name ?? '')}" placeholder="Nome do item">
+                        </div>
+                        <div class="inline-field inline-qtd-field">
+                            <label>Qtd</label>
+                            <input type="number" class="inline-edit-qtd" value="${draft?.qtd ?? item.qtd ?? 1}" min="0.1" step="any">
+                        </div>
+                        <div class="inline-field inline-unid-field">
+                            <label>Unid</label>
+                            <select class="inline-edit-unid">
+                                ${unitOptions.map(u => `<option value="${u}" ${(draft?.unid ?? item.unid ?? 'un') === u ? 'selected' : ''}>${u}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="inline-field inline-valor-field">
+                            <label>Valor</label>
+                            <input type="number" class="inline-edit-valor" value="${parseFloat(draft?.valor ?? item.valor ?? 0).toFixed(2)}" min="0" step="0.01">
+                        </div>
+                        <div class="item-actions inline-edit-actions">
+                            <button type="button" class="icon-button save-inline-edit-btn" title="Salvar"><i class="fa-solid fa-check"></i></button>
+                            <button type="button" class="icon-button cancel-inline-edit-btn" title="Cancelar"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="placeholder-item ${item.checked ? 'is-checked' : ''}" data-id="${item.id}" data-name="${itemName}" data-qtd="${item.qtd}" data-unid="${item.unid}" data-valor="${item.valor}">
+                <div class="item-row">
+                    <div class="item-main-info">
+                        <i class="fa-solid fa-grip-vertical drag-handle" title="Arrastar item"></i>
+                        <input type="checkbox" ${item.checked ? 'checked' : ''} aria-label="Marcar ${itemName}">
+                        <span class="item-name">${itemName}</span>
+                    </div>
+                    <div class="item-actions">
+                        <button type="button" class="icon-button edit-btn" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                        <button type="button" class="icon-button delete-btn" title="Excluir"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+                <div class="item-details-grid">
+                    <div>Qtd: <span>${item.qtd}</span></div>
+                    <div>Un: <span>${this.escapeHtml(item.unid || 'un')}</span></div>
+                    <div>Preço: <span>R$ ${parseFloat(item.valor || 0).toFixed(2)}</span></div>
+                </div>
+                <div class="item-checked-actions">
+                    <div class="form-group-checked">
+                        <label for="validade-${item.id}">Validade (Opcional)</label>
+                        <input type="date" id="validade-${item.id}" class="item-validade-input" value="${item.validade || ''}">
+                    </div>
+                    <div class="confirm-actions-group">
+                        <small class="confirm-pantry-text">Deseja enviar para a despensa?</small>
+                        <div class="confirm-buttons">
+                            <button type="button" class="icon-button cancel-move-btn" title="Não"><i class="fa-solid fa-times-circle" style="color: var(--red);"></i></button>
+                            <button type="button" class="icon-button move-to-despensa-btn" title="Sim"><i class="fa-solid fa-check-circle" style="color: var(--green);"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    app.renderListas = function(container) {
+        if (!container) container = document.getElementById('module-lista');
+        if (!container) return;
+        const sortMeta = this.getSortMeta('list', this.listSortMode || 'date_desc');
+        container.innerHTML = `
+            <div class="master-detail-layout" id="list-manager">
+                <div class="md-list-column dashboard-card">
+                    <div class="card-header"><h3><i class="fa-solid fa-list-ul"></i> Minhas Listas</h3></div>
+                    <div class="card-content">
+                        <div class="module-toolbar module-toolbar--ultra">
+                            <button class="btn btn-secondary btn-create-list luxury-create-btn"><i class="fa-solid fa-plus"></i><span>Nova Lista</span></button>
+                            <button class="icon-button luxury-sort-btn list-cycle-sort-btn" title="Organizar listas: ${sortMeta.label}" aria-label="Organizar listas: ${sortMeta.label}">
+                                <i class="fa-solid fa-arrow-up-short-wide"></i>
+                            </button>
+                        </div>
+                        <div id="saved-lists-container"></div>
+                    </div>
+                </div>
+                <div class="md-detail-column dashboard-card" id="lista-detail-desktop">
+                    <div class="card-header">
+                        <button id="list-back-btn" class="icon-button mobile-only" aria-label="Voltar"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h3 id="active-list-title"><i class="fa-solid fa-cart-shopping"></i> Selecione uma Lista</h3>
+                    </div>
+                    <div class="add-item-form-container">
+                        <form class="add-item-form">
+                            <input type="hidden" id="active-list-id-input" value="">
+                            <div class="form-group form-group-flex"><label>Nome</label><input type="text" id="lista-form-nome-full" placeholder="Ex: Arroz"></div>
+                            <div class="form-group form-group-small"><label>Qtd</label><input type="number" id="lista-form-qtd-full" value="1" min="0.1" step="any"></div>
+                            <div class="form-group form-group-small"><label>Unid</label><select id="lista-form-unid-full">${unitOptions.map(u => `<option value="${u}">${u}</option>`).join('')}</select></div>
+                            <div class="form-group form-group-medium"><label>Valor</label><input type="text" id="lista-form-valor-full" placeholder="0.00"></div>
+                            <button type="submit" class="btn btn-primary btn-add-item" id="lista-add-item-btn-full"><i class="fa-solid fa-plus"></i></button>
+                        </form>
+                    </div>
+                    <div class="card-content no-padding-top" id="lista-items-full" data-group="shared-items" data-list-type="lista"><div class="empty-state-placeholder"><p>Selecione uma lista ao lado para ver os itens.</p></div></div>
+                    <div class="card-footer module-actions-footer" id="active-list-actions"></div>
+                </div>
+            </div>`;
+        this.renderListasSalvas();
+        if (this.activeListId) this.renderListaAtiva(this.activeListId);
+    };
+
+    app.renderDespensa = function(container) {
+        if (!container) container = document.getElementById('module-despensa');
+        if (!container) return;
+        const sortMeta = this.getSortMeta('pantry', this.pantrySortMode || 'validade_asc');
+        container.innerHTML = `
+            <div class="master-detail-layout">
+                <div class="md-list-column dashboard-card">
+                    <div class="card-header"><h3><i class="fa-solid fa-box-archive"></i> Despensa</h3></div>
+                    <div class="card-content">
+                        <div class="module-toolbar module-toolbar--ultra">
+                            <button class="btn btn-secondary btn-create-list add-item-despensa-btn luxury-create-btn"><i class="fa-solid fa-plus"></i><span>Novo Item</span></button>
+                            <button class="icon-button luxury-sort-btn pantry-cycle-sort-btn" title="Organizar despensa: ${sortMeta.label}" aria-label="Organizar despensa: ${sortMeta.label}">
+                                <i class="fa-solid fa-arrow-up-short-wide"></i>
+                            </button>
+                        </div>
+                        <div id="despensa-list-container" data-group="shared-items" data-list-type="despensa"></div>
+                    </div>
+                </div>
+                <div class="md-detail-column dashboard-card" id="despensa-detail-desktop">
+                    <div class="empty-state-placeholder">
+                        <i class="fa-solid fa-box-open" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.45;"></i>
+                        <p>Selecione um item da despensa para abrir um visual limpo e detalhado.</p>
+                    </div>
+                </div>
+            </div>`;
+        const listContainer = document.getElementById('despensa-list-container');
+        const sortedDespensa = this.sortPantryCollection(this.state.despensa || []);
+        listContainer.innerHTML = sortedDespensa.map(item => this.createDespensaItemHTML(item)).join('') || '<p class="empty-list-message">Sua despensa está vazia.</p>';
+        this.initSortableItems('despensa-list-container');
+    };
+
+    app.renderReceitas = function(container) {
+        if (!container) container = document.getElementById('module-receitas');
+        if (!container) return;
+        const sortMeta = this.getSortMeta('recipe', this.recipeSortMode || 'name_asc');
+        container.innerHTML = `
+            <div class="master-detail-layout">
+                <div class="md-list-column dashboard-card">
+                    <div class="card-header"><h3><i class="fa-solid fa-utensils"></i> Receitas</h3></div>
+                    <div class="card-content">
+                        <div class="module-toolbar module-toolbar--ultra">
+                            <button class="btn btn-secondary add-recipe-btn luxury-create-btn"><i class="fa-solid fa-plus"></i><span>Nova Receita</span></button>
+                            <button class="icon-button luxury-sort-btn recipe-cycle-sort-btn" title="Organizar receitas: ${sortMeta.label}" aria-label="Organizar receitas: ${sortMeta.label}">
+                                <i class="fa-solid fa-arrow-up-short-wide"></i>
+                            </button>
+                        </div>
+                        <div id="main-recipe-grid"></div>
+                    </div>
+                </div>
+                <div class="md-detail-column dashboard-card recipe-detail-shell">
+                    <div class="card-header"><h3 id="recipe-detail-title-desktop"><i class="fa-solid fa-book-open"></i> Detalhes</h3></div>
+                    <div class="card-content" id="recipe-detail-desktop-body">
+                        <div class="empty-state-placeholder">
+                            <i class="fa-solid fa-utensils" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.45;"></i>
+                            <p>Selecione uma receita para ver ingredientes e preparo.</p>
+                        </div>
+                    </div>
+                    <div class="card-footer module-actions-footer" id="recipe-detail-desktop-footer" style="display:none;"></div>
+                </div>
+            </div>`;
+        const listContainer = document.getElementById('main-recipe-grid');
+        const recipes = this.sortRecipesCollection(Object.values(this.state.receitas || {}));
+        listContainer.innerHTML = recipes.map(recipe => this.renderUniversalCard({
+            type: 'recipe',
+            data: { id: recipe.id, name: recipe.name, ingredients: recipe.ingredients || [] },
+            actions: [
+                { type: 'edit edit-recipe-btn', icon: 'fa-solid fa-pencil', label: 'Editar' },
+                { type: 'danger delete-recipe-btn', icon: 'fa-solid fa-trash', label: 'Excluir' }
+            ],
+            isClickable: true
+        })).join('') || '<p class="empty-list-message">Nenhuma receita criada.</p>';
+    };
+
+    app.handleOpenListViewModal = function(listId) {
+        const lista = this.state.listas[listId];
+        if (!lista) return;
+        const header = document.querySelector('#list-view-modal .modal-header');
+        const body = document.getElementById('list-view-modal-body');
+        const footer = document.getElementById('list-view-modal-footer');
+        const idInput = document.getElementById('modal-list-id-input');
+        if (header) {
+            header.innerHTML = `
+                <button class="icon-button" data-modal-close="list-view-modal"><i class="fa-solid fa-arrow-left"></i></button>
+                <h3 id="list-view-modal-title" style="flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">${this.escapeHtml(lista.nome)}</h3>
+                <button class="icon-button" id="list-view-edit-btn" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+            `;
+        }
+        if (body) {
+            body.dataset.listId = listId;
+            body.innerHTML = (lista.items || []).map(item => this.createListaItemHTML(item)).join('') || '<p class="empty-list-message">Lista vazia.</p>';
+            this.initSortableItems('list-view-modal-body');
+        }
+        if (footer) {
+            footer.innerHTML = `
+                <button class="icon-button minimal-export-btn pdf-btn" data-list-id="${listId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+                <button class="icon-button minimal-export-btn print-btn" data-list-id="${listId}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+                <button class="icon-button minimal-export-btn share-btn" data-list-id="${listId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+            `;
+        }
+        if (idInput) idInput.value = listId;
+        this.openModal('list-view-modal');
+        document.getElementById('list-view-edit-btn')?.addEventListener('click', () => {
+            this.closeModal('list-view-modal');
+            this.openListEditView(listId);
+        }, { once: true });
+    };
+
+    app.handleOpenPantryView = function(itemEl) {
+        const id = itemEl?.dataset.id;
+        const item = this.state.despensa.find(i => String(i.id) === String(id));
+        if (!item) return;
+        const titleEl = document.getElementById('pantry-view-title');
+        const bodyEl = document.getElementById('pantry-view-body');
+        const footerEl = document.getElementById('pantry-view-footer');
+        if (!titleEl || !bodyEl || !footerEl) return;
+
+        const stock = parseInt(item.stock || 0, 10);
+        const stockBars = Array.from({ length: 4 }, (_, i) => `<div class="card__stock-bar ${i < Math.max(1, Math.round(stock / 25)) ? 'active' : ''}"></div>`).join('');
+        const validade = item.validade ? item.validade.split('-').reverse().join('/') : 'Não informada';
+
+        titleEl.textContent = item.name;
+        bodyEl.innerHTML = `
+            <div class="pantry-view-readonly pantry-luxury-view">
+                <div class="detail-kpi-grid">
+                    <div class="detail-kpi"><strong>${this.escapeHtml(item.name)}</strong><span>Item salvo</span></div>
+                    <div class="detail-kpi"><strong>${item.qtd}</strong><span>Quantidade</span></div>
+                    <div class="detail-kpi"><strong>${this.escapeHtml(item.unid || 'un')}</strong><span>Unidade</span></div>
+                    <div class="detail-kpi"><strong>R$ ${parseFloat(item.valor || 0).toFixed(2)}</strong><span>Valor unitário</span></div>
+                </div>
+                <div class="detail-stack" style="margin-top:1rem;">
+                    <div class="detail-listing-item">
+                        <div><strong>Validade</strong><p class="detail-note">${validade}</p></div>
+                    </div>
+                    <div class="detail-listing-item">
+                        <div><strong>Nível de estoque</strong><p class="detail-note">${stock}% disponível</p></div>
+                        <div class="card__stock pantry-stock-inline">${stockBars}</div>
+                    </div>
+                </div>
+            </div>`;
+        footerEl.innerHTML = `
+            <button class="icon-button minimal-export-btn share-btn" data-item-id="${item.id}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+            <button class="icon-button minimal-export-btn print-btn" data-item-id="${item.id}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+            <button class="icon-button minimal-export-btn pdf-btn" data-item-id="${item.id}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+        `;
+        this.openModal('pantry-view-modal');
+    };
+
+    app.showRecipeDetailModal = function(recipeId) {
+        const recipe = this.state.receitas[recipeId];
+        if (!recipe) return;
+        const titleEl = document.getElementById('recipe-detail-modal-title');
+        const bodyEl = document.getElementById('recipe-detail-modal-body');
+        const footerEl = document.getElementById('recipe-detail-modal-footer');
+        if (!titleEl || !bodyEl || !footerEl) return;
+
+        const ingredients = recipe.ingredients || [];
+        const prepText = (recipe.content || '')
+            .replace(/<h4>Ingredientes<\/h4>/gi, '')
+            .replace(/<ul>[\s\S]*?<\/ul>/i, '')
+            .replace(/<h4>Preparo<\/h4>/gi, '')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<[^>]+>/g, '')
+            .trim();
+        const desc = this.escapeHtml(recipe.desc || 'Receita criada no seu painel premium.');
+        const ingredientChips = ingredients.length
+            ? ingredients.map(ing => `<li class="recipe-chip"><span>${this.escapeHtml(ing.qty || '1')} ${this.escapeHtml(ing.unit || 'un')}</span><strong>${this.escapeHtml(ing.name || '')}</strong></li>`).join('')
+            : '<li class="recipe-chip recipe-chip--empty"><strong>Sem ingredientes cadastrados</strong></li>';
+
+        titleEl.textContent = recipe.name;
+        bodyEl.innerHTML = `
+            <div class="recipe-rich-content recipe-luxury-view">
+                <div class="recipe-hero-head">
+                    <div class="recipe-title-block">
+                        <span class="recipe-eyebrow">Receita salva</span>
+                        <h4>${this.escapeHtml(recipe.name)}</h4>
+                        <p class="detail-note">${desc}</p>
+                    </div>
+                    <div class="recipe-meta-grid">
+                        <div class="detail-kpi"><strong>${ingredients.length}</strong><span>ingredientes</span></div>
+                        <div class="detail-kpi"><strong>${prepText ? prepText.split('\n').filter(Boolean).length || 1 : 1}</strong><span>etapas</span></div>
+                    </div>
+                </div>
+                <div class="recipe-section-card">
+                    <h5>Ingredientes</h5>
+                    <ul class="recipe-ingredient-chips">${ingredientChips}</ul>
+                </div>
+                <div class="recipe-section-card">
+                    <h5>Modo de preparo</h5>
+                    <div class="recipe-prep-copy">${prepText ? prepText.split('\n').filter(Boolean).map(step => `<p>${this.escapeHtml(step)}</p>`).join('') : '<p>Adicione o modo de preparo para deixar a receita completa.</p>'}</div>
+                </div>
+            </div>`;
+        footerEl.innerHTML = `
+            <button type="button" class="icon-button minimal-export-btn share-btn" data-recipe-id="${recipeId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+            <button type="button" class="icon-button minimal-export-btn print-btn" data-recipe-id="${recipeId}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+            <button type="button" class="icon-button minimal-export-btn pdf-btn" data-recipe-id="${recipeId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+        `;
+        this.openModal('recipe-detail-modal');
+    };
+
+    app.renderPlanejador = function(container) {
+        if (!container) container = document.getElementById('module-planejador');
+        if (!container) return;
+        const days = this.getPlannerDaysMap();
+        const cards = Object.entries(days).map(([dayKey, dayLabel]) => {
+            const meals = this.getPlannerMealsForDay(dayKey);
+            const preview = meals.length
+                ? meals.slice(0, 3).map(meal => `
+                    <div class="planner-mini-meal ${meal.completed ? 'is-complete' : ''}">
+                        <small>${this.escapeHtml(meal.mealLabel)}</small>
+                        <strong>${this.escapeHtml(meal.name)}</strong>
+                    </div>`).join('')
+                : '<div class="planner-mini-empty">Nenhuma refeição planejada.</div>';
+            return `
+                <article class="planner-day-card" data-day="${dayKey}">
+                    <div class="planner-day-header">
+                        <div class="planner-day-copy">
+                            <strong>${dayLabel}</strong>
+                            <span>${meals.length ? `${meals.length} refeição(ões)` : 'Pronto para planejar'}</span>
+                        </div>
+                        <div class="planner-day-actions">
+                            <button type="button" class="icon-button day-clear-btn" data-day="${dayKey}" title="Limpar dia"><i class="fa-solid fa-eraser"></i></button>
+                            <button type="button" class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="planner-preview-list">${preview}</div>
+                </article>`;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="dashboard-card planner-shell planner-shell--ultra">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-calendar-week"></i> Planejador</h3>
+                    <div class="card-actions"><button class="icon-button clear-plan-btn" title="Limpar tudo"><i class="fa-solid fa-eraser"></i></button></div>
+                </div>
+                <div class="card-content"><div class="planner-grid">${cards}</div></div>
+                <div class="card-footer module-actions-footer">
+                    <button class="icon-button minimal-export-btn share-btn" title="Compartilhar planejamento"><i class="fa-solid fa-share-alt"></i></button>
+                    <button class="icon-button minimal-export-btn print-btn" title="Imprimir planejamento"><i class="fa-solid fa-print"></i></button>
+                    <button class="icon-button minimal-export-btn pdf-btn" title="Gerar PDF do planejamento"><i class="fa-solid fa-file-pdf"></i></button>
+                </div>
+            </div>`;
+    };
+
+    app.openPlannerDayDetailModal = function(dayKey) {
+        const titleEl = document.getElementById('detail-modal-title');
+        const bodyEl = document.getElementById('detail-modal-body');
+        const footerEl = document.getElementById('detail-modal-footer');
+        const headerActionsEl = document.getElementById('detail-modal-header-actions');
+        const meals = this.getPlannerMealsForDay(dayKey);
+        titleEl.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${this.getPlannerDaysMap()[dayKey] || 'Dia'}`;
+        headerActionsEl.innerHTML = `<button class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>`;
+
+        bodyEl.innerHTML = `
+            <div class="detail-rich-content planner-day-detail">
+                <div class="detail-kpi-grid">
+                    <div class="detail-kpi"><strong>${meals.length}</strong><span>refeições planejadas</span></div>
+                    <div class="detail-kpi"><strong>${meals.filter(meal => meal.completed).length}</strong><span>marcadas como usadas</span></div>
+                </div>
+                <div class="detail-stack planner-day-stack">
+                    ${meals.length ? meals.map(meal => `
+                        <div class="detail-listing-item planner-meal-item ${meal.completed ? 'completed' : ''}" data-recipe-id="${meal.recipeId || meal.id}" data-day="${dayKey}" data-meal="${meal.key}">
+                            <div class="planner-meal-copy">
+                                <small class="planner-meal-label">${this.escapeHtml(meal.mealLabel)}</small>
+                                <strong class="meal-item-name">${this.escapeHtml(meal.name)}</strong>
+                                <p class="detail-note">${meal.time ? `Horário: ${this.escapeHtml(meal.time)}` : 'Toque em visualizar para abrir a receita.'}</p>
+                            </div>
+                            <div class="module-detail-actions meal-item-actions">
+                                <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i></button>
+                                <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i></button>
+                                <button type="button" class="icon-button meal-complete-btn ${meal.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i></button>
+                            </div>
+                        </div>`).join('') : `
+                        <div class="detail-listing-item">
+                            <div><strong>Nenhuma refeição planejada.</strong><p class="detail-note">Use o botão inserir para escolher uma receita.</p></div>
+                        </div>`}
+                </div>
+            </div>`;
+        footerEl.className = 'modal-footer detail-modal-footer unified-detail-actions compact-export-row';
+        footerEl.innerHTML = `
+            <button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>
+            <button type="button" class="icon-button minimal-export-btn share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+            <button type="button" class="icon-button minimal-export-btn print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+            <button type="button" class="icon-button minimal-export-btn pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+        `;
+        this.openModal('detail-modal');
+    };
+
+    app.handleGenerateListFromPlanner = function(dayKey = null) {
+        const plannedDays = dayKey ? { [dayKey]: this.state.planejador[dayKey] || {} } : this.state.planejador;
+        let targetListId = this.activeListId;
+        if (!targetListId || !this.state.listas[targetListId]) {
+            const firstListId = Object.keys(this.state.listas || {})[0];
+            if (firstListId) {
+                targetListId = firstListId;
+            } else {
+                targetListId = this.generateId();
+                this.state.listas[targetListId] = {
+                    nome: dayKey ? `Lista de ${this.getPlannerDaysMap()[dayKey] || 'Planejamento'}` : 'Lista do Planejamento',
+                    items: [],
+                    createdAt: new Date().toISOString()
+                };
+            }
+            this.activeListId = targetListId;
+        }
+
+        let totalIngredients = 0;
+        const pushIngredients = (recipe) => {
+            const ingredients = recipe?.ingredients || [];
+            ingredients.forEach(ing => {
+                this.state.listas[targetListId].items.unshift({
+                    id: this.generateId(),
+                    name: ing.name,
+                    qtd: parseFloat(ing.qty) || 1,
+                    unid: ing.unit || 'un',
+                    valor: 0,
+                    checked: false
+                });
+                totalIngredients += 1;
+            });
+        };
+
+        Object.values(plannedDays).forEach(dayState => {
+            if (!dayState || typeof dayState !== 'object') return;
+            ['cafe', 'almoco', 'jantar'].forEach(key => {
+                const mealData = dayState[key];
+                if (mealData?.recipeId || mealData?.id) pushIngredients(this.state.receitas[mealData.recipeId || mealData.id]);
+            });
+            (dayState.extras || []).forEach(extra => pushIngredients(this.state.receitas[extra.recipeId || extra.id]));
+        });
+
+        if (!this.state.listas[targetListId].createdAt) this.state.listas[targetListId].createdAt = new Date().toISOString();
+
+        if (totalIngredients > 0) {
+            this.saveState();
+            this.renderListaWidget();
+            if (this.activeModule === 'lista') this.renderListas();
+            this.showNotification(`Sucesso! ${totalIngredients} ingredientes adicionados à lista.`, 'success');
+        } else {
+            this.showNotification('Seu planejador está vazio ou as receitas não têm ingredientes.', 'info');
+        }
+    };
+
+    app.renderAnalysisDetailDesktop = function(analysisKey = 'gastos_categoria') {
+        const container = document.getElementById('analises-detail-desktop');
+        if (!container) return;
+        const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+        container.innerHTML = `
+            <div class="card-header analysis-premium-header">
+                <h3><i class="${cfg.icon}"></i> ${cfg.label}</h3>
+                <div class="card-actions"><button class="icon-button analysis-mobile-open-btn" data-analysis-key="${analysisKey}" title="Abrir detalhe"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button></div>
+            </div>
+            <div class="card-content analysis-premium-content">
+                <div class="detail-note analysis-premium-note">${cfg.note}</div>
+                <div class="analysis-config-panel">
+                    <div class="form-group">
+                        <label for="analysis-data-select">Analisar</label>
+                        <select id="analysis-data-select">
+                            <option value="gastos_categoria">Gastos por Categoria (Listas)</option>
+                            <option value="validade_despensa">Itens por Validade (Despensa)</option>
+                            <option value="uso_receitas">Receitas Usadas (Planejador)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="analysis-type-select">Tipo de gráfico</label>
+                        <select id="analysis-type-select">
+                            <option value="pie">Pizza</option>
+                            <option value="doughnut">Rosca</option>
+                            <option value="bar">Barras</option>
+                            <option value="line">Linha</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-canvas-container analysis-premium-chart"><canvas id="dynamic-analysis-chart"></canvas></div>
+            </div>
+            <div class="card-footer module-actions-footer compact-export-row">
+                <button class="icon-button minimal-export-btn share-btn" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+                <button class="icon-button minimal-export-btn print-btn" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+                <button class="icon-button minimal-export-btn pdf-btn" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+            </div>`;
+        document.getElementById('analysis-data-select').value = analysisKey;
+        document.getElementById('analysis-data-select')?.addEventListener('change', (e) => this.renderAnalysisDetailDesktop(e.target.value));
+        document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+        this.updateDynamicChart();
+    };
+
+    app.openAnalysisDetailModal = function(analysisKey = 'gastos_categoria') {
+        const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+        const titleEl = document.getElementById('detail-modal-title');
+        const bodyEl = document.getElementById('detail-modal-body');
+        const footerEl = document.getElementById('detail-modal-footer');
+        const headerActionsEl = document.getElementById('detail-modal-header-actions');
+        titleEl.innerHTML = `<i class="${cfg.icon}"></i> ${cfg.label}`;
+        headerActionsEl.innerHTML = '';
+        bodyEl.innerHTML = `
+            <div class="analysis-premium-modal">
+                <p class="detail-note analysis-premium-note">${cfg.note}</p>
+                <div class="analysis-config-panel">
+                    <div class="form-group">
+                        <label for="analysis-data-select">Analisar</label>
+                        <select id="analysis-data-select">
+                            <option value="gastos_categoria">Gastos por Categoria (Listas)</option>
+                            <option value="validade_despensa">Itens por Validade (Despensa)</option>
+                            <option value="uso_receitas">Receitas Usadas (Planejador)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="analysis-type-select">Tipo de gráfico</label>
+                        <select id="analysis-type-select">
+                            <option value="pie">Pizza</option>
+                            <option value="doughnut">Rosca</option>
+                            <option value="bar">Barras</option>
+                            <option value="line">Linha</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-canvas-container analysis-premium-chart"><canvas id="dynamic-analysis-chart"></canvas></div>
+            </div>`;
+        footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+        footerEl.innerHTML = `
+            <button class="icon-button minimal-export-btn share-btn" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+            <button class="icon-button minimal-export-btn print-btn" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+            <button class="icon-button minimal-export-btn pdf-btn" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
+        document.getElementById('analysis-data-select').value = analysisKey;
+        document.getElementById('analysis-data-select')?.addEventListener('change', () => this.updateDynamicChart());
+        document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+        this.updateDynamicChart();
+        this.openModal('detail-modal');
+    };
+
+    function initHeroRotator() {
+        const identity = document.querySelector('#inicio .identity-container');
+        if (!identity || identity.classList.contains('has-hero-rotator')) return;
+        const signature = identity.querySelector('.hero-signature')?.textContent?.trim();
+        const statTexts = Array.from(identity.querySelectorAll('.hero-stat')).map(stat => {
+            const strong = stat.querySelector('strong')?.textContent?.trim() || '';
+            const span = stat.querySelector('span')?.textContent?.trim() || '';
+            return [strong, span].filter(Boolean).join(' • ');
+        }).filter(Boolean);
+        const messages = [signature, ...statTexts].filter(Boolean);
+        if (!messages.length) return;
+        identity.classList.add('has-hero-rotator');
+        const rotator = document.createElement('div');
+        rotator.className = 'hero-rotator';
+        rotator.innerHTML = messages.map((msg, index) => `<div class="hero-rotator-item ${index === 0 ? 'is-visible' : ''}">${msg}</div>`).join('');
+        identity.querySelector('.simple-subtitle')?.insertAdjacentElement('afterend', rotator);
+        let active = 0;
+        setInterval(() => {
+            const items = rotator.querySelectorAll('.hero-rotator-item');
+            if (!items.length) return;
+            items[active]?.classList.remove('is-visible');
+            active = (active + 1) % items.length;
+            items[active]?.classList.add('is-visible');
+        }, 2800);
+    }
+
+    function installUltraClickPatch() {
+        if (document.body.dataset.ultraUxPatchInstalled === 'true') return;
+        document.body.dataset.ultraUxPatchInstalled = 'true';
+
+        document.addEventListener('click', function(e) {
+            const closest = sel => e.target.closest(sel);
+            const itemEl = closest('.placeholder-item');
+            const recipeCard = closest('.recipe-list-item, .card--recipe');
+            const savedList = closest('.saved-list-item, .card--saved-list');
+
+            if (closest('.list-cycle-sort-btn')) { e.preventDefault(); e.stopImmediatePropagation(); app.cycleSortMode('list'); return; }
+            if (closest('.recipe-cycle-sort-btn')) { e.preventDefault(); e.stopImmediatePropagation(); app.cycleSortMode('recipe'); return; }
+            if (closest('.pantry-cycle-sort-btn')) { e.preventDefault(); e.stopImmediatePropagation(); app.cycleSortMode('pantry'); return; }
+
+            if (savedList && closest('.delete-list-btn')) {
+                const listId = savedList.dataset.listId || savedList.dataset.id;
+                if (listId) { e.preventDefault(); e.stopImmediatePropagation(); app.handleDeleteListaAtiva(listId); }
+                return;
+            }
+            if (savedList && closest('.select-list-btn')) {
+                const listId = savedList.dataset.listId || savedList.dataset.id;
+                if (listId) { e.preventDefault(); e.stopImmediatePropagation(); app.openListEditView(listId); }
+                return;
+            }
+
+            if (recipeCard && closest('.edit-recipe-btn')) {
+                const recipeId = closest('.edit-recipe-btn').dataset.recipeId || recipeCard.dataset.recipeId || recipeCard.dataset.id;
+                if (recipeId) { e.preventDefault(); e.stopImmediatePropagation(); app.handleOpenRecipeEditModal(recipeId); }
+                return;
+            }
+            if (recipeCard && closest('.delete-recipe-btn')) {
+                const recipeId = closest('.delete-recipe-btn').dataset.recipeId || recipeCard.dataset.recipeId || recipeCard.dataset.id;
+                if (recipeId) { e.preventDefault(); e.stopImmediatePropagation(); app.handleDeleteRecipe(recipeId); }
+                return;
+            }
+
+            if (itemEl) {
+                const isList = !!itemEl.closest('#lista-items-full, #list-view-modal-body, #lista-items-inicio');
+                const isPantry = !!itemEl.closest('#despensa-list-container, [id*="despensa-items"]');
+
+                if (isList && closest('.edit-btn')) {
+                    e.preventDefault(); e.stopImmediatePropagation();
+                    app.startInlineListEdit(itemEl);
+                    return;
+                }
+                if (isList && closest('.delete-btn')) {
+                    e.preventDefault(); e.stopImmediatePropagation();
+                    const itemName = itemEl.dataset.name || 'este item';
+                    app.openConfirmModal('Excluir item', `Deseja excluir "${itemName}" da lista?`, () => app.handleDeleteItem('lista', itemEl.dataset.id));
+                    return;
+                }
+                if (isList && closest('.save-inline-edit-btn')) {
+                    e.preventDefault(); e.stopImmediatePropagation();
+                    app.handleSaveInlineListEdit(itemEl);
+                    return;
+                }
+                if (isList && closest('.cancel-inline-edit-btn')) {
+                    e.preventDefault(); e.stopImmediatePropagation();
+                    app.cancelInlineListEdit();
+                    return;
+                }
+                if (isPantry && closest('.edit-btn')) {
+                    e.preventDefault(); e.stopImmediatePropagation();
+                    app.handleOpenDespensaEditModal(itemEl);
+                    return;
+                }
+                if (isPantry && closest('.delete-btn')) {
+                    e.preventDefault(); e.stopImmediatePropagation();
+                    const itemName = itemEl.dataset.name || 'este item';
+                    app.openConfirmModal('Excluir item', `Deseja excluir "${itemName}" da despensa?`, () => app.handleDeleteItem('despensa', itemEl.dataset.id));
+                    return;
+                }
+            }
+        }, true);
+    }
+
+    requestAnimationFrame(() => {
+        installUltraClickPatch();
+        initHeroRotator();
+        if (app.isAppMode && app.activeModule && typeof app.activateModuleAndRender === 'function') {
+            app.activateModuleAndRender(app.activeModule);
+        }
+    });
+})();
+
+
+// === PATCH MAGNIFICO FINAL 2026-03-21 ===
+(() => {
+    const originalHandleDeleteItemMagnifico = app.handleDeleteItem ? app.handleDeleteItem.bind(app) : null;
+
+    app.buildChefButton = function(prompt, label = 'Chef IA', extraClass = 'chef-inline-btn') {
+        return `<button type="button" class="${extraClass}" data-modal-open="ai-chat-modal" data-chef-prompt="${this.escapeHtml(prompt || 'Quero ajuda do Chef IA com este conteúdo.')}" title="Abrir Chef IA"><i class="fa-solid fa-wand-magic-sparkles"></i><span>${this.escapeHtml(label)}</span></button>`;
+    };
+
+    app.deleteListItemById = function(listId, itemId) {
+        if (!listId || !this.state.listas[listId]) return;
+        const id = String(itemId);
+        this.state.listas[listId].items = (this.state.listas[listId].items || []).filter(item => String(item.id) !== id);
+        if (this.inlineListEdit && String(this.inlineListEdit.itemId) === id) this.inlineListEdit = null;
+        this.saveState();
+        this.refreshListContexts(listId);
+        this.showNotification('Item removido da lista.', 'info');
+    };
+
+    app.deletePantryItemById = function(itemId) {
+        const id = String(itemId);
+        this.state.despensa = (this.state.despensa || []).filter(item => String(item.id) !== id);
+        this.saveState();
+        this.renderDespensaWidget();
+        if (this.activeModule === 'despensa') this.renderDespensa();
+        this.closeModal('pantry-view-modal');
+        const desktop = document.getElementById('despensa-detail-desktop');
+        if (desktop) desktop.innerHTML = `<div class="empty-state-placeholder"><i class="fa-solid fa-box-open" style="font-size:2rem; margin-bottom:1rem; opacity:.45;"></i><p>Selecione um item da despensa para abrir um visual limpo e detalhado.</p></div>`;
+        this.showNotification('Item excluído da despensa.', 'info');
+    };
+
+    app.handleDeleteItem = function(type, itemId, ctx = {}) {
+        if (type === 'lista') {
+            const listId = ctx?.listId || document.getElementById('list-view-modal-body')?.dataset?.listId || document.getElementById('active-list-id-input')?.value || this.activeListId;
+            if (listId && this.state.listas[listId]) {
+                this.deleteListItemById(listId, itemId);
+                return;
+            }
+        }
+        if (type === 'despensa') {
+            this.deletePantryItemById(itemId);
+            return;
+        }
+        if (originalHandleDeleteItemMagnifico) return originalHandleDeleteItemMagnifico(type, itemId, ctx);
+    };
+
+    app.renderPantryDetailDesktop = function(item) {
+        const container = document.getElementById('despensa-detail-desktop');
+        if (!container || !item) return;
+        const stock = Math.max(0, Math.min(100, parseInt(item.stock || 0, 10)));
+        const validade = item.validade ? item.validade.split('-').reverse().join('/') : 'Não informada';
+        const stockBars = [1,2,3,4].map(level => `<div class="pantry-stock-meter-bar level-${level} ${stock >= level * 25 ? 'active' : ''}"></div>`).join('');
+        const chefPrompt = `Quero analisar o item ${item.name}. Me diga formas de uso, conservação, validade, sinais de estrago e uma estimativa nutricional típica, deixando claro quando for uma estimativa.`;
+        container.innerHTML = `
+            <div class="card-header analysis-premium-header">
+                <h3><i class="fa-solid fa-box-archive"></i> ${this.escapeHtml(item.name)}</h3>
+                <div class="card-actions">
+                    ${this.buildChefButton(chefPrompt, 'Chef IA')}
+                    <button type="button" class="icon-button" data-pantry-edit-id="${item.id}" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                    <button type="button" class="icon-button danger" data-pantry-delete-id="${item.id}" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="pantry-luxury-view">
+                    <section class="pantry-hero-card">
+                        <div>
+                            <span class="pantry-eyebrow">Item da despensa</span>
+                            <h4>${this.escapeHtml(item.name)}</h4>
+                            <p class="detail-note">Visual premium com foco em estoque, validade e apoio do Chef IA.</p>
+                        </div>
+                        <div class="detail-kpi"><strong>R$ ${parseFloat(item.valor || 0).toFixed(2)}</strong><span>valor unitário</span></div>
+                    </section>
+                    <section class="pantry-meta-grid">
+                        <div class="pantry-meta-pill"><strong>${item.qtd}</strong><span>Quantidade</span></div>
+                        <div class="pantry-meta-pill"><strong>${this.escapeHtml(item.unid || 'un')}</strong><span>Unidade</span></div>
+                        <div class="pantry-meta-pill"><strong>${validade}</strong><span>Validade</span></div>
+                        <div class="pantry-meta-pill"><strong>${stock}%</strong><span>Estoque atual</span></div>
+                    </section>
+                    <section class="pantry-stock-card">
+                        <div>
+                            <h5 style="margin:0 0 .45rem; color:#fff;">Nível de estoque</h5>
+                            <p class="detail-note">Use as barras para acompanhar visualmente o nível disponível e decidir quando repor.</p>
+                        </div>
+                        <div class="pantry-stock-meter">${stockBars}</div>
+                    </section>
+                    <section class="pantry-nutrition-card">
+                        <h5 style="margin:0 0 .45rem; color:#fff;">Informações nutricionais</h5>
+                        <p class="detail-note">Este item ainda não possui tabela nutricional cadastrada no painel.</p>
+                        <ul>
+                            <li>Use o Chef IA para obter uma estimativa típica do produto.</li>
+                            <li>Peça também sugestões de conservação, uso e reaproveitamento.</li>
+                            <li>Quando houver embalagem, o Chef IA pode te orientar sobre quais dados conferir.</li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+            <div class="card-footer module-actions-footer compact-export-row">
+                ${this.buildChefButton(chefPrompt, 'Chef IA', 'chef-glass-btn')}
+                <button class="icon-button minimal-export-btn share-btn" data-item-id="${item.id}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+                <button class="icon-button minimal-export-btn print-btn" data-item-id="${item.id}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+                <button class="icon-button minimal-export-btn pdf-btn" data-item-id="${item.id}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+            </div>`;
+    };
+
+    app.handleOpenPantryView = function(itemEl) {
+        const id = itemEl?.dataset?.id;
+        const item = (this.state.despensa || []).find(i => String(i.id) === String(id));
+        if (!item) return;
+        const titleEl = document.getElementById('pantry-view-title');
+        const bodyEl = document.getElementById('pantry-view-body');
+        const footerEl = document.getElementById('pantry-view-footer');
+        if (!titleEl || !bodyEl || !footerEl) return;
+        const stock = Math.max(0, Math.min(100, parseInt(item.stock || 0, 10)));
+        const validade = item.validade ? item.validade.split('-').reverse().join('/') : 'Não informada';
+        const stockBars = [1,2,3,4].map(level => `<div class="pantry-stock-meter-bar level-${level} ${stock >= level * 25 ? 'active' : ''}"></div>`).join('');
+        const chefPrompt = `Quero conferir informações do produto ${item.name}. Me diga estimativas nutricionais típicas, dicas de conservação, validade, sinais de estrago e ideias de uso. Quando for estimativa, deixe isso claro.`;
+        titleEl.textContent = item.name;
+        bodyEl.innerHTML = `
+            <div class="pantry-luxury-view">
+                <section class="pantry-hero-card">
+                    <div>
+                        <span class="pantry-eyebrow">Despensa premium</span>
+                        <h4>${this.escapeHtml(item.name)}</h4>
+                        <p class="detail-note">Organizado, legível e com apoio do Chef IA para uso inteligente do produto.</p>
+                    </div>
+                    <div class="detail-kpi"><strong>${stock}%</strong><span>estoque atual</span></div>
+                </section>
+                <section class="pantry-meta-grid">
+                    <div class="pantry-meta-pill"><strong>${item.qtd}</strong><span>Quantidade</span></div>
+                    <div class="pantry-meta-pill"><strong>${this.escapeHtml(item.unid || 'un')}</strong><span>Unidade</span></div>
+                    <div class="pantry-meta-pill"><strong>R$ ${parseFloat(item.valor || 0).toFixed(2)}</strong><span>Valor unitário</span></div>
+                    <div class="pantry-meta-pill"><strong>${validade}</strong><span>Validade</span></div>
+                </section>
+                <section class="pantry-stock-card">
+                    <div>
+                        <h5 style="margin:0 0 .45rem; color:#fff;">Gráfico rápido do estoque</h5>
+                        <p class="detail-note">Barras mais altas significam mais disponibilidade do item.</p>
+                    </div>
+                    <div class="pantry-stock-meter">${stockBars}</div>
+                </section>
+                <section class="pantry-nutrition-card">
+                    <h5 style="margin:0 0 .45rem; color:#fff;">Informações nutricionais</h5>
+                    <p class="detail-note">Ainda não há dados nutricionais cadastrados manualmente.</p>
+                    <ul>
+                        <li>Peça ao Chef IA uma estimativa típica do produto.</li>
+                        <li>Cheque conservação, aproveitamento e sinais de vencimento.</li>
+                        <li>Use o botão abaixo para conferir o produto com apoio da IA.</li>
+                    </ul>
+                </section>
+                <section class="pantry-chef-card">
+                    <div class="pantry-chef-copy">
+                        <strong>Conferir produto com o Chef IA</strong>
+                        <p>Entenda melhor uso, validade, armazenamento e uma estimativa nutricional do item.</p>
+                    </div>
+                    ${this.buildChefButton(chefPrompt, 'Conferir com Chef IA', 'chef-glass-btn')}
+                </section>
+            </div>`;
+        footerEl.innerHTML = `
+            <button class="icon-button minimal-export-btn share-btn" data-item-id="${item.id}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+            <button class="icon-button minimal-export-btn print-btn" data-item-id="${item.id}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+            <button class="icon-button minimal-export-btn pdf-btn" data-item-id="${item.id}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
+        this.openModal('pantry-view-modal');
+    };
+
+    app.renderRecipeDetail = function(recipeId, targetElementId = 'recipe-detail-desktop-body', footerElementId = 'recipe-detail-desktop-footer') {
+        const recipe = this.state.receitas[recipeId];
+        const bodyEl = document.getElementById(targetElementId);
+        const footerEl = document.getElementById(footerElementId);
+        if (!recipe || !bodyEl || !footerEl) return;
+        const ingredients = recipe.ingredients || [];
+        const prepText = (recipe.content || '').replace(/<h4>Ingredientes<\/h4>/gi, '').replace(/<ul>[\s\S]*?<\/ul>/i, '').replace(/<h4>Preparo<\/h4>/gi, '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim();
+        const desc = this.escapeHtml(recipe.desc || 'Receita salva com visual premium.');
+        const ingredientChips = ingredients.length ? ingredients.map(ing => `<li class="recipe-chip"><span>${this.escapeHtml(ing.qty || '1')} ${this.escapeHtml(ing.unit || 'un')}</span><strong>${this.escapeHtml(ing.name || '')}</strong></li>`).join('') : '<li class="recipe-chip recipe-chip--empty"><strong>Sem ingredientes cadastrados</strong></li>';
+        const chefPrompt = `Tenho a receita ${recipe.name}. Quero sugestões de melhorias, substituições, forma de servir, tempo de preparo e uma lista de compras organizada.`;
+        bodyEl.innerHTML = `
+            <div class="recipe-rich-content recipe-luxury-view">
+                <div class="recipe-hero-head">
+                    <div class="recipe-title-block">
+                        <span class="recipe-eyebrow">Receita premium</span>
+                        <h4>${this.escapeHtml(recipe.name)}</h4>
+                        <p class="detail-note">${desc}</p>
+                    </div>
+                    <div class="recipe-meta-grid">
+                        <div class="detail-kpi"><strong>${ingredients.length}</strong><span>ingredientes</span></div>
+                        <div class="detail-kpi"><strong>${prepText ? prepText.split('\n').filter(Boolean).length || 1 : 1}</strong><span>etapas</span></div>
+                    </div>
+                </div>
+                <div class="recipe-section-card">
+                    <h5>Ingredientes</h5>
+                    <ul class="recipe-ingredient-chips">${ingredientChips}</ul>
+                </div>
+                <div class="recipe-section-card">
+                    <h5>Modo de preparo</h5>
+                    <div class="recipe-prep-copy">${prepText ? prepText.split('\n').filter(Boolean).map(step => `<p>${this.escapeHtml(step)}</p>`).join('') : '<p>Adicione o modo de preparo para deixar a receita completa.</p>'}</div>
+                </div>
+            </div>`;
+        footerEl.className = 'card-footer module-actions-footer compact-export-row';
+        footerEl.innerHTML = `
+            ${this.buildChefButton(chefPrompt, 'Chef IA', 'chef-glass-btn')}
+            <button type="button" class="icon-button minimal-export-btn share-btn" data-recipe-id="${recipeId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+            <button type="button" class="icon-button minimal-export-btn print-btn" data-recipe-id="${recipeId}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+            <button type="button" class="icon-button minimal-export-btn pdf-btn" data-recipe-id="${recipeId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+            <button type="button" class="icon-button edit-recipe-btn" data-recipe-id="${recipeId}" title="Editar"><i class="fa-solid fa-pen"></i></button>
+            <button type="button" class="icon-button delete-recipe-btn danger" data-recipe-id="${recipeId}" title="Excluir"><i class="fa-solid fa-trash"></i></button>`;
+        footerEl.style.display = 'flex';
+    };
+
+    app.showRecipeDetailModal = function(recipeId) {
+        const recipe = this.state.receitas[recipeId];
+        if (!recipe) return;
+        const titleEl = document.getElementById('recipe-detail-modal-title');
+        const bodyEl = document.getElementById('recipe-detail-modal-body');
+        const footerEl = document.getElementById('recipe-detail-modal-footer');
+        if (!titleEl || !bodyEl || !footerEl) return;
+        const ingredients = recipe.ingredients || [];
+        const prepText = (recipe.content || '').replace(/<h4>Ingredientes<\/h4>/gi, '').replace(/<ul>[\s\S]*?<\/ul>/i, '').replace(/<h4>Preparo<\/h4>/gi, '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim();
+        const desc = this.escapeHtml(recipe.desc || 'Receita salva com visual premium.');
+        const ingredientChips = ingredients.length ? ingredients.map(ing => `<li class="recipe-chip"><span>${this.escapeHtml(ing.qty || '1')} ${this.escapeHtml(ing.unit || 'un')}</span><strong>${this.escapeHtml(ing.name || '')}</strong></li>`).join('') : '<li class="recipe-chip recipe-chip--empty"><strong>Sem ingredientes cadastrados</strong></li>';
+        const chefPrompt = `Tenho a receita ${recipe.name}. Quero uma versão ainda melhor, com substituições, apresentação e dicas de armazenamento.`;
+        titleEl.textContent = recipe.name;
+        bodyEl.innerHTML = `
+            <div class="recipe-rich-content recipe-luxury-view">
+                <div class="recipe-hero-head">
+                    <div class="recipe-title-block">
+                        <span class="recipe-eyebrow">Receita premium</span>
+                        <h4>${this.escapeHtml(recipe.name)}</h4>
+                        <p class="detail-note">${desc}</p>
+                    </div>
+                    <div class="recipe-meta-grid">
+                        <div class="detail-kpi"><strong>${ingredients.length}</strong><span>ingredientes</span></div>
+                        <div class="detail-kpi"><strong>${prepText ? prepText.split('\n').filter(Boolean).length || 1 : 1}</strong><span>etapas</span></div>
+                    </div>
+                </div>
+                <div class="recipe-section-card">
+                    <h5>Ingredientes</h5>
+                    <ul class="recipe-ingredient-chips">${ingredientChips}</ul>
+                </div>
+                <div class="recipe-section-card">
+                    <h5>Modo de preparo</h5>
+                    <div class="recipe-prep-copy">${prepText ? prepText.split('\n').filter(Boolean).map(step => `<p>${this.escapeHtml(step)}</p>`).join('') : '<p>Adicione o modo de preparo para deixar a receita completa.</p>'}</div>
+                </div>
+            </div>`;
+        footerEl.innerHTML = `
+            ${this.buildChefButton(chefPrompt, 'Chef IA', 'chef-glass-btn')}
+            <button type="button" class="icon-button minimal-export-btn share-btn" data-recipe-id="${recipeId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+            <button type="button" class="icon-button minimal-export-btn print-btn" data-recipe-id="${recipeId}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+            <button type="button" class="icon-button minimal-export-btn pdf-btn" data-recipe-id="${recipeId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
+        this.openModal('recipe-detail-modal');
+    };
+
+    app.renderPlanejador = function(container) {
+        if (!container) container = document.getElementById('module-planejador');
+        if (!container) return;
+        const days = this.getPlannerDaysMap();
+        const cards = Object.entries(days).map(([dayKey, dayLabel]) => {
+            const meals = this.getPlannerMealsForDay(dayKey);
+            const preview = meals.length
+                ? meals.slice(0, 3).map(meal => `
+                    <div class="planner-mini-meal ${meal.completed ? 'is-complete' : ''}">
+                        <small>${this.escapeHtml(meal.mealLabel)}</small>
+                        <strong>${this.escapeHtml(meal.name)}</strong>
+                    </div>`).join('')
+                : '<div class="planner-mini-empty">Nenhuma refeição planejada.</div>';
+            return `
+                <article class="planner-day-card" data-day="${dayKey}">
+                    <div class="planner-day-header">
+                        <div class="planner-day-copy">
+                            <strong>${dayLabel}</strong>
+                            <span>${meals.length ? `${meals.length} refeição(ões)` : 'Pronto para planejar'}</span>
+                        </div>
+                        <div class="planner-day-actions">
+                            <button type="button" class="icon-button day-clear-btn" data-day="${dayKey}" title="Limpar dia"><i class="fa-solid fa-eraser"></i></button>
+                            <button type="button" class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="planner-preview-list">${preview}</div>
+                </article>`;
+        }).join('');
+        container.innerHTML = `
+            <div class="dashboard-card planner-shell planner-shell--ultra">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-calendar-week"></i> Planejador</h3>
+                    <div class="card-actions">
+                        ${this.buildChefButton('Monte um planejamento alimentar bonito, econômico e inteligente para a semana com base nas minhas receitas.', 'Chef IA')}
+                        <button class="icon-button clear-plan-btn" title="Limpar tudo"><i class="fa-solid fa-eraser"></i></button>
+                    </div>
+                </div>
+                <div class="card-content"><div class="planner-grid">${cards}</div></div>
+                <div class="card-footer module-actions-footer compact-export-row">
+                    <button class="icon-button minimal-export-btn share-btn" title="Compartilhar planejamento"><i class="fa-solid fa-share-alt"></i></button>
+                    <button class="icon-button minimal-export-btn print-btn" title="Imprimir planejamento"><i class="fa-solid fa-print"></i></button>
+                    <button class="icon-button minimal-export-btn pdf-btn" title="Gerar PDF do planejamento"><i class="fa-solid fa-file-pdf"></i></button>
+                </div>
+            </div>`;
+    };
+
+    app.openPlannerDayDetailModal = function(dayKey) {
+        const titleEl = document.getElementById('detail-modal-title');
+        const bodyEl = document.getElementById('detail-modal-body');
+        const footerEl = document.getElementById('detail-modal-footer');
+        const headerActionsEl = document.getElementById('detail-modal-header-actions');
+        const dayLabel = this.getPlannerDaysMap()[dayKey] || 'Dia';
+        const dayMeals = this.state.planejador[dayKey] || {};
+        const standardSlots = [
+            { key: 'cafe', label: 'Café da Manhã', icon: 'fa-solid fa-mug-saucer' },
+            { key: 'almoco', label: 'Almoço', icon: 'fa-solid fa-bowl-food' },
+            { key: 'jantar', label: 'Jantar', icon: 'fa-solid fa-utensils' }
+        ];
+        const slotCards = standardSlots.map(slot => {
+            const meal = dayMeals[slot.key];
+            if (!meal) {
+                return `
+                    <article class="planner-slot-card planner-slot-empty" data-day="${dayKey}" data-meal="${slot.key}">
+                        <div class="planner-slot-head">
+                            <div class="planner-slot-title"><small>${slot.label}</small><strong>Sem receita definida</strong></div>
+                            <i class="${slot.icon}" style="opacity:.7;"></i>
+                        </div>
+                        <div class="planner-slot-body"><p>Escolha uma receita para deixar o seu ${slot.label.toLowerCase()} lindo e organizado.</p></div>
+                        <div class="planner-slot-actions"><button type="button" class="icon-button planner-slot-direct-btn" data-day="${dayKey}" data-meal="${slot.key}" title="Escolher receita"><i class="fa-solid fa-plus"></i></button></div>
+                    </article>`;
+            }
+            const recipeId = meal.recipeId || meal.id || '';
+            const chefPrompt = `Tenho ${slot.label} com a receita ${meal.name}. Quero melhorar apresentação, combinações, preparo e lista de compras complementar.`;
+            return `
+                <article class="planner-slot-card ${meal.completed ? 'completed' : ''}" data-day="${dayKey}" data-meal="${slot.key}" data-recipe-id="${recipeId}">
+                    <div class="planner-slot-head">
+                        <div class="planner-slot-title">
+                            <small>${slot.label}</small>
+                            <strong>${this.escapeHtml(meal.name || 'Refeição')}</strong>
+                            ${meal.time ? `<span class="planner-slot-time">${this.escapeHtml(meal.time)}</span>` : ''}
+                        </div>
+                        <i class="${slot.icon}" style="opacity:.78;"></i>
+                    </div>
+                    <div class="planner-slot-body"><p>${meal.completed ? 'Marcada como usada. Ótimo para acompanhar sua rotina.' : 'Use os botões ao lado para visualizar, concluir ou remover.'}</p></div>
+                    <div class="planner-slot-actions">
+                        ${this.buildChefButton(chefPrompt, 'Chef IA')}
+                        <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i></button>
+                        <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i></button>
+                        <button type="button" class="icon-button meal-complete-btn ${meal.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i></button>
+                    </div>
+                </article>`;
+        }).join('');
+        const extras = (dayMeals.extras || []).map(extra => {
+            const recipeId = extra.recipeId || extra.id || '';
+            const chefPrompt = `Tenho a refeição ${extra.mealLabel || 'extra'} com a receita ${extra.name}. Quero combinações, apresentação e organização.`;
+            return `
+                <article class="planner-slot-card" data-day="${dayKey}" data-meal="${extra.key}" data-recipe-id="${recipeId}">
+                    <div class="planner-slot-head">
+                        <div class="planner-slot-title">
+                            <small>${this.escapeHtml(extra.mealLabel || 'Refeição Extra')}</small>
+                            <strong>${this.escapeHtml(extra.name || 'Receita')}</strong>
+                            ${extra.time ? `<span class="planner-slot-time">${this.escapeHtml(extra.time)}</span>` : ''}
+                        </div>
+                        <i class="fa-solid fa-star" style="opacity:.78;"></i>
+                    </div>
+                    <div class="planner-slot-body"><p>Refeição personalizada adicionada ao seu dia.</p></div>
+                    <div class="planner-slot-actions">
+                        ${this.buildChefButton(chefPrompt, 'Chef IA')}
+                        <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i></button>
+                        <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i></button>
+                        <button type="button" class="icon-button meal-complete-btn ${extra.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i></button>
+                    </div>
+                </article>`;
+        }).join('');
+        const addCard = `
+            <article class="planner-slot-card planner-slot-add-card">
+                <div class="planner-slot-head"><div class="planner-slot-title"><small>Personalizado</small><strong>Adicionar refeição</strong></div><i class="fa-solid fa-sparkles" style="opacity:.78;"></i></div>
+                <div class="planner-slot-body"><p>Crie uma refeição com nome e horário personalizados e escolha a receita depois.</p></div>
+                <div class="planner-slot-actions"><button type="button" class="icon-button planner-custom-meal-launch" data-day="${dayKey}" title="Criar refeição"><i class="fa-solid fa-plus"></i></button></div>
+            </article>`;
+        titleEl.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${dayLabel}`;
+        headerActionsEl.innerHTML = `<button class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>`;
+        bodyEl.innerHTML = `
+            <div class="planner-day-detail-shell">
+                <div class="detail-kpi-grid">
+                    <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).length}</strong><span>refeições no dia</span></div>
+                    <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).filter(meal => meal.completed).length}</strong><span>marcadas como usadas</span></div>
+                </div>
+                <div class="planner-slot-grid">${slotCards}${extras}${addCard}</div>
+            </div>`;
+        footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+        footerEl.innerHTML = `
+            <button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>
+            <button type="button" class="icon-button minimal-export-btn share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+            <button type="button" class="icon-button minimal-export-btn print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+            <button type="button" class="icon-button minimal-export-btn pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
+        this.openModal('detail-modal');
+    };
+
+    app.renderAnalises = function(container) {
+        if (!container) container = document.getElementById('module-analises');
+        if (!container) return;
+        const analysisOptions = this.getAnalysisOptions();
+        const spend = Object.values(this.getCategoryDataFromLists()).reduce((sum, value) => sum + (parseFloat(value) || 0), 0);
+        const pantryStats = this.getPantryValidityData();
+        const plannerUsage = this.getPlannerMealCountData();
+        const plannedCount = Object.values(plannerUsage).reduce((sum, value) => sum + (parseInt(value, 10) || 0), 0);
+        const nav = Object.entries(analysisOptions).map(([key, cfg], index) => `
+            <button type="button" class="module-nav-item analysis-nav-item ${index === 0 ? 'active' : ''}" data-analysis-key="${key}">
+                <strong>${cfg.label}</strong>
+                <span>${cfg.note}</span>
+            </button>`).join('');
+        container.innerHTML = `
+            <div class="analysis-luxe-shell">
+                <div class="analysis-hero-grid">
+                    <div class="analysis-kpi-card"><strong>R$ ${spend.toFixed(2)}</strong><small>gasto mapeado nas listas</small></div>
+                    <div class="analysis-kpi-card"><strong>${(this.state.despensa || []).length}</strong><small>itens na despensa</small></div>
+                    <div class="analysis-kpi-card"><strong>${pantryStats.vencidos + pantryStats.vencendo}</strong><small>itens que pedem atenção</small></div>
+                    <div class="analysis-kpi-card"><strong>${plannedCount}</strong><small>usos de receitas no planejador</small></div>
+                </div>
+                <div class="master-detail-layout">
+                    <div class="md-list-column dashboard-card">
+                        <div class="card-header analysis-premium-header">
+                            <h3><i class="fa-solid fa-chart-line"></i> Análises</h3>
+                            <div class="card-actions">${this.buildChefButton('Analise meus dados alimentares e me dê insights claros, práticos e elegantes sobre gastos, validade e uso de receitas.', 'Chef IA')}</div>
+                        </div>
+                        <div class="card-content"><div class="module-nav-list analysis-nav-grid">${nav}</div></div>
+                    </div>
+                    <div class="md-detail-column dashboard-card analysis-preview-panel" id="analises-detail-desktop"></div>
+                </div>
+            </div>`;
+        const firstKey = Object.keys(analysisOptions)[0];
+        this.renderAnalysisDetailDesktop(firstKey);
+    };
+
+    app.renderAnalysisDetailDesktop = function(analysisKey = 'gastos_categoria') {
+        const container = document.getElementById('analises-detail-desktop');
+        if (!container) return;
+        const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+        container.innerHTML = `
+            <div class="card-header analysis-premium-header">
+                <h3><i class="${cfg.icon}"></i> ${cfg.label}</h3>
+                <div class="card-actions">
+                    ${this.buildChefButton(`Analise ${cfg.label} e me dê insights claros, oportunidades de economia e o que devo priorizar.`, 'Chef IA')}
+                    <button class="btn btn-secondary change-chart-btn"><i class="fa-solid fa-repeat"></i> Trocar tipo</button>
+                </div>
+            </div>
+            <div class="card-content analysis-premium-content">
+                <p class="detail-note analysis-premium-note">${cfg.note}</p>
+                <div class="analysis-config-panel">
+                    <div class="form-group">
+                        <label for="analysis-data-select">Analisar</label>
+                        <select id="analysis-data-select">
+                            <option value="gastos_categoria">Gastos por Categoria (Listas)</option>
+                            <option value="validade_despensa">Itens por Validade (Despensa)</option>
+                            <option value="uso_receitas">Receitas Usadas (Planejador)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="analysis-type-select">Tipo de gráfico</label>
+                        <select id="analysis-type-select">
+                            <option value="pie">Pizza</option>
+                            <option value="doughnut">Rosca</option>
+                            <option value="bar">Barras</option>
+                            <option value="line">Linha</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-canvas-container analysis-premium-chart"><canvas id="dynamic-analysis-chart"></canvas></div>
+            </div>
+            <div class="card-footer module-actions-footer compact-export-row analysis-premium-actions">
+                ${this.buildChefButton(`Resuma ${cfg.label} em linguagem simples e me diga a melhor ação agora.`, 'Chef IA', 'chef-glass-btn')}
+                <button class="icon-button minimal-export-btn share-btn" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+                <button class="icon-button minimal-export-btn print-btn" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+                <button class="icon-button minimal-export-btn pdf-btn" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+            </div>`;
+        document.getElementById('analysis-data-select').value = analysisKey;
+        document.getElementById('analysis-data-select')?.addEventListener('change', (e) => this.renderAnalysisDetailDesktop(e.target.value));
+        document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+        this.updateDynamicChart();
+    };
+
+    app.openAnalysisDetailModal = function(analysisKey = 'gastos_categoria') {
+        const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+        const titleEl = document.getElementById('detail-modal-title');
+        const bodyEl = document.getElementById('detail-modal-body');
+        const footerEl = document.getElementById('detail-modal-footer');
+        const headerActionsEl = document.getElementById('detail-modal-header-actions');
+        titleEl.innerHTML = `<i class="${cfg.icon}"></i> ${cfg.label}`;
+        headerActionsEl.innerHTML = this.buildChefButton(`Analise ${cfg.label} e me diga insights acionáveis, elegantes e fáceis de entender.`, 'Chef IA');
+        bodyEl.innerHTML = `
+            <div class="analysis-premium-modal">
+                <p class="detail-note analysis-premium-note">${cfg.note}</p>
+                <div class="analysis-config-panel">
+                    <div class="form-group">
+                        <label for="analysis-data-select">Analisar</label>
+                        <select id="analysis-data-select">
+                            <option value="gastos_categoria">Gastos por Categoria (Listas)</option>
+                            <option value="validade_despensa">Itens por Validade (Despensa)</option>
+                            <option value="uso_receitas">Receitas Usadas (Planejador)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="analysis-type-select">Tipo de gráfico</label>
+                        <select id="analysis-type-select">
+                            <option value="pie">Pizza</option>
+                            <option value="doughnut">Rosca</option>
+                            <option value="bar">Barras</option>
+                            <option value="line">Linha</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-canvas-container analysis-premium-chart"><canvas id="dynamic-analysis-chart"></canvas></div>
+            </div>`;
+        footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+        footerEl.innerHTML = `
+            <button class="icon-button minimal-export-btn share-btn" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+            <button class="icon-button minimal-export-btn print-btn" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+            <button class="icon-button minimal-export-btn pdf-btn" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
+        document.getElementById('analysis-data-select').value = analysisKey;
+        document.getElementById('analysis-data-select')?.addEventListener('change', () => this.updateDynamicChart());
+        document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+        this.updateDynamicChart();
+        this.openModal('detail-modal');
+    };
+
+    function installMagnificoCapture() {
+        if (document.body.dataset.magnificoCaptureInstalled === 'true') return;
+        document.body.dataset.magnificoCaptureInstalled = 'true';
+        document.addEventListener('click', function(e) {
+            const closest = (sel) => e.target.closest(sel);
+
+            const savedCard = closest('.card--saved-list, .saved-list-item');
+            if (savedCard && closest('.delete-list-btn')) {
+                const listId = closest('.delete-list-btn').dataset.listId || savedCard.dataset.listId || savedCard.dataset.id;
+                if (listId) {
+                    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                    app.handleDeleteListaAtiva(listId);
+                }
+                return;
+            }
+            if (savedCard && closest('.select-list-btn')) {
+                const listId = closest('.select-list-btn').dataset.listId || savedCard.dataset.listId || savedCard.dataset.id;
+                if (listId) {
+                    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                    app.openListEditView(listId);
+                }
+                return;
+            }
+
+            const recipeCard = closest('.card--recipe, .recipe-list-item');
+            if (recipeCard && closest('.delete-recipe-btn')) {
+                const recipeId = closest('.delete-recipe-btn').dataset.recipeId || recipeCard.dataset.recipeId || recipeCard.dataset.id;
+                if (recipeId) {
+                    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                    app.handleDeleteRecipe(recipeId);
+                }
+                return;
+            }
+            if (recipeCard && closest('.edit-recipe-btn')) {
+                const recipeId = closest('.edit-recipe-btn').dataset.recipeId || recipeCard.dataset.recipeId || recipeCard.dataset.id;
+                if (recipeId) {
+                    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                    app.handleOpenRecipeEditModal(recipeId);
+                }
+                return;
+            }
+
+            const itemEl = closest('.placeholder-item[data-id]');
+            if (itemEl) {
+                const listId = app.getListIdFromItemElement ? app.getListIdFromItemElement(itemEl) : (document.getElementById('active-list-id-input')?.value || app.activeListId);
+                const itemName = itemEl.dataset.name || 'este item';
+                const isList = !!itemEl.closest('#lista-items-full, #list-view-modal-body');
+                const isPantry = !!itemEl.closest('#despensa-list-container');
+                if (isList && closest('.delete-btn')) {
+                    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                    app.openConfirmModal('Excluir item', `Deseja excluir "${itemName}" da lista?`, () => app.deleteListItemById(listId, itemEl.dataset.id));
+                    return;
+                }
+                if (isList && closest('.edit-btn')) {
+                    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                    app.startInlineListEdit(itemEl);
+                    return;
+                }
+                if (isPantry && closest('.delete-btn')) {
+                    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                    app.openConfirmModal('Excluir item', `Deseja excluir "${itemName}" da despensa?`, () => app.deletePantryItemById(itemEl.dataset.id));
+                    return;
+                }
+                if (isPantry && closest('.edit-btn')) {
+                    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                    app.handleOpenDespensaEditModal(itemEl);
+                    return;
+                }
+                if (isPantry && !closest('.icon-button, .drag-handle, .item-stock-level')) {
+                    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                    app.handleOpenPantryView(itemEl);
+                    return;
+                }
+            }
+
+            if (closest('[data-pantry-delete-id]')) {
+                const itemId = closest('[data-pantry-delete-id]').dataset.pantryDeleteId;
+                if (itemId) {
+                    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                    const item = (app.state.despensa || []).find(entry => String(entry.id) === String(itemId));
+                    app.openConfirmModal('Excluir item', `Deseja excluir "${item?.name || 'este item'}" da despensa?`, () => app.deletePantryItemById(itemId));
+                }
+                return;
+            }
+            if (closest('[data-pantry-edit-id]')) {
+                const itemId = closest('[data-pantry-edit-id]').dataset.pantryEditId;
+                const itemNode = document.querySelector(`#despensa-list-container .placeholder-item[data-id="${itemId}"]`);
+                if (itemNode) {
+                    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                    app.handleOpenDespensaEditModal(itemNode);
+                }
+                return;
+            }
+
+            if (closest('.planner-slot-direct-btn')) {
+                const btn = closest('.planner-slot-direct-btn');
+                e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                app.currentPlannerDayTarget = `planner-full-${btn.dataset.day}-${btn.dataset.meal}`;
+                app.pendingCustomMeal = null;
+                app.populateRecipePicker();
+                app.openModal('recipe-picker-modal');
+                return;
+            }
+            if (closest('.planner-custom-meal-launch')) {
+                const btn = closest('.planner-custom-meal-launch');
+                e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+                app.openPlannerCustomMealModal(btn.dataset.day);
+                return;
+            }
+        }, true);
+    }
+
+    requestAnimationFrame(() => {
+        installMagnificoCapture();
+    });
+})();
+
+
+// === PATCH UX V5 FINAL 2026-03-21 ===
+(() => {
+    const originalGetAnalysisOptionsV5 = app.getAnalysisOptions ? app.getAnalysisOptions.bind(app) : null;
+    let modalStackSeed = 21000;
+
+    app.getAnalysisOptions = function() {
+        const base = originalGetAnalysisOptionsV5 ? originalGetAnalysisOptionsV5() : {};
+        return {
+            gastos_categoria: { icon: 'fa-solid fa-layer-group', label: 'Gastos por categoria', note: 'Veja onde o orçamento pesa mais dentro das suas listas.' },
+            gastos_lista: { icon: 'fa-solid fa-cart-shopping', label: 'Total por lista', note: 'Compara o custo estimado de cada lista criada no painel.' },
+            validade_despensa: { icon: 'fa-solid fa-hourglass-half', label: 'Validade da despensa', note: 'Destaca risco de perda, vencidos e itens que merecem prioridade.' },
+            estoque_despensa: { icon: 'fa-solid fa-boxes-stacked', label: 'Nível de estoque', note: 'Mostra quais itens estão baixos, médios ou altos em estoque.' },
+            uso_receitas: { icon: 'fa-solid fa-utensils', label: 'Uso de receitas', note: 'Revela as receitas mais usadas no seu planejamento.' },
+            rotina_semana: { icon: 'fa-solid fa-calendar-days', label: 'Carga da semana', note: 'Analisa quantas refeições foram planejadas por dia da semana.' },
+            ...Object.fromEntries(Object.entries(base).filter(([k]) => !['gastos_categoria','validade_despensa','uso_receitas'].includes(k)))
+        };
+    };
+
+    app.getListTotalsData = function() {
+        const data = {};
+        Object.entries(this.state.listas || {}).forEach(([id, lista]) => {
+            const total = (lista.items || []).reduce((sum, item) => sum + ((parseFloat(item.qtd) || 0) * (parseFloat(item.valor) || 0)), 0);
+            data[lista.nome || `Lista ${id}`] = Number(total.toFixed(2));
+        });
+        return data;
+    };
+
+    app.getPantryStockBandsData = function() {
+        const bands = { 'Baixo estoque': 0, 'Estoque médio': 0, 'Estoque alto': 0 };
+        (this.state.despensa || []).forEach(item => {
+            const stock = parseInt(item.stock || 0, 10);
+            if (stock <= 25) bands['Baixo estoque'] += 1;
+            else if (stock <= 75) bands['Estoque médio'] += 1;
+            else bands['Estoque alto'] += 1;
+        });
+        return bands;
+    };
+
+    app.getPlannerWeekLoadData = function() {
+        const map = this.getPlannerDaysMap ? this.getPlannerDaysMap() : { seg:'Segunda', ter:'Terça', qua:'Quarta', qui:'Quinta', sex:'Sexta', sab:'Sábado', dom:'Domingo' };
+        const data = {};
+        Object.entries(map).forEach(([key, label]) => {
+            const dayMeals = (this.getPlannerMealsForDay ? this.getPlannerMealsForDay(key) : []) || [];
+            data[label] = dayMeals.length;
+        });
+        return data;
+    };
+
+    app.getAnalysisSelectOptionsHTML = function(selectedKey = 'gastos_categoria') {
+        return Object.entries(this.getAnalysisOptions()).map(([key, cfg]) => `<option value="${key}" ${key === selectedKey ? 'selected' : ''}>${cfg.label}</option>`).join('');
+    };
+
+    app.getChartTypeOptionsHTML = function(selectedKey = 'doughnut') {
+        const options = [
+            ['doughnut', 'Rosca'],
+            ['bar', 'Barras'],
+            ['line', 'Linha'],
+            ['pie', 'Pizza'],
+            ['polarArea', 'Polar'],
+            ['radar', 'Radar']
+        ];
+        return options.map(([key, label]) => `<option value="${key}" ${key === selectedKey ? 'selected' : ''}>${label}</option>`).join('');
+    };
+
+    app.openModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modalStackSeed += 10;
+        let z = modalStackSeed;
+        if (modalId === 'ai-chat-modal') z += 80;
+        modal.style.zIndex = String(z);
+        const box = modal.querySelector('.modal-box');
+        if (box) box.style.zIndex = String(z + 1);
+        modal.classList.add('is-visible');
+        document.body.classList.add('modal-open');
+    };
+
+    app.closeModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.classList.remove('is-visible');
+        setTimeout(() => {
+            if (!document.querySelector('.modal-overlay.is-visible')) document.body.classList.remove('modal-open');
+        }, 10);
+    };
+
+    app.buildExportButtons = function(extraAttrs = '') {
+        return `
+            <button type="button" class="icon-button minimal-export-btn share-btn" ${extraAttrs} title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+            <button type="button" class="icon-button minimal-export-btn print-btn" ${extraAttrs} title="Imprimir"><i class="fa-solid fa-print"></i></button>
+            <button type="button" class="icon-button minimal-export-btn pdf-btn" ${extraAttrs} title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
+    };
+
+    app.openChefFromListHeader = function() {
+        const listName = document.getElementById('active-list-name-input')?.value?.trim() || 'Nova lista';
+        const prompt = `Quero criar ou melhorar a lista "${listName}". Monte categorias, itens essenciais, quantidades base, substituições econômicas e uma versão mais inteligente da lista.`;
+        this.setupChatbotModal?.();
+        this.openModal('ai-chat-modal');
+        this.prefillChefPrompt(prompt);
+    };
+
+    app.renderListaAtiva = function(listId) {
+        const container = document.getElementById('lista-items-full');
+        const titleEl = document.getElementById('active-list-title');
+        const actionsContainer = document.getElementById('active-list-actions');
+        const idInput = document.getElementById('active-list-id-input');
+        const nameFormInput = document.getElementById('lista-form-nome-full');
+        const qtyFormInput = document.getElementById('lista-form-qtd-full');
+        const valorFormInput = document.getElementById('lista-form-valor-full');
+        if (!container || !titleEl || !actionsContainer || !idInput || !nameFormInput || !qtyFormInput || !valorFormInput) return;
+
+        let itemsHTML = '<p class="empty-list-message">Adicione itens à sua nova lista.</p>';
+        let listNameEditable = '';
+        let listNamePlaceholder = 'Nome da Lista...';
+        let footerHTML = '';
+        if (listId === null || listId === undefined || listId === 'new') {
+            idInput.value = 'new';
+            nameFormInput.value = ''; qtyFormInput.value = '1'; valorFormInput.value = '';
+        } else {
+            const lista = this.state.listas[listId];
+            if (!lista) return;
+            idInput.value = listId;
+            listNameEditable = lista.nome || '';
+            itemsHTML = (lista.items || []).map(item => this.createListaItemHTML(item)).join('') || '<p class="empty-list-message">Esta lista está vazia.</p>';
+            footerHTML = `<button type="button" class="icon-button danger" id="lista-delete-btn" title="Excluir lista"><i class="fa-solid fa-trash"></i></button>`;
+        }
+
+        titleEl.innerHTML = `
+            <span class="list-edit-title-shell">
+                <span class="list-name-chip">
+                    <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+                    <input type="text" id="active-list-name-input" value="${this.escapeHtml(listNameEditable)}" placeholder="${listNamePlaceholder}" aria-label="Nome da lista ativa">
+                </span>
+                <span class="list-title-actions">
+                    <button type="button" class="icon-button smart-save-btn" id="lista-save-changes-btn" title="Salvar lista"><i class="fa-solid fa-floppy-disk"></i></button>
+                    <button type="button" class="icon-button smart-chef-btn open-chef-list-btn" title="Criar lista com Chef IA"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Chef IA</span></button>
+                </span>
+            </span>`;
+        actionsContainer.innerHTML = footerHTML;
+        actionsContainer.style.display = footerHTML ? 'flex' : 'none';
+        container.innerHTML = itemsHTML;
+        this.initSortableItems('lista-items-full');
+    };
+
+    app.populateRecipePicker = function() {
+        const container = document.getElementById('recipe-picker-list-container');
+        if (!container) return;
+        const recipes = Object.values(this.state.receitas || {});
+        if (!recipes.length) {
+            container.innerHTML = `
+                <div class="recipe-picker-item">
+                    <div class="recipe-picker-copy">
+                        <strong>Nenhuma receita ainda</strong>
+                        <span>Crie uma receita nova para começar o seu planejamento com estilo.</span>
+                    </div>
+                    <button type="button" class="recipe-picker-create-btn" data-create-recipe="1"><i class="fa-solid fa-plus"></i><span>Criar nova receita</span></button>
+                </div>`;
+            return;
+        }
+        const cards = recipes.map(recipe => `
+            <div class="recipe-picker-item">
+                <div class="recipe-picker-copy">
+                    <strong>${this.escapeHtml(recipe.name)}</strong>
+                    <span>${this.escapeHtml(recipe.desc || 'Receita pronta para entrar no planejador.')}</span>
+                </div>
+                <button type="button" class="btn btn-primary btn-add-recipe" data-recipe-id="${recipe.id}" aria-label="Adicionar ${this.escapeHtml(recipe.name)}">
+                    <i class="fa-solid fa-plus"></i><span>Adicionar</span>
+                </button>
+            </div>`).join('');
+        container.innerHTML = `${cards}<button type="button" class="recipe-picker-create-btn" data-create-recipe="1"><i class="fa-solid fa-sparkles"></i><span>Criar nova receita</span></button>`;
+        if (!this.boundHandleRecipePickerAdd) this.boundHandleRecipePickerAdd = this.handleRecipePickerAdd.bind(this);
+        container.removeEventListener('click', this.boundHandleRecipePickerAdd);
+        container.addEventListener('click', this.boundHandleRecipePickerAdd);
+    };
+
+    app.renderAnalysisDetailDesktop = function(analysisKey = 'gastos_categoria') {
+        const container = document.getElementById('analises-detail-desktop');
+        if (!container) return;
+        const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+        container.innerHTML = `
+            <div class="card-header analysis-premium-header">
+                <h3><i class="${cfg.icon}"></i> ${cfg.label}</h3>
+                <div class="card-actions">
+                    ${this.buildChefButton(`Analise ${cfg.label} e me dê insights claros, práticos e de alto nível.`, 'Chef IA')}
+                    <button class="btn btn-secondary change-chart-btn"><i class="fa-solid fa-repeat"></i> Trocar tipo</button>
+                </div>
+            </div>
+            <div class="card-content analysis-premium-content">
+                <p class="detail-note analysis-premium-note">${cfg.note}</p>
+                <div class="analysis-config-panel">
+                    <div class="form-group">
+                        <label for="analysis-data-select">Analisar</label>
+                        <select id="analysis-data-select">${this.getAnalysisSelectOptionsHTML(analysisKey)}</select>
+                    </div>
+                    <div class="form-group">
+                        <label for="analysis-type-select">Tipo de gráfico</label>
+                        <select id="analysis-type-select">${this.getChartTypeOptionsHTML('doughnut')}</select>
+                    </div>
+                </div>
+                <div class="chart-canvas-container analysis-premium-chart"><canvas id="dynamic-analysis-chart"></canvas></div>
+            </div>
+            <div class="card-footer module-actions-footer compact-export-row analysis-premium-actions">
+                ${this.buildChefButton(`Quero uma leitura 360 graus de ${cfg.label}, com riscos, oportunidades e ações recomendadas.`, 'Chef IA', 'chef-glass-btn')}
+                ${this.buildExportButtons('data-analysis="1"')}
+            </div>`;
+        document.getElementById('analysis-data-select')?.addEventListener('change', (e) => this.renderAnalysisDetailDesktop(e.target.value));
+        document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+        this.updateDynamicChart();
+    };
+
+    app.openAnalysisDetailModal = function(analysisKey = 'gastos_categoria') {
+        const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+        const titleEl = document.getElementById('detail-modal-title');
+        const bodyEl = document.getElementById('detail-modal-body');
+        const footerEl = document.getElementById('detail-modal-footer');
+        const headerActionsEl = document.getElementById('detail-modal-header-actions');
+        titleEl.innerHTML = `<i class="${cfg.icon}"></i> ${cfg.label}`;
+        headerActionsEl.innerHTML = this.buildChefButton(`Faça uma análise 360 graus de ${cfg.label} e proponha ações práticas.`, 'Chef IA');
+        bodyEl.innerHTML = `
+            <div class="analysis-premium-modal">
+                <p class="detail-note analysis-premium-note">${cfg.note}</p>
+                <div class="analysis-config-panel">
+                    <div class="form-group"><label for="analysis-data-select">Analisar</label><select id="analysis-data-select">${this.getAnalysisSelectOptionsHTML(analysisKey)}</select></div>
+                    <div class="form-group"><label for="analysis-type-select">Tipo de gráfico</label><select id="analysis-type-select">${this.getChartTypeOptionsHTML('doughnut')}</select></div>
+                </div>
+                <div class="chart-canvas-container analysis-premium-chart"><canvas id="dynamic-analysis-chart"></canvas></div>
+            </div>`;
+        footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+        footerEl.innerHTML = `${this.buildChefButton(`Resuma ${cfg.label} para mim como um consultor premium.`, 'Chef IA', 'chef-glass-btn')}${this.buildExportButtons('data-analysis="1"')}`;
+        document.getElementById('analysis-data-select')?.addEventListener('change', () => this.updateDynamicChart());
+        document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+        this.updateDynamicChart();
+        this.openModal('detail-modal');
+    };
+
+    app.updateDynamicChart = function() {
+        const dataType = document.getElementById('analysis-data-select')?.value || 'gastos_categoria';
+        const chartType = document.getElementById('analysis-type-select')?.value || 'doughnut';
+        let labels = [];
+        let values = [];
+        let title = '';
+        let datasetLabel = '';
+        let onClick = null;
+
+        if (dataType === 'gastos_categoria') {
+            const data = this.getCategoryDataFromLists();
+            labels = Object.keys(data); values = Object.values(data); title = 'Gastos por categoria'; datasetLabel = 'R$ por categoria';
+            onClick = (label, value) => this.showChartDetail_Categorias(label, value);
+        } else if (dataType === 'gastos_lista') {
+            const data = this.getListTotalsData();
+            labels = Object.keys(data); values = Object.values(data); title = 'Total por lista'; datasetLabel = 'R$ por lista';
+            onClick = (label, value) => this.showInfoModal(`Lista: ${label}`, `<p>Total estimado: <strong>R$ ${Number(value || 0).toFixed(2)}</strong>.</p>`);
+        } else if (dataType === 'validade_despensa') {
+            const data = this.getPantryValidityData();
+            labels = ['Vencidos', 'Vence em 7 dias', 'Itens OK']; values = [data.vencidos, data.vencendo, data.ok]; title = 'Validade da despensa'; datasetLabel = 'Itens por status';
+            onClick = (label, value, index) => { const key = ['vencidos', 'vencendo', 'ok'][index]; this.showChartDetail_Validade(key, label, value); };
+        } else if (dataType === 'estoque_despensa') {
+            const data = this.getPantryStockBandsData();
+            labels = Object.keys(data); values = Object.values(data); title = 'Nível de estoque'; datasetLabel = 'Itens por faixa';
+            onClick = (label, value) => this.showInfoModal(`Estoque: ${label}`, `<p>Você tem <strong>${value}</strong> item(ns) na faixa <strong>${label}</strong>.</p>`);
+        } else if (dataType === 'uso_receitas') {
+            const data = this.getPlannerMealCountData();
+            labels = Object.keys(data); values = Object.values(data); title = 'Uso de receitas'; datasetLabel = 'Nº de usos';
+            onClick = (label, value) => this.showInfoModal(`Receita: ${label}`, `<p>A receita <strong>${label}</strong> apareceu <strong>${value}</strong> vez(es)</p>`);
+        } else if (dataType === 'rotina_semana') {
+            const data = this.getPlannerWeekLoadData();
+            labels = Object.keys(data); values = Object.values(data); title = 'Carga da semana'; datasetLabel = 'Refeições por dia';
+            onClick = (label, value) => this.showInfoModal(`Dia: ${label}`, `<p>Você tem <strong>${value}</strong> refeição(ões) planejada(s) para ${label}.</p>`);
+        }
+
+        if (!labels.length) { labels = ['Sem dados']; values = [1]; datasetLabel = 'Sem dados'; }
+        const ctx = document.getElementById('dynamic-analysis-chart')?.getContext('2d');
+        if (!ctx || typeof Chart === 'undefined') return;
+        const baseColors = ['rgba(0, 242, 234, 0.88)','rgba(84, 157, 255, 0.88)','rgba(255, 108, 108, 0.88)','rgba(255, 205, 86, 0.88)','rgba(156, 118, 255, 0.88)','rgba(92, 255, 162, 0.88)','rgba(224,224,224,0.88)'];
+        const borderColors = ['rgba(0, 242, 234, 1)','rgba(84, 157, 255, 1)','rgba(255, 108, 108, 1)','rgba(255, 205, 86, 1)','rgba(156, 118, 255, 1)','rgba(92, 255, 162, 1)','rgba(240,240,240,1)'];
+        this.charts.dynamicChart?.destroy();
+        const scales = (chartType === 'bar' || chartType === 'line') ? {
+            y: { beginAtZero: true, ticks: { color: '#cfd6e4' }, grid: { color: 'rgba(255,255,255,.08)' } },
+            x: { ticks: { color: '#ffffff' }, grid: { color: 'transparent' } }
+        } : (chartType === 'radar' ? {
+            r: { angleLines: { color: 'rgba(255,255,255,.08)' }, grid: { color: 'rgba(255,255,255,.08)' }, pointLabels: { color: '#ffffff' }, ticks: { color: '#cfd6e4', backdropColor: 'transparent' } }
+        } : {});
+        this.charts.dynamicChart = new Chart(ctx, {
+            type: chartType,
+            data: {
+                labels,
+                datasets: [{
+                    label: datasetLabel,
+                    data: values,
+                    backgroundColor: baseColors,
+                    borderColor: borderColors,
+                    borderWidth: 1.5,
+                    fill: chartType === 'radar'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { color: '#f5f7fb' } },
+                    title: { display: true, text: title, color: '#ffffff', font: { size: 16, weight: '700' } }
+                },
+                scales,
+                onClick: (evt, elements) => {
+                    if (!elements.length || !onClick) return;
+                    const idx = elements[0].index;
+                    onClick(labels[idx], values[idx], idx);
+                }
+            }
+        });
+    };
+
+    window.addEventListener('click', function(e) {
+        const closest = (sel) => e.target.closest(sel);
+
+        if (closest('.open-chef-list-btn')) {
+            e.preventDefault(); e.stopPropagation();
+            app.openChefFromListHeader();
+            return;
+        }
+        if (closest('#lista-delete-btn')) {
+            const listId = document.getElementById('active-list-id-input')?.value || app.activeListId;
+            const listName = app.state.listas?.[listId]?.nome || 'esta lista';
+            e.preventDefault(); e.stopPropagation();
+            app.openConfirmModal('Excluir lista', `Deseja excluir "${listName}"?`, () => app.handleDeleteListaAtiva(listId));
+            return;
+        }
+        if (closest('#lista-items-full .delete-btn') || closest('#list-view-modal-body .delete-btn')) {
+            const itemEl = closest('.placeholder-item[data-id]');
+            const listId = app.getListIdFromItemElement ? app.getListIdFromItemElement(itemEl) : (document.getElementById('active-list-id-input')?.value || app.activeListId);
+            const itemName = itemEl?.dataset?.name || 'este item';
+            if (itemEl && listId) {
+                e.preventDefault(); e.stopPropagation();
+                app.openConfirmModal('Excluir item', `Deseja excluir "${itemName}" da lista?`, () => app.deleteListItemById(listId, itemEl.dataset.id));
+                return;
+            }
+        }
+        if (closest('#despensa-list-container .delete-btn') || closest('[data-pantry-delete-id]')) {
+            const itemId = closest('[data-pantry-delete-id]')?.dataset?.pantryDeleteId || closest('.placeholder-item[data-id]')?.dataset?.id;
+            const item = (app.state.despensa || []).find(entry => String(entry.id) === String(itemId));
+            if (itemId) {
+                e.preventDefault(); e.stopPropagation();
+                app.openConfirmModal('Excluir item', `Deseja excluir "${item?.name || 'este item'}" da despensa?`, () => app.deletePantryItemById(itemId));
+                return;
+            }
+        }
+        if (closest('.planner-slot-direct-btn')) {
+            const btn = closest('.planner-slot-direct-btn');
+            e.preventDefault(); e.stopPropagation();
+            app.closeModal('detail-modal');
+            setTimeout(() => {
+                app.currentPlannerDayTarget = `planner-full-${btn.dataset.day}-${btn.dataset.meal}`;
+                app.pendingCustomMeal = null;
+                app.populateRecipePicker();
+                app.openModal('recipe-picker-modal');
+            }, 40);
+            return;
+        }
+        if (closest('#detail-modal .add-meal-btn')) {
+            const btn = closest('#detail-modal .add-meal-btn');
+            e.preventDefault(); e.stopPropagation();
+            app.closeModal('detail-modal');
+            setTimeout(() => {
+                app.currentPlannerDayTarget = btn.dataset.dayTarget || btn.dataset.day || 'seg';
+                app.populateRecipePicker();
+                app.openModal('recipe-picker-modal');
+            }, 40);
+            return;
+        }
+        if (closest('.planner-custom-meal-launch')) {
+            const btn = closest('.planner-custom-meal-launch');
+            e.preventDefault(); e.stopPropagation();
+            app.closeModal('detail-modal');
+            setTimeout(() => app.openPlannerCustomMealModal(btn.dataset.day), 40);
+            return;
+        }
+        if (closest('[data-create-recipe="1"]')) {
+            e.preventDefault(); e.stopPropagation();
+            app.closeModal('recipe-picker-modal');
+            setTimeout(() => {
+                app.openListNameModal({
+                    title: 'Nova Receita',
+                    placeholder: 'Digite o nome da receita',
+                    confirmText: 'Continuar',
+                    onConfirm: (recipeName) => app.handleOpenRecipeEditModal(null, { initialName: recipeName })
+                });
+            }, 40);
+            return;
+        }
+    }, true);
+})();
+
+
 window.app = app; 
     
     app.init();
+    app.installMandatoryPatches();
 
 });
+
+// === PATCH FINAL V6.1 — bugs finais de listas, receitas, planner, análises e Chef IA ===
+(() => {
+  if (!window.app) return;
+  const app = window.app;
+  const unitOptions = ['un','kg','g','L','ml','pct','cx'];
+  let afFinalPatchBound = false;
+
+  app.getChefIACapabilitiesText = function() {
+    return 'Você é o Chef IA do Alimente Fácil. Atua como especialista extremamente completo e cordial em gastronomia, nutrição, alimentação, supermercado, economia doméstica, listas de compras, organização de despensa, conservação, validade, aproveitamento integral, planejamento semanal, psicologia do consumo, rotina urbana e rural, agricultura, natureza, estilo de vida e também conhece profundamente todas as telas, fluxos e ações do sistema. Responda no estilo do usuário, com clareza, empatia e execução prática. Sempre que possível, sugira ações úteis dentro do app e deixe explícito quando algo for estimativa.';
+  };
+
+  app.openModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    if (!this.__modalStackSeed) this.__modalStackSeed = 30000;
+    this.__modalStackSeed += 10;
+    let z = this.__modalStackSeed;
+    if (modalId === 'custom-confirm-modal') z = 41000;
+    if (modalId === 'recipe-picker-modal') z = Math.max(z, 39500);
+    if (modalId === 'ai-chat-modal') z = Math.max(z, 40500);
+    if (modalId === 'detail-modal' || modalId === 'recipe-detail-modal' || modalId === 'list-view-modal' || modalId === 'pantry-view-modal') z = Math.max(z, 38000);
+    modal.style.zIndex = String(z);
+    const box = modal.querySelector('.modal-box');
+    if (box) box.style.zIndex = String(z + 1);
+    modal.classList.add('is-visible');
+    document.body.classList.add('modal-open');
+  };
+
+  app.refreshPlannerViews = function(dayKey = null) {
+    this.saveState();
+    this.renderPlannerWidget?.();
+    if (this.activeModule === 'planejador') this.renderPlanejador();
+    if (dayKey && document.getElementById('detail-modal')?.classList.contains('is-visible')) this.openPlannerDayDetailModal(dayKey);
+  };
+
+  app.executeClearPlannerDay = function(data = {}) {
+    const day = data.day;
+    if (!day) return;
+    if (this.state.planejador[day]) delete this.state.planejador[day];
+    this.refreshPlannerViews(day);
+    this.showNotification(`Planejamento de ${this.getPlannerDaysMap()[day] || day} limpo.`, 'info');
+  };
+
+  app.executeClearPlannerWeek = function() {
+    this.state.planejador = {};
+    this.refreshPlannerViews();
+    this.closeModal('detail-modal');
+    this.showNotification('Semana limpa com sucesso.', 'info');
+  };
+
+  app.renderListaAtiva = function(listId) {
+    const container = document.getElementById('lista-items-full');
+    const titleEl = document.getElementById('active-list-title');
+    const actionsContainer = document.getElementById('active-list-actions');
+    const idInput = document.getElementById('active-list-id-input');
+    const nameFormInput = document.getElementById('lista-form-nome-full');
+    const qtyFormInput = document.getElementById('lista-form-qtd-full');
+    const valorFormInput = document.getElementById('lista-form-valor-full');
+    if (!container || !titleEl || !actionsContainer || !idInput || !nameFormInput || !qtyFormInput || !valorFormInput) return;
+
+    let itemsHTML = '<p class="empty-list-message">Adicione itens à sua nova lista.</p>';
+    let listNameEditable = '';
+    if (listId === null || listId === undefined || listId === 'new') {
+      idInput.value = 'new';
+      nameFormInput.value = '';
+      qtyFormInput.value = '1';
+      valorFormInput.value = '';
+    } else {
+      const lista = this.state.listas[listId];
+      if (!lista) return;
+      idInput.value = listId;
+      listNameEditable = lista.nome || '';
+      itemsHTML = (lista.items || []).map(item => this.createListaItemHTML(item)).join('') || '<p class="empty-list-message">Esta lista está vazia.</p>';
+    }
+
+    titleEl.innerHTML = `
+      <span class="list-edit-title-shell">
+        <span class="list-name-chip">
+          <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+          <input type="text" id="active-list-name-input" value="${this.escapeHtml(listNameEditable)}" placeholder="Nome da Lista..." aria-label="Nome da lista ativa">
+        </span>
+        <span class="list-title-actions">
+          <button type="button" class="icon-button smart-save-btn" id="lista-save-changes-btn" title="Salvar lista"><i class="fa-solid fa-floppy-disk"></i></button>
+          <button type="button" class="icon-button smart-chef-btn open-chef-list-btn" title="Criar lista com Chef IA"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Chef IA</span></button>
+        </span>
+      </span>`;
+    actionsContainer.innerHTML = '';
+    actionsContainer.style.display = 'none';
+    container.innerHTML = itemsHTML;
+    this.initSortableItems?.('lista-items-full');
+  };
+
+  app.handleOpenRecipeEditModal = function(recipeId, options = {}) {
+    const isEditing = recipeId !== null && recipeId !== undefined && !!this.state.receitas[recipeId];
+    const recipe = isEditing ? this.state.receitas[recipeId] : null;
+    if (recipeId && !recipe) { this.showNotification('Receita não encontrada.', 'error'); return; }
+    if (!isEditing && this.userPlan === 'free' && Object.keys(this.state.receitas || {}).length >= 5) {
+      this.showPlansModal('Limite de 5 receitas atingido no plano Gratuito. Faça upgrade para receitas ilimitadas!');
+      return;
+    }
+    this.closeModal('recipe-detail-modal');
+    this.tempRecipeIngredients = recipe?.ingredients ? JSON.parse(JSON.stringify(recipe.ingredients)) : [];
+    const recipeName = options.initialName || recipe?.name || '';
+    const title = isEditing ? `Editar "${recipe.name}"` : 'Criar Nova Receita';
+    const contentText = (recipe?.content || '')
+      .replace(/<h4>Ingredientes<\/h4>/gi, '')
+      .replace(/<ul>[\s\S]*?<\/ul>/i, '')
+      .replace(/<h4>Preparo<\/h4>/gi, '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .trim();
+
+    const content = `
+      <form id="recipe-edit-form" onsubmit="return false;">
+        <input type="hidden" id="recipe-edit-id" value="${isEditing ? recipeId : ''}">
+        <div class="form-group"><label for="recipe-edit-name">Nome da Receita</label><input type="text" id="recipe-edit-name" value="${this.escapeHtml(recipeName)}" required></div>
+        <div class="form-group"><label for="recipe-edit-desc">Descrição Curta</label><input type="text" id="recipe-edit-desc" value="${this.escapeHtml(recipe?.desc || '')}"></div>
+        <hr class="divider">
+        <label style="display:block; font-size:.9rem; font-weight:600; margin-bottom:.55rem;">Ingredientes</label>
+        <div id="recipe-ing-form" class="add-item-form-container" style="padding:0; border:none; background:rgba(0,0,0,.18); border-radius:16px; margin-bottom:1rem;">
+          <div class="add-item-form" style="padding:.8rem;">
+            <div class="form-group form-group-flex"><label for="recipe-ing-name">Nome</label><input type="text" id="recipe-ing-name" placeholder="Ex: Arroz"></div>
+            <div class="form-group form-group-small"><label for="recipe-ing-qtd">Qtd</label><input type="text" id="recipe-ing-qtd" value="1"></div>
+            <div class="form-group form-group-small"><label for="recipe-ing-unid">Unid</label><select id="recipe-ing-unid">${['un','kg','g','L','ml','pct','cx','xícara','colher','pitada','dentes','a gosto','fio'].map(u => `<option value="${u}">${u}</option>`).join('')}</select></div>
+            <button type="button" class="btn-add-item" id="recipe-add-ing-btn" aria-label="Adicionar ingrediente"><i class="fa-solid fa-plus"></i></button>
+          </div>
+        </div>
+        <div id="recipe-ingredients-list"></div>
+        <hr class="divider">
+        <div class="form-group"><label for="recipe-edit-content">Modo de Preparo</label><textarea id="recipe-edit-content" rows="6">${this.escapeHtml(contentText)}</textarea></div>
+      </form>`;
+
+    this.openConfirmModal(title, content, () => this.handleSaveRecipe());
+    const modal = document.getElementById('custom-confirm-modal');
+    if (!modal) return;
+    modal.classList.add('recipe-editor-modal');
+    const okBtn = document.getElementById('confirm-ok-btn');
+    const cancelBtn = document.getElementById('confirm-cancel-btn');
+    if (okBtn) okBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
+    if (cancelBtn) cancelBtn.textContent = 'Cancelar';
+
+    const footer = modal.querySelector('.modal-footer');
+    footer?.querySelector('#recipe-editor-delete-btn')?.remove();
+    if (isEditing && footer) {
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.id = 'recipe-editor-delete-btn';
+      delBtn.className = 'btn btn-danger';
+      delBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir';
+      delBtn.addEventListener('click', () => {
+        this.closeModal('custom-confirm-modal');
+        this.handleDeleteRecipe(recipeId);
+      }, { once: true });
+      footer.insertBefore(delBtn, okBtn || null);
+    }
+
+    this.renderModalIngredientList?.();
+    const addIngBtn = modal.querySelector('#recipe-add-ing-btn');
+    const listWrap = modal.querySelector('#recipe-ingredients-list');
+    const formWrap = modal.querySelector('#recipe-ing-form');
+    addIngBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const nameInput = formWrap.querySelector('#recipe-ing-name');
+      const qtdInput = formWrap.querySelector('#recipe-ing-qtd');
+      const unidSelect = formWrap.querySelector('#recipe-ing-unid');
+      const name = nameInput.value.trim();
+      if (!name) return;
+      this.tempRecipeIngredients.push({ name, qty: qtdInput.value.trim() || '1', unit: unidSelect.value || 'un' });
+      this.renderModalIngredientList?.();
+      nameInput.value = '';
+      qtdInput.value = '1';
+      unidSelect.value = 'un';
+      nameInput.focus();
+    });
+    listWrap?.addEventListener('click', (e) => {
+      const itemEl = e.target.closest('.recipe-ing-item');
+      if (!itemEl) return;
+      const index = parseInt(itemEl.dataset.index || '-1', 10);
+      const ingredient = this.tempRecipeIngredients[index];
+      if (!ingredient) return;
+      if (e.target.closest('.delete-ing-btn')) {
+        this.tempRecipeIngredients.splice(index, 1);
+        this.renderModalIngredientList?.();
+      } else if (e.target.closest('.edit-ing-btn')) {
+        formWrap.querySelector('#recipe-ing-name').value = ingredient.name;
+        formWrap.querySelector('#recipe-ing-qtd').value = ingredient.qty;
+        formWrap.querySelector('#recipe-ing-unid').value = ingredient.unit;
+        this.tempRecipeIngredients.splice(index, 1);
+        this.renderModalIngredientList?.();
+        formWrap.querySelector('#recipe-ing-name').focus();
+      }
+    });
+  };
+
+  app.handleDeleteRecipe = function(recipeId) {
+    const recipeName = this.state.receitas?.[recipeId]?.name || 'Receita';
+    this.openConfirmModal('Excluir Receita', `Deseja excluir "${recipeName}"?`, () => {
+      if (!this.state.receitas?.[recipeId]) return;
+      delete this.state.receitas[recipeId];
+      Object.keys(this.state.planejador || {}).forEach(day => {
+        const dayState = this.state.planejador[day] || {};
+        ['cafe','almoco','jantar'].forEach(slot => {
+          const slotData = dayState[slot];
+          if (slotData && String(slotData.recipeId || slotData.id) === String(recipeId)) delete dayState[slot];
+        });
+        if (Array.isArray(dayState.extras)) dayState.extras = dayState.extras.filter(extra => String(extra.recipeId || extra.id) !== String(recipeId));
+      });
+      this.saveState();
+      if (this.activeModule === 'receitas') this.renderReceitas();
+      this.renderPlannerWidget?.();
+      this.closeModal('recipe-detail-modal');
+      this.showNotification(`Receita "${recipeName}" excluída.`, 'info');
+    });
+  };
+
+  app.handleDeleteMeal = function(day, meal) {
+    const dayState = this.state.planejador[day] || {};
+    const isExtra = String(meal).startsWith('extra:');
+    const mealKey = isExtra ? String(meal).replace('extra:', '') : meal;
+    const mealData = isExtra ? (dayState.extras || []).find(extra => String(extra.key) === mealKey) : dayState[mealKey];
+    if (!mealData) return;
+    this.openConfirmModal('Remover Refeição', `Deseja remover "${mealData.name}" do planejamento?`, () => {
+      if (isExtra) dayState.extras = (dayState.extras || []).filter(extra => String(extra.key) !== mealKey);
+      else delete dayState[mealKey];
+      this.refreshPlannerViews(day);
+      this.showNotification('Refeição removida.', 'info');
+    });
+  };
+
+  app.handleToggleCompleteMeal = function(day, meal) {
+    const dayState = this.state.planejador[day] || {};
+    const isExtra = String(meal).startsWith('extra:');
+    const mealKey = isExtra ? String(meal).replace('extra:', '') : meal;
+    const mealData = isExtra ? (dayState.extras || []).find(extra => String(extra.key) === mealKey) : dayState[mealKey];
+    if (!mealData) return;
+    mealData.completed = !mealData.completed;
+    this.refreshPlannerViews(day);
+  };
+
+  app.handleGenerateListFromPlanner = function(dayKey = null) {
+    const daysSource = dayKey ? { [dayKey]: this.state.planejador?.[dayKey] || {} } : (this.state.planejador || {});
+    const ingredientMap = new Map();
+    const addIngredient = (ing) => {
+      if (!ing?.name) return;
+      const key = `${String(ing.name).trim().toLowerCase()}|${String(ing.unit || 'un').toLowerCase()}`;
+      const current = ingredientMap.get(key) || { id: this.generateId(), name: ing.name, qtd: 0, unid: ing.unit || 'un', valor: 0, checked: false };
+      const qty = parseFloat(ing.qty || ing.quantity || 1) || 1;
+      current.qtd = Number((current.qtd + qty).toFixed(2));
+      ingredientMap.set(key, current);
+    };
+    Object.values(daysSource).forEach(dayState => {
+      if (!dayState || typeof dayState !== 'object') return;
+      ['cafe','almoco','jantar'].forEach(slot => {
+        const ref = dayState[slot];
+        const recipe = ref ? this.state.receitas?.[ref.recipeId || ref.id] : null;
+        (recipe?.ingredients || []).forEach(addIngredient);
+      });
+      (dayState.extras || []).forEach(extra => {
+        const recipe = this.state.receitas?.[extra.recipeId || extra.id];
+        (recipe?.ingredients || []).forEach(addIngredient);
+      });
+    });
+    if (!ingredientMap.size) {
+      this.showNotification('Seu planejador está vazio ou as receitas não têm ingredientes.', 'info');
+      return;
+    }
+    const newListId = this.generateId();
+    const listName = dayKey ? `Lista ${this.getPlannerDaysMap()[dayKey] || 'do dia'}` : 'Lista do Planejamento';
+    this.state.listas[newListId] = {
+      nome: listName,
+      createdAt: new Date().toISOString(),
+      items: Array.from(ingredientMap.values())
+    };
+    this.activeListId = newListId;
+    this.saveState();
+    this.renderListasSalvas?.();
+    this.renderListaWidget?.();
+    this.renderOrcamento?.();
+    this.showNotification(`Lista "${listName}" criada com ${ingredientMap.size} ingrediente(s).`, 'success');
+    this.closeModal('detail-modal');
+    this.activateModuleAndRender?.('lista');
+    setTimeout(() => {
+      document.getElementById('list-manager')?.classList.add('view-active-list');
+      this.renderListaAtiva?.(newListId);
+    }, 80);
+  };
+
+  app.handleOpenPantryView = function(itemEl) {
+    const id = itemEl?.dataset?.id;
+    const item = (this.state.despensa || []).find(i => String(i.id) === String(id));
+    if (!item) return;
+    const titleEl = document.getElementById('pantry-view-title');
+    const bodyEl = document.getElementById('pantry-view-body');
+    const footerEl = document.getElementById('pantry-view-footer');
+    if (!titleEl || !bodyEl || !footerEl) return;
+    const stock = Math.max(0, Math.min(100, parseInt(item.stock || 0, 10)));
+    const validade = item.validade ? item.validade.split('-').reverse().join('/') : 'Não informada';
+    const stockBars = Array.from({length: 4}, (_, i) => `<div class="card__stock-bar ${i < Math.max(1, Math.round(stock / 25)) ? 'active' : ''}"></div>`).join('');
+    const chefPrompt = `Analise o item ${item.name}. Quero conservação, uso ideal, combinação culinária, valor nutricional estimado e alerta de validade, deixando claro o que for estimativa.`;
+    titleEl.textContent = item.name;
+    bodyEl.innerHTML = `
+      <div class="pantry-view-readonly pantry-luxury-view">
+        <div class="detail-kpi-grid">
+          <div class="detail-kpi"><strong>${this.escapeHtml(item.name)}</strong><span>Item salvo</span></div>
+          <div class="detail-kpi"><strong>${item.qtd}</strong><span>Quantidade</span></div>
+          <div class="detail-kpi"><strong>${this.escapeHtml(item.unid || 'un')}</strong><span>Unidade</span></div>
+          <div class="detail-kpi"><strong>R$ ${parseFloat(item.valor || 0).toFixed(2)}</strong><span>Valor unitário</span></div>
+        </div>
+        <div class="detail-stack">
+          <div class="detail-listing-item"><div><strong>Validade</strong><p class="detail-note">${validade}</p></div></div>
+          <div class="detail-listing-item"><div><strong>Nível de estoque</strong><p class="detail-note">${stock}% disponível</p></div><div class="card__stock pantry-stock-inline">${stockBars}</div></div>
+          <div class="detail-listing-item"><div><strong>Informações nutricionais</strong><p class="detail-note">Estimativa visual: energia, macronutrientes e sugestões de uso podem ser avaliadas pelo Chef IA com base no tipo do produto.</p></div></div>
+        </div>
+        <div class="pantry-ai-card">${this.buildChefButton(chefPrompt, 'Conferir com Chef IA')}</div>
+      </div>`;
+    footerEl.innerHTML = this.buildExportButtons(`data-item-id="${item.id}"`);
+    this.openModal('pantry-view-modal');
+  };
+
+  app.renderPlanejador = function(container) {
+    if (!container) container = document.getElementById('module-planejador');
+    if (!container) return;
+    const days = this.getPlannerDaysMap();
+    const cards = Object.entries(days).map(([dayKey, dayLabel]) => {
+      const meals = this.getPlannerMealsForDay(dayKey);
+      const preview = meals.length
+        ? meals.slice(0, 3).map(meal => `<div class="planner-mini-meal ${meal.completed ? 'is-complete' : ''}"><small>${this.escapeHtml(meal.mealLabel)}</small><strong>${this.escapeHtml(meal.name)}</strong></div>`).join('')
+        : '<div class="planner-mini-empty">Nenhuma refeição planejada.</div>';
+      return `
+        <article class="planner-day-card" data-day="${dayKey}">
+          <div class="planner-day-header">
+            <div class="planner-day-copy"><strong>${dayLabel}</strong><span>${meals.length ? `${meals.length} refeição(ões)` : 'Pronto para planejar'}</span></div>
+            <div class="planner-day-actions">
+              <button type="button" class="icon-button day-clear-btn" data-day="${dayKey}" title="Limpar dia"><i class="fa-solid fa-eraser"></i></button>
+              <button type="button" class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="planner-preview-list">${preview}</div>
+        </article>`;
+    }).join('');
+    container.innerHTML = `
+      <div class="dashboard-card planner-shell planner-shell--ultra">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-calendar-week"></i> Planejador</h3>
+          <div class="card-actions">
+            ${this.buildChefButton('Monte um planejamento alimentar bonito, econômico, inteligente e totalmente adaptado à minha rotina.', 'Chef IA')}
+            <button class="icon-button clear-plan-btn" title="Limpar tudo"><i class="fa-solid fa-eraser"></i></button>
+          </div>
+        </div>
+        <div class="card-content"><div class="planner-grid">${cards}</div></div>
+        <div class="card-footer module-actions-footer compact-export-row">${this.buildExportButtons('data-planner="1"')}</div>
+      </div>`;
+  };
+
+  app.openPlannerDayDetailModal = function(dayKey) {
+    const titleEl = document.getElementById('detail-modal-title');
+    const bodyEl = document.getElementById('detail-modal-body');
+    const footerEl = document.getElementById('detail-modal-footer');
+    const headerActionsEl = document.getElementById('detail-modal-header-actions');
+    const dayLabel = this.getPlannerDaysMap()[dayKey] || 'Dia';
+    const dayMeals = this.state.planejador[dayKey] || {};
+    const standardSlots = [
+      { key: 'cafe', label: 'Café da Manhã', icon: 'fa-solid fa-mug-saucer' },
+      { key: 'almoco', label: 'Almoço', icon: 'fa-solid fa-bowl-food' },
+      { key: 'jantar', label: 'Jantar', icon: 'fa-solid fa-utensils' }
+    ];
+    const slotCards = standardSlots.map(slot => {
+      const meal = dayMeals[slot.key];
+      if (!meal) {
+        return `
+          <article class="planner-slot-card planner-slot-empty" data-day="${dayKey}" data-meal="${slot.key}">
+            <div class="planner-slot-head"><div class="planner-slot-title"><small>${slot.label}</small><strong>Sem receita definida</strong></div><i class="${slot.icon}" style="opacity:.72"></i></div>
+            <div class="planner-slot-body"><p>Escolha uma receita para deixar o seu ${slot.label.toLowerCase()} organizado e bonito.</p></div>
+            <div class="planner-slot-actions"><button type="button" class="icon-button planner-slot-direct-btn" data-day="${dayKey}" data-meal="${slot.key}" title="Escolher receita"><i class="fa-solid fa-plus"></i></button></div>
+          </article>`;
+      }
+      const recipeId = meal.recipeId || meal.id || '';
+      return `
+        <article class="planner-slot-card ${meal.completed ? 'completed' : ''} planner-meal-item" data-day="${dayKey}" data-meal="${slot.key}" data-recipe-id="${recipeId}">
+          <div class="planner-slot-head">
+            <div class="planner-slot-title"><small>${slot.label}</small><strong>${this.escapeHtml(meal.name || 'Refeição')}</strong>${meal.time ? `<span class="planner-slot-time">${this.escapeHtml(meal.time)}</span>` : ''}</div>
+            <i class="${slot.icon}" style="opacity:.78"></i>
+          </div>
+          <div class="planner-slot-body"><p>${meal.completed ? 'Marcada como usada. Ótimo para acompanhar sua rotina.' : 'Use os botões ao lado para visualizar, concluir ou remover.'}</p></div>
+          <div class="planner-slot-actions meal-item-actions">
+            <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i></button>
+            <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i></button>
+            <button type="button" class="icon-button meal-complete-btn ${meal.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i></button>
+          </div>
+        </article>`;
+    }).join('');
+
+    const extras = (dayMeals.extras || []).map(extra => {
+      const recipeId = extra.recipeId || extra.id || '';
+      return `
+        <article class="planner-slot-card planner-meal-item ${extra.completed ? 'completed' : ''}" data-day="${dayKey}" data-meal="extra:${extra.key}" data-recipe-id="${recipeId}">
+          <div class="planner-slot-head"><div class="planner-slot-title"><small>${this.escapeHtml(extra.mealLabel || 'Refeição extra')}</small><strong>${this.escapeHtml(extra.name || 'Receita')}</strong>${extra.time ? `<span class="planner-slot-time">${this.escapeHtml(extra.time)}</span>` : ''}</div><i class="fa-solid fa-star" style="opacity:.78"></i></div>
+          <div class="planner-slot-body"><p>Refeição personalizada adicionada ao seu dia.</p></div>
+          <div class="planner-slot-actions meal-item-actions">
+            <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i></button>
+            <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i></button>
+            <button type="button" class="icon-button meal-complete-btn ${extra.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i></button>
+          </div>
+        </article>`;
+    }).join('');
+
+    titleEl.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${dayLabel}`;
+    headerActionsEl.innerHTML = `<button class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>`;
+    bodyEl.innerHTML = `
+      <div class="planner-day-detail-shell">
+        <div class="detail-kpi-grid">
+          <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).length}</strong><span>refeições no dia</span></div>
+          <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).filter(meal => meal.completed).length}</strong><span>marcadas como usadas</span></div>
+        </div>
+        <div class="planner-slot-grid">${slotCards}${extras}
+          <article class="planner-slot-card planner-slot-add-card">
+            <div class="planner-slot-head"><div class="planner-slot-title"><small>Personalizado</small><strong>Adicionar refeição</strong></div><i class="fa-solid fa-sparkles" style="opacity:.78"></i></div>
+            <div class="planner-slot-body"><p>Crie uma refeição com nome e horário personalizados e escolha a receita depois.</p></div>
+            <div class="planner-slot-actions"><button type="button" class="icon-button planner-custom-meal-launch" data-day="${dayKey}" title="Criar refeição"><i class="fa-solid fa-plus"></i></button></div>
+          </article>
+        </div>
+      </div>`;
+    footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+    footerEl.innerHTML = `<button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>${this.buildExportButtons(`data-day="${dayKey}"`)}`;
+    this.openModal('detail-modal');
+  };
+
+  app.renderAnalises = function(container) {
+    if (!container) container = document.getElementById('module-analises');
+    if (!container) return;
+    const analysisOptions = this.getAnalysisOptions();
+    const spend = Object.values(this.getCategoryDataFromLists()).reduce((sum, value) => sum + (parseFloat(value) || 0), 0);
+    const pantryStats = this.getPantryValidityData();
+    const plannerUsage = this.getPlannerMealCountData ? this.getPlannerMealCountData() : {};
+    const plannedCount = Object.values(plannerUsage).reduce((sum, value) => sum + (parseInt(value, 10) || 0), 0);
+    const nav = Object.entries(analysisOptions).map(([key, cfg], index) => `
+      <button type="button" class="module-nav-item analysis-nav-item ${index === 0 ? 'active' : ''}" data-analysis-key="${key}">
+        <strong>${cfg.label}</strong>
+        <span>${cfg.note}</span>
+      </button>`).join('');
+    container.innerHTML = `
+      <div class="analysis-luxe-shell">
+        <div class="analysis-hero-grid">
+          <div class="analysis-kpi-card"><strong>R$ ${spend.toFixed(2)}</strong><small>gasto mapeado nas listas</small></div>
+          <div class="analysis-kpi-card"><strong>${(this.state.despensa || []).length}</strong><small>itens na despensa</small></div>
+          <div class="analysis-kpi-card"><strong>${pantryStats.vencidos + pantryStats.vencendo}</strong><small>itens que pedem atenção</small></div>
+          <div class="analysis-kpi-card"><strong>${plannedCount}</strong><small>usos no planejador</small></div>
+        </div>
+        <div class="master-detail-layout">
+          <div class="md-list-column dashboard-card">
+            <div class="card-header analysis-premium-header"><h3><i class="fa-solid fa-chart-line"></i> Análises</h3><div class="card-actions">${this.buildChefButton('Faça uma análise 360 graus dos meus dados alimentares, com riscos, oportunidades e prioridades práticas.', 'Chef IA')}</div></div>
+            <div class="card-content"><div class="module-nav-list analysis-nav-grid">${nav}</div></div>
+          </div>
+          <div class="md-detail-column dashboard-card analysis-preview-panel" id="analises-detail-desktop"></div>
+        </div>
+      </div>`;
+    this.renderAnalysisDetailDesktop(Object.keys(analysisOptions)[0] || 'gastos_categoria');
+  };
+
+  app.renderAnalysisDetailDesktop = function(analysisKey = 'gastos_categoria') {
+    const container = document.getElementById('analises-detail-desktop');
+    if (!container) return;
+    const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+    container.innerHTML = `
+      <div class="card-header analysis-premium-header">
+        <h3><i class="${cfg.icon}"></i> ${cfg.label}</h3>
+        <div class="card-actions">
+          ${this.buildChefButton(`Analise ${cfg.label} e me dê uma leitura 360 graus com ações práticas.`, 'Chef IA')}
+          <button class="icon-button analysis-mobile-open-btn" data-analysis-key="${analysisKey}" title="Abrir detalhe"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+        </div>
+      </div>
+      <div class="card-content analysis-premium-content">
+        <p class="detail-note analysis-premium-note">${cfg.note}</p>
+        <div class="analysis-config-panel">
+          <div class="form-group"><label for="analysis-data-select">Analisar</label><select id="analysis-data-select">${this.getAnalysisSelectOptionsHTML(analysisKey)}</select></div>
+          <div class="form-group"><label for="analysis-type-select">Tipo de gráfico</label><select id="analysis-type-select">${this.getChartTypeOptionsHTML('doughnut')}</select></div>
+        </div>
+        <div class="analysis-premium-chart"><canvas id="dynamic-analysis-chart"></canvas></div>
+      </div>
+      <div class="card-footer module-actions-footer compact-export-row">
+        ${this.buildChefButton(`Explique ${cfg.label} como um consultor premium.`, 'Chef IA', 'chef-glass-btn')}
+        ${this.buildExportButtons(`data-analysis="${analysisKey}"`)}
+      </div>`;
+    document.getElementById('analysis-data-select')?.addEventListener('change', (e) => this.renderAnalysisDetailDesktop(e.target.value));
+    document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+    this.updateDynamicChart();
+  };
+
+  app.openAnalysisDetailModal = function(analysisKey = 'gastos_categoria') {
+    const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+    const titleEl = document.getElementById('detail-modal-title');
+    const bodyEl = document.getElementById('detail-modal-body');
+    const footerEl = document.getElementById('detail-modal-footer');
+    const headerActionsEl = document.getElementById('detail-modal-header-actions');
+    if (!titleEl || !bodyEl || !footerEl || !headerActionsEl) return;
+    titleEl.innerHTML = `<i class="${cfg.icon}"></i> ${cfg.label}`;
+    headerActionsEl.innerHTML = this.buildChefButton(`Faça uma leitura 360 graus de ${cfg.label} no meu painel.`, 'Chef IA');
+    bodyEl.innerHTML = `
+      <div class="analysis-premium-modal">
+        <p class="detail-note analysis-premium-note">${cfg.note}</p>
+        <div class="analysis-config-panel">
+          <div class="form-group"><label for="analysis-data-select">Analisar</label><select id="analysis-data-select">${this.getAnalysisSelectOptionsHTML(analysisKey)}</select></div>
+          <div class="form-group"><label for="analysis-type-select">Tipo de gráfico</label><select id="analysis-type-select">${this.getChartTypeOptionsHTML('doughnut')}</select></div>
+        </div>
+        <div class="analysis-premium-chart"><canvas id="dynamic-analysis-chart"></canvas></div>
+      </div>`;
+    footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+    footerEl.innerHTML = `${this.buildChefButton(`Resuma ${cfg.label} para mim em linguagem simples, estratégica e elegante.`, 'Chef IA', 'chef-glass-btn')}${this.buildExportButtons(`data-analysis="${analysisKey}"`)}`;
+    document.getElementById('analysis-data-select')?.addEventListener('change', (e) => this.openAnalysisDetailModal(e.target.value));
+    document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+    this.updateDynamicChart();
+    this.openModal('detail-modal');
+  };
+
+  app.populateRecipePicker = function() {
+    const container = document.getElementById('recipe-picker-list-container');
+    if (!container) return;
+    const recipes = this.sortRecipesCollection ? this.sortRecipesCollection(Object.values(this.state.receitas || {})) : Object.values(this.state.receitas || {});
+    const helper = this.pendingCustomMeal
+      ? `<p class="detail-note" style="margin-bottom:1rem;">Selecione a receita para <strong>${this.escapeHtml(this.pendingCustomMeal.mealLabel)}</strong>${this.pendingCustomMeal.time ? ` às ${this.escapeHtml(this.pendingCustomMeal.time)}` : ''}.</p>`
+      : '<p class="detail-note" style="margin-bottom:1rem;">Selecione uma receita da sua lista.</p>';
+    if (!recipes.length) {
+      container.innerHTML = `${helper}<div class="recipe-picker-item"><div class="recipe-picker-copy"><strong>Nenhuma receita ainda</strong><span>Crie uma receita nova para começar o seu planejamento com estilo.</span></div><button type="button" class="recipe-picker-create-btn" data-create-recipe="1"><i class="fa-solid fa-plus"></i><span>Criar nova receita</span></button></div>`;
+      return;
+    }
+    container.innerHTML = `${helper}${recipes.map(recipe => `
+      <div class="recipe-picker-item">
+        <div class="recipe-picker-copy"><strong>${this.escapeHtml(recipe.name)}</strong><span>${this.escapeHtml(recipe.desc || 'Receita pronta para entrar no planejador.')}</span></div>
+        <button type="button" class="btn btn-primary btn-add-recipe" data-recipe-id="${recipe.id}"><i class="fa-solid fa-plus"></i><span>Adicionar</span></button>
+      </div>`).join('')}
+      <button type="button" class="recipe-picker-create-btn" data-create-recipe="1"><i class="fa-solid fa-sparkles"></i><span>Criar nova receita</span></button>`;
+    if (!this.boundHandleRecipePickerAdd) this.boundHandleRecipePickerAdd = this.handleRecipePickerAdd.bind(this);
+    container.removeEventListener('click', this.boundHandleRecipePickerAdd);
+    container.addEventListener('click', this.boundHandleRecipePickerAdd);
+  };
+
+  app.handleRecipePickerAdd = function(e) {
+    const addBtn = e.target.closest('.btn-add-recipe');
+    if (!addBtn || (!this.currentPlannerDayTarget && !this.pendingCustomMeal)) return;
+    const target = this.pendingCustomMeal ? null : this.currentPlannerDayTarget;
+    this.handleAddMealToPlanner(addBtn.dataset.recipeId, target);
+    this.closeModal('recipe-picker-modal');
+    const detailVisibleDay = document.querySelector('#detail-modal.is-visible .generate-list-btn')?.dataset.day || null;
+    this.currentPlannerDayTarget = null;
+    if (detailVisibleDay) setTimeout(() => this.openPlannerDayDetailModal(detailVisibleDay), 50);
+  };
+
+  app.bindAfFinalEvents = function() {
+    if (afFinalPatchBound) return;
+    afFinalPatchBound = true;
+    document.addEventListener('click', (e) => {
+      const closest = (sel) => e.target.closest(sel);
+
+      if (closest('#saved-lists-container .delete-list-btn')) {
+        const listId = closest('.saved-list-item,[data-list-id],.card--saved-list')?.dataset?.listId || closest('.saved-list-item,[data-id],.card--saved-list')?.dataset?.id;
+        if (listId) { e.preventDefault(); e.stopImmediatePropagation(); app.handleDeleteListaAtiva(listId); }
+        return;
+      }
+      if (closest('#lista-items-full .delete-btn') || closest('#list-view-modal-body .delete-btn')) {
+        const itemEl = closest('.placeholder-item[data-id]');
+        const listId = app.getListIdFromItemElement ? app.getListIdFromItemElement(itemEl) : (document.getElementById('active-list-id-input')?.value || app.activeListId);
+        const itemName = itemEl?.dataset?.name || 'este item';
+        if (itemEl && listId) {
+          e.preventDefault(); e.stopImmediatePropagation();
+          app.openConfirmModal('Excluir item', `Deseja excluir "${itemName}" da lista?`, () => app.deleteListItemById(listId, itemEl.dataset.id));
+        }
+        return;
+      }
+      if (closest('#main-recipe-grid .edit-recipe-btn') || closest('#recipe-detail-modal .edit-recipe-btn') || closest('#recipe-detail-desktop-footer .edit-recipe-btn')) {
+        const recipeId = closest('[data-recipe-id]')?.dataset?.recipeId || closest('.recipe-list-item,.card--recipe')?.dataset?.recipeId || closest('.recipe-list-item,.card--recipe')?.dataset?.id;
+        if (recipeId) { e.preventDefault(); e.stopImmediatePropagation(); app.handleOpenRecipeEditModal(recipeId); }
+        return;
+      }
+      if (closest('#main-recipe-grid .delete-recipe-btn') || closest('#recipe-detail-modal .delete-recipe-btn') || closest('#recipe-detail-desktop-footer .delete-recipe-btn')) {
+        const recipeId = closest('[data-recipe-id]')?.dataset?.recipeId || closest('.recipe-list-item,.card--recipe')?.dataset?.recipeId || closest('.recipe-list-item,.card--recipe')?.dataset?.id;
+        if (recipeId) { e.preventDefault(); e.stopImmediatePropagation(); app.handleDeleteRecipe(recipeId); }
+        return;
+      }
+      if (closest('#despensa-list-container .delete-btn') || closest('[data-pantry-delete-id]')) {
+        const itemId = closest('[data-pantry-delete-id]')?.dataset?.pantryDeleteId || closest('.placeholder-item[data-id]')?.dataset?.id;
+        const itemName = closest('.placeholder-item[data-name]')?.dataset?.name || 'este item';
+        if (itemId) { e.preventDefault(); e.stopImmediatePropagation(); app.openConfirmModal('Excluir item', `Deseja excluir "${itemName}" da despensa?`, () => app.deletePantryItemById(itemId)); }
+        return;
+      }
+      if (closest('.clear-plan-btn')) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        app.openConfirmModal('Limpar semana', 'Deseja remover todas as refeições planejadas desta semana?', () => app.executeClearPlannerWeek());
+        return;
+      }
+      if (closest('.day-clear-btn')) {
+        const dayKey = closest('.day-clear-btn')?.dataset?.day;
+        if (dayKey) {
+          e.preventDefault(); e.stopImmediatePropagation();
+          app.openConfirmModal('Limpar dia', `Deseja remover todas as refeições de ${app.getPlannerDaysMap()[dayKey] || dayKey}?`, () => app.executeClearPlannerDay({ day: dayKey }));
+        }
+        return;
+      }
+      if (closest('.planner-day-card') && !closest('.icon-button') && !closest('.chef-inline-btn')) {
+        const dayKey = closest('.planner-day-card')?.dataset?.day;
+        if (dayKey) { e.preventDefault(); e.stopImmediatePropagation(); app.openPlannerDayDetailModal(dayKey); }
+        return;
+      }
+      if (closest('.add-meal-btn')) {
+        const dayKey = closest('.add-meal-btn')?.dataset?.dayTarget;
+        if (dayKey) {
+          e.preventDefault(); e.stopImmediatePropagation();
+          app.openPlannerDayDetailModal(dayKey);
+        }
+        return;
+      }
+      if (closest('.planner-slot-direct-btn')) {
+        const btn = closest('.planner-slot-direct-btn');
+        e.preventDefault(); e.stopImmediatePropagation();
+        app.currentPlannerDayTarget = `planner-full-${btn.dataset.day}-${btn.dataset.meal}`;
+        app.pendingCustomMeal = null;
+        app.populateRecipePicker();
+        app.openModal('recipe-picker-modal');
+        return;
+      }
+      if (closest('.planner-custom-meal-launch')) {
+        const btn = closest('.planner-custom-meal-launch');
+        if (btn?.dataset?.day) { e.preventDefault(); e.stopImmediatePropagation(); app.openPlannerCustomMealModal(btn.dataset.day); }
+        return;
+      }
+      if (closest('.planner-meal-item .meal-delete-btn')) {
+        const mealItem = closest('.planner-meal-item');
+        if (mealItem) { e.preventDefault(); e.stopImmediatePropagation(); app.handleDeleteMeal(mealItem.dataset.day, mealItem.dataset.meal); }
+        return;
+      }
+      if (closest('.planner-meal-item .meal-view-btn')) {
+        const mealItem = closest('.planner-meal-item');
+        const recipeId = mealItem?.dataset?.recipeId;
+        if (recipeId) { e.preventDefault(); e.stopImmediatePropagation(); app.showRecipeDetailModal(recipeId); }
+        return;
+      }
+      if (closest('.planner-meal-item .meal-complete-btn')) {
+        const mealItem = closest('.planner-meal-item');
+        if (mealItem) { e.preventDefault(); e.stopImmediatePropagation(); app.handleToggleCompleteMeal(mealItem.dataset.day, mealItem.dataset.meal); }
+        return;
+      }
+      if (closest('.generate-list-btn')) {
+        const dayKey = closest('.generate-list-btn')?.dataset?.day || null;
+        e.preventDefault(); e.stopImmediatePropagation();
+        app.handleGenerateListFromPlanner(dayKey);
+        return;
+      }
+      if (closest('.analysis-nav-item')) {
+        const key = closest('.analysis-nav-item')?.dataset?.analysisKey;
+        if (key && window.innerWidth <= 991) { e.preventDefault(); e.stopImmediatePropagation(); app.openAnalysisDetailModal(key); }
+      }
+    }, true);
+  };
+
+  app.bindAfFinalEvents();
+  setTimeout(() => {
+    try {
+      if (app.isAppMode) app.activateModuleAndRender?.(app.activeModule || 'inicio');
+    } catch (e) {
+      console.error('Erro ao aplicar patch final V6.1', e);
+    }
+  }, 80);
+})();
