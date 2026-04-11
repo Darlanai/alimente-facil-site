@@ -7284,3 +7284,2522 @@ window.app = app;
     }
   }, 80);
 })();
+
+
+/* === FIX 2100 | Chef IA + Análises premium === */
+(() => {
+  const app = window.app;
+  if (!app) return;
+
+  const normalize = (text = '') => String(text)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().trim();
+
+  const catalog = (typeof ALL_ITEMS_DATA !== 'undefined' && Array.isArray(ALL_ITEMS_DATA)) ? ALL_ITEMS_DATA : [];
+
+  const findCatalogItem = (name) => {
+    const n = normalize(name);
+    if (!n) return null;
+    return catalog.find(item => normalize(item.name) === n)
+      || catalog.find(item => normalize(item.name).includes(n))
+      || catalog.find(item => n.includes(normalize(item.name)));
+  };
+
+  const priceFor = (name, fallback = 6) => {
+    const item = findCatalogItem(name);
+    return Number(item?.price || fallback);
+  };
+
+  const escape = (text) => app.escapeHtml ? app.escapeHtml(String(text ?? '')) : String(text ?? '');
+
+  const shortReply = (text) => ({
+    intent: 'answer_question',
+    data: {},
+    response_text_html: escape(text)
+  });
+
+  const richReply = (html, data = {}) => ({
+    intent: 'answer_question',
+    data,
+    response_text_html: html
+  });
+
+  const parseCount = (text, unitWords, fallback) => {
+    const rx = new RegExp(`(\\d+)\\s*(?:${unitWords.join('|')})`, 'i');
+    const m = String(text).match(rx);
+    return m ? Math.max(1, parseInt(m[1], 10)) : fallback;
+  };
+
+  const parseMeals = (text) => {
+    const t = normalize(text);
+    const flags = {
+      cafe: /cafe da manha|cafe/.test(t),
+      almoco: /almoco/.test(t),
+      jantar: /jantar/.test(t),
+      lanche: /lanche/.test(t)
+    };
+    if (!flags.cafe && !flags.almoco && !flags.jantar && !flags.lanche) {
+      flags.cafe = true; flags.almoco = true; flags.jantar = true;
+    }
+    return flags;
+  };
+
+  app.chefLimits = { perMinute: 999, perDay: 50000 };
+  app.lastChefAction = app.lastChefAction || null;
+
+  app.setupChatbotModal = function() {
+    const modal = document.getElementById('ai-chat-modal');
+    if (!modal || modal.dataset.chefBound === 'true') return;
+    const sendBtn = modal.querySelector('#ai-chat-send-btn');
+    const input = modal.querySelector('#ai-chat-input');
+    const messages = modal.querySelector('#ai-chat-messages-container');
+    const voiceBtn = modal.querySelector('#ai-voice-btn');
+
+    const greetIfEmpty = () => {
+      if (!messages.children.length) {
+        const welcome = document.createElement('div');
+        welcome.className = 'chat-message ia';
+        welcome.innerHTML = '<div class="bubble">Olá! Como posso ajudar?</div>';
+        messages.appendChild(welcome);
+      }
+    };
+
+    const sendMessage = () => {
+      const userText = String(input.value || '').trim();
+      if (!userText || this.isIAProcessing) return;
+      input.value = '';
+
+      const userMessage = document.createElement('div');
+      userMessage.className = 'chat-message user';
+      userMessage.innerHTML = `<div class="bubble">${escape(userText)}</div>`;
+      messages.appendChild(userMessage);
+      messages.scrollTop = messages.scrollHeight;
+      this.triggerChefIAAnalysis(userText);
+    };
+
+    if (voiceBtn) voiceBtn.onclick = () => this.startVoiceRecognition?.();
+    if (sendBtn) sendBtn.onclick = sendMessage;
+    if (input) {
+      input.onkeyup = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      };
+    }
+
+    messages.onclick = (e) => {
+      const button = e.target.closest('[data-action]');
+      if (!button) return;
+      const { action, listId, recipeId, module } = button.dataset;
+      if (action === 'view-list' && listId) {
+        this.closeAllModals();
+        this.activeListId = listId;
+        this.activateModuleAndRender('lista');
+      } else if (action === 'view-recipe' && recipeId) {
+        this.closeAllModals();
+        this.activateModuleAndRender('receitas');
+        setTimeout(() => {
+          if (window.innerWidth < 992) this.showRecipeDetailModal(recipeId);
+          else this.renderRecipeDetail(recipeId);
+        }, 80);
+      } else if (action === 'open-module' && module) {
+        this.closeAllModals();
+        this.activateModuleAndRender(module);
+      }
+    };
+
+    greetIfEmpty();
+    modal.dataset.chefBound = 'true';
+  };
+
+  app.triggerChefIAAnalysis = async function(prompt) {
+    if (this.isIAProcessing) return;
+
+    const now = Date.now();
+    const today = new Date().toDateString();
+    if (!this.state.aiUsage) this.state.aiUsage = { tokensThisMonth: 0, dailyMsgs: 0, lastMsgDate: null, minuteHistory: [] };
+    if (this.state.aiUsage.lastMsgDate !== today) {
+      this.state.aiUsage.lastMsgDate = today;
+      this.state.aiUsage.dailyMsgs = 0;
+      this.state.aiUsage.minuteHistory = [];
+    }
+    this.state.aiUsage.minuteHistory = (this.state.aiUsage.minuteHistory || []).filter(ts => ts > (now - 60000));
+
+    const messages = document.getElementById('ai-chat-messages-container');
+    const sendBtn = document.getElementById('ai-chat-send-btn');
+
+    if (this.state.aiUsage.minuteHistory.length >= this.chefLimits.perMinute || this.state.aiUsage.dailyMsgs >= this.chefLimits.perDay) {
+      const limitMessage = document.createElement('div');
+      limitMessage.className = 'chat-message ia';
+      limitMessage.innerHTML = '<div class="bubble">Modo de teste ativo. Aguarde alguns segundos e tente de novo.</div>';
+      messages.appendChild(limitMessage);
+      messages.scrollTop = messages.scrollHeight;
+      return;
+    }
+
+    this.isIAProcessing = true;
+    this.state.aiUsage.minuteHistory.push(now);
+    this.state.aiUsage.dailyMsgs++;
+
+    if (sendBtn) {
+      sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+      sendBtn.disabled = true;
+    }
+
+    const thinking = document.createElement('div');
+    thinking.className = 'chat-message ia';
+    thinking.innerHTML = '<div class="bubble typing-indicator"><span></span><span></span><span></span></div>';
+    messages.appendChild(thinking);
+    messages.scrollTop = messages.scrollHeight;
+
+    try {
+      const apiResponse = await this.callGeminiAPI(prompt);
+      this.processIAResponse(apiResponse.json, apiResponse.html, thinking);
+    } catch (error) {
+      thinking.innerHTML = '<div class="bubble">Não consegui responder agora. Tente reformular em uma frase curta.</div>';
+    } finally {
+      this.isIAProcessing = false;
+      if (sendBtn) {
+        sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i>';
+        sendBtn.disabled = false;
+      }
+      this.saveState?.();
+    }
+  };
+
+  app.executeCreateList = function(listData) {
+    const newListId = this.generateId();
+    const items = (listData.items || []).map(item => ({
+      id: this.generateId(),
+      name: item.name || 'Item',
+      qtd: Number(item.quantity || item.qtd || 1),
+      unid: item.unit || item.unid || 'un',
+      checked: false,
+      valor: Number(item.price || item.valor || priceFor(item.name || 'item', 5)).toFixed ? Number(item.price || item.valor || priceFor(item.name || 'item', 5)) : 0
+    }));
+    this.state.listas[newListId] = {
+      nome: listData.list_name || 'Lista do Chef IA',
+      items
+    };
+    this.activeListId = newListId;
+    this.lastChefAction = { type: 'list', id: newListId };
+    this.saveState?.();
+    return newListId;
+  };
+
+  app.executeUpdateList = function(data) {
+    const listId = data.list_id || this.activeListId;
+    const list = this.state.listas?.[listId];
+    if (!list) return;
+    if (data.changes?.add?.length) {
+      data.changes.add.forEach(item => {
+        list.items.unshift({
+          id: this.generateId(),
+          name: item.name,
+          qtd: Number(item.quantity || 1),
+          unid: item.unit || 'un',
+          checked: false,
+          valor: Number(item.price || priceFor(item.name, 5))
+        });
+      });
+    }
+    if (data.changes?.removeNames?.length) {
+      const removals = data.changes.removeNames.map(normalize);
+      list.items = (list.items || []).filter(item => !removals.includes(normalize(item.name)));
+    }
+    this.saveState?.();
+  };
+
+  app.executePantryUpdate = function(data) {
+    this.state.despensa = this.state.despensa || [];
+    if (data.add?.length) {
+      data.add.forEach(item => {
+        this.state.despensa.unshift({
+          id: this.generateId(),
+          name: item.name,
+          stock: Number(item.stock || 100),
+          qtd: Number(item.quantity || 1),
+          unid: item.unit || 'un',
+          valor: Number(item.price || priceFor(item.name, 5)),
+          validade: item.validade || ''
+        });
+      });
+    }
+    if (data.removeNames?.length) {
+      const removals = data.removeNames.map(normalize);
+      this.state.despensa = this.state.despensa.filter(item => !removals.includes(normalize(item.name)));
+    }
+    this.saveState?.();
+  };
+
+  app.executePlannerPlan = function(data) {
+    const daysMap = ['seg','ter','qua','qui','sex','sab','dom'];
+    this.state.planejador = this.state.planejador || {};
+    const recipes = Object.values(this.state.receitas || {});
+    if (!recipes.length) return;
+    daysMap.forEach((day, idx) => {
+      const recipe = recipes[idx % recipes.length];
+      this.state.planejador[day] = this.state.planejador[day] || {};
+      this.state.planejador[day].almoco = { id: recipe.id, name: recipe.name };
+    });
+    this.saveState?.();
+  };
+
+  app.buildSmartShoppingList = function(promptText) {
+    const text = normalize(promptText);
+    const days = parseCount(text, ['dias','dia'], 7);
+    const people = parseCount(text, ['pessoas','pessoa'], 1);
+    const meals = parseMeals(text);
+    const cheap = /barat|econom|baixo custo/.test(text);
+    const vegan = /vegano|vegana|vegan/.test(text);
+    const fit = /fitness|fit|proteic|proteina|hipertrof/.test(text);
+
+    const items = [];
+    const add = (name, quantity, unit) => {
+      const q = Math.max(1, Number(quantity || 1));
+      items.push({
+        name,
+        quantity: Number(q.toFixed ? q.toFixed(2) : q),
+        unit,
+        price: Number(priceFor(name, 5).toFixed(2))
+      });
+    };
+
+    if (meals.cafe) {
+      add('Café', Math.ceil(days * people / 10), 'pct');
+      add('Pão', Math.ceil(days * people * 0.6), 'un');
+      add('Banana', Math.ceil(days * people * 1.0), 'un');
+      add('Aveia', Math.ceil(days * people / 7), 'pct');
+      if (!vegan) {
+        add('Leite', Math.ceil(days * people / 3), 'l');
+        add('Ovos', Math.ceil(days * people * (fit ? 2 : 1.2)), 'un');
+      }
+    }
+
+    if (meals.almoco || meals.jantar) {
+      add('Arroz', Math.max(1, Math.ceil(days * people * 0.12)), 'kg');
+      add('Feijão Preto', Math.max(1, Math.ceil(days * people * 0.07)), 'kg');
+      add('Macarrão', Math.max(1, Math.ceil(days * people * 0.05)), 'pct');
+      add('Tomate', Math.ceil(days * people * 0.7), 'un');
+      add('Cebola', Math.ceil(days * people * 0.35), 'un');
+      add('Alho', Math.max(1, Math.ceil(days * people * 0.15)), 'un');
+      add('Alface', Math.ceil(days * people * 0.18), 'un');
+      add('Batata', Math.ceil(days * people * 0.5), 'un');
+      if (vegan) {
+        add('Brócolis', Math.ceil(days * people * 0.22), 'un');
+        add('Beterraba', Math.ceil(days * people * 0.18), 'un');
+      } else if (fit) {
+        add('Peito de Frango', Math.ceil(days * people * 0.22), 'kg');
+        add('Batata Doce', Math.ceil(days * people * 0.4), 'un');
+        add('Brócolis', Math.ceil(days * people * 0.2), 'un');
+      } else {
+        add(cheap ? 'Ovos' : 'Peito de Frango', cheap ? Math.ceil(days * people * 1.4) : Math.ceil(days * people * 0.18), cheap ? 'un' : 'kg');
+        add('Carne Bovina', cheap ? Math.ceil(days * people * 0.08) : Math.ceil(days * people * 0.12), 'kg');
+      }
+    }
+
+    if (meals.lanche) {
+      add('Iogurte', Math.ceil(days * people * 0.5), 'un');
+      add('Maçã', Math.ceil(days * people * 0.7), 'un');
+    }
+
+    const merged = {};
+    items.forEach(item => {
+      const key = normalize(item.name) + '|' + item.unit;
+      if (!merged[key]) merged[key] = { ...item };
+      else merged[key].quantity += item.quantity;
+    });
+
+    const finalItems = Object.values(merged).map(item => ({
+      ...item,
+      quantity: item.unit === 'kg' || item.unit === 'l'
+        ? Number(item.quantity.toFixed(1))
+        : Math.ceil(item.quantity)
+    }));
+
+    const total = finalItems.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.price || 0)), 0);
+    const mealLabel = meals.cafe && meals.almoco && meals.jantar ? 'completa' :
+      meals.cafe ? 'café da manhã' : meals.almoco ? 'almoço' : meals.jantar ? 'jantar' : 'personalizada';
+
+    return {
+      list_name: `Lista ${mealLabel} • ${days} dia(s) • ${people} pessoa(s)`,
+      items: finalItems,
+      totalEstimate: Number(total.toFixed(2)),
+      meta: { days, people, mealLabel, cheap, vegan, fit }
+    };
+  };
+
+  app.buildRecipeFromPrompt = function(promptText) {
+    const text = normalize(promptText);
+    if (text.includes('doce de amendoim')) {
+      return {
+        recipe_name: 'Doce de amendoim cremoso',
+        desc: 'Receita rápida, econômica e ótima para sobremesa simples.',
+        ingredients: [
+          { name: 'Amendoim', qty: '500', unit: 'g' },
+          { name: 'Açúcar', qty: '1', unit: 'xícara' },
+          { name: 'Leite', qty: '1', unit: 'xícara' }
+        ],
+        prepMode: 'Torre o amendoim, retire a pele, leve ao fogo com açúcar e leite, mexendo até engrossar. Desligue quando ficar cremoso e sirva morno ou frio.'
+      };
+    }
+    const main = text.includes('frango') ? 'Peito de Frango' : text.includes('banana') ? 'Banana' : 'Tomate';
+    return {
+      recipe_name: `Receita Chef IA • ${main}`,
+      desc: 'Receita prática para o dia a dia, com preparo simples.',
+      ingredients: [
+        { name: main, qty: '2', unit: 'un' },
+        { name: 'Cebola', qty: '1', unit: 'un' },
+        { name: 'Alho', qty: '2', unit: 'dentes' }
+      ],
+      prepMode: 'Refogue cebola e alho. Acrescente o ingrediente principal, tempere e cozinhe até chegar ao ponto. Finalize e sirva.'
+    };
+  };
+
+  app.runChefLocalIntent = function(userText) {
+    const text = String(userText || '').trim();
+    const n = normalize(text);
+
+    if (!n) return shortReply('Digite sua mensagem.');
+
+    if (/^(oi|ola|olá|bom dia|boa tarde|boa noite)$/.test(n)) {
+      return shortReply('Olá! Como posso ajudar?');
+    }
+
+    if (n.includes('manda o botao') || n.includes('manda o botão')) {
+      if (this.lastChefAction?.type === 'recipe') {
+        return richReply(`<button class="af-option-btn" data-action="view-recipe" data-recipe-id="${this.lastChefAction.id}"><i class="fa-solid fa-utensils"></i> Abrir receita criada</button>`);
+      }
+      if (this.lastChefAction?.type === 'list') {
+        return richReply(`<button class="af-option-btn" data-action="view-list" data-list-id="${this.lastChefAction.id}"><i class="fa-solid fa-list"></i> Abrir lista criada</button>`);
+      }
+      return shortReply('Ainda não criei nada nesta conversa.');
+    }
+
+    if (n.includes('abrir analise') || n.includes('abrir análise') || n.includes('analises') || n.includes('análises')) {
+      return richReply(`Abri a área de análises para você.<br><button class="af-option-btn" data-action="open-module" data-module="analises"><i class="fa-solid fa-chart-line"></i> Abrir análises</button>`);
+    }
+
+    if ((n.includes('crie uma lista') || n.includes('criar uma lista') || n.includes('monte uma lista') || n.includes('lista ') || n.includes('compras')) && !n.includes('manda o bot')) {
+      const list = this.buildSmartShoppingList(text);
+      return {
+        intent: 'create_shopping_list',
+        data: list,
+        response_text_html: `Criei uma lista mais completa para <strong>${list.meta.days} dia(s)</strong> e <strong>${list.meta.people} pessoa(s)</strong>, com ${list.items.length} itens e estimativa de <strong>R$ ${list.totalEstimate.toFixed(2)}</strong>.<br><small style="opacity:.82">Base: ${escape(list.meta.mealLabel)}${list.meta.cheap ? ' • foco em economia' : ''}${list.meta.vegan ? ' • versão vegana' : ''}${list.meta.fit ? ' • foco em proteína' : ''}</small><br><button class="af-option-btn" style="margin-top:10px;width:100%;" data-action="view-list" data-list-id="[NEW_LIST_ID]"><i class="fa-solid fa-eye"></i> Abrir lista criada</button>`
+      };
+    }
+
+    if (n.includes('adicione') && n.includes('lista')) {
+      const names = text.split(/adicione/i)[1]?.split(/na lista|à lista|a lista/i)[0] || '';
+      const parts = names.split(/,| e /i).map(s => s.trim()).filter(Boolean);
+      return {
+        intent: 'update_shopping_list',
+        data: { list_id: this.activeListId, changes: { add: parts.map(name => ({ name, quantity: 1, unit: 'un', price: priceFor(name, 5) })) } },
+        response_text_html: `Adicionei ${parts.map(escape).join(', ')} na lista ativa.`
+      };
+    }
+
+    if ((n.includes('remova') || n.includes('remove')) && n.includes('lista')) {
+      const names = text.split(/remova|remove/i)[1]?.split(/da lista|da compras|da compra/i)[0] || '';
+      const parts = names.split(/,| e /i).map(s => s.trim()).filter(Boolean);
+      return {
+        intent: 'update_shopping_list',
+        data: { list_id: this.activeListId, changes: { removeNames: parts } },
+        response_text_html: `Removi ${parts.map(escape).join(', ')} da lista ativa.`
+      };
+    }
+
+    if ((n.includes('adicione') || n.includes('coloque')) && (n.includes('despensa') || n.includes('estoque'))) {
+      const names = text.split(/adicione|coloque/i)[1]?.split(/na despensa|no estoque/i)[0] || '';
+      const parts = names.split(/,| e /i).map(s => s.trim()).filter(Boolean);
+      return {
+        intent: 'update_pantry',
+        data: { add: parts.map(name => ({ name, quantity: 1, unit: 'un', price: priceFor(name, 5), stock: 100 })) },
+        response_text_html: `Adicionei ${parts.map(escape).join(', ')} na despensa.`
+      };
+    }
+
+    if ((n.includes('remova') || n.includes('remove')) && (n.includes('despensa') || n.includes('estoque'))) {
+      const names = text.split(/remova|remove/i)[1]?.split(/da despensa|do estoque/i)[0] || '';
+      const parts = names.split(/,| e /i).map(s => s.trim()).filter(Boolean);
+      return {
+        intent: 'update_pantry',
+        data: { removeNames: parts },
+        response_text_html: `Removi ${parts.map(escape).join(', ')} da despensa.`
+      };
+    }
+
+    if (n.includes('receita') || n.includes('doce de amendoim') || n.includes('jantar') || n.includes('almoco') || n.includes('almoço')) {
+      const recipe = this.buildRecipeFromPrompt(text);
+      return {
+        intent: 'create_recipe',
+        data: recipe,
+        response_text_html: `Criei a receita <strong>${escape(recipe.recipe_name)}</strong>.<br><button class="af-option-btn" style="margin-top:10px;width:100%;" data-action="view-recipe" data-recipe-id="[NEW_RECIPE_ID]"><i class="fa-solid fa-utensils"></i> Abrir receita criada</button>`
+      };
+    }
+
+    if (n.includes('planejador') || n.includes('monte minha semana') || n.includes('organize minha semana')) {
+      return {
+        intent: 'planner_week',
+        data: {},
+        response_text_html: `Organizei um rascunho de semana no planejador com base nas receitas já salvas.<br><button class="af-option-btn" data-action="open-module" data-module="planejador"><i class="fa-solid fa-calendar-days"></i> Abrir planejador</button>`
+      };
+    }
+
+    if (n.includes('historico') || n.includes('histórico')) {
+      const totalListas = Object.keys(this.state.listas || {}).length;
+      const totalReceitas = Object.keys(this.state.receitas || {}).length;
+      const totalDespensa = (this.state.despensa || []).length;
+      return shortReply(`Hoje o app tem ${totalListas} lista(s), ${totalReceitas} receita(s) e ${totalDespensa} item(ns) na despensa.`);
+    }
+
+    if (n.includes('carne de boi')) {
+      return shortReply('Serve como fonte de proteína, ferro e energia. É mais usada em almoço, jantar e receitas com maior saciedade.');
+    }
+
+    return null;
+  };
+
+  app.callGeminiAPI = async function(userText) {
+    const local = this.runChefLocalIntent(userText);
+    if (local) return { json: local, html: null };
+
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      const response = await fetch('/api/chef', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({ message: userText })
+      });
+      clearTimeout(timer);
+      const data = await response.json();
+      const reply = data.reply || data.content || 'Não consegui responder agora.';
+      return { json: shortReply(reply), html: null };
+    } catch (e) {
+      return { json: shortReply('Não consegui responder agora. Tente reformular em uma frase curta.'), html: null };
+    }
+  };
+
+  app.processIAResponse = function(jsonResponse, htmlResponse, thinkingMessageElement) {
+    let finalHtml = htmlResponse || jsonResponse?.response_text_html || 'Não consegui responder.';
+    const intent = jsonResponse?.intent || 'answer_question';
+    const data = jsonResponse?.data || {};
+
+    try {
+      if (intent === 'create_shopping_list') {
+        const newListId = this.executeCreateList(data);
+        finalHtml = finalHtml.replace('[NEW_LIST_ID]', newListId);
+      } else if (intent === 'create_recipe') {
+        const newRecipeId = this.executeCreateRecipe(data);
+        this.lastChefAction = { type: 'recipe', id: newRecipeId };
+        finalHtml = finalHtml.replace('[NEW_RECIPE_ID]', newRecipeId);
+      } else if (intent === 'update_shopping_list') {
+        this.executeUpdateList(data);
+      } else if (intent === 'update_pantry') {
+        this.executePantryUpdate(data);
+      } else if (intent === 'planner_week') {
+        this.executePlannerPlan(data);
+      }
+    } catch (e) {
+      finalHtml += `<br><small style="color:#ff8f8f">Erro ao executar ação.</small>`;
+    }
+
+    if (thinkingMessageElement) thinkingMessageElement.innerHTML = `<div class="bubble">${finalHtml}</div>`;
+
+    if (['create_shopping_list', 'update_shopping_list'].includes(intent)) {
+      if (this.activeModule === 'lista') this.renderListas?.();
+      this.renderListaWidget?.();
+      this.renderListasSalvas?.();
+    }
+    if (['create_recipe'].includes(intent) && this.activeModule === 'receitas') this.renderReceitas?.();
+    if (['update_pantry'].includes(intent) && this.activeModule === 'despensa') this.renderDespensa?.();
+    if (['planner_week'].includes(intent) && this.activeModule === 'planejador') this.renderPlanejador?.();
+
+    this.saveState?.();
+  };
+
+  app.renderAnalises = function(container) {
+    if (!container) container = document.getElementById('module-analises');
+    if (!container) return;
+
+    const analysisOptions = this.getAnalysisOptions();
+    const spend = Object.values(this.getCategoryDataFromLists()).reduce((sum, value) => sum + (parseFloat(value) || 0), 0);
+    const pantryStats = this.getPantryValidityData();
+    const plannerUsage = this.getPlannerMealCountData();
+    const plannedCount = Object.values(plannerUsage).reduce((sum, value) => sum + (parseInt(value, 10) || 0), 0);
+
+    const nav = Object.entries(analysisOptions).map(([key, cfg], index) => `
+      <button type="button" class="module-nav-item analysis-nav-item ${index === 0 ? 'active' : ''}" data-analysis-key="${key}">
+        <strong>${cfg.label}</strong>
+        <span>${cfg.note}</span>
+      </button>`).join('');
+
+    container.innerHTML = `
+      <div class="analysis-shell-2100">
+        <div class="analysis-top-grid">
+          <div class="dashboard-card analysis-stage-card" id="analises-detail-desktop"></div>
+          <div class="analysis-side-stack">
+            <div class="analysis-kpi-grid-compact">
+              <div class="analysis-kpi-card"><strong>R$ ${spend.toFixed(2)}</strong><small>gasto mapeado nas listas</small></div>
+              <div class="analysis-kpi-card"><strong>${(this.state.despensa || []).length}</strong><small>itens na despensa</small></div>
+              <div class="analysis-kpi-card"><strong>${pantryStats.vencidos + pantryStats.vencendo}</strong><small>itens que pedem atenção</small></div>
+              <div class="analysis-kpi-card"><strong>${plannedCount}</strong><small>usos de receitas no planejador</small></div>
+            </div>
+            <div class="dashboard-card analysis-picker-card">
+              <div class="card-header analysis-premium-header">
+                <h3><i class="fa-solid fa-chart-line"></i> Análises</h3>
+                <div class="card-actions">${this.buildChefButton('Analise meus dados do app e me dê prioridades claras de economia, desperdício e organização.', 'Chef IA')}</div>
+              </div>
+              <div class="card-content">
+                <div class="module-nav-list analysis-nav-grid">${nav}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    const firstKey = 'gastos_categoria';
+    this.renderAnalysisDetailDesktop(firstKey);
+  };
+
+  app.renderAnalysisDetailDesktop = function(analysisKey = 'gastos_categoria') {
+    const container = document.getElementById('analises-detail-desktop');
+    if (!container) return;
+    const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+    const defaultType = analysisKey === 'rotina_semana' ? 'bar' : analysisKey.includes('gastos') ? 'doughnut' : 'bar';
+
+    container.innerHTML = `
+      <div class="card-header analysis-premium-header">
+        <h3><i class="${cfg.icon}"></i> ${cfg.label}</h3>
+        <div class="card-actions">
+          ${this.buildChefButton(`Analise ${cfg.label} e me diga oportunidades de economia, desperdício e organização.`, 'Chef IA')}
+        </div>
+      </div>
+      <div class="card-content analysis-premium-content">
+        <p class="detail-note analysis-premium-note">${cfg.note}</p>
+        <div class="analysis-config-panel">
+          <div class="form-group">
+            <label for="analysis-data-select">Analisar</label>
+            <select id="analysis-data-select">${this.getAnalysisSelectOptionsHTML(analysisKey)}</select>
+          </div>
+          <div class="form-group">
+            <label for="analysis-type-select">Tipo de gráfico</label>
+            <select id="analysis-type-select">${this.getChartTypeOptionsHTML(defaultType)}</select>
+          </div>
+        </div>
+        <div class="chart-canvas-container analysis-premium-chart"><canvas id="dynamic-analysis-chart"></canvas></div>
+        <div class="analysis-quick-summary">
+          <div class="mini"><strong>Visão imediata</strong><span>gráfico aberto de cara</span></div>
+          <div class="mini"><strong>Troca rápida</strong><span>altere análise e tipo</span></div>
+          <div class="mini"><strong>Leitura limpa</strong><span>mobile e desktop</span></div>
+        </div>
+      </div>`;
+
+    document.getElementById('analysis-data-select')?.addEventListener('change', (e) => {
+      this.renderAnalysisDetailDesktop(e.target.value);
+      document.querySelectorAll('.analysis-nav-item').forEach(btn => btn.classList.toggle('active', btn.dataset.analysisKey === e.target.value));
+    });
+    document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+    this.updateDynamicChart();
+  };
+
+  // ensure modal/chat setup uses new logic after script load
+  setTimeout(() => {
+    try { app.setupChatbotModal?.(); } catch (e) {}
+  }, 50);
+})();
+
+
+/* === PATCH EXECUTÁVEL 4560 | Correções finais solicitadas === */
+(() => {
+  const app = window.app;
+  if (!app) return;
+
+  const normalize = (text = '') => String(text)
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().trim();
+
+  app.chefScopeKeywords = [
+    'alimento','alimentacao','comida','refeicao','refeicoes','receita','receitas','ingrediente','ingredientes',
+    'mercado','supermercado','compras','lista','listas','despensa','estoque','geladeira','cozinha','cardapio',
+    'cardapio','planejador','planejamento','semana','almoco','jantar','cafe','lanche','economia','orcamento',
+    'gasto','gastos','desperdicio','validade','vencer','vence','nutric','caloria','proteina','frango','arroz',
+    'feijao','carne','legume','verdura','panela','preparo','prato','porcao','porcoes','organizar','organizacao',
+    'casa','domestica','doméstica','rotina','compras','analise','analises','análise','análises','chef ia',
+    'app','painel','sistema','modulo','módulo','planejar','planeje','planejado','mercadoria'
+  ];
+
+  app.isChefScopeQuery = function(userText = '') {
+    const n = normalize(userText);
+    if (!n) return true;
+    return this.chefScopeKeywords.some(keyword => n.includes(normalize(keyword)));
+  };
+
+  app.getChefRedirectMessage = function() {
+    return 'Posso te ajudar melhor com alimentação, compras, receitas, despensa, planejamento, economia doméstica e análises do app.';
+  };
+
+  app.getAnalysisDataBundle = function(dataType = 'gastos_categoria') {
+    let labels = [];
+    let values = [];
+    let title = '';
+    let datasetLabel = '';
+    let onClick = null;
+
+    if (dataType === 'gastos_categoria') {
+      const data = this.getCategoryDataFromLists();
+      labels = Object.keys(data); values = Object.values(data); title = 'Gastos por categoria'; datasetLabel = 'R$ por categoria';
+      onClick = (label, value) => this.showChartDetail_Categorias?.(label, value);
+    } else if (dataType === 'gastos_lista') {
+      const data = this.getListTotalsData();
+      labels = Object.keys(data); values = Object.values(data); title = 'Total por lista'; datasetLabel = 'R$ por lista';
+      onClick = (label, value) => this.showInfoModal?.(`Lista: ${label}`, `<p>Total estimado: <strong>R$ ${Number(value || 0).toFixed(2)}</strong>.</p>`);
+    } else if (dataType === 'validade_despensa') {
+      const data = this.getPantryValidityData();
+      labels = ['Vencidos', 'Vence em 7 dias', 'Itens OK']; values = [data.vencidos, data.vencendo, data.ok]; title = 'Validade da despensa'; datasetLabel = 'Itens por status';
+      onClick = (label, value, index) => { const key = ['vencidos', 'vencendo', 'ok'][index]; this.showChartDetail_Validade?.(key, label, value); };
+    } else if (dataType === 'estoque_despensa') {
+      const data = this.getPantryStockBandsData();
+      labels = Object.keys(data); values = Object.values(data); title = 'Nível de estoque'; datasetLabel = 'Itens por faixa';
+      onClick = (label, value) => this.showInfoModal?.(`Estoque: ${label}`, `<p>Você tem <strong>${value}</strong> item(ns) na faixa <strong>${label}</strong>.</p>`);
+    } else if (dataType === 'uso_receitas') {
+      const data = this.getPlannerMealCountData();
+      labels = Object.keys(data); values = Object.values(data); title = 'Uso de receitas'; datasetLabel = 'Nº de usos';
+      onClick = (label, value) => this.showInfoModal?.(`Receita: ${label}`, `<p>A receita <strong>${label}</strong> apareceu <strong>${value}</strong> vez(es).</p>`);
+    } else if (dataType === 'rotina_semana') {
+      const data = this.getPlannerWeekLoadData();
+      labels = Object.keys(data); values = Object.values(data); title = 'Carga da semana'; datasetLabel = 'Refeições planejadas';
+      onClick = (label, value) => this.showInfoModal?.(label, `<p>Há <strong>${value}</strong> refeição(ões) planejada(s) em <strong>${label}</strong>.</p>`);
+    }
+
+    return { labels, values, title, datasetLabel, onClick };
+  };
+
+  app.getAnalysisSnapshot = function(dataType = 'gastos_categoria') {
+    const bundle = this.getAnalysisDataBundle(dataType);
+    const labels = bundle.labels || [];
+    const values = bundle.values || [];
+    const total = values.reduce((sum, value) => sum + (Number(value) || 0), 0);
+    if (!labels.length || !values.length || total <= 0) {
+      return {
+        headline: 'Ainda não há dados suficientes nesta visão.',
+        insight: 'Adicione listas, itens na despensa, receitas ou planejamentos para liberar uma leitura mais rica.',
+        action: 'Comece por uma lista de compras ou pela despensa para alimentar as análises.'
+      };
+    }
+    const pairs = labels.map((label, index) => ({ label, value: Number(values[index]) || 0 })).sort((a, b) => b.value - a.value);
+    const top = pairs[0];
+    const share = total > 0 ? ((top.value / total) * 100) : 0;
+    const moneyView = dataType.includes('gastos');
+    const fmt = moneyView ? `R$ ${top.value.toFixed(2)}` : `${top.value}`;
+    const secondary = pairs[1];
+    return {
+      headline: `${top.label} lidera esta leitura com ${fmt}${moneyView ? '' : ' registro(s)'}.`,
+      insight: secondary ? `${top.label} representa ${share.toFixed(0)}% da visão atual, acima de ${secondary.label}.` : `${top.label} concentra praticamente toda a leitura disponível agora.`,
+      action: moneyView
+        ? `Revise ${top.label.toLowerCase()} primeiro para cortar excesso sem bagunçar a rotina.`
+        : `Priorize ${top.label.toLowerCase()} agora para reduzir risco, melhorar uso e organizar melhor a rotina.`
+    };
+  };
+
+  app.callGeminiAPI = async function(userText) {
+    const local = this.runChefLocalIntent(userText);
+    if (local) return { json: local, html: null };
+
+    if (!this.isChefScopeQuery(userText)) {
+      return {
+        json: {
+          intent: 'answer_question',
+          data: {},
+          response_text_html: `${this.getChefRedirectMessage()}<br><br><small style="opacity:.82">Posso, por exemplo, montar uma lista, sugerir receitas, organizar a despensa, planejar a semana ou analisar seus gastos.</small>`
+        },
+        html: null
+      };
+    }
+
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      const response = await fetch('/api/chef', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({ message: userText })
+      });
+      clearTimeout(timer);
+      const data = await response.json();
+      const reply = data.reply || data.content || 'Não consegui responder agora.';
+      return { json: { intent: 'answer_question', data: {}, response_text_html: this.escapeHtml ? this.escapeHtml(reply) : reply }, html: null };
+    } catch (e) {
+      return { json: { intent: 'answer_question', data: {}, response_text_html: 'Não consegui responder agora. Tente reformular em uma frase curta.' }, html: null };
+    }
+  };
+
+  app.setupChatbotModal = function() {
+    const modal = document.getElementById('ai-chat-modal');
+    if (!modal || modal.dataset.chefBound4560 === 'true') return;
+    const sendBtn = modal.querySelector('#ai-chat-send-btn');
+    const input = modal.querySelector('#ai-chat-input');
+    const messages = modal.querySelector('#ai-chat-messages-container');
+    const voiceBtn = modal.querySelector('#ai-voice-btn');
+
+    const greetIfEmpty = () => {
+      if (!messages.children.length) {
+        const welcome = document.createElement('div');
+        welcome.className = 'chat-message ia';
+        welcome.innerHTML = '<div class="bubble">Olá. Posso ajudar com compras, receitas, despensa, planejamento e análises.</div>';
+        messages.appendChild(welcome);
+      }
+    };
+
+    const sendMessage = () => {
+      const userText = String(input?.value || '').trim();
+      if (!userText || this.isIAProcessing) return;
+      input.value = '';
+      const userMessage = document.createElement('div');
+      userMessage.className = 'chat-message user';
+      userMessage.innerHTML = `<div class="bubble">${this.escapeHtml ? this.escapeHtml(userText) : userText}</div>`;
+      messages.appendChild(userMessage);
+      messages.scrollTop = messages.scrollHeight;
+      this.triggerChefIAAnalysis(userText);
+    };
+
+    if (voiceBtn) voiceBtn.onclick = () => this.startVoiceRecognition?.();
+    if (sendBtn) sendBtn.onclick = sendMessage;
+    if (input) {
+      input.onkeyup = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      };
+    }
+
+    messages.onclick = (e) => {
+      const button = e.target.closest('[data-action]');
+      if (!button) return;
+      const { action, listId, recipeId, module } = button.dataset;
+      if (action === 'view-list' && listId) {
+        this.closeAllModals?.();
+        this.activeListId = listId;
+        this.activateModuleAndRender?.('lista');
+      } else if (action === 'view-recipe' && recipeId) {
+        this.closeAllModals?.();
+        this.activateModuleAndRender?.('receitas');
+        setTimeout(() => {
+          if (window.innerWidth < 992) this.showRecipeDetailModal?.(recipeId);
+          else this.renderRecipeDetail?.(recipeId);
+        }, 80);
+      } else if (action === 'open-module' && module) {
+        this.closeAllModals?.();
+        this.activateModuleAndRender?.(module);
+      }
+    };
+
+    greetIfEmpty();
+    modal.dataset.chefBound4560 = 'true';
+  };
+
+  app.renderAnalises = function(container) {
+    if (!container) container = document.getElementById('module-analises');
+    if (!container) return;
+
+    const analysisOptions = this.getAnalysisOptions();
+    const spend = Object.values(this.getCategoryDataFromLists()).reduce((sum, value) => sum + (parseFloat(value) || 0), 0);
+    const pantryStats = this.getPantryValidityData();
+    const plannerUsage = this.getPlannerMealCountData();
+    const plannedCount = Object.values(plannerUsage).reduce((sum, value) => sum + (parseInt(value, 10) || 0), 0);
+    const nav = Object.entries(analysisOptions).map(([key, cfg], index) => `
+      <button type="button" class="module-nav-item analysis-nav-item ${index === 0 ? 'active' : ''}" data-analysis-key="${key}">
+        <strong>${cfg.label}</strong>
+        <span>${cfg.note}</span>
+      </button>`).join('');
+
+    container.innerHTML = `
+      <div class="analysis-shell-2100">
+        <div class="analysis-top-grid">
+          <div class="dashboard-card analysis-stage-card" id="analises-detail-desktop"></div>
+          <div class="analysis-side-stack">
+            <div class="analysis-kpi-grid-compact">
+              <div class="analysis-kpi-card"><strong>R$ ${spend.toFixed(2)}</strong><small>gasto mapeado nas listas</small></div>
+              <div class="analysis-kpi-card"><strong>${(this.state.despensa || []).length}</strong><small>itens na despensa</small></div>
+              <div class="analysis-kpi-card"><strong>${pantryStats.vencidos + pantryStats.vencendo}</strong><small>itens que pedem atenção imediata</small></div>
+              <div class="analysis-kpi-card"><strong>${plannedCount}</strong><small>refeições associadas ao planejador</small></div>
+            </div>
+            <div class="dashboard-card analysis-picker-card">
+              <div class="card-header analysis-premium-header">
+                <h3><i class="fa-solid fa-chart-line"></i> Análises</h3>
+                <div class="card-actions">${this.buildChefButton('Analise meus dados do app e me dê prioridades claras de economia, desperdício e organização.', 'Chef IA')}</div>
+              </div>
+              <div class="card-content">
+                <p class="detail-note analysis-premium-note">O gráfico principal aparece primeiro. À direita, você troca a leitura sem perder clareza.</p>
+                <div class="module-nav-list analysis-nav-grid">${nav}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    this.renderAnalysisDetailDesktop('gastos_categoria');
+  };
+
+  app.renderAnalysisDetailDesktop = function(analysisKey = 'gastos_categoria') {
+    const container = document.getElementById('analises-detail-desktop');
+    if (!container) return;
+    const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+    const defaultType = analysisKey === 'rotina_semana' ? 'bar' : analysisKey.includes('gastos') ? 'doughnut' : analysisKey.includes('uso') ? 'bar' : 'bar';
+    const snapshot = this.getAnalysisSnapshot(analysisKey);
+
+    container.innerHTML = `
+      <div class="card-header analysis-premium-header">
+        <h3><i class="${cfg.icon}"></i> ${cfg.label}</h3>
+        <div class="card-actions">${this.buildChefButton(`Analise ${cfg.label} e me diga oportunidades de economia, desperdício e organização.`, 'Chef IA')}</div>
+      </div>
+      <div class="card-content analysis-premium-content">
+        <p class="detail-note analysis-premium-note">${cfg.note}</p>
+        <div class="analysis-config-panel">
+          <div class="form-group">
+            <label for="analysis-data-select">Analisar</label>
+            <select id="analysis-data-select">${this.getAnalysisSelectOptionsHTML(analysisKey)}</select>
+          </div>
+          <div class="form-group">
+            <label for="analysis-type-select">Tipo de gráfico</label>
+            <select id="analysis-type-select">${this.getChartTypeOptionsHTML(defaultType)}</select>
+          </div>
+        </div>
+        <div class="chart-canvas-container analysis-premium-chart"><canvas id="dynamic-analysis-chart"></canvas></div>
+        <div class="analysis-quick-summary">
+          <div class="mini"><strong>Leitura imediata</strong><span>${snapshot.headline}</span></div>
+          <div class="mini"><strong>O que isso diz</strong><span>${snapshot.insight}</span></div>
+          <div class="mini"><strong>Próxima ação</strong><span>${snapshot.action}</span></div>
+        </div>
+      </div>
+      <div class="card-footer module-actions-footer compact-export-row analysis-premium-actions">
+        ${this.buildChefButton(`Resuma ${cfg.label} para mim com clareza, prioridade e ação.`, 'Chef IA', 'chef-glass-btn')}
+        ${this.buildExportButtons(`data-analysis="${analysisKey}"`)}
+      </div>`;
+
+    document.getElementById('analysis-data-select')?.addEventListener('change', (e) => {
+      this.renderAnalysisDetailDesktop(e.target.value);
+      document.querySelectorAll('.analysis-nav-item').forEach(btn => btn.classList.toggle('active', btn.dataset.analysisKey === e.target.value));
+    });
+    document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+    this.updateDynamicChart();
+  };
+
+  app.openAnalysisDetailModal = function(analysisKey = 'gastos_categoria') {
+    const cfg = this.getAnalysisOptions()[analysisKey] || this.getAnalysisOptions().gastos_categoria;
+    const snapshot = this.getAnalysisSnapshot(analysisKey);
+    const titleEl = document.getElementById('detail-modal-title');
+    const bodyEl = document.getElementById('detail-modal-body');
+    const footerEl = document.getElementById('detail-modal-footer');
+    const headerActionsEl = document.getElementById('detail-modal-header-actions');
+    titleEl.innerHTML = `<i class="${cfg.icon}"></i> ${cfg.label}`;
+    headerActionsEl.innerHTML = this.buildChefButton(`Faça uma leitura 360 graus de ${cfg.label} no meu painel.`, 'Chef IA');
+    bodyEl.innerHTML = `
+      <div class="analysis-premium-modal">
+        <p class="detail-note analysis-premium-note">${cfg.note}</p>
+        <div class="analysis-config-panel">
+          <div class="form-group"><label for="analysis-data-select">Analisar</label><select id="analysis-data-select">${this.getAnalysisSelectOptionsHTML(analysisKey)}</select></div>
+          <div class="form-group"><label for="analysis-type-select">Tipo de gráfico</label><select id="analysis-type-select">${this.getChartTypeOptionsHTML(analysisKey.includes('gastos') ? 'doughnut' : 'bar')}</select></div>
+        </div>
+        <div class="chart-canvas-container analysis-premium-chart"><canvas id="dynamic-analysis-chart"></canvas></div>
+        <div class="analysis-quick-summary">
+          <div class="mini"><strong>Leitura imediata</strong><span>${snapshot.headline}</span></div>
+          <div class="mini"><strong>O que isso diz</strong><span>${snapshot.insight}</span></div>
+          <div class="mini"><strong>Próxima ação</strong><span>${snapshot.action}</span></div>
+        </div>
+      </div>`;
+    footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+    footerEl.innerHTML = `${this.buildChefButton(`Resuma ${cfg.label} para mim em linguagem simples, estratégica e elegante.`, 'Chef IA', 'chef-glass-btn')}${this.buildExportButtons(`data-analysis="${analysisKey}"`)}`;
+    document.getElementById('analysis-data-select')?.addEventListener('change', (e) => {
+      this.openAnalysisDetailModal(e.target.value);
+      document.querySelectorAll('.analysis-nav-item').forEach(btn => btn.classList.toggle('active', btn.dataset.analysisKey === e.target.value));
+    });
+    document.getElementById('analysis-type-select')?.addEventListener('change', () => this.updateDynamicChart());
+    this.updateDynamicChart();
+    this.openModal('detail-modal');
+  };
+
+  app.updateDynamicChart = function() {
+    const canvas = document.getElementById('dynamic-analysis-chart');
+    if (!canvas || typeof Chart === 'undefined') return;
+    const dataType = document.getElementById('analysis-data-select')?.value || 'gastos_categoria';
+    const chartType = document.getElementById('analysis-type-select')?.value || 'doughnut';
+    const bundle = this.getAnalysisDataBundle(dataType);
+    const labels = bundle.labels || [];
+    const values = (bundle.values || []).map(v => Number(v) || 0);
+    const total = values.reduce((sum, value) => sum + value, 0);
+    const chartWrap = canvas.closest('.analysis-premium-chart');
+    if (chartWrap) {
+      const empty = chartWrap.querySelector('.analysis-empty-state');
+      if (empty) empty.remove();
+      canvas.style.display = '';
+    }
+
+    if (this.dynamicAnalysisChart?.destroy) this.dynamicAnalysisChart.destroy();
+
+    if (!labels.length || total <= 0) {
+      canvas.style.display = 'none';
+      if (chartWrap) {
+        const empty = document.createElement('div');
+        empty.className = 'analysis-empty-state';
+        empty.innerHTML = '<div><strong>Sem dados suficientes nesta visão.</strong><span>Adicione listas, itens na despensa, receitas ou planejamentos para liberar este gráfico.</span></div>';
+        chartWrap.appendChild(empty);
+      }
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    this.dynamicAnalysisChart = new Chart(ctx, {
+      type: chartType,
+      data: {
+        labels,
+        datasets: [{
+          label: bundle.datasetLabel || bundle.title || 'Dados',
+          data: values,
+          borderWidth: 1.5,
+          tension: 0.34,
+          fill: chartType === 'line' || chartType === 'radar' ? false : true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: chartType !== 'bar', labels: { color: '#f3f6fb', boxWidth: 12, usePointStyle: true } },
+          title: { display: true, text: bundle.title || 'Análise', color: '#ffffff', font: { size: 15, weight: '600' }, padding: { bottom: 14 } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const value = Number(ctx.parsed?.y ?? ctx.parsed ?? 0);
+                return (dataType.includes('gastos')) ? `R$ ${value.toFixed(2)}` : `${value}`;
+              }
+            }
+          }
+        },
+        scales: (chartType === 'bar' || chartType === 'line') ? {
+          x: { ticks: { color: 'rgba(255,255,255,.78)' }, grid: { color: 'rgba(255,255,255,.07)' } },
+          y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,.78)' }, grid: { color: 'rgba(255,255,255,.07)' } }
+        } : {},
+        onClick: (_evt, elements) => {
+          if (!elements.length || typeof bundle.onClick !== 'function') return;
+          const el = elements[0];
+          bundle.onClick(labels[el.index], values[el.index], el.index);
+        }
+      }
+    });
+  };
+
+  setTimeout(() => {
+    try { app.setupChatbotModal?.(); } catch (e) {}
+    try { if (app.isAppMode && app.activeModule === 'analises') app.renderAnalises?.(); } catch (e) {}
+  }, 60);
+})();
+
+
+/* === ANALISES REBUILD FINAL | 2026-04-10 === */
+(() => {
+  const app = window.app;
+  if (!app) return;
+
+  app.analysisPreferredDefaults = {
+    overview_360: 'radar',
+    validade_despensa: 'pie',
+    estoque_despensa: 'doughnut',
+    gastos_categoria: 'doughnut',
+    gastos_lista: 'bar',
+    uso_receitas: 'bar',
+    rotina_semana: 'line'
+  };
+
+  app.getAnalysisOptions = function() {
+    return {
+      validade_despensa: { icon: 'fa-solid fa-hourglass-half', label: 'Validade da despensa', note: 'Veja rapidamente o que está vencido, vencendo ou seguro na sua despensa.' },
+      overview_360: { icon: 'fa-solid fa-globe', label: 'Visão 360° do painel', note: 'Uma leitura ampla conectando listas, despensa, receitas e planejador.' },
+      gastos_categoria: { icon: 'fa-solid fa-layer-group', label: 'Gastos por categoria', note: 'Entenda onde o orçamento está concentrado dentro das listas.' },
+      gastos_lista: { icon: 'fa-solid fa-cart-shopping', label: 'Total por lista', note: 'Compare rapidamente o peso financeiro de cada lista salva.' },
+      estoque_despensa: { icon: 'fa-solid fa-boxes-stacked', label: 'Nível de estoque', note: 'Identifique equilíbrio, excesso ou risco de falta na despensa.' },
+      uso_receitas: { icon: 'fa-solid fa-utensils', label: 'Uso de receitas', note: 'Saiba quais receitas aparecem mais no seu planejamento.' },
+      rotina_semana: { icon: 'fa-solid fa-calendar-days', label: 'Carga da semana', note: 'Descubra quais dias recebem mais refeições planejadas.' }
+    };
+  };
+
+  app.getAnalysisSelectOptionsHTML = function(selectedKey = 'validade_despensa') {
+    return Object.entries(this.getAnalysisOptions()).map(([key, cfg]) => `<option value="${key}" ${key === selectedKey ? 'selected' : ''}>${cfg.label}</option>`).join('');
+  };
+
+  app.getChartTypeOptionsHTML = function(selectedKey = 'pie') {
+    const options = [
+      ['pie', 'Pizza'],
+      ['doughnut', 'Rosca'],
+      ['bar', 'Barras'],
+      ['line', 'Linha'],
+      ['polarArea', 'Polar'],
+      ['radar', 'Radar']
+    ];
+    return options.map(([key, label]) => `<option value="${key}" ${key === selectedKey ? 'selected' : ''}>${label}</option>`).join('');
+  };
+
+  app.getCategoryDataFromListsSafe = function() {
+    try {
+      if (typeof this.getCategoryDataFromLists === 'function') return this.getCategoryDataFromLists() || {};
+    } catch (e) {}
+    const map = {};
+    Object.values(this.state?.listas || {}).forEach((lista, listIndex) => {
+      (lista.items || []).forEach((item) => {
+        const bucket = item.categoria || item.category || item.tipo || `Categoria ${listIndex + 1}`;
+        map[bucket] = (map[bucket] || 0) + ((parseFloat(item.qtd) || 0) * (parseFloat(item.valor) || 0));
+      });
+    });
+    return map;
+  };
+
+  app.getListTotalsData = function() {
+    const data = {};
+    Object.entries(this.state?.listas || {}).forEach(([id, lista], idx) => {
+      const total = (lista.items || []).reduce((sum, item) => sum + ((parseFloat(item.qtd) || 0) * (parseFloat(item.valor) || 0)), 0);
+      data[lista.nome || `Lista ${idx + 1}`] = Number(total.toFixed(2));
+    });
+    return data;
+  };
+
+  app.getPantryValidityData = function() {
+    const today = new Date();
+    const normalizeDate = (value) => {
+      if (!value) return null;
+      const d = new Date(value + 'T12:00:00');
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
+    const result = { vencidos: 0, vencendo: 0, seguros: 0, sem_validade: 0 };
+    (this.state?.despensa || []).forEach((item) => {
+      const d = normalizeDate(item.validade);
+      if (!d) {
+        result.sem_validade += 1;
+        return;
+      }
+      const diff = Math.ceil((d - today) / 86400000);
+      if (diff < 0) result.vencidos += 1;
+      else if (diff <= 7) result.vencendo += 1;
+      else result.seguros += 1;
+    });
+    return result;
+  };
+
+  app.getPantryStockBandsData = function() {
+    const bands = { 'Baixo estoque': 0, 'Estoque médio': 0, 'Estoque alto': 0 };
+    (this.state?.despensa || []).forEach((item) => {
+      const stock = parseInt(item.stock || 0, 10);
+      if (stock <= 25) bands['Baixo estoque'] += 1;
+      else if (stock <= 75) bands['Estoque médio'] += 1;
+      else bands['Estoque alto'] += 1;
+    });
+    return bands;
+  };
+
+  app.getPlannerMealCountData = function() {
+    const usage = {};
+    Object.values(this.state?.planejador || {}).forEach((day) => {
+      Object.values(day || {}).forEach((meal) => {
+        if (!meal || !meal.id) return;
+        const recipe = this.state?.receitas?.[meal.id];
+        const name = recipe?.name || meal.nome || `Receita ${meal.id}`;
+        usage[name] = (usage[name] || 0) + 1;
+      });
+    });
+    return usage;
+  };
+
+  app.getPlannerWeekLoadData = function() {
+    const mapping = [
+      ['seg', 'Segunda'],
+      ['ter', 'Terça'],
+      ['qua', 'Quarta'],
+      ['qui', 'Quinta'],
+      ['sex', 'Sexta'],
+      ['sab', 'Sábado'],
+      ['dom', 'Domingo']
+    ];
+    const data = {};
+    mapping.forEach(([key, label]) => {
+      const day = this.state?.planejador?.[key] || {};
+      data[label] = Object.values(day).filter(Boolean).length;
+    });
+    return data;
+  };
+
+  app.getAnalysisDataBundle = function(dataType = 'validade_despensa') {
+    const money = (n) => `R$ ${Number(n || 0).toFixed(2)}`;
+    const bundles = {
+      validade_despensa: () => {
+        const d = this.getPantryValidityData();
+        return {
+          title: 'Itens da despensa por validade',
+          datasetLabel: 'Itens',
+          labels: ['Vencidos', 'Vencendo', 'Seguros', 'Sem validade'],
+          values: [d.vencidos, d.vencendo, d.seguros, d.sem_validade],
+          valueFormatter: (v) => `${v} item(ns)`,
+          insight: d.vencidos > 0 ? `Você já tem ${d.vencidos} item(ns) vencido(s).` : 'Sua despensa não tem itens vencidos agora.',
+          action: d.vencendo > 0 ? `Priorize ${d.vencendo} item(ns) que vencem em até 7 dias.` : 'No momento, a urgência por validade está controlada.',
+          headline: `${d.vencidos + d.vencendo} item(ns) pedem atenção imediata.`
+        };
+      },
+      overview_360: () => {
+        const validity = this.getPantryValidityData();
+        const categories = this.getCategoryDataFromListsSafe();
+        const planner = this.getPlannerMealCountData();
+        const lists = this.getListTotalsData();
+        const totalSpend = Object.values(categories).reduce((s, v) => s + (Number(v) || 0), 0);
+        return {
+          title: 'Visão 360° do sistema',
+          datasetLabel: 'Painel',
+          labels: ['Gasto mapeado', 'Itens despensa', 'Atenção validade', 'Receitas usadas', 'Listas ativas'],
+          values: [
+            Number(totalSpend.toFixed(2)),
+            (this.state?.despensa || []).length,
+            validity.vencidos + validity.vencendo,
+            Object.values(planner).reduce((s, v) => s + v, 0),
+            Object.keys(this.state?.listas || {}).length
+          ],
+          valueFormatter: (v, idx) => idx === 0 ? money(v) : `${v}`,
+          insight: totalSpend > 0 ? `Seu painel já registra ${money(totalSpend)} em gastos estimados.` : 'Seu painel ainda tem poucos dados financeiros mapeados.',
+          action: validity.vencidos + validity.vencendo > 0 ? 'Use a análise de validade para atacar desperdício primeiro.' : 'Agora vale explorar gastos e rotina para otimizar compras.',
+          headline: `${Object.keys(lists).length} lista(s), ${(this.state?.despensa || []).length} item(ns) em estoque e ${Object.values(planner).reduce((s, v) => s + v, 0)} uso(s) no planejador.`
+        };
+      },
+      gastos_categoria: () => {
+        const data = this.getCategoryDataFromListsSafe();
+        const labels = Object.keys(data);
+        const values = labels.map((k) => Number(data[k] || 0));
+        const topIndex = values.reduce((best, value, idx, arr) => value > (arr[best] || 0) ? idx : best, 0);
+        return {
+          title: 'Gastos por categoria',
+          datasetLabel: 'Gasto estimado',
+          labels,
+          values,
+          valueFormatter: (v) => money(v),
+          insight: labels.length ? `${labels[topIndex]} concentra a maior parte do gasto atual.` : 'Ainda não há categorias suficientes para leitura.',
+          action: labels.length ? 'Compare a categoria líder com a segunda maior para cortar excessos.' : 'Cadastre preços e itens nas listas para liberar essa visão.',
+          headline: labels.length ? `${labels.length} categoria(s) com gasto rastreado.` : 'Sem categorias para analisar.'
+        };
+      },
+      gastos_lista: () => {
+        const data = this.getListTotalsData();
+        const labels = Object.keys(data);
+        const values = labels.map((k) => Number(data[k] || 0));
+        const max = Math.max(0, ...values);
+        const top = labels[values.indexOf(max)] || 'Nenhuma';
+        return {
+          title: 'Total estimado por lista',
+          datasetLabel: 'Total',
+          labels,
+          values,
+          valueFormatter: (v) => money(v),
+          insight: labels.length ? `${top} é a lista financeiramente mais pesada agora.` : 'Você ainda não tem listas suficientes para comparação.',
+          action: labels.length ? 'Revise os itens da lista mais cara e veja o que pode ser redistribuído.' : 'Crie mais de uma lista para comparar prioridades.',
+          headline: labels.length ? `${labels.length} lista(s) com custo estimado calculado.` : 'Sem listas comparáveis.'
+        };
+      },
+      estoque_despensa: () => {
+        const data = this.getPantryStockBandsData();
+        return {
+          title: 'Faixas de estoque da despensa',
+          datasetLabel: 'Itens',
+          labels: Object.keys(data),
+          values: Object.values(data),
+          valueFormatter: (v) => `${v} item(ns)`,
+          insight: data['Baixo estoque'] > 0 ? `${data['Baixo estoque']} item(ns) estão com estoque baixo.` : 'Seu nível de estoque baixo está sob controle.',
+          action: data['Baixo estoque'] > data['Estoque alto'] ? 'Priorize reposição dos itens essenciais antes de ampliar variedade.' : 'Mantenha equilíbrio para evitar excesso parado.',
+          headline: `${(this.state?.despensa || []).length} item(ns) distribuídos por nível de estoque.`
+        };
+      },
+      uso_receitas: () => {
+        const data = this.getPlannerMealCountData();
+        const labels = Object.keys(data);
+        const values = labels.map((k) => Number(data[k] || 0));
+        return {
+          title: 'Uso de receitas no planejador',
+          datasetLabel: 'Usos',
+          labels,
+          values,
+          valueFormatter: (v) => `${v} uso(s)`,
+          insight: labels.length ? `${labels[0]} aparece dentro do seu histórico planejado.` : 'Ainda não há receitas usadas no planejador.',
+          action: labels.length ? 'Use as receitas mais repetidas para montar listas mais inteligentes.' : 'Adicione receitas no planejador para gerar inteligência aqui.',
+          headline: labels.length ? `${values.reduce((s, v) => s + v, 0)} uso(s) de receita detectados.` : 'Sem receitas planejadas.'
+        };
+      },
+      rotina_semana: () => {
+        const data = this.getPlannerWeekLoadData();
+        const labels = Object.keys(data);
+        const values = Object.values(data).map((v) => Number(v || 0));
+        const max = Math.max(0, ...values);
+        const top = labels[values.indexOf(max)] || 'Nenhum dia';
+        return {
+          title: 'Carga de refeições por dia',
+          datasetLabel: 'Refeições',
+          labels,
+          values,
+          valueFormatter: (v) => `${v} refeição(ões)`,
+          insight: max > 0 ? `${top} é o dia com maior carga planejada.` : 'Sua semana ainda não tem refeições distribuídas.',
+          action: max > 0 ? 'Espalhe melhor os preparos para reduzir correria e desperdício.' : 'Planeje a semana para revelar padrão e gargalos.',
+          headline: `${values.reduce((s, v) => s + v, 0)} refeição(ões) planejadas na semana.`
+        };
+      }
+    };
+
+    const fallback = bundles.validade_despensa;
+    return (bundles[dataType] || fallback).call(this);
+  };
+
+  app.getAnalysisColorPalette = function(count = 6) {
+    const base = [
+      'rgba(0,242,234,0.92)',
+      'rgba(252,235,154,0.92)',
+      'rgba(175,82,222,0.92)',
+      'rgba(52,199,89,0.92)',
+      'rgba(255,59,48,0.92)',
+      'rgba(255,204,0,0.92)',
+      'rgba(90,200,250,0.92)',
+      'rgba(255,149,0,0.92)'
+    ];
+    return Array.from({ length: count }, (_, i) => base[i % base.length]);
+  };
+
+  app.getAnalysisSnapshot = function(key = 'validade_despensa') {
+    const bundle = this.getAnalysisDataBundle(key);
+    return {
+      headline: bundle.headline || bundle.title || 'Painel pronto',
+      insight: bundle.insight || 'Leitura gerada com base nos dados atuais.',
+      action: bundle.action || 'Use os filtros acima para aprofundar a análise.'
+    };
+  };
+
+  app.analysisState = { key: 'validade_despensa', type: 'pie' };
+
+  app.renderAnalises = function(container) {
+    if (!container) container = document.getElementById('module-analises');
+    if (!container) return;
+
+    const analysisOptions = this.getAnalysisOptions();
+    const activeKey = this.analysisState?.key && analysisOptions[this.analysisState.key] ? this.analysisState.key : 'validade_despensa';
+    const defaultType = this.analysisState?.type || this.analysisPreferredDefaults[activeKey] || 'pie';
+    this.analysisState = { key: activeKey, type: defaultType };
+
+    const validity = this.getPantryValidityData();
+    const spend = Object.values(this.getCategoryDataFromListsSafe()).reduce((s, v) => s + (Number(v) || 0), 0);
+    const plannerUsage = this.getPlannerMealCountData();
+    const plannerCount = Object.values(plannerUsage).reduce((s, v) => s + (Number(v) || 0), 0);
+    const totalLists = Object.keys(this.state?.listas || {}).length;
+    const snap = this.getAnalysisSnapshot(activeKey);
+
+    const pills = Object.entries(analysisOptions).map(([key, cfg]) => `
+      <button type="button" class="analysis-360-pill ${key === activeKey ? 'active' : ''}" data-analysis-pill="${key}">
+        <i class="${cfg.icon}"></i> ${cfg.label}
+      </button>`).join('');
+
+    container.innerHTML = `
+      <section class="analysis-360-shell">
+        <div class="analysis-360-topbar">
+          <article class="analysis-360-hero">
+            <div>
+              <div class="analysis-360-eyebrow"><i class="fa-solid fa-chart-pie"></i> inteligência visual premium</div>
+              <h2 class="analysis-360-title">Clicou em Análises, já vê gráfico de cara.</h2>
+              <p class="analysis-360-subtitle">A primeira visão abre imediatamente com os itens da despensa por validade. Depois, com uma seta elegante, o cliente pode trocar tanto a análise quanto o tipo de gráfico e navegar pelo painel inteiro.</p>
+            </div>
+            <div class="analysis-360-chip-row">
+              <div class="analysis-360-chip"><i class="fa-solid fa-hourglass-half"></i> padrão inicial: validade da despensa</div>
+              <div class="analysis-360-chip"><i class="fa-solid fa-arrows-rotate"></i> troca rápida de análise e gráfico</div>
+              <div class="analysis-360-chip"><i class="fa-solid fa-mobile-screen-button"></i> pronto para mobile e desktop</div>
+            </div>
+          </article>
+
+          <aside class="analysis-360-summary">
+            <h3><i class="fa-solid fa-sparkles"></i> Leitura imediata</h3>
+            <div class="analysis-360-summary-list">
+              <div class="analysis-360-summary-item"><strong>${snap.headline}</strong><span>${snap.insight}</span></div>
+              <div class="analysis-360-summary-item"><strong>Próxima ação</strong><span>${snap.action}</span></div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="analysis-360-kpi-grid">
+          <article class="analysis-360-kpi"><small>Gasto mapeado nas listas</small><strong>R$ ${spend.toFixed(2)}</strong></article>
+          <article class="analysis-360-kpi"><small>Itens na despensa</small><strong>${(this.state?.despensa || []).length}</strong></article>
+          <article class="analysis-360-kpi"><small>Itens que pedem atenção</small><strong>${validity.vencidos + validity.vencendo}</strong></article>
+          <article class="analysis-360-kpi"><small>Usos de receitas no planejador</small><strong>${plannerCount}</strong></article>
+        </div>
+
+        <div class="analysis-360-main">
+          <article class="analysis-360-chart-card">
+            <div class="analysis-360-chart-head">
+              <h3><i class="fa-solid fa-chart-simple"></i> Painel principal</h3>
+              <div class="analysis-360-current-badge" id="analysis-current-badge"><i class="${analysisOptions[activeKey].icon}"></i> ${analysisOptions[activeKey].label}</div>
+            </div>
+
+            <div class="analysis-360-controls">
+              <div class="analysis-360-control">
+                <label for="analysis-data-select">O que analisar</label>
+                <div class="analysis-360-select-wrap">
+                  <select id="analysis-data-select" class="analysis-360-select">${this.getAnalysisSelectOptionsHTML(activeKey)}</select>
+                </div>
+              </div>
+              <div class="analysis-360-control">
+                <label for="analysis-type-select">Tipo de gráfico</label>
+                <div class="analysis-360-select-wrap">
+                  <select id="analysis-type-select" class="analysis-360-select">${this.getChartTypeOptionsHTML(defaultType)}</select>
+                </div>
+              </div>
+              <div class="analysis-360-arrow-group">
+                <button type="button" class="analysis-360-ghost-btn" id="analysis-prev-btn" aria-label="Análise anterior" title="Análise anterior"><i class="fa-solid fa-arrow-left"></i></button>
+                <button type="button" class="analysis-360-ghost-btn" id="analysis-next-btn" aria-label="Próxima análise" title="Próxima análise"><i class="fa-solid fa-arrow-right"></i></button>
+              </div>
+            </div>
+
+            <div class="analysis-360-canvas-wrap">
+              <canvas id="dynamic-analysis-chart"></canvas>
+            </div>
+
+            <div class="analysis-360-meta-grid">
+              <div class="analysis-360-meta-card"><strong>Visão imediata</strong><span id="analysis-meta-headline">${snap.headline}</span></div>
+              <div class="analysis-360-meta-card"><strong>O que isso diz</strong><span id="analysis-meta-insight">${snap.insight}</span></div>
+              <div class="analysis-360-meta-card"><strong>O que fazer agora</strong><span id="analysis-meta-action">${snap.action}</span></div>
+            </div>
+          </article>
+
+          <aside class="analysis-360-explorer">
+            <div class="analysis-360-explorer-head">
+              <h3><i class="fa-solid fa-compass-drafting"></i> Explorador 360°</h3>
+            </div>
+            <div class="analysis-360-pills">${pills}</div>
+            <div class="analysis-360-mini-list" id="analysis-mini-list">
+              <div class="analysis-360-mini-item"><i class="fa-solid fa-wallet"></i><div><strong>${totalLists} lista(s)</strong><span>base ativa para leitura financeira</span></div><em>listas</em></div>
+              <div class="analysis-360-mini-item"><i class="fa-solid fa-box-archive"></i><div><strong>${(this.state?.despensa || []).length} item(ns)</strong><span>estoque pronto para cruzar com validade</span></div><em>despensa</em></div>
+              <div class="analysis-360-mini-item"><i class="fa-solid fa-utensils"></i><div><strong>${Object.keys(this.state?.receitas || {}).length} receita(s)</strong><span>catálogo disponível para o planejador</span></div><em>receitas</em></div>
+              <div class="analysis-360-mini-item"><i class="fa-solid fa-calendar-week"></i><div><strong>${plannerCount} uso(s)</strong><span>atividade detectada no planejador</span></div><em>planejador</em></div>
+            </div>
+          </aside>
+        </div>
+      </section>`;
+
+    const dataSelect = document.getElementById('analysis-data-select');
+    const typeSelect = document.getElementById('analysis-type-select');
+    const keys = Object.keys(analysisOptions);
+
+    const syncPills = () => {
+      document.querySelectorAll('[data-analysis-pill]').forEach((btn) => btn.classList.toggle('active', btn.dataset.analysisPill === this.analysisState.key));
+    };
+
+    const applyAnalysisKey = (key) => {
+      const nextKey = analysisOptions[key] ? key : 'validade_despensa';
+      this.analysisState.key = nextKey;
+      const preferredType = this.analysisPreferredDefaults[nextKey] || this.analysisState.type || 'pie';
+      this.analysisState.type = preferredType;
+      if (dataSelect) dataSelect.value = nextKey;
+      if (typeSelect) typeSelect.innerHTML = this.getChartTypeOptionsHTML(preferredType), typeSelect.value = preferredType;
+      syncPills();
+      this.updateDynamicChart();
+    };
+
+    dataSelect?.addEventListener('change', (e) => {
+      this.analysisState.key = e.target.value;
+      if (typeSelect) {
+        const preferredType = this.analysisPreferredDefaults[e.target.value] || 'pie';
+        typeSelect.value = preferredType;
+        this.analysisState.type = preferredType;
+      }
+      syncPills();
+      this.updateDynamicChart();
+    });
+
+    typeSelect?.addEventListener('change', (e) => {
+      this.analysisState.type = e.target.value;
+      this.updateDynamicChart();
+    });
+
+    document.getElementById('analysis-prev-btn')?.addEventListener('click', () => {
+      const index = keys.indexOf(this.analysisState.key);
+      applyAnalysisKey(keys[(index - 1 + keys.length) % keys.length]);
+    });
+
+    document.getElementById('analysis-next-btn')?.addEventListener('click', () => {
+      const index = keys.indexOf(this.analysisState.key);
+      applyAnalysisKey(keys[(index + 1) % keys.length]);
+    });
+
+    document.querySelectorAll('[data-analysis-pill]').forEach((btn) => {
+      btn.addEventListener('click', () => applyAnalysisKey(btn.dataset.analysisPill));
+    });
+
+    this.updateDynamicChart();
+  };
+
+  app.updateDynamicChart = function() {
+    const canvas = document.getElementById('dynamic-analysis-chart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const dataType = document.getElementById('analysis-data-select')?.value || this.analysisState?.key || 'validade_despensa';
+    const chartType = document.getElementById('analysis-type-select')?.value || this.analysisState?.type || this.analysisPreferredDefaults[dataType] || 'pie';
+    this.analysisState = { key: dataType, type: chartType };
+
+    const bundle = this.getAnalysisDataBundle(dataType);
+    const labels = bundle.labels || [];
+    const values = (bundle.values || []).map((v) => Number(v) || 0);
+    const total = values.reduce((s, v) => s + v, 0);
+    const wrap = canvas.closest('.analysis-360-canvas-wrap');
+    if (!wrap) return;
+
+    wrap.querySelector('.analysis-360-empty')?.remove();
+    canvas.style.display = '';
+
+    if (this.dynamicAnalysisChart?.destroy) this.dynamicAnalysisChart.destroy();
+
+    const currentBadge = document.getElementById('analysis-current-badge');
+    const cfg = this.getAnalysisOptions()[dataType] || this.getAnalysisOptions().validade_despensa;
+    if (currentBadge) currentBadge.innerHTML = `<i class="${cfg.icon}"></i> ${cfg.label}`;
+    const snapshot = this.getAnalysisSnapshot(dataType);
+    const m1 = document.getElementById('analysis-meta-headline');
+    const m2 = document.getElementById('analysis-meta-insight');
+    const m3 = document.getElementById('analysis-meta-action');
+    if (m1) m1.textContent = snapshot.headline;
+    if (m2) m2.textContent = snapshot.insight;
+    if (m3) m3.textContent = snapshot.action;
+
+    if (!labels.length || total <= 0) {
+      canvas.style.display = 'none';
+      const empty = document.createElement('div');
+      empty.className = 'analysis-360-empty';
+      empty.innerHTML = '<div><strong>Sem dados suficientes nesta visão.</strong><span>Cadastre itens, preços, receitas ou planejamentos para liberar este gráfico.</span></div>';
+      wrap.appendChild(empty);
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    const colors = this.getAnalysisColorPalette(labels.length);
+
+    this.dynamicAnalysisChart = new Chart(ctx, {
+      type: chartType,
+      data: {
+        labels,
+        datasets: [{
+          label: bundle.datasetLabel || 'Dados',
+          data: values,
+          backgroundColor: colors,
+          borderColor: colors.map((c) => c.replace('0.92', '1')),
+          borderWidth: 1.5,
+          fill: chartType === 'line' || chartType === 'radar' ? false : true,
+          tension: 0.35,
+          pointRadius: chartType === 'line' ? 4 : 3,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: 8 },
+        plugins: {
+          legend: {
+            display: true,
+            position: chartType === 'bar' ? 'bottom' : 'right',
+            labels: {
+              color: '#f4f7fb',
+              usePointStyle: true,
+              boxWidth: 10,
+              padding: 14,
+              font: { size: 12 }
+            }
+          },
+          title: {
+            display: true,
+            text: bundle.title || cfg.label,
+            color: '#ffffff',
+            font: { size: 16, weight: '700' },
+            padding: { bottom: 18 }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(8,10,14,.95)',
+            borderColor: 'rgba(255,255,255,.10)',
+            borderWidth: 1,
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            callbacks: {
+              label: (context) => {
+                const raw = Number(context.parsed?.y ?? context.parsed?.r ?? context.raw ?? 0);
+                const idx = context.dataIndex ?? 0;
+                return bundle.valueFormatter ? bundle.valueFormatter(raw, idx, context.label) : `${raw}`;
+              }
+            }
+          }
+        },
+        scales: ['bar','line','radar'].includes(chartType) ? {
+          x: { ticks: { color: 'rgba(255,255,255,.78)' }, grid: { color: 'rgba(255,255,255,.06)' } },
+          y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,.78)' }, grid: { color: 'rgba(255,255,255,.06)' } },
+          r: chartType === 'radar' ? { angleLines: { color: 'rgba(255,255,255,.08)' }, grid: { color: 'rgba(255,255,255,.08)' }, pointLabels: { color: 'rgba(255,255,255,.78)' }, ticks: { color: 'rgba(255,255,255,.58)', backdropColor: 'transparent' }, suggestedMin: 0 } : undefined
+        } : {},
+        animation: { duration: 650, easing: 'easeOutQuart' }
+      }
+    });
+  };
+
+  setTimeout(() => {
+    try {
+      if (app.isAppMode && app.activeModule === 'analises') app.renderAnalises();
+    } catch (e) {}
+  }, 60);
+})();
+
+
+/* === ANALISES NEO DASHBOARD REBUILD | 2026-04-10 FINAL === */
+(() => {
+  const app = window.app;
+  if (!app) return;
+
+  const money = (v) => `R$ ${Number(v || 0).toFixed(2)}`;
+
+  app.analysisState = { key: 'validade_despensa', type: 'doughnut' };
+  app.analysisChartDefaults = {
+    validade_despensa: 'doughnut',
+    overview_360: 'radar',
+    gastos_categoria: 'polarArea',
+    gastos_lista: 'bar',
+    estoque_despensa: 'doughnut',
+    uso_receitas: 'bar',
+    rotina_semana: 'line'
+  };
+
+  app.getAnalysisOptions = function() {
+    return {
+      validade_despensa: { icon: 'fa-solid fa-hourglass-half', label: 'Validade da despensa', note: 'Veja o que está vencido, vencendo e seguro.' },
+      overview_360: { icon: 'fa-solid fa-globe', label: 'Visão 360°', note: 'Conecta listas, despensa, receitas e planejador.' },
+      gastos_categoria: { icon: 'fa-solid fa-layer-group', label: 'Gastos por categoria', note: 'Mostra a concentração do orçamento.' },
+      gastos_lista: { icon: 'fa-solid fa-cart-shopping', label: 'Gastos por lista', note: 'Compara o peso financeiro de cada lista.' },
+      estoque_despensa: { icon: 'fa-solid fa-boxes-stacked', label: 'Nível de estoque', note: 'Separa baixo, médio e alto estoque.' },
+      uso_receitas: { icon: 'fa-solid fa-utensils', label: 'Uso de receitas', note: 'Identifica as receitas mais usadas.' },
+      rotina_semana: { icon: 'fa-solid fa-calendar-days', label: 'Carga semanal', note: 'Mostra os dias mais carregados do planejador.' }
+    };
+  };
+
+  app.getAnalysisSelectOptionsHTML = function(selectedKey = 'validade_despensa') {
+    return Object.entries(this.getAnalysisOptions())
+      .map(([key, cfg]) => `<option value="${key}" ${key === selectedKey ? 'selected' : ''}>${cfg.label}</option>`)
+      .join('');
+  };
+
+  app.getChartTypeOptionsHTML = function(selected = 'doughnut') {
+    const opts = [
+      ['doughnut', 'Rosca'],
+      ['pie', 'Pizza'],
+      ['bar', 'Barras'],
+      ['line', 'Linha'],
+      ['polarArea', 'Polar'],
+      ['radar', 'Radar']
+    ];
+    return opts.map(([v, label]) => `<option value="${v}" ${v === selected ? 'selected' : ''}>${label}</option>`).join('');
+  };
+
+  app.getAnalysisColorPalette = function(size = 6) {
+    const base = [
+      'rgba(54, 110, 255, 0.92)',
+      'rgba(255, 54, 145, 0.92)',
+      'rgba(112, 81, 255, 0.92)',
+      'rgba(66, 205, 255, 0.92)',
+      'rgba(255, 125, 191, 0.92)',
+      'rgba(132, 97, 255, 0.92)',
+      'rgba(31, 167, 255, 0.92)'
+    ];
+    return Array.from({length: size}, (_, i) => base[i % base.length]);
+  };
+
+  app.getPantryValidityData = function() {
+    const today = new Date();
+    const result = { Vencidos: 0, 'Vencendo em 7 dias': 0, Seguros: 0, 'Sem validade': 0 };
+    (this.state?.despensa || []).forEach((item) => {
+      if (!item.validade) {
+        result['Sem validade'] += 1;
+        return;
+      }
+      const d = new Date(`${item.validade}T12:00:00`);
+      if (Number.isNaN(d.getTime())) {
+        result['Sem validade'] += 1;
+        return;
+      }
+      const diff = Math.ceil((d - today) / 86400000);
+      if (diff < 0) result['Vencidos'] += 1;
+      else if (diff <= 7) result['Vencendo em 7 dias'] += 1;
+      else result['Seguros'] += 1;
+    });
+    return result;
+  };
+
+  app.getPantryStockBandsData = function() {
+    const result = { 'Baixo estoque': 0, 'Estoque médio': 0, 'Estoque alto': 0 };
+    (this.state?.despensa || []).forEach((item) => {
+      const stock = parseInt(item.stock || 0, 10);
+      if (stock <= 25) result['Baixo estoque'] += 1;
+      else if (stock <= 75) result['Estoque médio'] += 1;
+      else result['Estoque alto'] += 1;
+    });
+    return result;
+  };
+
+  app.getCategoryDataFromListsSafe = function() {
+    const result = {};
+    Object.values(this.state?.listas || {}).forEach((lista, idx) => {
+      (lista.items || []).forEach((item) => {
+        const key = item.categoria || item.category || item.tipo || `Grupo ${idx + 1}`;
+        result[key] = (result[key] || 0) + ((parseFloat(item.qtd) || 0) * (parseFloat(item.valor) || 0));
+      });
+    });
+    return result;
+  };
+
+  app.getListTotalsData = function() {
+    const result = {};
+    Object.values(this.state?.listas || {}).forEach((lista, idx) => {
+      result[lista.nome || `Lista ${idx + 1}`] = (lista.items || []).reduce((sum, item) => sum + ((parseFloat(item.qtd) || 0) * (parseFloat(item.valor) || 0)), 0);
+    });
+    return result;
+  };
+
+  app.getPlannerMealCountData = function() {
+    const result = {};
+    Object.values(this.state?.planejador || {}).forEach((day) => {
+      Object.values(day || {}).forEach((meal) => {
+        if (!meal || !meal.id) return;
+        const recipe = this.state?.receitas?.[meal.id];
+        const label = recipe?.name || meal.nome || `Receita ${meal.id}`;
+        result[label] = (result[label] || 0) + 1;
+      });
+    });
+    return result;
+  };
+
+  app.getPlannerWeekLoadData = function() {
+    const order = [
+      ['segunda', 'Seg'], ['terca', 'Ter'], ['terça', 'Ter'], ['quarta', 'Qua'], ['quinta', 'Qui'], ['sexta', 'Sex'], ['sabado', 'Sáb'], ['sábado', 'Sáb'], ['domingo', 'Dom'],
+      ['seg', 'Seg'], ['ter', 'Ter'], ['qua', 'Qua'], ['qui', 'Qui'], ['sex', 'Sex'], ['sab', 'Sáb'], ['dom', 'Dom']
+    ];
+    const map = { Seg: 0, Ter: 0, Qua: 0, Qui: 0, Sex: 0, 'Sáb': 0, Dom: 0 };
+    Object.entries(this.state?.planejador || {}).forEach(([key, meals]) => {
+      const found = order.find(([test]) => String(key).toLowerCase().includes(test));
+      const day = found ? found[1] : key;
+      const count = Object.values(meals || {}).filter(Boolean).length;
+      if (map[day] == null) map[day] = 0;
+      map[day] += count;
+    });
+    return map;
+  };
+
+  app.getAnalysisDataBundle = function(key = 'validade_despensa') {
+    const toBundle = (title, source, datasetLabel, formatter) => {
+      const entries = Object.entries(source || {}).filter(([, v]) => Number(v) > 0);
+      return {
+        title,
+        datasetLabel,
+        labels: entries.map(([k]) => k),
+        values: entries.map(([, v]) => Number(v) || 0),
+        valueFormatter: formatter
+      };
+    };
+    switch (key) {
+      case 'validade_despensa':
+        return toBundle('Despensa por validade', this.getPantryValidityData(), 'Itens', (v) => `${v} item(ns)`);
+      case 'overview_360': {
+        const validity = this.getPantryValidityData();
+        const listsSpend = Object.values(this.getListTotalsData()).reduce((a, b) => a + b, 0);
+        const plannerUse = Object.values(this.getPlannerMealCountData()).reduce((a, b) => a + b, 0);
+        const recipes = Object.keys(this.state?.receitas || {}).length;
+        const pantry = (this.state?.despensa || []).length;
+        return {
+          title: 'Visão 360° do aplicativo',
+          datasetLabel: 'Painel',
+          labels: ['Gastos', 'Despensa', 'Alertas', 'Receitas', 'Planejador'],
+          values: [listsSpend, pantry, (validity['Vencidos'] || 0) + (validity['Vencendo em 7 dias'] || 0), recipes, plannerUse],
+          valueFormatter: (v, i, label) => label === 'Gastos' ? money(v) : `${v}`
+        };
+      }
+      case 'gastos_categoria':
+        return toBundle('Gastos por categoria', this.getCategoryDataFromListsSafe(), 'Valor', (v) => money(v));
+      case 'gastos_lista':
+        return toBundle('Gastos por lista', this.getListTotalsData(), 'Valor', (v) => money(v));
+      case 'estoque_despensa':
+        return toBundle('Nível de estoque da despensa', this.getPantryStockBandsData(), 'Itens', (v) => `${v} item(ns)`);
+      case 'uso_receitas':
+        return toBundle('Receitas mais usadas', this.getPlannerMealCountData(), 'Usos', (v) => `${v} uso(s)`);
+      case 'rotina_semana':
+        return toBundle('Carga semanal do planejador', this.getPlannerWeekLoadData(), 'Refeições', (v) => `${v} refeição(ões)`);
+      default:
+        return toBundle('Despensa por validade', this.getPantryValidityData(), 'Itens', (v) => `${v} item(ns)`);
+    }
+  };
+
+  app.getAnalysisSnapshot = function(key = 'validade_despensa') {
+    const bundle = this.getAnalysisDataBundle(key);
+    const max = Math.max(...bundle.values, 0);
+    const idx = bundle.values.indexOf(max);
+    const topLabel = idx >= 0 ? bundle.labels[idx] : 'Sem dados';
+    const total = bundle.values.reduce((a, b) => a + b, 0);
+    const map = {
+      validade_despensa: {
+        headline: total ? `${total} item(ns) classificados na despensa` : 'Sem itens suficientes para classificar',
+        insight: total ? `${topLabel} é a faixa dominante agora.` : 'Cadastre itens com validade para liberar esta leitura.',
+        action: 'Priorize vencidos e vencendo primeiro.'
+      },
+      overview_360: {
+        headline: total ? `${bundle.labels.length} áreas cruzadas em uma leitura única` : 'Visão geral vazia',
+        insight: total ? `${topLabel} está puxando mais atenção no painel.` : 'Adicione movimentação em listas, despensa e planejador.',
+        action: 'Use esta visão para decidir a próxima prioridade.'
+      },
+      gastos_categoria: {
+        headline: total ? `${money(total)} mapeados por categoria` : 'Nenhum gasto categorizado',
+        insight: total ? `${topLabel} concentra a maior fatia do gasto.` : 'Preencha preços nas listas para abrir esta análise.',
+        action: 'Corte excessos na categoria líder.'
+      },
+      gastos_lista: {
+        headline: total ? `${Object.keys(this.state?.listas || {}).length} lista(s) comparadas` : 'Sem listas com valor',
+        insight: total ? `${topLabel} é a lista mais pesada financeiramente.` : 'Adicione itens com preço nas listas.',
+        action: 'Revise a lista mais cara primeiro.'
+      },
+      estoque_despensa: {
+        headline: total ? `${total} item(ns) com nível de estoque lido` : 'Sem dados de estoque',
+        insight: total ? `${topLabel} é a faixa dominante do estoque.` : 'Atualize os níveis de estoque na despensa.',
+        action: 'Equilibre excesso e risco de falta.'
+      },
+      uso_receitas: {
+        headline: total ? `${total} uso(s) de receitas no planejador` : 'Nenhum uso de receita detectado',
+        insight: total ? `${topLabel} é a receita mais reaproveitada.` : 'Planeje refeições para ativar esta leitura.',
+        action: 'Repita o que funciona e varie o resto.'
+      },
+      rotina_semana: {
+        headline: total ? `${total} refeição(ões) distribuídas na semana` : 'Semana ainda sem carga',
+        insight: total ? `${topLabel} é o dia mais carregado.` : 'Adicione refeições ao planejador.',
+        action: 'Espalhe melhor a carga entre os dias.'
+      }
+    };
+    return map[key] || map.validade_despensa;
+  };
+
+  app.renderAnalises = function(container) {
+    if (!container) container = document.getElementById('module-analises');
+    if (!container) return;
+
+    const userName = this.state?.user?.nome || 'Seu Painel';
+    const options = this.getAnalysisOptions();
+    const keys = Object.keys(options);
+    const activeKey = this.analysisState?.key || 'validade_despensa';
+    const activeType = this.analysisState?.type || this.analysisChartDefaults[activeKey] || 'doughnut';
+    const snapshot = this.getAnalysisSnapshot(activeKey);
+    const validity = this.getPantryValidityData();
+    const listTotal = Object.values(this.getListTotalsData()).reduce((a, b) => a + b, 0);
+    const plannerCount = Object.values(this.getPlannerMealCountData()).reduce((a, b) => a + b, 0);
+    const pills = keys.map((key) => `<button type="button" class="neo-analysis-pill ${key === activeKey ? 'active' : ''}" data-analysis-pill="${key}"><i class="${options[key].icon}"></i><span>${options[key].label}</span></button>`).join('');
+
+    container.innerHTML = `
+      <section class="neo-analysis-shell">
+        <header class="neo-analysis-topbar">
+          <div class="neo-analysis-profile">
+            <div class="neo-analysis-avatar"><i class="fa-solid fa-user"></i></div>
+            <div>
+              <strong>${this.escapeHtml ? this.escapeHtml(userName) : userName}</strong>
+              <span>Central de análises do Alimente Fácil</span>
+            </div>
+          </div>
+          <div class="neo-analysis-status">
+            <span><i class="fa-solid fa-circle"></i> visão ativa</span>
+            <strong id="neo-analysis-badge"><i class="${options[activeKey].icon}"></i> ${options[activeKey].label}</strong>
+          </div>
+        </header>
+
+        <div class="neo-analysis-stage">
+          <div class="neo-analysis-primary">
+            <div class="neo-analysis-panel neo-analysis-main-panel">
+              <div class="neo-panel-header">
+                <div>
+                  <small>Análise principal</small>
+                  <h3 id="neo-analysis-title">${options[activeKey].label}</h3>
+                </div>
+                <div class="neo-analysis-arrow-group">
+                  <button type="button" class="neo-arrow-btn" id="analysis-prev-btn" aria-label="Análise anterior"><i class="fa-solid fa-chevron-left"></i></button>
+                  <button type="button" class="neo-arrow-btn" id="analysis-next-btn" aria-label="Próxima análise"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+              </div>
+
+              <div class="neo-analysis-controlbar">
+                <div class="neo-control-field">
+                  <label for="analysis-data-select">Análise</label>
+                  <div class="neo-select-wrap">
+                    <select id="analysis-data-select">${this.getAnalysisSelectOptionsHTML(activeKey)}</select>
+                  </div>
+                </div>
+                <div class="neo-control-field">
+                  <label for="analysis-type-select">Gráfico</label>
+                  <div class="neo-select-wrap">
+                    <select id="analysis-type-select">${this.getChartTypeOptionsHTML(activeType)}</select>
+                  </div>
+                </div>
+                <button type="button" class="neo-cycle-btn" id="analysis-cycle-type-btn"><i class="fa-solid fa-shuffle"></i><span>Trocar gráfico</span></button>
+              </div>
+
+              <div class="neo-chart-hero">
+                <div class="neo-chart-hero-canvas">
+                  <canvas id="dynamic-analysis-chart"></canvas>
+                </div>
+                <div class="neo-chart-center-copy">
+                  <div class="neo-center-orb"></div>
+                  <div class="neo-center-content">
+                    <small>Leitura imediata</small>
+                    <strong id="analysis-meta-headline">${snapshot.headline}</strong>
+                    <span id="analysis-meta-insight">${snapshot.insight}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="neo-analysis-side">
+            <div class="neo-analysis-panel neo-insight-stack">
+              <div class="neo-panel-header compact"><h3>Prioridade</h3></div>
+              <div class="neo-mini-kpi-grid">
+                <article class="neo-mini-kpi"><small>Listas</small><strong>${money(listTotal)}</strong></article>
+                <article class="neo-mini-kpi"><small>Despensa</small><strong>${(this.state?.despensa || []).length}</strong></article>
+                <article class="neo-mini-kpi"><small>Alertas</small><strong>${(validity['Vencidos']||0) + (validity['Vencendo em 7 dias']||0)}</strong></article>
+                <article class="neo-mini-kpi"><small>Planejador</small><strong>${plannerCount}</strong></article>
+              </div>
+              <div class="neo-priority-copy">
+                <strong>O que fazer agora</strong>
+                <p id="analysis-meta-action">${snapshot.action}</p>
+              </div>
+            </div>
+
+            <div class="neo-analysis-panel neo-pill-panel">
+              <div class="neo-panel-header compact"><h3>Explorador 360°</h3></div>
+              <div class="neo-pill-grid">${pills}</div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="neo-analysis-bottom">
+          <article class="neo-analysis-panel neo-secondary-card">
+            <div class="neo-panel-header compact"><h3>Resumo operacional</h3></div>
+            <div class="neo-summary-rows">
+              <div class="neo-summary-row"><span>Visão atual</span><strong>${options[activeKey].label}</strong></div>
+              <div class="neo-summary-row"><span>Leitura</span><strong id="neo-analysis-note">${options[activeKey].note}</strong></div>
+              <div class="neo-summary-row"><span>Gráfico</span><strong id="neo-analysis-chart-type">${document ? '' : ''}</strong></div>
+            </div>
+          </article>
+          <article class="neo-analysis-panel neo-secondary-card">
+            <div class="neo-panel-header compact"><h3>Atalho inteligente</h3></div>
+            <div class="neo-chef-actions">${this.buildChefButton ? this.buildChefButton('Faça uma leitura 360 graus do meu aplicativo e me diga prioridades práticas.', 'Chef IA', 'chef-glass-btn') : ''}</div>
+          </article>
+        </div>
+      </section>`;
+
+    const dataSelect = document.getElementById('analysis-data-select');
+    const typeSelect = document.getElementById('analysis-type-select');
+
+    const syncPills = () => {
+      document.querySelectorAll('[data-analysis-pill]').forEach((btn) => btn.classList.toggle('active', btn.dataset.analysisPill === this.analysisState.key));
+    };
+
+    const applyAnalysis = (key) => {
+      const next = options[key] ? key : 'validade_despensa';
+      this.analysisState.key = next;
+      const defaultType = this.analysisChartDefaults[next] || 'doughnut';
+      this.analysisState.type = defaultType;
+      if (dataSelect) dataSelect.value = next;
+      if (typeSelect) {
+        typeSelect.innerHTML = this.getChartTypeOptionsHTML(defaultType);
+        typeSelect.value = defaultType;
+      }
+      syncPills();
+      this.updateDynamicChart();
+    };
+
+    dataSelect?.addEventListener('change', (e) => applyAnalysis(e.target.value));
+    typeSelect?.addEventListener('change', (e) => { this.analysisState.type = e.target.value; this.updateDynamicChart(); });
+    document.getElementById('analysis-cycle-type-btn')?.addEventListener('click', () => {
+      if (!typeSelect) return;
+      const order = ['doughnut', 'pie', 'bar', 'line', 'polarArea', 'radar'];
+      let index = order.indexOf(typeSelect.value);
+      index = (index + 1) % order.length;
+      typeSelect.value = order[index];
+      this.analysisState.type = order[index];
+      this.updateDynamicChart();
+    });
+    document.getElementById('analysis-prev-btn')?.addEventListener('click', () => {
+      const index = keys.indexOf(this.analysisState.key);
+      applyAnalysis(keys[(index - 1 + keys.length) % keys.length]);
+    });
+    document.getElementById('analysis-next-btn')?.addEventListener('click', () => {
+      const index = keys.indexOf(this.analysisState.key);
+      applyAnalysis(keys[(index + 1) % keys.length]);
+    });
+    document.querySelectorAll('[data-analysis-pill]').forEach((btn) => btn.addEventListener('click', () => applyAnalysis(btn.dataset.analysisPill)));
+
+    this.updateDynamicChart();
+  };
+
+  app.updateDynamicChart = function() {
+    const canvas = document.getElementById('dynamic-analysis-chart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const key = document.getElementById('analysis-data-select')?.value || this.analysisState.key || 'validade_despensa';
+    const type = document.getElementById('analysis-type-select')?.value || this.analysisState.type || this.analysisChartDefaults[key] || 'doughnut';
+    this.analysisState = { key, type };
+
+    const cfg = this.getAnalysisOptions()[key] || this.getAnalysisOptions().validade_despensa;
+    const bundle = this.getAnalysisDataBundle(key);
+    const labels = bundle.labels || [];
+    const values = (bundle.values || []).map((v) => Number(v) || 0);
+    const total = values.reduce((a, b) => a + b, 0);
+
+    if (this.dynamicAnalysisChart?.destroy) this.dynamicAnalysisChart.destroy();
+
+    const badge = document.getElementById('neo-analysis-badge');
+    const title = document.getElementById('neo-analysis-title');
+    const note = document.getElementById('neo-analysis-note');
+    const chartTypeText = document.getElementById('neo-analysis-chart-type');
+    const snap = this.getAnalysisSnapshot(key);
+    if (badge) badge.innerHTML = `<i class="${cfg.icon}"></i> ${cfg.label}`;
+    if (title) title.textContent = cfg.label;
+    if (note) note.textContent = cfg.note;
+    if (chartTypeText) chartTypeText.textContent = type;
+    const h = document.getElementById('analysis-meta-headline');
+    const i = document.getElementById('analysis-meta-insight');
+    const a = document.getElementById('analysis-meta-action');
+    if (h) h.textContent = snap.headline;
+    if (i) i.textContent = snap.insight;
+    if (a) a.textContent = snap.action;
+
+    const wrap = canvas.parentElement;
+    wrap.querySelector('.neo-analysis-empty')?.remove();
+    canvas.style.display = '';
+
+    if (!labels.length || total <= 0) {
+      canvas.style.display = 'none';
+      const empty = document.createElement('div');
+      empty.className = 'neo-analysis-empty';
+      empty.innerHTML = '<div><strong>Sem dados suficientes nesta visão.</strong><span>Cadastre listas, despensa, receitas ou planejamentos para liberar este painel.</span></div>';
+      wrap.appendChild(empty);
+      return;
+    }
+
+    const colors = this.getAnalysisColorPalette(labels.length);
+    const ctx = canvas.getContext('2d');
+    this.dynamicAnalysisChart = new Chart(ctx, {
+      type,
+      data: {
+        labels,
+        datasets: [{
+          label: bundle.datasetLabel || cfg.label,
+          data: values,
+          backgroundColor: colors,
+          borderColor: colors.map((c) => c.replace('0.92', '1')),
+          borderWidth: 2,
+          pointRadius: type === 'line' ? 4 : 3,
+          pointHoverRadius: 6,
+          tension: 0.35,
+          fill: type === 'line' ? true : false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: type === 'bar' || type === 'line' ? 'bottom' : 'right',
+            labels: { color: '#eef3ff', usePointStyle: true, boxWidth: 10, padding: 16 }
+          },
+          title: {
+            display: true,
+            text: bundle.title || cfg.label,
+            color: '#ffffff',
+            font: { size: 18, weight: '700' },
+            padding: { bottom: 20 }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(10, 12, 26, 0.96)',
+            borderColor: 'rgba(255,255,255,.12)',
+            borderWidth: 1,
+            callbacks: {
+              label: (context) => bundle.valueFormatter ? bundle.valueFormatter(Number(context.parsed?.y ?? context.parsed?.r ?? context.raw ?? 0), context.dataIndex, context.label) : `${context.raw}`
+            }
+          }
+        },
+        scales: ['bar', 'line'].includes(type) ? {
+          x: { ticks: { color: 'rgba(238,243,255,.8)' }, grid: { color: 'rgba(255,255,255,.06)' } },
+          y: { beginAtZero: true, ticks: { color: 'rgba(238,243,255,.8)' }, grid: { color: 'rgba(255,255,255,.06)' } }
+        } : type === 'radar' ? {
+          r: {
+            angleLines: { color: 'rgba(255,255,255,.08)' },
+            grid: { color: 'rgba(255,255,255,.08)' },
+            pointLabels: { color: 'rgba(238,243,255,.85)' },
+            ticks: { color: 'rgba(238,243,255,.55)', backdropColor: 'transparent' },
+            suggestedMin: 0
+          }
+        } : {},
+        animation: { duration: 650, easing: 'easeOutQuart' }
+      }
+    });
+  };
+
+  setTimeout(() => {
+    try {
+      if (app.isAppMode && app.activeModule === 'analises') app.renderAnalises();
+    } catch (e) {}
+  }, 80);
+})();
+
+
+/* === HOTFIX: aba Análises em branco, sem mexer no restante do app === */
+(function(){
+  document.addEventListener('DOMContentLoaded', function(){
+    const app = window.app;
+    if (!app) return;
+
+    const blankHtml = '<div class="analysis-blank-state" aria-label="Aba Análises vazia"></div>';
+
+    app.renderAnalises = function(container) {
+      if (!container) container = document.getElementById('module-analises');
+      if (!container) return;
+      if (this.charts && this.charts.dynamicAnalysisChart) {
+        try { this.charts.dynamicAnalysisChart.destroy(); } catch (e) {}
+        this.charts.dynamicAnalysisChart = null;
+      }
+      container.innerHTML = blankHtml;
+    };
+
+    app.renderAnalysisDetailDesktop = function() {
+      const container = document.getElementById('analises-detail-desktop');
+      if (container) container.innerHTML = '';
+    };
+
+    app.openAnalysisDetailModal = function() {
+      return;
+    };
+
+    app.updateDynamicChart = function() {
+      return;
+    };
+
+    if (app.isAppMode && app.activeModule === 'analises') {
+      app.renderAnalises();
+    }
+  });
+})();
+
+
+/* === REBUILD REAL: Aba Análises refeita do zero, mobile-first e integrada ao layout === */
+(function(){
+  document.addEventListener('DOMContentLoaded', function(){
+    const app = window.app;
+    if (!app) return;
+
+    app.analysisV3State = {
+      analysisKey: 'validade_despensa',
+      chartType: 'doughnut'
+    };
+
+    app.getAnalysisV3Order = function(){
+      return ['validade_despensa', 'estoque_despensa', 'gastos_categoria', 'gastos_lista', 'uso_receitas', 'carga_semanal', 'visao_360'];
+    };
+
+    app.getAnalysisV3Meta = function(){
+      return {
+        validade_despensa: { title: 'Validade da despensa', subtitle: 'Itens por faixa de validade', icon: 'fa-solid fa-hourglass-half', defaultType: 'doughnut' },
+        estoque_despensa: { title: 'Nível de estoque', subtitle: 'Percentual dos itens da despensa', icon: 'fa-solid fa-boxes-stacked', defaultType: 'bar' },
+        gastos_categoria: { title: 'Gastos por categoria', subtitle: 'Peso financeiro das listas', icon: 'fa-solid fa-layer-group', defaultType: 'doughnut' },
+        gastos_lista: { title: 'Gastos por lista', subtitle: 'Comparativo entre listas salvas', icon: 'fa-solid fa-list-check', defaultType: 'bar' },
+        uso_receitas: { title: 'Uso de receitas', subtitle: 'Receitas mais usadas no planejador', icon: 'fa-solid fa-utensils', defaultType: 'bar' },
+        carga_semanal: { title: 'Carga semanal', subtitle: 'Refeições distribuídas por dia', icon: 'fa-solid fa-calendar-week', defaultType: 'line' },
+        visao_360: { title: 'Leitura 360°', subtitle: 'Pulso geral do aplicativo', icon: 'fa-solid fa-satellite-dish', defaultType: 'radar' }
+      };
+    };
+
+    app.analysisV3Colors = function(alpha = 0.92){
+      return [
+        `rgba(0,242,234,${alpha})`,
+        `rgba(252,235,154,${alpha})`,
+        `rgba(52,199,89,${alpha})`,
+        `rgba(175,82,222,${alpha})`,
+        `rgba(255,204,0,${alpha})`,
+        `rgba(255,59,48,${alpha})`
+      ];
+    };
+
+    app.getAnalysisV3Payload = function(key){
+      const meta = this.getAnalysisV3Meta()[key] || this.getAnalysisV3Meta().validade_despensa;
+      const currency = (n) => `R$ ${Number(n || 0).toFixed(2)}`;
+      const orderBreakdown = (labels, values, formatter = v => `${v}`) => labels.map((label, idx) => ({ label, value: values[idx], display: formatter(values[idx]) }));
+
+      if (key === 'validade_despensa') {
+        const data = this.getPantryValidityData();
+        const labels = ['Vencidos', 'Vence em 7 dias', 'Em dia'];
+        const values = [data.vencidos, data.vencendo, data.ok];
+        const total = values.reduce((a,b) => a+b, 0);
+        return {
+          ...meta,
+          labels,
+          values,
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Itens',
+          centerValue: `${total}`,
+          centerSub: total === 1 ? 'item na despensa' : 'itens na despensa',
+          kpis: [
+            { label: 'Vencidos', value: `${data.vencidos}` },
+            { label: 'Atenção', value: `${data.vencendo}` },
+            { label: 'Em dia', value: `${data.ok}` },
+            { label: 'Total', value: `${total}` }
+          ],
+          breakdown: orderBreakdown(labels, values, v => `${v} item(ns)`),
+          insight: data.vencidos > 0 ? 'Sua prioridade deve ser consumir ou revisar os itens vencidos agora.' : (data.vencendo > 0 ? 'Existem itens perto do vencimento. Vale priorizar essas receitas.' : 'Sua despensa está estável no momento.')
+        };
+      }
+
+      if (key === 'estoque_despensa') {
+        const labels = [];
+        const values = [];
+        (this.state.despensa || []).forEach(item => {
+          labels.push(item.name);
+          values.push(Number(item.stock || 0));
+        });
+        const avg = values.length ? values.reduce((a,b)=>a+b,0) / values.length : 0;
+        return {
+          ...meta,
+          labels: labels.length ? labels : ['Sem itens'],
+          values: values.length ? values : [0],
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Média',
+          centerValue: `${Math.round(avg)}%`,
+          centerSub: 'nível médio de estoque',
+          kpis: [
+            { label: 'Itens', value: `${labels.length}` },
+            { label: 'Média', value: `${Math.round(avg)}%` },
+            { label: 'Baixos', value: `${values.filter(v => v <= 25).length}` },
+            { label: 'Cheios', value: `${values.filter(v => v >= 75).length}` }
+          ],
+          breakdown: orderBreakdown(labels.length ? labels : ['Sem itens'], values.length ? values : [0], v => `${v}%`),
+          insight: values.filter(v => v <= 25).length ? 'Há itens com estoque baixo. Vale acionar reposição nas listas.' : 'Os níveis de estoque estão confortáveis.'
+        };
+      }
+
+      if (key === 'gastos_categoria') {
+        const data = this.getCategoryDataFromLists();
+        const labels = Object.keys(data);
+        const values = Object.values(data);
+        const total = values.reduce((a,b)=>a+b,0);
+        const topIdx = values.length ? values.indexOf(Math.max(...values)) : -1;
+        return {
+          ...meta,
+          labels: labels.length ? labels : ['Sem dados'],
+          values: values.length ? values : [0],
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Total',
+          centerValue: currency(total),
+          centerSub: topIdx >= 0 ? `maior peso em ${labels[topIdx]}` : 'sem gasto mapeado',
+          kpis: [
+            { label: 'Categorias', value: `${labels.length}` },
+            { label: 'Total', value: currency(total) },
+            { label: 'Maior grupo', value: topIdx >= 0 ? labels[topIdx] : '—' },
+            { label: 'Listas', value: `${Object.keys(this.state.listas || {}).length}` }
+          ],
+          breakdown: orderBreakdown(labels.length ? labels : ['Sem dados'], values.length ? values : [0], currency),
+          insight: topIdx >= 0 ? `${labels[topIdx]} concentra a maior parte do custo atual.` : 'Adicione valores às listas para liberar esta leitura.'
+        };
+      }
+
+      if (key === 'gastos_lista') {
+        const labels = [];
+        const values = [];
+        Object.values(this.state.listas || {}).forEach(lista => {
+          labels.push(lista.nome || 'Lista');
+          values.push((lista.items || []).reduce((acc, item) => acc + ((parseFloat(item.qtd) || 0) * (parseFloat(item.valor) || 0)), 0));
+        });
+        const total = values.reduce((a,b)=>a+b,0);
+        return {
+          ...meta,
+          labels: labels.length ? labels : ['Sem listas'],
+          values: values.length ? values : [0],
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Listas',
+          centerValue: `${labels.length}`,
+          centerSub: `total de ${currency(total)}`,
+          kpis: [
+            { label: 'Total', value: currency(total) },
+            { label: 'Listas', value: `${labels.length}` },
+            { label: 'Maior', value: labels.length ? labels[values.indexOf(Math.max(...values))] : '—' },
+            { label: 'Orçamento', value: currency(this.state.orcamento?.total || 0) }
+          ],
+          breakdown: orderBreakdown(labels.length ? labels : ['Sem listas'], values.length ? values : [0], currency),
+          insight: total > (this.state.orcamento?.total || 0) ? 'O total das listas já ultrapassa o orçamento definido.' : 'O total das listas ainda cabe no orçamento configurado.'
+        };
+      }
+
+      if (key === 'uso_receitas') {
+        const data = this.getPlannerMealCountData();
+        const labels = Object.keys(data);
+        const values = Object.values(data);
+        const total = values.reduce((a,b)=>a+b,0);
+        return {
+          ...meta,
+          labels: labels.length ? labels : ['Sem receitas planejadas'],
+          values: values.length ? values : [0],
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Usos',
+          centerValue: `${total}`,
+          centerSub: 'total de encaixes no planejador',
+          kpis: [
+            { label: 'Receitas', value: `${labels.length}` },
+            { label: 'Usos', value: `${total}` },
+            { label: 'Top', value: labels.length ? labels[values.indexOf(Math.max(...values))] : '—' },
+            { label: 'Dias ativos', value: `${Object.keys(this.state.planejador || {}).length}` }
+          ],
+          breakdown: orderBreakdown(labels.length ? labels : ['Sem receitas planejadas'], values.length ? values : [0], v => `${v} uso(s)`),
+          insight: labels.length ? 'Seu planejador já mostra um padrão claro de repetição de receitas.' : 'Quando você começar a planejar refeições, esta leitura ganha vida.'
+        };
+      }
+
+      if (key === 'carga_semanal') {
+        const map = this.getPlannerDaysMap();
+        const labels = Object.keys(map).map(k => map[k].slice(0,3));
+        const values = Object.keys(map).map(dayKey => {
+          const meals = this.state.planejador?.[dayKey] || {};
+          return ['cafe','almoco','jantar'].filter(slot => meals[slot]).length;
+        });
+        const total = values.reduce((a,b)=>a+b,0);
+        return {
+          ...meta,
+          labels,
+          values,
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Semana',
+          centerValue: `${total}`,
+          centerSub: 'refeições planejadas',
+          kpis: [
+            { label: 'Total', value: `${total}` },
+            { label: 'Pico', value: `${Math.max(...values, 0)}` },
+            { label: 'Dias ativos', value: `${values.filter(v => v > 0).length}` },
+            { label: 'Meta', value: '21' }
+          ],
+          breakdown: orderBreakdown(labels, values, v => `${v} refeição(ões)`),
+          insight: total ? 'Você já consegue ver os dias mais carregados da sua semana.' : 'Seu planejador ainda está vazio. Adicione refeições para abrir esta análise.'
+        };
+      }
+
+      const validade = this.getPantryValidityData();
+      const categorias = this.getCategoryDataFromLists();
+      const receitas = this.getPlannerMealCountData();
+      const plannerDays = this.getPlannerDaysMap();
+      const totalPantry = (this.state.despensa || []).length;
+      const totalLists = Object.values(this.state.listas || {}).reduce((acc, lista) => acc + ((lista.items || []).length), 0);
+      const totalPlanner = Object.keys(this.state.planejador || {}).reduce((acc, day) => acc + ['cafe','almoco','jantar'].filter(slot => this.state.planejador?.[day]?.[slot]).length, 0);
+      const totalRecipes = Object.keys(this.state.receitas || {}).length;
+      const labels = ['Despensa', 'Listas', 'Receitas', 'Planejador', 'Atenção validade', 'Categorias'];
+      const values = [totalPantry, totalLists, totalRecipes, totalPlanner, validade.vencidos + validade.vencendo, Object.keys(categorias).length];
+      return {
+        ...meta,
+        labels,
+        values,
+        preferredType: this.analysisV3State.chartType || meta.defaultType,
+        centerLabel: 'Radar',
+        centerValue: `${values.reduce((a,b)=>a+b,0)}`,
+        centerSub: 'sinais ativos no app',
+        kpis: [
+          { label: 'Despensa', value: `${totalPantry}` },
+          { label: 'Itens em listas', value: `${totalLists}` },
+          { label: 'Receitas', value: `${totalRecipes}` },
+          { label: 'Refeições', value: `${totalPlanner}` }
+        ],
+        breakdown: orderBreakdown(labels, values, v => `${v}`),
+        insight: 'Esta visão cruza seus quatro pilares principais em uma leitura única.'
+      };
+    };
+
+    app.renderAnalises = function(container){
+      if (!container) container = document.getElementById('module-analises');
+      if (!container) return;
+      const key = this.analysisV3State?.analysisKey || 'validade_despensa';
+      const payload = this.getAnalysisV3Payload(key);
+      this.analysisV3State.analysisKey = key;
+      if (!this.analysisV3State.chartType) this.analysisV3State.chartType = payload.preferredType || 'doughnut';
+
+      container.innerHTML = `
+        <section class="analysis-v3-wrap">
+          <div class="dashboard-card analysis-v3-shell">
+            <div class="card-header analysis-v3-header">
+              <h3><i class="${payload.icon}"></i> Análises</h3>
+              <div class="card-actions">
+                <button type="button" class="analysis-v3-modepill">leitura 360°</button>
+              </div>
+            </div>
+            <div class="card-content analysis-v3-content">
+              <div class="analysis-v3-topline">
+                <div class="analysis-v3-copy">
+                  <small>Central de análises</small>
+                  <h4 id="analysis-v3-title">${payload.title}</h4>
+                  <p id="analysis-v3-subtitle">${payload.subtitle}</p>
+                </div>
+                <div class="analysis-v3-controls">
+                  <button type="button" class="analysis-v3-navbtn" data-analysis-nav="prev" aria-label="Análise anterior"><i class="fa-solid fa-arrow-left"></i></button>
+                  <button type="button" class="analysis-v3-typebtn" data-analysis-chart-cycle aria-label="Trocar tipo de gráfico"><i class="fa-solid fa-shuffle"></i><span id="analysis-v3-type-label">${this.analysisV3State.chartType}</span></button>
+                  <button type="button" class="analysis-v3-navbtn" data-analysis-nav="next" aria-label="Próxima análise"><i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+              </div>
+
+              <div class="analysis-v3-stage">
+                <div class="analysis-v3-chartcard">
+                  <div class="analysis-v3-chartwrap">
+                    <canvas id="analysis-v3-chart"></canvas>
+                  </div>
+                  <div class="analysis-v3-overlaycard">
+                    <span id="analysis-v3-center-label">${payload.centerLabel}</span>
+                    <strong id="analysis-v3-center-value">${payload.centerValue}</strong>
+                    <small id="analysis-v3-center-sub">${payload.centerSub}</small>
+                  </div>
+                </div>
+
+                <div class="analysis-v3-sidepanel">
+                  <div class="analysis-v3-kpis" id="analysis-v3-kpis"></div>
+                  <div class="analysis-v3-summarycard">
+                    <strong>Resumo rápido</strong>
+                    <p id="analysis-v3-insight">${payload.insight}</p>
+                  </div>
+                  <div class="analysis-v3-breakdown" id="analysis-v3-breakdown"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+
+      container.querySelector('[data-analysis-nav="prev"]')?.addEventListener('click', () => this.analysisV3Navigate(-1));
+      container.querySelector('[data-analysis-nav="next"]')?.addEventListener('click', () => this.analysisV3Navigate(1));
+      container.querySelector('[data-analysis-chart-cycle]')?.addEventListener('click', () => this.analysisV3CycleType());
+      this.analysisV3PaintSide(payload);
+      this.analysisV3DrawChart(payload);
+    };
+
+    app.analysisV3PaintSide = function(payload){
+      const kpiEl = document.getElementById('analysis-v3-kpis');
+      const breakdownEl = document.getElementById('analysis-v3-breakdown');
+      if (kpiEl) {
+        kpiEl.innerHTML = (payload.kpis || []).map(item => `
+          <article class="analysis-v3-kpi">
+            <span>${item.label}</span>
+            <strong>${item.value}</strong>
+          </article>
+        `).join('');
+      }
+      if (breakdownEl) {
+        breakdownEl.innerHTML = `
+          <div class="analysis-v3-breakdown-head"><span>Leitura detalhada</span></div>
+          ${(payload.breakdown || []).slice(0,6).map(item => `
+            <div class="analysis-v3-row">
+              <span>${this.escapeHtml(item.label)}</span>
+              <strong>${this.escapeHtml(String(item.display))}</strong>
+            </div>
+          `).join('')}
+        `;
+      }
+      const insightEl = document.getElementById('analysis-v3-insight');
+      if (insightEl) insightEl.textContent = payload.insight || '';
+    };
+
+    app.analysisV3Navigate = function(direction){
+      const order = this.getAnalysisV3Order();
+      let idx = order.indexOf(this.analysisV3State.analysisKey);
+      if (idx < 0) idx = 0;
+      idx = (idx + direction + order.length) % order.length;
+      this.analysisV3State.analysisKey = order[idx];
+      const meta = this.getAnalysisV3Meta()[order[idx]];
+      this.analysisV3State.chartType = meta.defaultType;
+      this.renderAnalises();
+    };
+
+    app.analysisV3CycleType = function(){
+      const order = ['doughnut', 'pie', 'bar', 'line', 'polarArea', 'radar'];
+      let idx = order.indexOf(this.analysisV3State.chartType);
+      if (idx < 0) idx = 0;
+      this.analysisV3State.chartType = order[(idx + 1) % order.length];
+      this.renderAnalises();
+    };
+
+    app.analysisV3DrawChart = function(payload){
+      if (this.charts && this.charts.analysisRebuiltChart) {
+        try { this.charts.analysisRebuiltChart.destroy(); } catch(e) {}
+      }
+      const canvas = document.getElementById('analysis-v3-chart');
+      if (!canvas || !window.Chart) return;
+      const ctx = canvas.getContext('2d');
+      const type = this.analysisV3State.chartType || payload.preferredType || 'doughnut';
+      const colors = this.analysisV3Colors(0.92);
+      const lineColor = 'rgba(0,242,234,0.95)';
+      const glowColor = 'rgba(0,242,234,0.18)';
+      const dataset = {
+        label: payload.title,
+        data: payload.values,
+        backgroundColor: (type === 'line' || type === 'radar') ? colors.map(c => c.replace('0.92','0.22')) : colors,
+        borderColor: (type === 'line' || type === 'radar') ? lineColor : colors,
+        pointBackgroundColor: lineColor,
+        pointBorderColor: '#ffffff',
+        borderWidth: type === 'line' ? 3 : 2,
+        tension: 0.42,
+        fill: type === 'line' || type === 'radar',
+        pointRadius: type === 'line' ? 4 : 3,
+        hoverOffset: 8
+      };
+      const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: 8 },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              color: '#dbe6ea',
+              usePointStyle: true,
+              boxWidth: 8,
+              padding: 16,
+              font: { family: 'Roboto, sans-serif', size: 11 }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(8,12,20,.96)',
+            borderColor: 'rgba(255,255,255,.08)',
+            borderWidth: 1,
+            titleColor: '#ffffff',
+            bodyColor: '#c9d6db',
+            displayColors: true
+          }
+        },
+        scales: (type === 'bar' || type === 'line') ? {
+          x: { ticks: { color: '#dbe6ea' }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } },
+          y: { beginAtZero: true, ticks: { color: '#9fb2bb', precision: 0 }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } }
+        } : (type === 'radar') ? {
+          r: {
+            angleLines: { color: 'rgba(255,255,255,.08)' },
+            grid: { color: 'rgba(255,255,255,.08)' },
+            pointLabels: { color: '#dbe6ea', font: { size: 11 } },
+            ticks: { display: false, backdropColor: 'transparent' },
+            suggestedMin: 0
+          }
+        } : {},
+        cutout: (type === 'doughnut') ? '68%' : undefined,
+        animation: { duration: 420, easing: 'easeOutCubic' }
+      };
+      this.charts.analysisRebuiltChart = new Chart(ctx, { type, data: { labels: payload.labels, datasets: [dataset] }, options });
+    };
+
+    app.renderAnalysisDetailDesktop = function(){ return; };
+    app.openAnalysisDetailModal = function(){ return; };
+    app.updateDynamicChart = function(){ return; };
+
+    if (app.isAppMode && app.activeModule === 'analises') {
+      app.renderAnalises();
+    }
+  });
+})();
