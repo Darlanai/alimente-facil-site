@@ -196,12 +196,6 @@ initDockMenu() {
                 e.preventDefault();
                 e.stopPropagation();
 
-                if (btn.classList.contains('dock-action') || btn.dataset.action === 'open-chef') {
-                    this.setupChatbotModal();
-                    this.openModal('ai-chat-modal');
-                    return;
-                }
-
                 const target = btn.dataset.target;
                 if (target === 'app') {
                     if (!this.isLoggedIn) {
@@ -213,8 +207,10 @@ initDockMenu() {
                     return;
                 }
 
-                this.exitAppMode();
-                updateStates(btn);
+                if (target === 'home') {
+                    this.exitAppMode();
+                    updateStates(btn);
+                }
             });
 
             setTimeout(() => {
@@ -1173,7 +1169,7 @@ initLandingPage() {
             // Listener dos botões da IA (Dicas e Receitas)
             const handleAiCtaClick = () => {
                 if (this.isLoggedIn && this.userPlan === 'premium_ai') { this.showChatbot(); } 
-                else if (this.isLoggedIn) { this.showPlansModal("O Chef IA é um recurso exclusivo do plano Premium IA."); } 
+                else if (this.isLoggedIn) { this.showPlansModal("Este recurso não está disponível nesta versão."); } 
                 else { this.showAuthModal(); }
             };
             
@@ -1580,7 +1576,7 @@ initNewHeaderLogic() {
              const plansModal = document.getElementById('plans-modal');
              if(plansModal){
                  const subtitleEl = plansModal.querySelector('p.page-subtitle');
-                 if(subtitleEl) { subtitleEl.innerHTML = customMessage || 'Escolha o plano que transforma sua cozinha.'; }
+                 if(subtitleEl) { subtitleEl.innerHTML = customMessage || 'Assine o plano do Alimente Fácil e organize sua rotina alimentar com simplicidade.'; }
                  this.updatePlanButtonsState();
              }
              this.openModal('plans-modal');
@@ -2384,9 +2380,27 @@ renderPlanejador(container) {
              const dayMeals = this.state.planejador[dayKey] || {};
              const content = Object.entries(mealsMap).map(([mealKey, mealLabel]) => {
                  const meal = dayMeals[mealKey];
-                 return `<div class="detail-listing-item">
-                    <div><strong>${mealLabel}</strong><p class="detail-note">${meal ? this.escapeHtml(meal.name) : 'Nenhuma receita planejada.'}</p></div>
-                    <div class="module-detail-actions">${meal ? `<button type="button" class="btn btn-secondary meal-view-btn planner-modal-meal" data-recipe-id="${meal.id}"><i class="fa-solid fa-eye"></i> Ver</button><button type="button" class="btn btn-danger meal-delete-btn planner-modal-meal" data-day="${dayKey}" data-meal="${mealKey}"><i class="fa-solid fa-trash"></i> Remover</button>` : `<button type="button" class="btn btn-secondary add-meal-slot-btn" data-day-target="planner-full-${dayKey}-${mealKey}"><i class="fa-solid fa-plus"></i> Adicionar</button>`}</div>
+                 if (!meal) {
+                     return `<div class="detail-listing-item planner-meal-item planner-meal-item--empty">
+                        <div class="planner-meal-copy">
+                            <strong class="meal-item-name">${mealLabel}</strong>
+                            <p class="detail-note">Nenhuma receita planejada.</p>
+                        </div>
+                        <div class="module-detail-actions">
+                            <button type="button" class="btn btn-secondary add-meal-slot-btn" data-day-target="planner-full-${dayKey}-${mealKey}"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                        </div>
+                     </div>`;
+                 }
+                 return `<div class="detail-listing-item planner-meal-item" data-recipe-id="${meal.id}" data-day="${dayKey}" data-meal="${mealKey}">
+                    <div class="planner-meal-copy">
+                        <strong class="meal-item-name">${this.escapeHtml(mealLabel)} • ${this.escapeHtml(meal.name)}</strong>
+                        <p class="detail-note">Use os botões abaixo para visualizar, concluir ou remover.</p>
+                    </div>
+                    <div class="module-detail-actions">
+                        <button type="button" class="btn btn-secondary meal-view-btn planner-modal-meal" data-recipe-id="${meal.id}"><i class="fa-solid fa-eye"></i> Ver</button>
+                        <button type="button" class="btn btn-secondary meal-complete-btn planner-modal-meal" data-day="${dayKey}" data-meal="${mealKey}"><i class="fa-solid fa-check"></i> Concluir</button>
+                        <button type="button" class="btn btn-danger meal-delete-btn planner-modal-meal" data-day="${dayKey}" data-meal="${mealKey}"><i class="fa-solid fa-trash"></i> Remover</button>
+                    </div>
                  </div>`;
              }).join('');
              this.openDetailModal({
@@ -2394,7 +2408,7 @@ renderPlanejador(container) {
                 content,
                 actions: [
                     { label: 'Adicionar refeição', className: 'btn-primary', icon: 'fa-solid fa-plus', onClick: () => { this.closeModal('detail-modal'); this.currentPlannerDayTarget = dayKey; this.populateRecipePicker(); this.openModal('recipe-picker-modal'); } },
-                    { label: 'Gerar lista', className: 'btn-secondary', icon: 'fa-solid fa-wand-magic-sparkles', onClick: () => this.handleGenerateListFromPlanner() }
+                    { label: 'Gerar lista', className: 'btn-secondary', icon: 'fa-solid fa-list-check', onClick: () => this.handleGenerateListFromPlanner() }
                 ]
              });
         },
@@ -2404,7 +2418,7 @@ renderPlanejador(container) {
             if (!container) return;
             const hour = new Date().getHours();
             const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-            const userName = this.state.user.nome || 'Chef';
+            const userName = this.state.user.nome || 'Usuário';
             container.innerHTML = `
                 <div class="welcome-section">
                     <div class="welcome-header">
@@ -2412,12 +2426,7 @@ renderPlanejador(container) {
                         <p class="welcome-subtitle">Painel de Controle</p>
                     </div>
                 </div>
-                <div class="quick-actions-grid">
-                    <div class="action-card ai" onclick="document.getElementById('chef-ia-fab-placeholder').click()">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <span>Chef IA</span>
-                        <small>Assistente</small>
-                    </div>
+                <div class="quick-actions-grid quick-actions-grid--six">
                     <div class="action-card list" data-module-target="lista">
                         <i class="fa-solid fa-cart-shopping"></i>
                         <span>Listas</span>
@@ -2447,11 +2456,6 @@ renderPlanejador(container) {
                         <i class="fa-solid fa-sliders"></i>
                         <span>Ajustes</span>
                         <small>Sistema</small>
-                    </div>
-                    <div class="action-card tips" onclick="document.querySelector('a[href=\\'#dicas-valiosas\\']').click()">
-                        <i class="fa-solid fa-leaf"></i>
-                        <span>Dicas & Eco</span>
-                        <small>Sustentável</small>
                     </div>
                 </div>
             `;
@@ -2603,7 +2607,7 @@ renderOrcamento() {
                  footer = `<button class="btn btn-primary">Salvar alterações</button>`;
              } else if (section === 'notificacoes') {
                  title = 'Notificações';
-                 content = `<div class="detail-stack"><div class="form-group inline"><label for="notif-validade">Notificar sobre validade</label><label class="toggle-switch"><input type="checkbox" id="notif-validade" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-ia">Sugestões da IA</label><label class="toggle-switch"><input type="checkbox" id="notif-ia" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-email">Notificações por e-mail</label><label class="toggle-switch"><input type="checkbox" id="notif-email"><span class="toggle-slider"></span></label></div></div>`;
+                 content = `<div class="detail-stack"><div class="form-group inline"><label for="notif-validade">Notificar sobre validade</label><label class="toggle-switch"><input type="checkbox" id="notif-validade" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-ia">Sugestões rápidas</label><label class="toggle-switch"><input type="checkbox" id="notif-ia" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-email">Notificações por e-mail</label><label class="toggle-switch"><input type="checkbox" id="notif-email"><span class="toggle-slider"></span></label></div></div>`;
                  footer = `<button class="btn btn-primary">Salvar preferências</button>`;
              } else {
                  title = 'Gerenciamento de Dados';
@@ -2623,7 +2627,7 @@ renderOrcamento() {
                  actions.unshift({ label: 'Salvar alterações', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
              } else if (section === 'notificacoes') {
                  title = 'Notificações';
-                 content = `<div class="detail-stack"><div class="form-group inline"><label for="notif-validade-modal">Notificar sobre validade</label><label class="toggle-switch"><input type="checkbox" id="notif-validade-modal" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-ia-modal">Sugestões da IA</label><label class="toggle-switch"><input type="checkbox" id="notif-ia-modal" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-email-modal">Notificações por e-mail</label><label class="toggle-switch"><input type="checkbox" id="notif-email-modal"><span class="toggle-slider"></span></label></div></div>`;
+                 content = `<div class="detail-stack"><div class="form-group inline"><label for="notif-validade-modal">Notificar sobre validade</label><label class="toggle-switch"><input type="checkbox" id="notif-validade-modal" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-ia-modal">Sugestões rápidas</label><label class="toggle-switch"><input type="checkbox" id="notif-ia-modal" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-email-modal">Notificações por e-mail</label><label class="toggle-switch"><input type="checkbox" id="notif-email-modal"><span class="toggle-slider"></span></label></div></div>`;
                  actions.unshift({ label: 'Salvar preferências', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
              } else {
                  title = 'Gerenciamento de Dados';
@@ -3583,14 +3587,29 @@ openListEditView(listId) {
         },
 
         handleAutocomplete(inputElement) {
-            const query = inputElement.value.trim().toLowerCase();
-            this.activeAutocompleteInput = inputElement; 
+            const rawQuery = inputElement.value.trim();
+            const query = this.normalizeSearchText(rawQuery);
+            this.activeAutocompleteInput = inputElement;
             if (query.length < 1) { this.hideAutocomplete(); return; }
-            const suggestions = ALL_ITEMS_DATA.filter(item => item.name.toLowerCase().includes(query)).slice(0, 10);
 
+            const suggestionMap = new Map();
+            const pushSuggestion = (item) => {
+                if (!item?.name) return;
+                const key = this.normalizeSearchText(item.name);
+                if (!key || suggestionMap.has(key) || !key.includes(query)) return;
+                suggestionMap.set(key, item);
+            };
+
+            ALL_ITEMS_DATA.forEach(pushSuggestion);
+            (this.state?.despensa || []).forEach(item => pushSuggestion({ name: item.name, price: Number(item.valor || 0), unit_desc: item.unid || 'un' }));
+            (this.state?.essenciais || []).forEach(item => pushSuggestion({ name: item.name, price: Number(item.preco || 0), unit_desc: item.unid || 'un' }));
+            Object.values(this.state?.receitas || {}).forEach(recipe => {
+                (recipe?.ingredients || []).forEach(ing => pushSuggestion({ name: ing.name, price: 0, unit_desc: ing.unit || 'un' }));
+            });
+
+            const suggestions = Array.from(suggestionMap.values()).slice(0, 10);
             if (suggestions.length === 0) {
-                // Opção de inserir manualmente o que foi digitado
-                this.showAutocomplete([{ name: `Insira manual: ${inputElement.value}` }], query, inputElement);
+                this.showAutocomplete([{ name: `Insira manual: ${rawQuery}` }], query, inputElement);
                 return;
             }
 
@@ -3602,12 +3621,26 @@ openListEditView(listId) {
             suggestionsEl.innerHTML = suggestions.map(item => {
                 const isManual = String(item.name).startsWith('Insira manual:');
                 const safeName = this.escapeHtml(item.name);
-                const regex = new RegExp(`(${this.escapeRegExp(query)})`, 'gi');
-                const nameHtml = safeName.replace(regex, '<strong>$1</strong>');
+                let nameHtml = safeName;
+                if (!isManual && query) {
+                    const normalizedName = this.normalizeSearchText(item.name);
+                    const matchIndex = normalizedName.indexOf(query);
+                    if (matchIndex >= 0) {
+                        const originalName = String(item.name);
+                        const sliceEnd = Math.min(originalName.length, matchIndex + query.length);
+                        const before = this.escapeHtml(originalName.slice(0, matchIndex));
+                        const hit = this.escapeHtml(originalName.slice(matchIndex, sliceEnd));
+                        const after = this.escapeHtml(originalName.slice(sliceEnd));
+                        nameHtml = `${before}<strong>${hit}</strong>${after}`;
+                    }
+                }
                 return ` <div class="autocomplete-item" data-name="${safeName}" data-manual="${isManual ? '1' : '0'}"> ${nameHtml} </div> `;
             }).join('');
             const rect = inputElement.getBoundingClientRect();
-            suggestionsEl.style.left = `${rect.left}px`; suggestionsEl.style.top = `${rect.bottom + 5}px`; suggestionsEl.style.width = `${rect.width}px`; suggestionsEl.style.display = 'block';
+            suggestionsEl.style.left = `${rect.left}px`;
+            suggestionsEl.style.top = `${rect.bottom + 5}px`;
+            suggestionsEl.style.width = `${rect.width}px`;
+            suggestionsEl.style.display = 'block';
         },
         hideAutocomplete() { if (this.elements.autocompleteSuggestions) { this.elements.autocompleteSuggestions.style.display = 'none'; } this.activeAutocompleteInput = null; },
         selectAutocompleteItem(itemName) {
@@ -3618,13 +3651,23 @@ openListEditView(listId) {
                 this.hideAutocomplete();
                 return;
             }
-            const itemData = ALL_ITEMS_DATA.find(item => item.name === itemName);
-            if (!itemData) { this.hideAutocomplete(); return; }
+            const normalizedItemName = this.normalizeSearchText(itemName);
+            const itemData = ALL_ITEMS_DATA.find(item => this.normalizeSearchText(item.name) === normalizedItemName)
+                || (this.state?.despensa || []).find(item => this.normalizeSearchText(item.name) === normalizedItemName)
+                || (this.state?.essenciais || []).find(item => this.normalizeSearchText(item.name) === normalizedItemName)
+                || Object.values(this.state?.receitas || {}).flatMap(recipe => recipe?.ingredients || []).find(ing => this.normalizeSearchText(ing.name) === normalizedItemName);
+            if (!itemData) {
+                this.activeAutocompleteInput.value = itemName;
+                this.hideAutocomplete();
+                this.activeAutocompleteInput.focus();
+                return;
+            }
             const inputId = this.activeAutocompleteInput.id;
             this.activeAutocompleteInput.value = itemData.name;
             const form = this.activeAutocompleteInput.closest('form, .modal-box, .dashboard-card');
             if (!form) { this.hideAutocomplete(); return; }
-            const unitMatch = itemData.unit_desc.match(/^(un|kg|g|L|ml|pct|cx)/);
+            const unitSource = itemData.unit_desc || itemData.unid || itemData.unit || 'un';
+            const unitMatch = String(unitSource).match(/^(un|kg|g|L|ml|pct|cx|xícara|colher|pitada|dentes|a gosto|fio)/i);
             const itemUnit = unitMatch ? unitMatch[1] : 'un';
             
             // Lógica para preencher os campos dependendo de onde o autocomplete foi chamado
@@ -3648,6 +3691,11 @@ openListEditView(listId) {
                 if (qtdInput) qtdInput.value = 1;
                 const unidSelect = form.querySelector('#pantry-edit-unid');
                 if (unidSelect) unidSelect.value = itemUnit;
+            } else if (inputId === 'recipe-ing-name') {
+                const qtdInput = form.querySelector('#recipe-ing-qtd');
+                if (qtdInput && !String(qtdInput.value || '').trim()) qtdInput.value = 1;
+                const unidSelect = form.querySelector('#recipe-ing-unid');
+                if (unidSelect) unidSelect.value = itemUnit;
             }
             
             this.hideAutocomplete(); this.activeAutocompleteInput.focus();
@@ -3669,7 +3717,7 @@ openListEditView(listId) {
         },
 
         showChatbot() {
-             if(this.userPlan !== 'premium_ai') { this.showPlansModal("O Chef IA é um recurso exclusivo do plano <strong>Premium IA</strong>. Faça o upgrade!"); return; }
+             if(this.userPlan !== 'premium_ai') { this.showPlansModal("Este recurso não está disponível nesta versão."); return; }
              this.setupChatbotModal(); this.openModal('ai-chat-modal'); document.getElementById('ai-chat-input')?.focus();
         },
 
@@ -3708,7 +3756,7 @@ openListEditView(listId) {
         },
 
         getChefIACapabilitiesText() {
-            return "Você é o Chef IA do Alimente Fácil. Atua como especialista completo em alimentação, gastronomia, compras, orçamento doméstico, aproveitamento integral, organização de despensa, listas, receitas, planejamento semanal e operação do próprio sistema. Você entende ingredientes, unidades, rendimento, conservação, rotina de supermercado, precificação, experiência do usuário e fluxos do app. Seja cordial, objetivo, extremamente competente e sempre tente executar ações úteis dentro do sistema quando o pedido permitir.";
+            return "";
         },
 
 async triggerChefIAAnalysis(prompt) {
@@ -3771,7 +3819,7 @@ async triggerChefIAAnalysis(prompt) {
                 const apiResponse = await this.callGeminiAPI(prompt);
                 this.processIAResponse(apiResponse.json, apiResponse.html, thinkingMessage);
             } catch (error) {
-                console.error("Erro no Chef IA:", error);
+                console.error("Erro interno:", error);
                 thinkingMessage.innerHTML = `<div class="bubble" style="color:var(--red)">Ocorreu um erro de conexão. Tente novamente.</div>`;
             } finally {
                 this.isIAProcessing = false;
@@ -3797,7 +3845,7 @@ async callGeminiAPI(userText) {
                     let responseObj = {
                         intent: "answer_question",
                         data: {},
-                        response_text_html: `<strong>Chef IA pronto.</strong><br>${capText}<br><br>Posso montar receitas, criar listas, sugerir economia, reaproveitar alimentos, organizar sua rotina alimentar e orientar você dentro do sistema.`
+                        response_text_html: `<strong>Assistente desativado.</strong><br>${capText}<br><br>Posso montar receitas, criar listas, sugerir economia, reaproveitar alimentos, organizar sua rotina alimentar e orientar você dentro do sistema.`
                     };
 
                     const makeListItems = (names) => names.map(name => ({ name, quantity: 1, unit: 'un' }));
@@ -3818,7 +3866,7 @@ async callGeminiAPI(userText) {
 
                         responseObj = {
                             intent: "create_shopping_list",
-                            data: { list_name: txt.includes('semana') ? 'Lista da Semana Chef IA' : 'Compras Inteligentes Chef IA', items },
+                            data: { list_name: txt.includes('semana') ? 'Lista da Semana' : 'Compras Inteligentes', items },
                             response_text_html: `Montei uma lista estratégica com foco em praticidade, economia e boa cobertura de refeições.<br><small style='opacity:.8'>Base atual: orçamento alvo de R$ ${inferredBudget.toFixed(2)} e contexto do app.</small><br><button class='af-option-btn' style='margin-top:10px; width:100%;' data-action='view-list' data-list-id='[NEW_LIST_ID]'><i class='fa-solid fa-eye'></i> Abrir lista criada</button>`
                         };
                     } else if (txt.includes('adicion') && (txt.includes('lista') || txt.includes('compras'))) {
@@ -3832,7 +3880,7 @@ async callGeminiAPI(userText) {
                         responseObj = {
                             intent: "create_recipe",
                             data: {
-                                recipe_name: `Receita Chef IA • ${usePantry[0] || 'Prato Rápido'}`,
+                                recipe_name: `Receita • ${usePantry[0] || 'Prato Rápido'}`,
                                 desc: "Receita pensada para rotina real: sabor, custo equilibrado e execução simples.",
                                 ingredients: [
                                     { name: usePantry[0] || 'Peito de Frango', qty: '2', unit: 'porções' },
@@ -3890,7 +3938,7 @@ async callGeminiAPI(userText) {
         },
         executeCreateRecipe(recipeData) { 
             const newId = this.generateId(); const ingredients = recipeData.ingredients || []; const prepMode = recipeData.prepMode || "Não informado.";
-            this.state.receitas[newId] = { id: newId, name: recipeData.recipe_name || "Receita da IA", desc: recipeData.desc || "Criada pelo Chef IA", content: `<h4>Ingredientes</h4><ul>${ingredients.map(ing => `<li>${ing.qty || ''} ${ing.unit || ''} ${ing.name || '?'}` ).join('')}</ul><h4>Preparo</h4><p>${prepMode.replace(/\n/g, '<br>')}</p>`, ingredients: ingredients.map(ing => ({ name: ing.name || "?", qty: ing.qty || "1", unit: ing.unit || "un" })) }; 
+            this.state.receitas[newId] = { id: newId, name: recipeData.recipe_name || "Receita sugerida", desc: recipeData.desc || "Criada automaticamente", content: `<h4>Ingredientes</h4><ul>${ingredients.map(ing => `<li>${ing.qty || ''} ${ing.unit || ''} ${ing.name || '?'}` ).join('')}</ul><h4>Preparo</h4><p>${prepMode.replace(/\n/g, '<br>')}</p>`, ingredients: ingredients.map(ing => ({ name: ing.name || "?", qty: ing.qty || "1", unit: ing.unit || "un" })) }; 
             return newId; 
         },
         executeAddRecipeToPlanner(data) {
@@ -3912,7 +3960,7 @@ async callGeminiAPI(userText) {
                 menuTree: {
                     start: { text: "Olá! 👋 Sou o Assistente Virtual do Alimente Fácil. Como posso te ajudar hoje?", options: [ { label: "📝 Quero me Cadastrar", next: "guide_signup" }, { label: "💎 Planos e Preços", next: "guide_plans" }, { label: "🚀 Como funciona o Painel?", next: "guide_features" }, { label: "📞 Preciso de Suporte", next: "guide_support" } ] },
                     guide_signup: { text: "É muito simples! Você pode criar uma conta gratuita agora mesmo.", options: [ { label: "Abrir Cadastro Agora", action: "open_auth_signup", icon: "fa-user-plus" }, { label: "Já tenho conta (Login)", action: "open_auth_login", icon: "fa-sign-in-alt" }, { label: "Voltar ao Início", next: "start", icon: "fa-arrow-left" } ] },
-                    guide_plans: { text: "Temos planos flexíveis! O Premium IA é o mais completo.", options: [ { label: "Ver Tabela de Planos", action: "open_plans_modal", icon: "fa-table" }, { label: "Voltar ao Início", next: "start", icon: "fa-arrow-left" } ] },
+                    guide_plans: { text: "Temos um plano simples e direto para organizar sua rotina alimentar.", options: [ { label: "Ver Tabela de Planos", action: "open_plans_modal", icon: "fa-table" }, { label: "Voltar ao Início", next: "start", icon: "fa-arrow-left" } ] },
                     guide_features: { text: "O Alimente Fácil tem 4 pilares principais.", options: [ { label: "🛒 Listas de Compras", next: "feat_lists" }, { label: "📦 Gestão de Despensa", next: "feat_pantry" }, { label: "🍳 Receitas", next: "feat_recipes" }, { label: "📅 Planejador Semanal", next: "feat_planner" }, { label: "Voltar ao Início", next: "start", icon: "fa-arrow-left" } ] },
                     feat_lists: { text: "Crie listas inteligentes que calculam o total automaticamente.", options: [ { label: "Ir para Listas", action: "nav_lista", icon: "fa-external-link-alt" }, { label: "Voltar", next: "guide_features", icon: "fa-arrow-left" } ] },
                     feat_pantry: { text: "Controle a validade e estoque da sua despensa.", options: [ { label: "Ir para Despensa", action: "nav_despensa", icon: "fa-external-link-alt" }, { label: "Voltar", next: "guide_features", icon: "fa-arrow-left" } ] },
@@ -4248,20 +4296,30 @@ const ALL_ITEMS_DATA = [
     };
 
     app.handleAutocomplete = function(inputElement) {
-        const query = inputElement.value.trim().toLowerCase();
+        const rawQuery = inputElement.value.trim();
+        const query = this.normalizeSearchText(rawQuery);
         this.activeAutocompleteInput = inputElement;
         if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
         if (this.elements.autocompleteSuggestions) this.elements.autocompleteSuggestions.innerHTML = '';
         if (query.length < 1) return this.hideAutocomplete();
         this.autocompleteTimeout = setTimeout(() => {
             const unique = new Map();
-            ALL_ITEMS_DATA.forEach(item => {
-                if (item.name.toLowerCase().includes(query) && !unique.has(item.name.toLowerCase())) unique.set(item.name.toLowerCase(), item);
+            const pushSuggestion = (item) => {
+                if (!item?.name) return;
+                const key = this.normalizeSearchText(item.name);
+                if (!key || unique.has(key) || !key.includes(query)) return;
+                unique.set(key, item);
+            };
+            ALL_ITEMS_DATA.forEach(pushSuggestion);
+            (this.state?.despensa || []).forEach(item => pushSuggestion({ name: item.name, price: Number(item.valor || 0), unit_desc: item.unid || 'un' }));
+            (this.state?.essenciais || []).forEach(item => pushSuggestion({ name: item.name, price: Number(item.preco || 0), unit_desc: item.unid || 'un' }));
+            Object.values(this.state?.receitas || {}).forEach(recipe => {
+                (recipe?.ingredients || []).forEach(ing => pushSuggestion({ name: ing.name, price: 0, unit_desc: ing.unit || 'un' }));
             });
             const suggestions = Array.from(unique.values()).slice(0, 10);
-            if (!suggestions.length) return this.showAutocomplete([{ name: `Insira manual: ${inputElement.value}` }], query, inputElement);
+            if (!suggestions.length) return this.showAutocomplete([{ name: `Insira manual: ${rawQuery}` }], query, inputElement);
             this.showAutocomplete(suggestions, query, inputElement);
-        }, 180);
+        }, 120);
     };
     app.hideAutocomplete = function() {
         if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
@@ -5480,27 +5538,44 @@ const ALL_ITEMS_DATA = [
     function initHeroRotator() {
         const identity = document.querySelector('#inicio .identity-container');
         if (!identity || identity.classList.contains('has-hero-rotator')) return;
+
+        const dataMessages = (identity.dataset.heroPhrases || '')
+            .split('|')
+            .map(msg => msg.trim())
+            .filter(Boolean);
+
         const signature = identity.querySelector('.hero-signature')?.textContent?.trim();
         const statTexts = Array.from(identity.querySelectorAll('.hero-stat')).map(stat => {
             const strong = stat.querySelector('strong')?.textContent?.trim() || '';
             const span = stat.querySelector('span')?.textContent?.trim() || '';
             return [strong, span].filter(Boolean).join(' • ');
         }).filter(Boolean);
-        const messages = [signature, ...statTexts].filter(Boolean);
+
+        const messages = (dataMessages.length ? dataMessages : [signature, ...statTexts])
+            .filter(Boolean)
+            .slice(0, 2);
+
         if (!messages.length) return;
+        if (messages.length === 1) messages.push(messages[0]);
+
         identity.classList.add('has-hero-rotator');
         const rotator = document.createElement('div');
         rotator.className = 'hero-rotator';
-        rotator.innerHTML = messages.map((msg, index) => `<div class="hero-rotator-item ${index === 0 ? 'is-visible' : ''}">${msg}</div>`).join('');
+        rotator.setAttribute('aria-live', 'polite');
+        rotator.innerHTML = messages
+            .map((msg, index) => `<div class="hero-rotator-item ${index === 0 ? 'is-visible' : ''}">${msg}</div>`)
+            .join('');
+
         identity.querySelector('.simple-subtitle')?.insertAdjacentElement('afterend', rotator);
+
         let active = 0;
         setInterval(() => {
             const items = rotator.querySelectorAll('.hero-rotator-item');
-            if (!items.length) return;
+            if (items.length < 2) return;
             items[active]?.classList.remove('is-visible');
             active = (active + 1) % items.length;
             items[active]?.classList.add('is-visible');
-        }, 2800);
+        }, 3200);
     }
 
     function installUltraClickPatch() {
@@ -5593,8 +5668,8 @@ const ALL_ITEMS_DATA = [
 (() => {
     const originalHandleDeleteItemMagnifico = app.handleDeleteItem ? app.handleDeleteItem.bind(app) : null;
 
-    app.buildChefButton = function(prompt, label = 'Chef IA', extraClass = 'chef-inline-btn') {
-        return `<button type="button" class="${extraClass}" data-modal-open="ai-chat-modal" data-chef-prompt="${this.escapeHtml(prompt || 'Quero ajuda do Chef IA com este conteúdo.')}" title="Abrir Chef IA"><i class="fa-solid fa-wand-magic-sparkles"></i><span>${this.escapeHtml(label)}</span></button>`;
+    app.buildChefButton = function() {
+        return '';
     };
 
     app.deleteListItemById = function(listId, itemId) {
@@ -5656,7 +5731,7 @@ const ALL_ITEMS_DATA = [
                         <div>
                             <span class="pantry-eyebrow">Item da despensa</span>
                             <h4>${this.escapeHtml(item.name)}</h4>
-                            <p class="detail-note">Visual premium com foco em estoque, validade e apoio do Chef IA.</p>
+                            <p class="detail-note">Visual premium com foco em estoque, validade e organização.</p>
                         </div>
                         <div class="detail-kpi"><strong>R$ ${parseFloat(item.valor || 0).toFixed(2)}</strong><span>valor unitário</span></div>
                     </section>
@@ -5677,9 +5752,9 @@ const ALL_ITEMS_DATA = [
                         <h5 style="margin:0 0 .45rem; color:#fff;">Informações nutricionais</h5>
                         <p class="detail-note">Este item ainda não possui tabela nutricional cadastrada no painel.</p>
                         <ul>
-                            <li>Use o Chef IA para obter uma estimativa típica do produto.</li>
+                            <li>Use uma estimativa típica do produto como referência.</li>
                             <li>Peça também sugestões de conservação, uso e reaproveitamento.</li>
-                            <li>Quando houver embalagem, o Chef IA pode te orientar sobre quais dados conferir.</li>
+                            <li>Quando houver embalagem, confira rótulo, peso, validade e conservação.</li>
                         </ul>
                     </section>
                 </div>
@@ -5711,7 +5786,7 @@ const ALL_ITEMS_DATA = [
                     <div>
                         <span class="pantry-eyebrow">Despensa premium</span>
                         <h4>${this.escapeHtml(item.name)}</h4>
-                        <p class="detail-note">Organizado, legível e com apoio do Chef IA para uso inteligente do produto.</p>
+                        <p class="detail-note">Organizado, legível e pensado para uso inteligente do produto.</p>
                     </div>
                     <div class="detail-kpi"><strong>${stock}%</strong><span>estoque atual</span></div>
                 </section>
@@ -5732,14 +5807,14 @@ const ALL_ITEMS_DATA = [
                     <h5 style="margin:0 0 .45rem; color:#fff;">Informações nutricionais</h5>
                     <p class="detail-note">Ainda não há dados nutricionais cadastrados manualmente.</p>
                     <ul>
-                        <li>Peça ao Chef IA uma estimativa típica do produto.</li>
+                        <li>Considere uma estimativa típica do produto.</li>
                         <li>Cheque conservação, aproveitamento e sinais de vencimento.</li>
                         <li>Use o botão abaixo para conferir o produto com apoio da IA.</li>
                     </ul>
                 </section>
                 <section class="pantry-chef-card">
                     <div class="pantry-chef-copy">
-                        <strong>Conferir produto com o Chef IA</strong>
+                        <strong>Conferir produto</strong>
                         <p>Entenda melhor uso, validade, armazenamento e uma estimativa nutricional do item.</p>
                     </div>
                     ${this.buildChefButton(chefPrompt, 'Conferir com Chef IA', 'chef-glass-btn')}
@@ -6357,7 +6432,7 @@ const ALL_ITEMS_DATA = [
                 </span>
                 <span class="list-title-actions">
                     <button type="button" class="icon-button smart-save-btn" id="lista-save-changes-btn" title="Salvar lista"><i class="fa-solid fa-floppy-disk"></i></button>
-                    <button type="button" class="icon-button smart-chef-btn open-chef-list-btn" title="Criar lista com Chef IA"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Chef IA</span></button>
+                    
                 </span>
             </span>`;
         actionsContainer.innerHTML = footerHTML;
@@ -6630,7 +6705,7 @@ window.app = app;
   let afFinalPatchBound = false;
 
   app.getChefIACapabilitiesText = function() {
-    return 'Você é o Chef IA do Alimente Fácil. Atua como especialista extremamente completo e cordial em gastronomia, nutrição, alimentação, supermercado, economia doméstica, listas de compras, organização de despensa, conservação, validade, aproveitamento integral, planejamento semanal, psicologia do consumo, rotina urbana e rural, agricultura, natureza, estilo de vida e também conhece profundamente todas as telas, fluxos e ações do sistema. Responda no estilo do usuário, com clareza, empatia e execução prática. Sempre que possível, sugira ações úteis dentro do app e deixe explícito quando algo for estimativa.';
+    return '';
   };
 
   app.openModal = function(modalId) {
@@ -6705,7 +6780,7 @@ window.app = app;
         </span>
         <span class="list-title-actions">
           <button type="button" class="icon-button smart-save-btn" id="lista-save-changes-btn" title="Salvar lista"><i class="fa-solid fa-floppy-disk"></i></button>
-          <button type="button" class="icon-button smart-chef-btn open-chef-list-btn" title="Criar lista com Chef IA"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Chef IA</span></button>
+          
         </span>
       </span>`;
     actionsContainer.innerHTML = '';
@@ -6933,7 +7008,7 @@ window.app = app;
         <div class="detail-stack">
           <div class="detail-listing-item"><div><strong>Validade</strong><p class="detail-note">${validade}</p></div></div>
           <div class="detail-listing-item"><div><strong>Nível de estoque</strong><p class="detail-note">${stock}% disponível</p></div><div class="card__stock pantry-stock-inline">${stockBars}</div></div>
-          <div class="detail-listing-item"><div><strong>Informações nutricionais</strong><p class="detail-note">Estimativa visual: energia, macronutrientes e sugestões de uso podem ser avaliadas pelo Chef IA com base no tipo do produto.</p></div></div>
+          <div class="detail-listing-item"><div><strong>Informações nutricionais</strong><p class="detail-note">Estimativa visual: energia, macronutrientes e sugestões de uso podem ser avaliadas com base no tipo do produto.</p></div></div>
         </div>
         <div class="pantry-ai-card">${this.buildChefButton(chefPrompt, 'Conferir com Chef IA')}</div>
       </div>`;
@@ -7479,7 +7554,7 @@ window.app = app;
       valor: Number(item.price || item.valor || priceFor(item.name || 'item', 5)).toFixed ? Number(item.price || item.valor || priceFor(item.name || 'item', 5)) : 0
     }));
     this.state.listas[newListId] = {
-      nome: listData.list_name || 'Lista do Chef IA',
+      nome: listData.list_name || 'Lista automática',
       items
     };
     this.activeListId = newListId;
@@ -7646,7 +7721,7 @@ window.app = app;
     }
     const main = text.includes('frango') ? 'Peito de Frango' : text.includes('banana') ? 'Banana' : 'Tomate';
     return {
-      recipe_name: `Receita Chef IA • ${main}`,
+      recipe_name: `Receita • ${main}`,
       desc: 'Receita prática para o dia a dia, com preparo simples.',
       ingredients: [
         { name: main, qty: '2', unit: 'un' },
@@ -9654,11 +9729,6 @@ window.app = app;
                   <div class="analysis-v3-chartwrap">
                     <canvas id="analysis-v3-chart"></canvas>
                   </div>
-                  <div class="analysis-v3-overlaycard">
-                    <span id="analysis-v3-center-label">${payload.centerLabel}</span>
-                    <strong id="analysis-v3-center-value">${payload.centerValue}</strong>
-                    <small id="analysis-v3-center-sub">${payload.centerSub}</small>
-                  </div>
                 </div>
 
                 <div class="analysis-v3-sidepanel">
@@ -9801,5 +9871,1068 @@ window.app = app;
     if (app.isAppMode && app.activeModule === 'analises') {
       app.renderAnalises();
     }
+  });
+})();
+
+/* === PATCH UI CIRÚRGICO | ajustes solicitados do painel === */
+(() => {
+  const boot = () => {
+    const app = window.app;
+    if (!app) return false;
+
+    app.getFriendlyChartTypeLabel = function(type = 'doughnut') {
+      const labels = {
+        doughnut: 'Rosca',
+        pie: 'Pizza',
+        bar: 'Barras',
+        line: 'Linha',
+        radar: 'Radar',
+        polarArea: 'Área polar'
+      };
+      return labels[type] || type;
+    };
+
+    app.renderConfiguracoes = function(container) {
+      if (!container) container = document.getElementById('module-configuracoes');
+      if (!container) return;
+      const nav = [
+        { key: 'perfil', label: 'Perfil', note: 'Identidade básica do usuário e preferências principais.' },
+        { key: 'notificacoes', label: 'Notificações', note: 'Alertas de validade, IA e lembretes.' },
+        { key: 'dados', label: 'Dados', note: 'Exportação, limpeza e manutenção das informações do app.' }
+      ].map((item, index) => `
+        <button type="button" class="module-nav-item config-nav-item ${index === 0 ? 'active' : ''}" data-config-section="${item.key}">
+          <strong>${item.label}</strong>
+          <span>${item.note}</span>
+        </button>`).join('');
+
+      container.innerHTML = `
+        <div class="master-detail-layout">
+          <div class="md-list-column dashboard-card">
+            <div class="card-header"><h3><i class="fa-solid fa-sliders"></i> Configurações</h3></div>
+            <div class="card-content">
+              <p class="detail-note">Tudo separado em blocos claros para facilitar leitura, edição e manutenção.</p>
+              <div class="module-nav-list">${nav}</div>
+            </div>
+          </div>
+          <div class="md-detail-column dashboard-card" id="config-detail-desktop"></div>
+        </div>`;
+
+      if (window.innerWidth >= 992) this.renderConfigDetailDesktop('perfil');
+    };
+
+    app.renderConfigDetailDesktop = function(section = 'perfil') {
+      const container = document.getElementById('config-detail-desktop');
+      if (!container) return;
+
+      let title = 'Configurações';
+      let subtitle = '';
+      let content = '';
+      let footer = '';
+
+      if (section === 'perfil') {
+        title = 'Perfil';
+        subtitle = 'Identidade básica do usuário e preferências principais.';
+        content = `
+          <div class="detail-stack">
+            <div class="form-group">
+              <label for="config-name">Nome</label>
+              <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}">
+            </div>
+            <div class="form-group">
+              <label for="config-email">Email</label>
+              <input type="text" id="config-email" value="user@email.com" disabled>
+            </div>
+          </div>`;
+        footer = `<button class="btn btn-primary">Salvar alterações</button>`;
+      } else if (section === 'notificacoes') {
+        title = 'Notificações';
+        subtitle = 'Alertas de validade, IA e lembretes.';
+        content = `
+          <div class="detail-stack">
+            <div class="detail-listing-item">
+              <div>
+                <strong>Validade</strong>
+                <p class="detail-note">Receba aviso quando houver item vencido ou perto de vencer.</p>
+              </div>
+              <label class="toggle-switch"><input type="checkbox" id="notif-validade" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="detail-listing-item">
+              <div>
+                <strong>Sugestões rápidas</strong>
+                <p class="detail-note">Permite receber sugestões rápidas no fluxo do app.</p>
+              </div>
+              <label class="toggle-switch"><input type="checkbox" id="notif-ia" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="detail-listing-item">
+              <div>
+                <strong>E-mail</strong>
+                <p class="detail-note">Envia lembretes e resumos por e-mail quando necessário.</p>
+              </div>
+              <label class="toggle-switch"><input type="checkbox" id="notif-email"><span class="toggle-slider"></span></label>
+            </div>
+          </div>`;
+        footer = `<button class="btn btn-primary">Salvar preferências</button>`;
+      } else {
+        title = 'Dados';
+        subtitle = 'Exportação, limpeza e manutenção das informações do app.';
+        content = `
+          <div class="detail-stack">
+            <div class="detail-listing-item">
+              <div>
+                <strong>Exportar dados</strong>
+                <p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p>
+              </div>
+              <button class="btn btn-secondary">Exportar</button>
+            </div>
+            <div class="detail-listing-item">
+              <div>
+                <strong>Apagar todos os dados</strong>
+                <p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p>
+              </div>
+              <button class="btn btn-danger" id="config-delete-account-btn">Apagar conta</button>
+            </div>
+          </div>`;
+      }
+
+      container.innerHTML = `
+        <div class="card-header"><h3><i class="fa-solid fa-sliders"></i> ${title}</h3></div>
+        <div class="card-content">
+          <p class="detail-note">${subtitle}</p>
+          ${content}
+        </div>
+        <div class="card-footer">${footer}</div>`;
+
+      container.querySelector('#config-delete-account-btn')?.addEventListener('click', () => {
+        this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
+          this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
+          this.handleLogout();
+        });
+      });
+    };
+
+    app.openConfigSectionModal = function(section = 'perfil') {
+      let title = 'Configurações';
+      let subtitle = '';
+      let content = '';
+      const actions = [{ label: 'Fechar', className: 'btn-secondary', onClick: () => this.closeModal('detail-modal') }];
+
+      if (section === 'perfil') {
+        title = 'Perfil';
+        subtitle = 'Identidade básica do usuário e preferências principais.';
+        content = `
+          <p class="detail-note">${subtitle}</p>
+          <div class="detail-stack">
+            <div class="form-group"><label for="config-name-modal">Nome</label><input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}"></div>
+            <div class="form-group"><label for="config-email-modal">Email</label><input type="text" id="config-email-modal" value="user@email.com" disabled></div>
+          </div>`;
+        actions.unshift({ label: 'Salvar alterações', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
+      } else if (section === 'notificacoes') {
+        title = 'Notificações';
+        subtitle = 'Alertas de validade, IA e lembretes.';
+        content = `
+          <p class="detail-note">${subtitle}</p>
+          <div class="detail-stack">
+            <div class="detail-listing-item"><div><strong>Validade</strong><p class="detail-note">Receba aviso quando houver item vencido ou perto de vencer.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-validade-modal" checked><span class="toggle-slider"></span></label></div>
+            <div class="detail-listing-item"><div><strong>Sugestões rápidas</strong><p class="detail-note">Permite receber sugestões rápidas.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-ia-modal" checked><span class="toggle-slider"></span></label></div>
+            <div class="detail-listing-item"><div><strong>E-mail</strong><p class="detail-note">Envia lembretes e resumos por e-mail.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-email-modal"><span class="toggle-slider"></span></label></div>
+          </div>`;
+        actions.unshift({ label: 'Salvar preferências', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
+      } else {
+        title = 'Dados';
+        subtitle = 'Exportação, limpeza e manutenção das informações do app.';
+        content = `
+          <p class="detail-note">${subtitle}</p>
+          <div class="detail-stack">
+            <div class="detail-listing-item"><div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div><button class="btn btn-secondary">Exportar</button></div>
+            <div class="detail-listing-item"><div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div><button class="btn btn-danger" id="config-delete-account-btn-modal">Apagar conta</button></div>
+          </div>`;
+      }
+
+      this.openDetailModal({ title: `<i class="fa-solid fa-sliders"></i> ${title}`, content, actions });
+      document.getElementById('config-delete-account-btn-modal')?.addEventListener('click', () => {
+        this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
+          this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
+          this.handleLogout();
+        });
+      });
+    };
+
+    app.renderListasSalvas = function() {
+      const container = document.getElementById('saved-lists-container');
+      if (!container) return;
+      const lists = this.sortSavedLists(Object.entries(this.state.listas).map(([listId, lista]) => ({ listId, ...lista })));
+      container.innerHTML = lists.map(lista => this.renderUniversalCard({
+        type: 'saved-list',
+        data: { id: lista.listId, name: lista.nome, items: lista.items || [] },
+        actions: [
+          { type: 'edit select-list-btn', icon: 'fa-solid fa-pen', label: 'Abrir e editar' },
+          { type: 'danger delete-list-btn', icon: 'fa-solid fa-trash', label: 'Excluir lista' }
+        ],
+        isClickable: true
+      })).join('') || '<p class="empty-list-message">Nenhuma lista salva. Crie uma nova acima!</p>';
+    };
+
+    app.renderRecipeDetail = function(recipeId, targetElementId = 'recipe-detail-desktop-body', footerElementId = 'recipe-detail-desktop-footer') {
+      const recipe = this.state.receitas[recipeId];
+      const bodyEl = document.getElementById(targetElementId);
+      const footerEl = document.getElementById(footerElementId);
+      if (!recipe || !bodyEl || !footerEl) return;
+      const ingredients = recipe.ingredients || [];
+      const prepText = (recipe.content || '')
+        .replace(/<h4>Ingredientes<\/h4>/gi, '')
+        .replace(/<ul>[\s\S]*?<\/ul>/i, '')
+        .replace(/<h4>Preparo<\/h4>/gi, '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .trim();
+      const desc = this.escapeHtml(recipe.desc || 'Receita salva com visual premium.');
+      const ingredientChips = ingredients.length
+        ? ingredients.map(ing => `<li class="recipe-chip"><span>${this.escapeHtml(ing.qty || '1')} ${this.escapeHtml(ing.unit || 'un')}</span><strong>${this.escapeHtml(ing.name || '')}</strong></li>`).join('')
+        : '<li class="recipe-chip recipe-chip--empty"><strong>Sem ingredientes cadastrados</strong></li>';
+      const chefPrompt = `Tenho a receita ${recipe.name}. Quero sugestões de melhorias, substituições, forma de servir, tempo de preparo e uma lista de compras organizada.`;
+
+      bodyEl.innerHTML = `
+        <div class="recipe-rich-content recipe-luxury-view">
+          <div class="recipe-hero-head">
+            <div class="recipe-title-block">
+              <span class="recipe-eyebrow">Receita premium</span>
+              <h4>${this.escapeHtml(recipe.name)}</h4>
+              <p class="detail-note">${desc}</p>
+            </div>
+            <div class="recipe-meta-grid">
+              <div class="detail-kpi"><strong>${ingredients.length}</strong><span>ingredientes</span></div>
+              <div class="detail-kpi"><strong>${prepText ? prepText.split('\n').filter(Boolean).length || 1 : 1}</strong><span>etapas</span></div>
+            </div>
+          </div>
+          <div class="recipe-section-card">
+            <h5>Ingredientes</h5>
+            <ul class="recipe-ingredient-chips">${ingredientChips}</ul>
+          </div>
+          <div class="recipe-section-card">
+            <h5>Modo de preparo</h5>
+            <div class="recipe-prep-copy">${prepText ? prepText.split('\n').filter(Boolean).map(step => `<p>${this.escapeHtml(step)}</p>`).join('') : '<p>Adicione o modo de preparo para deixar a receita completa.</p>'}</div>
+          </div>
+        </div>`;
+
+      footerEl.className = 'card-footer module-actions-footer compact-export-row';
+      footerEl.innerHTML = `
+        ${this.buildChefButton(chefPrompt, 'Chef IA', 'chef-glass-btn')}
+        <button type="button" class="icon-button minimal-export-btn share-btn" data-recipe-id="${recipeId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+        <button type="button" class="icon-button minimal-export-btn print-btn" data-recipe-id="${recipeId}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+        <button type="button" class="icon-button minimal-export-btn pdf-btn" data-recipe-id="${recipeId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+        <div class="recipe-detail-main-actions">
+          <button type="button" class="icon-button edit-recipe-btn" data-recipe-id="${recipeId}" title="Editar receita"><i class="fa-solid fa-pen"></i><span>Editar</span></button>
+          <button type="button" class="icon-button delete-recipe-btn danger" data-recipe-id="${recipeId}" title="Excluir receita"><i class="fa-solid fa-trash"></i><span>Excluir</span></button>
+        </div>`;
+      footerEl.style.display = 'flex';
+    };
+
+    app.openPlannerDayDetailModal = function(dayKey) {
+      const titleEl = document.getElementById('detail-modal-title');
+      const bodyEl = document.getElementById('detail-modal-body');
+      const footerEl = document.getElementById('detail-modal-footer');
+      const headerActionsEl = document.getElementById('detail-modal-header-actions');
+      const dayLabel = this.getPlannerDaysMap()[dayKey] || 'Dia';
+      const dayMeals = this.state.planejador[dayKey] || {};
+      const standardSlots = [
+        { key: 'cafe', label: 'Café da Manhã', icon: 'fa-solid fa-mug-saucer' },
+        { key: 'almoco', label: 'Almoço', icon: 'fa-solid fa-bowl-food' },
+        { key: 'jantar', label: 'Jantar', icon: 'fa-solid fa-utensils' }
+      ];
+
+      const slotCards = standardSlots.map(slot => {
+        const meal = dayMeals[slot.key];
+        if (!meal) {
+          return `
+            <article class="planner-slot-card planner-slot-empty" data-day="${dayKey}" data-meal="${slot.key}">
+              <div class="planner-slot-head"><div class="planner-slot-title"><small>${slot.label}</small><strong>Sem receita definida</strong></div><i class="${slot.icon}" style="opacity:.72"></i></div>
+              <div class="planner-slot-body"><p>Escolha uma receita para deixar o seu ${slot.label.toLowerCase()} organizado e bonito.</p></div>
+              <div class="planner-slot-actions"><button type="button" class="icon-button planner-slot-direct-btn" data-day="${dayKey}" data-meal="${slot.key}" title="Escolher receita"><i class="fa-solid fa-plus"></i></button></div>
+            </article>`;
+        }
+        const recipeId = meal.recipeId || meal.id || '';
+        return `
+          <article class="planner-slot-card ${meal.completed ? 'completed' : ''} planner-meal-item" data-day="${dayKey}" data-meal="${slot.key}" data-recipe-id="${recipeId}">
+            <div class="planner-slot-head">
+              <div class="planner-slot-title"><small>${slot.label}</small><strong>${this.escapeHtml(meal.name || 'Refeição')}</strong>${meal.time ? `<span class="planner-slot-time">${this.escapeHtml(meal.time)}</span>` : ''}</div>
+              <i class="${slot.icon}" style="opacity:.78"></i>
+            </div>
+            <div class="planner-slot-body"><p>${meal.completed ? 'Marcada como usada. Ótimo para acompanhar sua rotina.' : 'Use os botões abaixo para visualizar, concluir ou remover.'}</p></div>
+            <div class="planner-slot-actions meal-item-actions">
+              <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i><span>Ver</span></button>
+              <button type="button" class="icon-button meal-complete-btn ${meal.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i><span>Concluir</span></button>
+              <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i><span>Excluir</span></button>
+            </div>
+          </article>`;
+      }).join('');
+
+      const extras = (dayMeals.extras || []).map(extra => {
+        const recipeId = extra.recipeId || extra.id || '';
+        return `
+          <article class="planner-slot-card planner-meal-item ${extra.completed ? 'completed' : ''}" data-day="${dayKey}" data-meal="extra:${extra.key}" data-recipe-id="${recipeId}">
+            <div class="planner-slot-head"><div class="planner-slot-title"><small>${this.escapeHtml(extra.mealLabel || 'Refeição extra')}</small><strong>${this.escapeHtml(extra.name || 'Receita')}</strong>${extra.time ? `<span class="planner-slot-time">${this.escapeHtml(extra.time)}</span>` : ''}</div><i class="fa-solid fa-star" style="opacity:.78"></i></div>
+            <div class="planner-slot-body"><p>Refeição personalizada adicionada ao seu dia.</p></div>
+            <div class="planner-slot-actions meal-item-actions">
+              <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i><span>Ver</span></button>
+              <button type="button" class="icon-button meal-complete-btn ${extra.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i><span>Concluir</span></button>
+              <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i><span>Excluir</span></button>
+            </div>
+          </article>`;
+      }).join('');
+
+      titleEl.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${dayLabel}`;
+      headerActionsEl.innerHTML = `<button class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>`;
+      bodyEl.innerHTML = `
+        <div class="planner-day-detail-shell">
+          <div class="detail-kpi-grid">
+            <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).length}</strong><span>refeições no dia</span></div>
+            <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).filter(meal => meal.completed).length}</strong><span>marcadas como usadas</span></div>
+          </div>
+          <div class="planner-slot-grid">${slotCards}${extras}
+            <article class="planner-slot-card planner-slot-add-card">
+              <div class="planner-slot-head"><div class="planner-slot-title"><small>Personalizado</small><strong>Adicionar refeição</strong></div><i class="fa-solid fa-sparkles" style="opacity:.78"></i></div>
+              <div class="planner-slot-body"><p>Crie uma refeição com nome e horário personalizados e escolha a receita depois.</p></div>
+              <div class="planner-slot-actions"><button type="button" class="icon-button planner-custom-meal-launch" data-day="${dayKey}" title="Criar refeição"><i class="fa-solid fa-plus"></i></button></div>
+            </article>
+          </div>
+        </div>`;
+      footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+      footerEl.innerHTML = `<button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>${this.buildExportButtons(`data-day="${dayKey}"`)}`;
+      this.openModal('detail-modal');
+    };
+
+    app.analysisV3PaintSide = function(payload){
+      const kpiEl = document.getElementById('analysis-v3-kpis');
+      const breakdownEl = document.getElementById('analysis-v3-breakdown');
+      if (kpiEl) {
+        kpiEl.innerHTML = (payload.kpis || []).map(item => `
+          <article class="analysis-v3-kpi">
+            <span>${item.label}</span>
+            <strong>${item.value}</strong>
+          </article>`).join('');
+      }
+      if (breakdownEl) {
+        breakdownEl.innerHTML = `
+          <div class="analysis-v3-breakdown-head"><span>Leitura detalhada</span></div>
+          ${(payload.breakdown || []).map(item => `
+            <div class="analysis-v3-row">
+              <span>${item.label}</span>
+              <strong>${item.value}</strong>
+            </div>`).join('')}`;
+      }
+      const insightEl = document.getElementById('analysis-v3-insight');
+      if (insightEl) insightEl.textContent = payload.insight || '';
+      const typeLabel = document.getElementById('analysis-v3-type-label');
+      if (typeLabel) typeLabel.textContent = this.getFriendlyChartTypeLabel(this.analysisV3State?.chartType || payload.preferredType || 'doughnut');
+    };
+
+    app.analysisV3CycleType = function(){
+      const order = ['doughnut', 'pie', 'bar', 'line'];
+      let idx = order.indexOf(this.analysisV3State.chartType);
+      if (idx < 0) idx = 0;
+      this.analysisV3State.chartType = order[(idx + 1) % order.length];
+      const label = document.getElementById('analysis-v3-type-label');
+      if (label) label.textContent = this.getFriendlyChartTypeLabel(this.analysisV3State.chartType);
+      this.renderAnalises?.();
+    };
+
+    app.analysisV3DrawChart = function(payload){
+      if (this.charts && this.charts.analysisRebuiltChart) {
+        try { this.charts.analysisRebuiltChart.destroy(); } catch(e) {}
+      }
+      const canvas = document.getElementById('analysis-v3-chart');
+      if (!canvas || !window.Chart) return;
+      const chartCard = document.querySelector('#module-analises .analysis-v3-chartcard');
+      const ctx = canvas.getContext('2d');
+      const type = this.analysisV3State.chartType || payload.preferredType || 'doughnut';
+      if (chartCard) chartCard.dataset.chartType = type;
+      const colors = this.analysisV3Colors(0.92);
+      const lineColor = 'rgba(0,242,234,0.95)';
+      const total = (payload.values || []).reduce((sum, value) => sum + (Number(value) || 0), 0);
+
+      const dataset = {
+        label: payload.title,
+        data: payload.values,
+        backgroundColor: (type === 'line' || type === 'radar') ? colors.map(c => c.replace('0.92','0.22')) : colors,
+        borderColor: (type === 'line' || type === 'radar') ? lineColor : colors,
+        pointBackgroundColor: lineColor,
+        pointBorderColor: '#ffffff',
+        borderWidth: type === 'line' ? 3 : 2,
+        tension: 0.42,
+        fill: type === 'line' || type === 'radar',
+        pointRadius: type === 'line' ? 4 : 3,
+        hoverOffset: 8
+      };
+
+      const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: 8 },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              color: '#dbe6ea',
+              usePointStyle: true,
+              boxWidth: 8,
+              padding: 16,
+              font: { family: 'Roboto, sans-serif', size: 11 },
+              generateLabels: (chart) => {
+                const defaults = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                return defaults.map((item) => {
+                  const value = chart.data.datasets?.[item.datasetIndex || 0]?.data?.[item.index] ?? 0;
+                  const percent = total > 0 ? Math.round((Number(value || 0) / total) * 100) : 0;
+                  return {
+                    ...item,
+                    text: ['doughnut', 'pie'].includes(type)
+                      ? `${chart.data.labels[item.index]} • ${value} (${percent}%)`
+                      : `${chart.data.labels[item.index]} • ${value}`
+                  };
+                });
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(8,12,20,.96)',
+            borderColor: 'rgba(255,255,255,.08)',
+            borderWidth: 1,
+            titleColor: '#ffffff',
+            bodyColor: '#c9d6db',
+            displayColors: true,
+            callbacks: {
+              label: (context) => {
+                const value = Number(context.parsed?.y ?? context.parsed ?? 0);
+                const percent = total > 0 ? Math.round((value / total) * 100) : 0;
+                return ['doughnut', 'pie'].includes(type)
+                  ? `${context.label}: ${value} (${percent}%)`
+                  : `${context.label}: ${value}`;
+              }
+            }
+          }
+        },
+        scales: (type === 'bar' || type === 'line') ? {
+          x: { ticks: { color: '#dbe6ea' }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } },
+          y: { beginAtZero: true, ticks: { color: '#9fb2bb', precision: 0 }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } }
+        } : {},
+        cutout: (type === 'doughnut') ? '68%' : undefined,
+        animation: { duration: 420, easing: 'easeOutCubic' }
+      };
+
+      this.charts.analysisRebuiltChart = new Chart(ctx, { type, data: { labels: payload.labels, datasets: [dataset] }, options });
+      const typeLabel = document.getElementById('analysis-v3-type-label');
+      if (typeLabel) typeLabel.textContent = this.getFriendlyChartTypeLabel(type);
+    };
+
+    if (app.isAppMode && app.activeModule === 'configuracoes') app.renderConfiguracoes();
+    if (app.isAppMode && app.activeModule === 'analises') app.renderAnalises();
+    if (app.isAppMode && app.activeModule === 'lista') app.renderListas?.();
+    if (app.isAppMode && app.activeModule === 'receitas') app.renderReceitas?.();
+    if (app.isAppMode && app.activeModule === 'planejador') app.renderPlanejador?.();
+    return true;
+  };
+
+  if (!boot()) {
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      if (boot() || tries > 40) clearInterval(timer);
+    }, 120);
+  }
+})();
+
+
+/* === PATCH FINAL | landing limpa + análises sem legenda quebrada === */
+(() => {
+  const patch = () => {
+    const app = window.app;
+    if (!app || app.__cleanLandingDesktopPatch) return !!app;
+    app.__cleanLandingDesktopPatch = true;
+
+    app.analysisV3DrawChart = function(payload){
+      const canvas = document.getElementById('analysis-v3-chart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      const ctx = canvas.getContext('2d');
+      if (this.charts.analysisRebuiltChart) this.charts.analysisRebuiltChart.destroy();
+
+      const type = this.analysisV3State.chartType || payload.preferredType || 'doughnut';
+      const colors = this.analysisV3Colors(0.92);
+      const lineColor = 'rgba(0,242,234,0.95)';
+      const total = (payload.values || []).reduce((sum, value) => sum + (Number(value) || 0), 0);
+      const legendVisible = ['doughnut', 'pie'].includes(type);
+
+      const dataset = {
+        label: payload.title,
+        data: payload.values,
+        backgroundColor: (type === 'line' || type === 'radar') ? colors.map(c => c.replace('0.92','0.22')) : colors,
+        borderColor: (type === 'line' || type === 'radar') ? lineColor : colors,
+        pointBackgroundColor: lineColor,
+        pointBorderColor: '#ffffff',
+        borderWidth: type === 'line' ? 3 : 2,
+        tension: 0.42,
+        fill: type === 'line' || type === 'radar',
+        pointRadius: type === 'line' ? 4 : 3,
+        hoverOffset: 8
+      };
+
+      const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: 8 },
+        plugins: {
+          legend: {
+            display: legendVisible,
+            position: 'bottom',
+            labels: {
+              color: '#dbe6ea',
+              usePointStyle: true,
+              boxWidth: 8,
+              padding: 16,
+              font: { family: 'Roboto, sans-serif', size: 11 },
+              generateLabels: (chart) => {
+                const datasetValues = chart.data.datasets?.[0]?.data || [];
+                return (chart.data.labels || []).map((label, index) => {
+                  const value = Number(datasetValues[index] || 0);
+                  const percent = total > 0 ? Math.round((value / total) * 100) : 0;
+                  const fillStyle = Array.isArray(chart.data.datasets?.[0]?.backgroundColor)
+                    ? chart.data.datasets[0].backgroundColor[index]
+                    : chart.data.datasets?.[0]?.backgroundColor;
+                  return {
+                    text: `${label} • ${value} (${percent}%)`,
+                    fillStyle,
+                    strokeStyle: fillStyle,
+                    lineWidth: 0,
+                    hidden: false,
+                    index,
+                    datasetIndex: 0,
+                    pointStyle: 'circle'
+                  };
+                });
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(8,12,20,.96)',
+            borderColor: 'rgba(255,255,255,.08)',
+            borderWidth: 1,
+            titleColor: '#ffffff',
+            bodyColor: '#c9d6db',
+            displayColors: true,
+            callbacks: {
+              label: (context) => {
+                const value = Number(context.parsed?.y ?? context.parsed ?? 0);
+                const percent = total > 0 ? Math.round((value / total) * 100) : 0;
+                return legendVisible
+                  ? `${context.label}: ${value} (${percent}%)`
+                  : `${context.label}: ${value}`;
+              }
+            }
+          }
+        },
+        scales: (type === 'bar' || type === 'line') ? {
+          x: { ticks: { color: '#dbe6ea' }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } },
+          y: { beginAtZero: true, ticks: { color: '#9fb2bb', precision: 0 }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } }
+        } : (type === 'radar') ? {
+          r: {
+            angleLines: { color: 'rgba(255,255,255,.08)' },
+            grid: { color: 'rgba(255,255,255,.08)' },
+            pointLabels: { color: '#dbe6ea', font: { size: 11 } },
+            ticks: { display: false, backdropColor: 'transparent' },
+            suggestedMin: 0
+          }
+        } : {},
+        cutout: (type === 'doughnut') ? '68%' : undefined,
+        animation: { duration: 420, easing: 'easeOutCubic' }
+      };
+
+      this.charts.analysisRebuiltChart = new Chart(ctx, {
+        type,
+        data: { labels: payload.labels, datasets: [dataset] },
+        options
+      });
+    };
+
+    return true;
+  };
+  if (!patch()) {
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      if (patch() || tries > 80) clearInterval(timer);
+    }, 120);
+  }
+})();
+
+/* === PATCH V3.2 — planejador mobile confiável === */
+(() => {
+  const patchPlanner = () => {
+    const app = window.app;
+    if (!app || app.__plannerMobileFix320) return !!app;
+    app.__plannerMobileFix320 = true;
+
+    app.openPlannerDayDetailModal = function(dayKey) {
+      const titleEl = document.getElementById('detail-modal-title');
+      const bodyEl = document.getElementById('detail-modal-body');
+      const footerEl = document.getElementById('detail-modal-footer');
+      const headerActionsEl = document.getElementById('detail-modal-header-actions');
+      if (!titleEl || !bodyEl || !footerEl || !headerActionsEl) return;
+
+      const dayLabel = this.getPlannerDaysMap?.()[dayKey] || 'Dia';
+      const dayMeals = this.state?.planejador?.[dayKey] || {};
+      const standardSlots = [
+        { key: 'cafe', label: 'Café da manhã', icon: 'fa-solid fa-mug-saucer' },
+        { key: 'almoco', label: 'Almoço', icon: 'fa-solid fa-bowl-food' },
+        { key: 'jantar', label: 'Jantar', icon: 'fa-solid fa-utensils' }
+      ];
+
+      const renderFilledSlot = (slotLabel, slotIcon, meal, mealKey) => {
+        const recipeId = meal?.recipeId || meal?.id || '';
+        const completed = !!meal?.completed;
+        const helper = completed
+          ? 'Marcada como usada. Toque em ver para abrir a receita novamente.'
+          : 'Use os botões abaixo para visualizar, concluir ou remover.';
+        return `
+          <article class="planner-slot-card planner-meal-item ${completed ? 'completed' : ''}" data-day="${dayKey}" data-meal="${mealKey}" data-recipe-id="${recipeId}">
+            <div class="planner-slot-head">
+              <div class="planner-slot-title">
+                <small>${this.escapeHtml(slotLabel)}</small>
+                <strong>${this.escapeHtml(meal?.name || 'Refeição')}</strong>
+                ${meal?.time ? `<span class="planner-slot-time">${this.escapeHtml(meal.time)}</span>` : ''}
+              </div>
+              <i class="${slotIcon}" aria-hidden="true" style="opacity:.78"></i>
+            </div>
+            <div class="planner-slot-body"><p>${helper}</p></div>
+            <div class="planner-slot-actions meal-item-actions">
+              <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i><span>Ver</span></button>
+              <button type="button" class="icon-button meal-complete-btn ${completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i><span>Concluir</span></button>
+              <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i><span>Excluir</span></button>
+            </div>
+          </article>`;
+      };
+
+      const renderEmptySlot = (slotLabel, slotIcon, mealKey) => `
+        <article class="planner-slot-card planner-slot-empty" data-day="${dayKey}" data-meal="${mealKey}">
+          <div class="planner-slot-head">
+            <div class="planner-slot-title">
+              <small>${slotLabel}</small>
+              <strong>Sem receita definida</strong>
+            </div>
+            <i class="${slotIcon}" aria-hidden="true" style="opacity:.72"></i>
+          </div>
+          <div class="planner-slot-body"><p>Escolha uma receita para organizar melhor este horário.</p></div>
+          <div class="planner-slot-actions">
+            <button type="button" class="icon-button planner-slot-direct-btn" data-day="${dayKey}" data-meal="${mealKey}" title="Escolher receita"><i class="fa-solid fa-plus"></i><span>Adicionar</span></button>
+          </div>
+        </article>`;
+
+      const slotCards = standardSlots.map(slot => {
+        const meal = dayMeals[slot.key];
+        return meal ? renderFilledSlot(slot.label, slot.icon, meal, slot.key) : renderEmptySlot(slot.label, slot.icon, slot.key);
+      }).join('');
+
+      const extras = (dayMeals.extras || []).map(extra => {
+        return renderFilledSlot(extra?.mealLabel || 'Refeição extra', 'fa-solid fa-star', extra, `extra:${extra.key}`);
+      }).join('');
+
+      titleEl.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${dayLabel}`;
+      headerActionsEl.innerHTML = `<button class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>`;
+      bodyEl.innerHTML = `
+        <div class="planner-day-detail-shell">
+          <div class="detail-kpi-grid">
+            <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).length}</strong><span>refeições no dia</span></div>
+            <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).filter(meal => meal.completed).length}</strong><span>concluídas</span></div>
+          </div>
+          <div class="planner-slot-grid">
+            ${slotCards}
+            ${extras}
+            <article class="planner-slot-card planner-slot-add-card">
+              <div class="planner-slot-head">
+                <div class="planner-slot-title"><small>Personalizado</small><strong>Adicionar refeição</strong></div>
+                <i class="fa-solid fa-sparkles" aria-hidden="true" style="opacity:.78"></i>
+              </div>
+              <div class="planner-slot-body"><p>Crie uma refeição com nome e horário personalizados.</p></div>
+              <div class="planner-slot-actions">
+                <button type="button" class="icon-button planner-custom-meal-launch" data-day="${dayKey}" title="Criar refeição"><i class="fa-solid fa-plus"></i><span>Criar</span></button>
+              </div>
+            </article>
+          </div>
+        </div>`;
+
+      footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+      footerEl.innerHTML = `<button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>${this.buildExportButtons(`data-day="${dayKey}"`)}`;
+      this.openModal('detail-modal');
+    };
+
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      const viewBtn = target.closest('#detail-modal .planner-slot-card .meal-view-btn');
+      if (viewBtn) {
+        const card = viewBtn.closest('.planner-slot-card[data-recipe-id]');
+        const recipeId = card?.dataset?.recipeId;
+        if (!recipeId) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        app.closeModal?.('detail-modal');
+        setTimeout(() => app.showRecipeDetailModal?.(recipeId), 120);
+        return;
+      }
+    }, true);
+
+    return true;
+  };
+
+  if (!patchPlanner()) {
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      if (patchPlanner() || tries > 120) clearInterval(timer);
+    }, 120);
+  }
+})();
+
+
+/* === PATCH V3.3 — confirmação de exclusão do planejador acima de tudo === */
+(() => {
+  const applyPatch = () => {
+    const app = window.app;
+    if (!app || app.__plannerDeleteConfirmFix330) return !!app;
+    app.__plannerDeleteConfirmFix330 = true;
+
+    app.__getPlannerMealRef = function(dayKey, mealKey) {
+      const dayMeals = this.state?.planejador?.[dayKey];
+      if (!dayMeals || !mealKey) return null;
+      if (String(mealKey).startsWith('extra:')) {
+        const extraKey = String(mealKey).split(':').slice(1).join(':');
+        const extras = Array.isArray(dayMeals.extras) ? dayMeals.extras : [];
+        const index = extras.findIndex(item => String(item?.key) === String(extraKey));
+        if (index === -1) return null;
+        return { type: 'extra', index, meal: extras[index] };
+      }
+      if (!dayMeals[mealKey]) return null;
+      return { type: 'slot', key: mealKey, meal: dayMeals[mealKey] };
+    };
+
+    app.handleDeleteMeal = function(dayKey, mealKey) {
+      const ref = this.__getPlannerMealRef(dayKey, mealKey);
+      if (!ref?.meal) return;
+
+      const mealName = ref.meal?.name || 'esta refeição';
+      const detailWasVisible = !!document.getElementById('detail-modal')?.classList.contains('is-visible');
+
+      const reopenPlannerDay = () => {
+        if (!detailWasVisible) return;
+        setTimeout(() => this.openPlannerDayDetailModal?.(dayKey), 80);
+      };
+
+      const removeMeal = () => {
+        const dayMeals = this.state?.planejador?.[dayKey];
+        if (!dayMeals) return;
+
+        if (ref.type === 'extra') {
+          if (Array.isArray(dayMeals.extras) && ref.index > -1) {
+            dayMeals.extras.splice(ref.index, 1);
+            if (!dayMeals.extras.length) delete dayMeals.extras;
+          }
+        } else if (ref.type === 'slot' && ref.key) {
+          delete dayMeals[ref.key];
+        }
+
+        const hasEntries = Object.keys(dayMeals).some((key) => {
+          if (key === 'extras') return Array.isArray(dayMeals.extras) && dayMeals.extras.length > 0;
+          return !!dayMeals[key];
+        });
+        if (!hasEntries) delete this.state.planejador[dayKey];
+
+        this.saveState();
+        if (this.activeModule === 'planejador') this.renderPlanejador?.();
+        this.renderPlannerWidget?.();
+        reopenPlannerDay();
+        this.showNotification('Refeição removida.', 'info');
+      };
+
+      const openConfirm = () => {
+        this.openConfirmModal('Remover refeição', `Deseja remover "${mealName}" do planejamento?`, removeMeal);
+        const confirmModal = document.getElementById('custom-confirm-modal');
+        const cancelBtn = document.getElementById('confirm-cancel-btn');
+        const closeBtn = confirmModal?.querySelector('[data-modal-close="custom-confirm-modal"]');
+
+        if (confirmModal) {
+          confirmModal.style.zIndex = '45000';
+          const box = confirmModal.querySelector('.modal-box');
+          if (box) box.style.zIndex = '45001';
+        }
+
+        if (detailWasVisible) {
+          cancelBtn?.addEventListener('click', reopenPlannerDay, { once: true });
+          closeBtn?.addEventListener('click', reopenPlannerDay, { once: true });
+          confirmModal?.addEventListener('click', (ev) => {
+            if (ev.target === confirmModal) reopenPlannerDay();
+          }, { once: true });
+        }
+      };
+
+      if (detailWasVisible) {
+        this.closeModal?.('detail-modal');
+        setTimeout(openConfirm, 90);
+        return;
+      }
+
+      openConfirm();
+    };
+
+    return true;
+  };
+
+  if (!applyPatch()) {
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      if (applyPatch() || tries > 120) clearInterval(timer);
+    }, 120);
+  }
+})();
+
+
+// === PATCH v4.0 | autocomplete de ingredientes + gerar lista do planejador ===
+(() => {
+  if (typeof app === 'undefined') return;
+
+  app.normalizeSearchText = function(value) {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  app.showAutocomplete = function(suggestions, query, inputElement) {
+    const suggestionsEl = this.elements?.autocompleteSuggestions;
+    if (!suggestionsEl || !inputElement) return;
+
+    const renderLabel = (item) => {
+      const isManual = String(item?.name || '').startsWith('Insira manual:');
+      const original = String(item?.name || '');
+      if (isManual || !query) return this.escapeHtml(original);
+      const normalizedOriginal = this.normalizeSearchText(original);
+      const idx = normalizedOriginal.indexOf(query);
+      if (idx < 0) return this.escapeHtml(original);
+      const sliceEnd = Math.min(original.length, idx + query.length);
+      return `${this.escapeHtml(original.slice(0, idx))}<strong>${this.escapeHtml(original.slice(idx, sliceEnd))}</strong>${this.escapeHtml(original.slice(sliceEnd))}`;
+    };
+
+    suggestionsEl.innerHTML = suggestions.map(item => {
+      const name = String(item?.name || '');
+      const safeName = this.escapeHtml(name);
+      const isManual = name.startsWith('Insira manual:');
+      return `<div class="autocomplete-item" data-name="${safeName}" data-manual="${isManual ? '1' : '0'}">${renderLabel(item)}</div>`;
+    }).join('');
+
+    const rect = inputElement.getBoundingClientRect();
+    suggestionsEl.style.position = 'fixed';
+    suggestionsEl.style.left = `${Math.max(12, rect.left)}px`;
+    suggestionsEl.style.top = `${Math.min(window.innerHeight - 12, rect.bottom + 6)}px`;
+    suggestionsEl.style.width = `${Math.max(220, rect.width)}px`;
+    suggestionsEl.style.maxWidth = `calc(100vw - 24px)`;
+    suggestionsEl.style.display = 'block';
+  };
+
+  app.hideAutocomplete = function() {
+    if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
+    if (this.elements?.autocompleteSuggestions) {
+      this.elements.autocompleteSuggestions.style.display = 'none';
+      this.elements.autocompleteSuggestions.innerHTML = '';
+    }
+    this.activeAutocompleteInput = null;
+  };
+
+  app.handleAutocomplete = function(inputElement) {
+    if (!inputElement) return;
+    const rawQuery = String(inputElement.value || '').trim();
+    const query = this.normalizeSearchText(rawQuery);
+    this.activeAutocompleteInput = inputElement;
+
+    if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
+    if (query.length < 1) {
+      this.hideAutocomplete();
+      return;
+    }
+
+    const suggestionsSource = [];
+    if (Array.isArray(window.ALL_ITEMS_DATA)) suggestionsSource.push(...window.ALL_ITEMS_DATA);
+    suggestionsSource.push(...(this.state?.despensa || []).map(item => ({ name: item.name, price: Number(item.valor || 0), unit_desc: item.unid || 'un' })));
+    suggestionsSource.push(...(this.state?.essenciais || []).map(item => ({ name: item.name, price: Number(item.preco || 0), unit_desc: item.unid || 'un' })));
+    Object.values(this.state?.receitas || {}).forEach(recipe => {
+      (recipe?.ingredients || []).forEach(ing => {
+        suggestionsSource.push({ name: ing.name, price: 0, unit_desc: ing.unit || 'un' });
+      });
+    });
+
+    this.autocompleteTimeout = setTimeout(() => {
+      const normalizedQueryWords = query.split(' ').filter(Boolean);
+      const dedup = new Map();
+
+      suggestionsSource.forEach(item => {
+        const name = String(item?.name || '').trim();
+        if (!name) return;
+        const normalizedName = this.normalizeSearchText(name);
+        if (!normalizedName) return;
+        const matches = normalizedQueryWords.every(word => normalizedName.includes(word));
+        if (!matches) return;
+        const score = normalizedName.startsWith(query) ? 0 : normalizedName.includes(` ${query}`) ? 1 : 2;
+        const key = normalizedName;
+        if (!dedup.has(key)) dedup.set(key, { ...item, __score: score });
+        else if ((dedup.get(key).__score ?? 9) > score) dedup.set(key, { ...item, __score: score });
+      });
+
+      const suggestions = Array.from(dedup.values())
+        .sort((a, b) => (a.__score - b.__score) || String(a.name).localeCompare(String(b.name), 'pt-BR'))
+        .slice(0, 8)
+        .map(({ __score, ...item }) => item);
+
+      if (!suggestions.length) {
+        this.showAutocomplete([{ name: `Insira manual: ${rawQuery}` }], query, inputElement);
+        return;
+      }
+
+      this.showAutocomplete(suggestions, query, inputElement);
+    }, 80);
+  };
+
+  app.selectAutocompleteItem = function(itemName) {
+    const activeInput = this.activeAutocompleteInput;
+    if (!activeInput) {
+      this.hideAutocomplete();
+      return;
+    }
+
+    if (String(itemName).startsWith('Insira manual:')) {
+      const manualName = String(itemName).replace('Insira manual:', '').trim();
+      activeInput.value = manualName;
+      this.hideAutocomplete();
+      activeInput.focus();
+      return;
+    }
+
+    const normalizedItemName = this.normalizeSearchText(itemName);
+    const recipeIngredients = Object.values(this.state?.receitas || {}).flatMap(recipe => recipe?.ingredients || []);
+    const candidates = [
+      ...(Array.isArray(window.ALL_ITEMS_DATA) ? window.ALL_ITEMS_DATA : []),
+      ...(this.state?.despensa || []).map(item => ({ name: item.name, price: Number(item.valor || 0), unit_desc: item.unid || 'un' })),
+      ...(this.state?.essenciais || []).map(item => ({ name: item.name, price: Number(item.preco || 0), unit_desc: item.unid || 'un' })),
+      ...recipeIngredients.map(ing => ({ name: ing.name, price: 0, unit_desc: ing.unit || 'un' }))
+    ];
+
+    const itemData = candidates.find(item => this.normalizeSearchText(item?.name || '') === normalizedItemName) || { name: itemName, price: 0, unit_desc: 'un' };
+    activeInput.value = itemData.name;
+
+    const modal = activeInput.closest('.modal-box, .modal-content, #custom-confirm-modal, form') || document;
+    const unitSource = String(itemData.unit_desc || itemData.unid || itemData.unit || 'un');
+    const matchedUnit = ['un','kg','g','L','ml','pct','cx','xícara','colher','pitada','dentes','a gosto','fio'].find(unit => unitSource.toLowerCase().includes(unit.toLowerCase())) || 'un';
+
+    if (activeInput.id === 'recipe-ing-name') {
+      const qtdInput = modal.querySelector('#recipe-ing-qtd');
+      const unitSelect = modal.querySelector('#recipe-ing-unid');
+      if (qtdInput && !String(qtdInput.value || '').trim()) qtdInput.value = '1';
+      if (unitSelect) unitSelect.value = matchedUnit;
+    }
+
+    this.hideAutocomplete();
+    activeInput.focus();
+  };
+
+  app.handleGenerateListFromPlanner = function(dayKey = null) {
+    const source = dayKey
+      ? { [dayKey]: this.state?.planejador?.[dayKey] || {} }
+      : (this.state?.planejador || {});
+
+    const aggregated = new Map();
+    const addIngredient = (ingredient) => {
+      if (!ingredient?.name) return;
+      const unit = String(ingredient.unit || ingredient.unid || 'un').trim() || 'un';
+      const qty = parseFloat(ingredient.qty || ingredient.quantity || 1) || 1;
+      const key = `${this.normalizeSearchText(ingredient.name)}|${unit.toLowerCase()}`;
+      const current = aggregated.get(key) || {
+        id: this.generateId(),
+        name: String(ingredient.name).trim(),
+        qtd: 0,
+        unid: unit,
+        valor: 0,
+        checked: false
+      };
+      current.qtd = Number((current.qtd + qty).toFixed(2));
+      aggregated.set(key, current);
+    };
+
+    Object.values(source).forEach(dayState => {
+      if (!dayState || typeof dayState !== 'object') return;
+      ['cafe', 'almoco', 'jantar'].forEach(slot => {
+        const ref = dayState[slot];
+        const recipe = ref ? this.state?.receitas?.[ref.recipeId || ref.id] : null;
+        (recipe?.ingredients || []).forEach(addIngredient);
+      });
+      (Array.isArray(dayState.extras) ? dayState.extras : []).forEach(extra => {
+        const recipe = this.state?.receitas?.[extra.recipeId || extra.id];
+        (recipe?.ingredients || []).forEach(addIngredient);
+      });
+    });
+
+    if (!aggregated.size) {
+      const title = dayKey ? 'Nada para gerar neste dia' : 'Nada para gerar no planejador';
+      const text = dayKey
+        ? 'Adicione pelo menos uma receita com ingredientes neste dia para gerar a lista.'
+        : 'Adicione pelo menos uma receita com ingredientes ao planejador para gerar a lista.';
+      this.showInfoModal?.(title, `<p>${text}</p>`) || this.showNotification(text, 'info');
+      return;
+    }
+
+    const newListId = this.generateId();
+    const listName = dayKey ? `Lista ${this.getPlannerDaysMap?.()[dayKey] || 'do dia'}` : 'Lista do Planejamento';
+    this.state.listas[newListId] = {
+      nome: listName,
+      createdAt: new Date().toISOString(),
+      items: Array.from(aggregated.values())
+    };
+    this.activeListId = newListId;
+    this.saveState();
+    this.closeModal?.('detail-modal');
+    this.activateModuleAndRender?.('lista');
+    setTimeout(() => {
+      document.getElementById('list-manager')?.classList.add('view-active-list');
+      this.renderListasSalvas?.();
+      this.renderListaWidget?.();
+      this.renderOrcamento?.();
+      this.renderListaAtiva?.(newListId);
+      this.showNotification?.(`Lista "${listName}" criada com ${aggregated.size} ingrediente(s).`, 'success');
+    }, 60);
+  };
+
+  const bindRecipeIngredientField = (scope = document) => {
+    const input = scope.querySelector?.('#recipe-ing-name');
+    if (!input || input.dataset.afBindAutocomplete === '1') return;
+    input.dataset.afBindAutocomplete = '1';
+    input.setAttribute('autocomplete', 'off');
+    input.addEventListener('input', () => app.handleAutocomplete(input));
+    input.addEventListener('focus', () => {
+      if (String(input.value || '').trim()) app.handleAutocomplete(input);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') app.hideAutocomplete();
+    });
+  };
+
+  const originalHandleOpenRecipeEditModal = app.handleOpenRecipeEditModal?.bind(app);
+  if (originalHandleOpenRecipeEditModal) {
+    app.handleOpenRecipeEditModal = function(...args) {
+      const result = originalHandleOpenRecipeEditModal(...args);
+      setTimeout(() => bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document), 30);
+      return result;
+    };
+  }
+
+  document.addEventListener('focusin', (e) => {
+    if (e.target?.id === 'recipe-ing-name') bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document);
   });
 })();

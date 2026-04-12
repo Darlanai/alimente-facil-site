@@ -5,11 +5,11 @@
     <title>Alimente Fácil [Visão Futurista]</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#00f2ea">
-    <meta name="description" content="Projetando o futuro da sua alimentação. Fluidez, inteligência e zero desperdício com o Alimente Fácil.">
+    <meta name="description" content="Organização alimentar premium, simples e sem ruído com o Alimente Fácil.">
     <meta name="author" content="Alimente Fácil">
     
     <meta property="og:title" content="Alimente Fácil [Visão Futurista]">
-    <meta property="og:description" content="Projetando o futuro da sua alimentação. Fluidez, inteligência e zero desperdício.">
+    <meta property="og:description" content="Organização alimentar premium, simples e sem ruído.">
     <meta property="og:type" content="website">
     
     <link rel="manifest" href="manifest.webmanifest">
@@ -78,109 +78,27 @@
     <main class="main-container">
         
         <section id="inicio" class="page-section">
-<div class="identity-container">
-                <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
-                
-                <h2 class="hero-tagline">Organização alimentar premium, sem ruído</h2>
-                
-                <p class="simple-subtitle scroll-reveal">
-                    Organize, planeje e economize com a inteligência artificial que transforma sua rotina alimentar.
-                </p>
-                <div class="hero-signature scroll-reveal" aria-label="Resumo do produto">Listas • Despensa • Receitas • Planejamento com IA</div>
-                <div class="hero-stat"><strong>30%</strong><span>economia média</span></div>
-                    <div class="hero-stat"><strong>Zero</strong><span>desperdício como meta</span></div>
-                </div>
-                
-                <div style="margin-top: 2.5rem;">
-                    <a href="#" class="modern-start-btn" onclick="if(window.app){window.app.handleStartButtonClick(); return false;}">
-                        <span class="btn-text">Começar Agora</span>
-                        <span class="btn-icon-wrapper"><i class="fa-solid fa-arrow-right"></i></span>
-                    </a>
-                    <div class="hero-secondary-actions" aria-label="Ações rápidas">
-                        <button type="button" class="hero-pill" data-modal-open="ai-chat-modal"
-                           data-chef-prompt="Quero testar o Chef IA. Me dê uma sugestão de refeição rápida e econômica para hoje.">
-                           <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
-                           <span>Chef IA</span>
-                        </button>
-                        <a href="#chef-ia" class="hero-pill hero-pill-ghost">
-                           <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-                           <span>Como funciona</span>
-                        </a>
-                        <button type="button" class="hero-pill hero-pill-ghost" data-modal-open="plans-modal">
-                           <i class="fa-solid fa-crown" aria-hidden="true"></i>
-                           <span>Planos</span>
-                        </button>
-                    </div>
+            <div class="identity-container hero-clean-layout" data-hero-phrases="Despensa em ordem|Planejamento sem bagunça">
+                <div class="hero-clean-shell">
+                    <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
+                    <h2 class="hero-tagline">Organização alimentar premium</h2>
+                    <p class="simple-subtitle scroll-reveal"></p>
 
+                    <div class="hero-signature scroll-reveal" aria-label="Frase rotativa">Despensa em ordem</div>
+
+                    <div class="hero-cta-stack">
+                        <a href="#" class="modern-start-btn" onclick="if(window.app){window.app.handleStartButtonClick(); return false;}">
+                            <span class="btn-text">Começar Agora</span>
+                            <span class="btn-icon-wrapper"><i class="fa-solid fa-arrow-right"></i></span>
+                        </a>
+                        <div class="hero-pricing-note">Plano único <strong>R$ 9,90/mês</strong></div>
+                    </div>
                 </div>
             </div>
 
-             <div class="scroll-down-indicator" aria-hidden="true">
+            <div class="scroll-down-indicator" aria-hidden="true">
                 <span>Role para explorar</span>
                 <i class="fa-solid fa-arrow-down"></i>
-            </div>
-                </section>
-
-        <section class="page-section chef-hub-section" id="chef-ia">
-            <div class="section-container">
-                <div class="chef-hub">
-                    <div class="chef-hub-left">
-                        <div class="section-eyebrow">Chef IA</div>
-                        <h2 class="section-title">A mente operacional do Alimente Fácil</h2>
-                        <p class="section-subtitle">
-                            Em vez de só “listar itens”, você conversa com o Chef — e ele transforma despensa + metas + rotina em cardápio, lista e economia.
-                        </p>
-
-                        <div class="chef-chips" role="list">
-                            <button class="chef-chip" role="listitem" data-modal-open="ai-chat-modal"
-                                    data-chef-prompt="Monte um cardápio simples e econômico para 7 dias (almoço e jantar). Considere receitas fáceis e ingredientes comuns no Brasil.">
-                                <i class="fa-solid fa-calendar-day" aria-hidden="true"></i>
-                                Montar semana
-                            </button>
-                            <button class="chef-chip" role="listitem" data-modal-open="ai-chat-modal"
-                                    data-chef-prompt="Crie uma lista de compras para uma semana de refeições simples e saudáveis para 1 pessoa, com foco em economizar e evitar desperdício.">
-                                <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-                                Lista automática
-                            </button>
-                            <button class="chef-chip" role="listitem" data-modal-open="ai-chat-modal"
-                                    data-chef-prompt="Me dê 5 ideias de receitas rápidas para reaproveitar ingredientes que estão perto de vencer. Inclua variações e substituições.">
-                                <i class="fa-solid fa-recycle" aria-hidden="true"></i>
-                                Anti-desperdício
-                            </button>
-                        </div>
-
-                        <div class="chef-cta-row">
-                            <a href="#" class="chef-primary-cta" data-modal-open="ai-chat-modal"
-                               data-chef-prompt="Quero começar. Me faça 3 perguntas rápidas e depois monte um plano semanal de refeições para mim.">
-                                <span>Experimentar o Chef IA</span>
-                                <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
-                            </a>
-                            <a href="#" class="chef-secondary-cta" data-modal-open="plans-modal">Ver planos</a>
-                        </div>
-                    </div>
-
-                    <div class="chef-hub-right" aria-hidden="true">
-                        <div class="chef-demo-card is-clickable" role="button" tabindex="0"
-                             data-modal-open="ai-chat-modal"
-                             data-chef-prompt="Tenho frango, arroz e cenoura. Me dê 3 ideias rápidas e econômicas, com passo a passo curto e substituições." aria-label="Abrir Chef IA">
-                            <div class="chef-demo-header">
-                                <div class="chef-demo-avatar"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                                <div>
-                                    <div class="chef-demo-title">Chef IA</div>
-                                    <div class="chef-demo-sub">Receitas • Compras • Planejamento</div>
-                                </div>
-                            </div>
-                            <div class="chef-demo-chat">
-                                <div class="chef-demo-bubble ia">Tenho frango, arroz e cenoura. O que dá pra fazer rápido?</div>
-                                <div class="chef-demo-bubble me">3 ideias: frango xadrez simples, arroz de forno e salteado rápido.</div>
-                                <div class="chef-demo-bubble ia">Quer que eu monte a semana e gere a lista de compras?</div>
-                            </div>
-                            <div class="chef-demo-footer">
-                                <div class="chef-demo-pill">Dica: clique em “Montar semana”</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -269,13 +187,6 @@
                 <h1 id="dicas-title" class="page-title">Dicas Valiosas</h1>
                 <p class="page-subtitle">Otimize sua rotina, economize e reduza o desperdício com nossas dicas.</p>
                 <div class="carousel-slider dicas-carousel"></div>
-                <button class="ai-cta-button" id="ai-cta-dicas">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="sparkle" aria-hidden="true">
-                    <path class="path" stroke-linejoin="round" stroke-linecap="round" d="M14.187 8.096L15 5.25L15.813 8.096C16.0231 8.83114 16.4171 9.50062 16.9577 10.0413C17.4984 10.5819 18.1679 10.9759 18.903 11.186L21.75 12L18.904 12.813C18.1689 13.0231 17.4994 13.4171 16.9587 13.9577C16.4181 14.4984 16.0241 15.1679 15.814 15.903L15 18.75L14.187 15.904C13.9769 15.1689 13.5829 14.4994 13.0423 13.9587C12.5016 13.4181 11.8321 13.0241 11.097 12.814L8.25 12L11.096 11.187C11.8311 10.9769 12.5006 10.5829 13.0413 10.0423C13.5819 9.50162 13.9759 8.83214 14.186 8.097L14.187 8.096Z"></path>
-                    <path class="path" stroke-linejoin="round" stroke-linecap="round" d="M6 14.25L5.741 15.285C5.59267 15.8785 5.28579 16.4206 4.85319 16.8532C4.42059 17.2858 3.87853 17.5927 3.285 17.741L2.25 18L3.285 18.259C3.87853 18.4073 4.42059 18.7142 4.85319 19.1468C5.28579 19.5794 5.59267 20.1215 5.741 20.715L6 21.75L6.259 20.715C6.40725 20.1216 6.71398 19.5796 7.14639 19.147C7.5788 18.7144 8.12065 18.4075 8.714 18.259L9.75 18L8.714 17.741C8.12065 17.5925 7.5788 17.2856 7.14639 16.853C6.71398 16.4204 6.40725 15.8784 6.259 15.285L6 14.25Z"></path>
-                  </svg>
-                  <span class="text_button">Mais dicas? Pergunte ao Chef IA</span>
-                </button>
             </div>
         </section>
 
@@ -284,11 +195,6 @@
                 <h1 id="receitas-title" class="page-title">Receitas Rápidas</h1>
                 <p class="page-subtitle">Inspire-se com pratos fáceis e deliciosos para o dia a dia.</p>
                 <div class="carousel-slider receitas-carousel"></div>
-                <button class="ai-cta-button" id="ai-cta-receitas">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="sparkle" aria-hidden="true">
-                      </svg>
-                    <span class="text_button">Mais receitas? Pergunte ao Chef IA</span>
-                </button>
             </div>
         </section>
 
@@ -297,7 +203,7 @@
                 <div class="about-contact-container">
                     <div class="about-card glass-card">
                         <h2 id="sobre-title">Sobre o Projeto</h2>
-                        <p>O "Alimente Fácil" nasceu da ideia de que a tecnologia pode ser nossa maior aliada contra o desperdício de alimentos. Queremos transformar a maneira como você planeja suas compras e gerencia sua despensa.</p>
+                        <p>O "Alimente Fácil" nasceu para simplificar a rotina alimentar com mais organização, economia e menos desperdício. A proposta é ajudar você a planejar compras, cuidar da despensa e manter a semana sob controle com clareza.</p>
                     </div>
                     <div class="contact-card glass-card">
                         <h2 id="contato-title">Contato</h2>
@@ -419,66 +325,35 @@
      </div>
 
     <div id="plans-modal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 900px;">
+        <div class="modal-box" style="max-width: 760px;">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-gem"></i> Escolha seu Plano</h3>
+                <h3><i class="fa-solid fa-gem"></i> Plano Alimente Fácil</h3>
                 <button class="icon-button close-btn" data-modal-close="plans-modal"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="modal-body" style="padding: 2rem;">
-                <p class="page-subtitle" style="text-align: center; margin-bottom: 2rem;">Desbloqueie todo o potencial da sua cozinha inteligente.</p>
-                
-                <div class="plans-container">
-                    <div class="plan-card" id="plan-free">
-                        <h4>Gratuito</h4>
-                        <div class="plan-price">R$ 0<span>/mês</span></div>
+                <p class="page-subtitle" style="text-align: center; margin-bottom: 2rem;">Uma assinatura simples para organizar sua rotina alimentar sem complicação.</p>
+                <div class="plans-container plans-container-single">
+                    <div class="plan-card recommended" id="plan-premium" style="border-color: var(--primary-color); background: rgba(0, 242, 234, 0.05); max-width: 420px; margin: 0 auto;">
+                        <div style="background: var(--primary-color); color: #000; font-size: 0.8rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; align-self: center; margin-bottom: 1rem;">PLANO ÚNICO</div>
+                        <h4>Alimente Fácil</h4>
+                        <div class="plan-price">R$ 9,90<span>/mês</span></div>
                         <ul>
-                            <li><i class="fa-solid fa-check"></i> 2 Listas de Compras</li>
-                            <li><i class="fa-solid fa-check"></i> 5 Receitas Salvas</li>
-                            <li><i class="fa-solid fa-check"></i> Gestão de Despensa Básica</li>
-                            <li style="opacity: 0.5;"><i class="fa-solid fa-times"></i> Sem Chef IA</li>
-                            <li style="opacity: 0.5;"><i class="fa-solid fa-times"></i> Sem Análises Avançadas</li>
+                            <li><i class="fa-solid fa-check"></i> Listas ilimitadas</li>
+                            <li><i class="fa-solid fa-check"></i> Receitas ilimitadas</li>
+                            <li><i class="fa-solid fa-check"></i> Planejador semanal completo</li>
+                            <li><i class="fa-solid fa-check"></i> Controle de despensa</li>
+                            <li><i class="fa-solid fa-check"></i> Análises e organização do painel</li>
                         </ul>
                         <div class="plan-actions">
-                            <button class="btn btn-secondary" disabled>Seu Plano Atual</button>
+                            <button class="btn btn-primary" data-action="subscribe" data-plan="premium" style="width: 100%;">Assinar agora</button>
+                            <div class="cancel-link">Cancelar assinatura</div>
                         </div>
-                    </div>
-
-                    <div class="plan-card recommended" id="plan-premium_ai" style="border-color: var(--primary-color); background: rgba(0, 242, 234, 0.05);">
-                        <div style="background: var(--primary-color); color: #000; font-size: 0.8rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; align-self: center; margin-bottom: 1rem;">MAIS POPULAR</div>
-                        <h4>Premium IA</h4>
-                        <div class="plan-price">R$ 29,90<span>/mês</span></div>
-                        <ul>
-                            <li><i class="fa-solid fa-check"></i> <strong>Chef IA Ilimitado</strong></li>
-                            <li><i class="fa-solid fa-check"></i> Listas Ilimitadas</li>
-                            <li><i class="fa-solid fa-check"></i> Receitas Ilimitadas</li>
-                            <li><i class="fa-solid fa-check"></i> Planejador Semanal Completo</li>
-                            <li><i class="fa-solid fa-check"></i> Análises de Gastos</li>
-                        </ul>
-                        <div class="plan-actions">
-                            <button class="btn btn-primary" data-action="subscribe" data-plan="premium_ai" style="width: 100%;">Assinar Agora</button>
-                            <div class="cancel-link">Cancelar Assinatura</div>
-                        </div>
-                    </div>
-                    
-                    <div class="plan-card" id="plan-premium">
-                         <h4>Essencial</h4>
-                         <div class="plan-price">R$ 14,90<span>/mês</span></div>
-                         <ul>
-                             <li><i class="fa-solid fa-check"></i> Listas Ilimitadas</li>
-                             <li><i class="fa-solid fa-check"></i> Receitas Ilimitadas</li>
-                             <li><i class="fa-solid fa-check"></i> Planejador Semanal</li>
-                             <li style="opacity: 0.5;"><i class="fa-solid fa-times"></i> Sem Chef IA</li>
-                         </ul>
-                         <div class="plan-actions">
-                             <button class="btn btn-secondary" data-action="subscribe" data-plan="premium" style="width: 100%;">Assinar Essencial</button>
-                             <div class="cancel-link">Cancelar Assinatura</div>
-                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <div class="app-panel-container-standalone">
         <aside class="app-sidebar">
             <div class="sidebar-header">
@@ -576,10 +451,6 @@
                  <div id="module-configuracoes" class="module-container"></div>
             </div>
         </main>
-    </div>
-
-    <div id="chef-ia-fab-placeholder" data-modal-open="ai-chat-modal" role="button" tabindex="0" aria-label="Abrir Chef IA">
-        <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
     </div>
     
     <div id="custom-confirm-modal" class="modal-overlay"> 
@@ -779,40 +650,21 @@
             </div>
         </div> 
     </div>
-    
-    <div id="ai-chat-modal" class="modal-overlay"> 
-        <div class="modal-box" style="max-width: 600px;" role="dialog" aria-modal="true" aria-labelledby="ai-chat-title"> 
-            <div class="modal-header"> 
-                <button class="icon-button close-btn" data-modal-close="ai-chat-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
-                <h3 id="ai-chat-title"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Chef IA</h3> 
-            </div> 
-            <div class="modal-body"> 
-                <div class="ai-chat-messages" id="ai-chat-messages-container" role="log" aria-live="polite"> 
-                    <div class="chat-message ia"><div class="bubble">Olá! Como posso te ajudar hoje com suas receitas ou planejamento?</div></div> 
-                </div> 
-            </div>
-<div class="modal-footer ai-chat-footer" style="justify-content: space-between;"> 
-                 <div class="form-group" style="width: 100%; display: flex; gap: 8px;"> 
-                     <button class="icon-button" id="ai-voice-btn" style="width: 45px; height: 45px; flex-shrink: 0;" aria-label="Falar com o Chef IA" title="Ditar mensagem"><i class="fa-solid fa-microphone"></i></button>
-                     <label for="ai-chat-input" class="sr-only">Digite sua mensagem para o Chef IA</label>
-                     <input type="text" id="ai-chat-input" placeholder="Digite ou fale sua mensagem..."> 
-                     <button class="btn btn-primary" id="ai-chat-send-btn" style="padding: 0 1rem;" aria-label="Enviar mensagem"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button> 
-                 </div> 
-            </div>
-        </div> 
+
+        <div class="glass-dock-container" aria-label="Alternar visualização">
+        <nav class="glass-dock" aria-label="Alternância entre página inicial e painel">
+            <button class="dock-item active" data-target="home" type="button" aria-label="Ir para a página inicial">
+                <i class="fa-solid fa-house" aria-hidden="true"></i>
+                <span>Home</span>
+            </button>
+            <button class="dock-item" data-target="app" type="button" aria-label="Ir para o painel">
+                <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>
+                <span>Painel</span>
+            </button>
+        </nav>
     </div>
 
-<div class="glass-dock-container">
-    <div class="glass-dock">
-        <button class="dock-item active" data-target="home"><i class="fa-solid fa-house"></i><span>Início</span></button>
-        <button class="dock-item" data-target="app"><i class="fa-solid fa-border-all"></i><span>Painel</span></button>
-        <button class="dock-item dock-action" type="button" data-action="open-chef" aria-label="Abrir Chef IA" title="Chef IA">
-            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span>Chef IA</span>
-        </button>
-    </div>
-</div>
-
-    <div id="af-chatbot" class="af-chatbot" aria-hidden="true">
+<div id="af-chatbot" class="af-chatbot" aria-hidden="true">
          <div class="af-chatbot-header">
             <div class="af-header-info">
                 <div class="af-avatar"><i class="fa-solid fa-robot"></i></div>
