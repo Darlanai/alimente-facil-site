@@ -11587,3 +11587,626 @@ window.app = app;
     }
   }, true);
 })();
+
+
+/* === AUTH + PAYMENT GATE PATCH FINAL | 2026-04-12 === */
+(() => {
+  const app = window.app;
+  if (!app) return;
+
+  const AUTH_TOKEN_KEY = 'alimenteFacilAuthToken';
+  const AUTH_USER_KEY = 'alimenteFacilAuthUser';
+  const AUTH_PENDING_KEY = 'alimenteFacilPendingSignup';
+
+  app.apiFetchJson = async function(url, options = {}) {
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+    const response = await fetch(url, Object.assign({}, options, { headers }));
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error(data?.message || 'Erro na comunicação com o servidor.');
+      error.payload = data;
+      error.status = response.status;
+      throw error;
+    }
+    return data;
+  };
+
+  app.getStoredAuthToken = function() {
+    return localStorage.getItem(AUTH_TOKEN_KEY) || '';
+  };
+
+  app.setStoredAuthSession = function(token, user) {
+    if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
+    if (user) localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  };
+
+  app.clearStoredAuthSession = function() {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
+  };
+
+  app.setPendingSignup = function(payload) {
+    if (payload) localStorage.setItem(AUTH_PENDING_KEY, JSON.stringify(payload));
+  };
+
+  app.getPendingSignup = function() {
+    try { return JSON.parse(localStorage.getItem(AUTH_PENDING_KEY) || 'null'); }
+    catch(_e) { return null; }
+  };
+
+  app.clearPendingSignup = function() {
+    localStorage.removeItem(AUTH_PENDING_KEY);
+  };
+
+  app.applyAuthenticatedUser = function(sessionData) {
+    const user = sessionData?.user || {};
+    this.isLoggedIn = true;
+    this.userPlan = (sessionData?.subscription?.plan === 'premium') ? 'premium' : 'free';
+    this.state.user = this.state.user || {};
+    this.state.user.nome = user.name || user.nome || 'Usuário';
+    this.state.user.email = user.email || '';
+    this.state.user.id = user.id || '';
+    this.saveState();
+    this.updateStartButton();
+  };
+
+  app.forceLoggedOutLanding = function() {
+    this.isLoggedIn = false;
+    this.userPlan = 'free';
+    this.state.user = this.state.user || {};
+    this.state.user.nome = null;
+    this.state.user.email = '';
+    this.clearStoredAuthSession();
+    this.updateStartButton();
+    if (this.isAppMode) this.exitAppMode();
+    this.saveState();
+  };
+
+  app.syncRealUserInfoInDOM = function() {
+    const email = this.state?.user?.email || '';
+    const name = this.state?.user?.nome || '';
+    if (!email && !name) return;
+
+    document.querySelectorAll('*').forEach((el) => {
+      if (email && el.childNodes.length === 1 && el.textContent.trim() === 'user@email.com') {
+        el.textContent = email;
+      }
+      if (name && el.childNodes.length === 1 && el.textContent.trim() === 'Antonio') {
+        el.textContent = name;
+      }
+    });
+  };
+
+  app.showPaymentGateModal = function({ title, message, checkoutUrl, pendingToken = '', mode = 'payment_required' }) {
+    const existing = document.getElementById('payment-gate-modal');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'payment-gate-modal';
+    overlay.className = 'modal-overlay is-visible';
+    overlay.style.zIndex = '6000';
+
+    const isWelcome = mode === 'welcome_after_signup';
+
+    overlay.innerHTML = `
+      <div class="modal-box" style="max-width:520px; z-index:6001;">
+        <div class="modal-header">
+          <h3>${title || 'Tudo certo por aqui'}</h3>
+          <button class="icon-button close-btn" type="button" data-close-payment-gate aria-label="Fechar">
+            <i class="fa-solid fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body" style="padding:1.5rem 1.5rem 1.25rem;">
+          <p style="line-height:1.6; color:var(--glass-text-primary);">${message || ''}</p>
+          <div style="display:flex; gap:.75rem; flex-wrap:wrap; margin-top:1.25rem;">
+            <button type="button" class="btn btn-primary" id="payment-gate-primary-btn" style="flex:1 1 220px;">
+              ${isWelcome ? 'Ativar teste grátis' : 'Ir para o Mercado Pago'}
+            </button>
+            ${isWelcome ? '<button type="button" class="btn btn-secondary" id="payment-gate-cancel-btn" style="flex:1 1 180px;">Sair e excluir cadastro</button>' : '<button type="button" class="btn btn-secondary" id="payment-gate-close-btn" style="flex:1 1 180px;">Fechar</button>'}
+          </div>
+          <p style="font-size:.88rem; color:var(--glass-text-secondary); margin-top:1rem;">
+            ${isWelcome
+              ? 'Seu acesso ao painel só é liberado depois que o cartão for configurado no Mercado Pago.'
+              : 'Enquanto o pagamento não for configurado, o acesso ao painel continua bloqueado.'}
+          </p>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const closeModal = () => overlay.remove();
+
+    overlay.querySelector('[data-close-payment-gate]')?.addEventListener('click', closeModal);
+    overlay.querySelector('#payment-gate-close-btn')?.addEventListener('click', closeModal);
+
+    overlay.querySelector('#payment-gate-primary-btn')?.addEventListener('click', () => {
+      if (checkoutUrl) window.location.href = checkoutUrl;
+      else this.showNotification('Link de pagamento não encontrado.', 'error');
+    });
+
+    overlay.querySelector('#payment-gate-cancel-btn')?.addEventListener('click', async () => {
+      try {
+        if (!pendingToken) {
+          this.clearPendingSignup();
+          closeModal();
+          return;
+        }
+
+        await this.apiFetchJson('/api/auth/cancel-pending', {
+          method: 'POST',
+          body: JSON.stringify({ pendingToken })
+        });
+
+        this.clearPendingSignup();
+        this.forceLoggedOutLanding();
+        closeModal();
+        this.showNotification('Cadastro pendente excluído com sucesso.', 'info');
+      } catch (error) {
+        this.showNotification(error?.payload?.message || error.message || 'Não foi possível excluir o cadastro pendente.', 'error');
+      }
+    });
+  };
+
+  app.handleSignup = async function() {
+    const name = String(document.getElementById('signup-name')?.value || '').trim();
+    const email = String(document.getElementById('signup-email')?.value || '').trim();
+    const password = String(document.getElementById('signup-password')?.value || '');
+
+    if (!name || !email || !password) {
+      this.showNotification('Preencha nome, e-mail e senha.', 'error');
+      return;
+    }
+
+    try {
+      const data = await this.apiFetchJson('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password })
+      });
+
+      this.forceLoggedOutLanding();
+      this.closeAllModals();
+      this.setPendingSignup({
+        email,
+        pendingToken: data.pendingToken || '',
+        checkoutUrl: data.checkoutUrl || this.checkoutLinks?.premium || ''
+      });
+
+      this.showPaymentGateModal({
+        mode: 'welcome_after_signup',
+        title: 'Bem-vindo ao Alimente Fácil',
+        message: 'Cadastro realizado com sucesso. Você ganhou 7 dias grátis. Para ativar o teste e liberar o painel, configure agora o pagamento automático no Mercado Pago.',
+        checkoutUrl: data.checkoutUrl || this.checkoutLinks?.premium || '',
+        pendingToken: data.pendingToken || ''
+      });
+    } catch (error) {
+      this.showNotification(error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.', 'error');
+    }
+  };
+
+  app.handleLogin = async function() {
+    const email = String(document.getElementById('login-email')?.value || '').trim();
+    const password = String(document.getElementById('login-password')?.value || '');
+
+    if (!email || !password) {
+      this.showNotification('Informe e-mail e senha.', 'error');
+      return;
+    }
+
+    try {
+      const data = await this.apiFetchJson('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+
+      this.clearPendingSignup();
+      this.setStoredAuthSession(data.token, data.user);
+      this.applyAuthenticatedUser(data);
+      this.closeAllModals();
+      this.showNotification('Login realizado com sucesso.', 'success');
+      this.enterAppMode();
+      setTimeout(() => this.syncRealUserInfoInDOM(), 80);
+    } catch (error) {
+      const payload = error?.payload || {};
+      if (payload.requiresPayment) {
+        this.forceLoggedOutLanding();
+        this.closeAllModals();
+        this.showPaymentGateModal({
+          mode: 'payment_required',
+          title: 'Ative seu teste grátis',
+          message: payload.message || 'Para liberar o painel, configure primeiro o pagamento automático no Mercado Pago. Você só começa a cobrança após o período grátis.',
+          checkoutUrl: payload.checkoutUrl || this.checkoutLinks?.premium || ''
+        });
+        return;
+      }
+
+      this.showNotification(payload.message || error.message || 'Não foi possível fazer login.', 'error');
+    }
+  };
+
+  app.handleLogout = async function() {
+    const pending = this.getPendingSignup();
+    if (pending?.pendingToken) {
+      try {
+        await this.apiFetchJson('/api/auth/cancel-pending', {
+          method: 'POST',
+          body: JSON.stringify({ pendingToken: pending.pendingToken })
+        });
+      } catch (_error) {}
+    }
+
+    this.clearPendingSignup();
+    this.forceLoggedOutLanding();
+    this.state = JSON.parse(JSON.stringify(this.defaultState));
+    this.state.user = { nome: null, email: '' };
+    this.activeListId = 'listaDaSemana';
+    this.activeModule = 'inicio';
+    this.showNotification('Você saiu da sua conta.', 'info');
+  };
+
+  app.checkAccessAndEnter = async function() {
+    const token = this.getStoredAuthToken();
+    if (!token) {
+      this.forceLoggedOutLanding();
+      this.showAuthModal();
+      return;
+    }
+
+    try {
+      const data = await this.apiFetchJson('/api/access-status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!data?.access?.allowed) {
+        this.forceLoggedOutLanding();
+        this.showPaymentGateModal({
+          mode: 'payment_required',
+          title: 'Ative seu acesso',
+          message: data?.access?.message || 'Seu acesso ao painel ainda não está liberado.',
+          checkoutUrl: data?.checkoutUrl || this.checkoutLinks?.premium || ''
+        });
+        return;
+      }
+
+      const me = await this.apiFetchJson('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      this.applyAuthenticatedUser(me);
+      this.enterAppMode();
+      setTimeout(() => this.syncRealUserInfoInDOM(), 80);
+    } catch (_error) {
+      this.forceLoggedOutLanding();
+      this.showAuthModal();
+    }
+  };
+
+  app.handleStartButtonClick = function() {
+    this.checkAccessAndEnter();
+  };
+
+  app.restoreBackendSession = async function() {
+    const token = this.getStoredAuthToken();
+    if (!token) {
+      this.forceLoggedOutLanding();
+      return;
+    }
+
+    try {
+      const data = await this.apiFetchJson('/api/access-status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!data?.access?.allowed) {
+        this.forceLoggedOutLanding();
+        return;
+      }
+
+      const me = await this.apiFetchJson('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      this.applyAuthenticatedUser(me);
+      setTimeout(() => this.syncRealUserInfoInDOM(), 80);
+    } catch (_error) {
+      this.forceLoggedOutLanding();
+    }
+  };
+
+  const originalActivateModuleAndRender = app.activateModuleAndRender?.bind(app);
+  if (originalActivateModuleAndRender) {
+    app.activateModuleAndRender = function(moduleName) {
+      const result = originalActivateModuleAndRender(moduleName);
+      setTimeout(() => this.syncRealUserInfoInDOM(), 60);
+      return result;
+    };
+  }
+
+  const originalEnterAppMode = app.enterAppMode?.bind(app);
+  if (originalEnterAppMode) {
+    app.enterAppMode = function() {
+      const token = this.getStoredAuthToken();
+      if (!token) {
+        this.forceLoggedOutLanding();
+        this.showAuthModal();
+        return;
+      }
+      const result = originalEnterAppMode();
+      setTimeout(() => this.syncRealUserInfoInDOM(), 60);
+      return result;
+    };
+  }
+
+  // Neutraliza qualquer estado fake antigo salvo no app.
+  if (!app.getStoredAuthToken()) {
+    app.isLoggedIn = false;
+    app.userPlan = 'free';
+    if (app.state?.user) {
+      app.state.user.nome = null;
+      app.state.user.email = '';
+    }
+    app.updateStartButton?.();
+    app.saveState?.();
+  }
+
+  app.restoreBackendSession();
+})();
+
+
+;(() => {
+  const app = window.app;
+  if (!app) return;
+
+  const PENDING_ACCESS_KEY = 'alimenteFacilPendingAccess';
+
+  app.setPendingAccessSession = function(payload) {
+    if (payload) localStorage.setItem(PENDING_ACCESS_KEY, JSON.stringify(payload));
+  };
+
+  app.getPendingAccessSession = function() {
+    try { return JSON.parse(localStorage.getItem(PENDING_ACCESS_KEY) || 'null'); }
+    catch (_e) { return null; }
+  };
+
+  app.clearPendingAccessSession = function() {
+    localStorage.removeItem(PENDING_ACCESS_KEY);
+  };
+
+  app.applyPendingAccessUser = function(payload = {}) {
+    const user = payload.user || {};
+    this.pendingAccessOnly = true;
+    this.isLoggedIn = true;
+    this.userPlan = 'free';
+    this.state.user = this.state.user || {};
+    this.state.user.nome = user.name || user.nome || 'Usuário';
+    this.state.user.email = user.email || '';
+    this.state.user.id = user.id || '';
+    this.saveState();
+    this.updateStartButton?.();
+    this.syncRealUserInfoInDOM?.();
+  };
+
+  const originalApplyAuthenticatedUser2 = app.applyAuthenticatedUser?.bind(app);
+  if (originalApplyAuthenticatedUser2) {
+    app.applyAuthenticatedUser = function(sessionData) {
+      this.pendingAccessOnly = false;
+      this.clearPendingAccessSession?.();
+      return originalApplyAuthenticatedUser2(sessionData);
+    };
+  }
+
+  const originalForceLoggedOutLanding2 = app.forceLoggedOutLanding?.bind(app);
+  if (originalForceLoggedOutLanding2) {
+    app.forceLoggedOutLanding = function() {
+      this.pendingAccessOnly = false;
+      this.clearPendingAccessSession?.();
+      return originalForceLoggedOutLanding2();
+    };
+  }
+
+  app.showPremiumRequiredModal = function(payload = {}) {
+    this.showPaymentGateModal({
+      mode: 'payment_required',
+      title: 'Assine o Premium por R$ 9,90',
+      message: payload.message || 'Para liberar esta área do painel, ative agora seu Premium com 7 dias grátis e cobrança automática no Mercado Pago.',
+      checkoutUrl: payload.checkoutUrl || this.checkoutLinks?.premium || ''
+    });
+  };
+
+  app.enterPendingPanel = function(payload = {}) {
+    this.setPendingAccessSession(payload);
+    this.applyPendingAccessUser(payload);
+    this.closeAllModals?.();
+    this.enterAppMode?.();
+    this.activeModule = 'inicio';
+    try { this.activateModuleUI?.('inicio'); } catch (_e) {}
+    this.showNotification?.('Conta criada. Você entrou no painel, mas as abas serão liberadas após assinar o Premium.', 'info');
+  };
+
+  app.handleSignup = async function() {
+    const name = String(document.getElementById('signup-name')?.value || '').trim();
+    const email = String(document.getElementById('signup-email')?.value || '').trim();
+    const password = String(document.getElementById('signup-password')?.value || '');
+
+    if (!name || !email || !password) {
+      this.showNotification('Preencha nome, e-mail e senha.', 'error');
+      return;
+    }
+
+    try {
+      const data = await this.apiFetchJson('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password })
+      });
+
+      this.clearStoredAuthSession?.();
+      this.enterPendingPanel({
+        user: data.user || { name, email },
+        pendingToken: data.pendingToken || '',
+        checkoutUrl: data.checkoutUrl || this.checkoutLinks?.premium || ''
+      });
+
+      this.showPaymentGateModal({
+        mode: 'payment_required',
+        title: 'Bem-vindo ao Alimente Fácil',
+        message: 'Cadastro realizado com sucesso. Você pode testar grátis por 7 dias. Clique abaixo para assinar o Premium por R$ 9,90 e configurar o pagamento automático no Mercado Pago.',
+        checkoutUrl: data.checkoutUrl || this.checkoutLinks?.premium || ''
+      });
+    } catch (error) {
+      this.showNotification(error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.', 'error');
+    }
+  };
+
+  app.handleLogin = async function() {
+    const email = String(document.getElementById('login-email')?.value || '').trim();
+    const password = String(document.getElementById('login-password')?.value || '');
+
+    if (!email || !password) {
+      this.showNotification('Informe e-mail e senha.', 'error');
+      return;
+    }
+
+    try {
+      const data = await this.apiFetchJson('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+
+      this.clearPendingSignup?.();
+      this.clearPendingAccessSession?.();
+      this.setStoredAuthSession(data.token, data.user);
+      this.applyAuthenticatedUser(data);
+      this.closeAllModals?.();
+      this.enterAppMode?.();
+      setTimeout(() => this.syncRealUserInfoInDOM?.(), 80);
+      this.showNotification('Login realizado com sucesso.', 'success');
+    } catch (error) {
+      const payload = error?.payload || {};
+      if (payload.requiresPayment) {
+        this.clearStoredAuthSession?.();
+        this.enterPendingPanel({
+          user: payload.user || { email },
+          pendingToken: payload.pendingToken || '',
+          checkoutUrl: payload.checkoutUrl || this.checkoutLinks?.premium || ''
+        });
+        this.showPremiumRequiredModal({
+          message: payload.message || 'Para liberar as abas do painel, assine o Premium por R$ 9,90 e configure o pagamento automático no Mercado Pago.',
+          checkoutUrl: payload.checkoutUrl || this.checkoutLinks?.premium || ''
+        });
+        return;
+      }
+
+      this.showNotification(payload.message || error.message || 'Não foi possível fazer login.', 'error');
+    }
+  };
+
+  app.handleLogout = async function() {
+    this.pendingAccessOnly = false;
+    this.clearStoredAuthSession?.();
+    this.clearPendingSignup?.();
+    this.clearPendingAccessSession?.();
+    this.isLoggedIn = false;
+    this.userPlan = 'free';
+    this.state = JSON.parse(JSON.stringify(this.defaultState));
+    this.state.user = { nome: null, email: '' };
+    this.activeListId = 'listaDaSemana';
+    this.activeModule = 'inicio';
+    this.updateStartButton?.();
+    if (this.isAppMode) this.exitAppMode?.();
+    this.saveState?.();
+    this.showNotification?.('Você saiu da sua conta.', 'info');
+  };
+
+  app.checkAccessAndEnter = async function() {
+    const token = this.getStoredAuthToken?.();
+    if (token) {
+      try {
+        const data = await this.apiFetchJson('/api/access-status', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (data?.access?.allowed) {
+          const me = await this.apiFetchJson('/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          this.applyAuthenticatedUser(me);
+          this.enterAppMode?.();
+          setTimeout(() => this.syncRealUserInfoInDOM?.(), 80);
+          return;
+        }
+      } catch (_e) {}
+    }
+
+    const pending = this.getPendingAccessSession?.();
+    if (pending) {
+      this.applyPendingAccessUser(pending);
+      this.enterAppMode?.();
+      return;
+    }
+
+    this.showAuthModal?.();
+  };
+
+  app.restoreBackendSession = async function() {
+    const token = this.getStoredAuthToken?.();
+    if (token) {
+      try {
+        const data = await this.apiFetchJson('/api/access-status', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (data?.access?.allowed) {
+          const me = await this.apiFetchJson('/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          this.applyAuthenticatedUser(me);
+          setTimeout(() => this.syncRealUserInfoInDOM?.(), 80);
+          return;
+        }
+      } catch (_e) {}
+    }
+
+    const pending = this.getPendingAccessSession?.();
+    if (pending) {
+      this.applyPendingAccessUser(pending);
+      return;
+    }
+
+    this.pendingAccessOnly = false;
+    this.forceLoggedOutLanding?.();
+  };
+
+  const originalActivateModuleAndRender2 = app.activateModuleAndRender?.bind(app);
+  if (originalActivateModuleAndRender2) {
+    app.activateModuleAndRender = function(moduleName) {
+      if (this.pendingAccessOnly && moduleName && moduleName !== 'inicio') {
+        this.showPremiumRequiredModal({
+          message: 'Para abrir esta aba, assine o Premium por R$ 9,90 e configure o pagamento automático no Mercado Pago.',
+          checkoutUrl: (this.getPendingAccessSession?.() || {}).checkoutUrl || this.checkoutLinks?.premium || ''
+        });
+        return;
+      }
+      const result = originalActivateModuleAndRender2(moduleName);
+      setTimeout(() => this.syncRealUserInfoInDOM?.(), 60);
+      return result;
+    };
+  }
+
+  const originalHandleStart3 = app.handleStartButtonClick?.bind(app);
+  app.handleStartButtonClick = function() {
+    const pending = this.getPendingAccessSession?.();
+    if (pending) {
+      this.applyPendingAccessUser(pending);
+      this.enterAppMode?.();
+      return;
+    }
+    return originalHandleStart3 ? originalHandleStart3() : this.checkAccessAndEnter?.();
+  };
+
+  // Se houver sessão pendente, não deixa o app limpar tudo de volta para landing.
+  const pending = app.getPendingAccessSession?.();
+  if (pending && !app.getStoredAuthToken?.()) {
+    app.applyPendingAccessUser(pending);
+    app.updateStartButton?.();
+    app.saveState?.();
+  }
+})();
