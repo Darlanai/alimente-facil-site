@@ -220,7 +220,7 @@
                                 <label for="contact-message" class="sr-only">Sua Mensagem</label>
                                 <textarea rows="4" id="contact-message" placeholder="Sua Mensagem" required></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Mensagem</button>
+                            <p style="font-size:.92rem; color:var(--glass-text-secondary); margin-bottom:.85rem;">As mensagens enviadas aqui vão direto para <strong>projetosdarlan@gmail.com</strong> quando o SMTP estiver configurado na Vercel.</p><button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Mensagem</button>
                         </form>
                     </div>
                 </div>
@@ -230,8 +230,8 @@
         <footer class="page-footer glass-card">
             <div class="footer-content">
                 <div class="footer-links">
-                    <a href="#">Termos de Uso</a>
-                    <a href="#">Política de Privacidade</a>
+                    <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a>
+                    <a href="/politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>
                 </div>
                 <p>Alimente Fácil &copy; 2025 - Todos os direitos reservados.</p>
             </div>
@@ -316,6 +316,10 @@
                          <div class="form-group"><label for="signup-name">Nome</label><input type="text" id="signup-name" required></div> 
                          <div class="form-group"><label for="signup-email">Email</label><input type="email" id="signup-email" required></div> 
                          <div class="form-group"><label for="signup-password">Senha</label><input type="password" id="signup-password" required></div> 
+                         <label class="terms-check" for="signup-terms" style="display:flex; gap:.6rem; align-items:flex-start; margin-top:.75rem; font-size:.92rem; line-height:1.45; color:var(--glass-text-secondary);">
+                            <input type="checkbox" id="signup-terms" required style="margin-top:.2rem;">
+                            <span>Ao criar a conta, eu concordo com os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> e com a <a href="/politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
+                         </label>
                          <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Criar Conta</button> 
                      </form> 
                      <p class="form-footer-text">Já tem uma conta? <span class="auth-toggle-link" data-view="login-view" role="button" tabindex="0">Faça o login</span></p> 

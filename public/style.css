@@ -8484,3 +8484,7 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
 #custom-confirm-modal.recipe-editor-modal #recipe-ing-form{
   overflow: visible !important;
 }
+
+
+.terms-check a { color: var(--primary-color); text-decoration: underline; }
+.terms-check input[type='checkbox'] { transform: translateY(2px); }

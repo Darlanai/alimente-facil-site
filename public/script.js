@@ -12210,3 +12210,172 @@ window.app = app;
     app.saveState?.();
   }
 })();
+
+
+/* === ALIMENTE FACIL BILLING + CONTACT PATCH | 2026-04-12 === */
+;(() => {
+  const app = window.app;
+  if (!app) return;
+
+  app.getMercadoPagoReturnId = function() {
+    const params = new URLSearchParams(window.location.search);
+    return (
+      params.get('preapproval_id') ||
+      params.get('preapprovalId') ||
+      params.get('subscription_id') ||
+      params.get('subscriptionId') ||
+      params.get('id') ||
+      ''
+    ).trim();
+  };
+
+  app.cleanPaymentQueryFromUrl = function() {
+    const url = new URL(window.location.href);
+    ['mp_checkout','status','preapproval_id','preapprovalId','subscription_id','subscriptionId','id'].forEach((key) => url.searchParams.delete(key));
+    window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : '') + url.hash);
+  };
+
+  app.tryFinalizePendingPayment = async function({ silent = false } = {}) {
+    const pending = this.getPendingAccessSession?.();
+    if (!pending?.pendingToken) return false;
+
+    try {
+      const data = await this.apiFetchJson('/api/auth/finalize-pending', {
+        method: 'POST',
+        body: JSON.stringify({
+          pendingToken: pending.pendingToken,
+          preapprovalId: this.getMercadoPagoReturnId?.() || ''
+        })
+      });
+
+      this.clearPendingAccessSession?.();
+      this.clearPendingSignup?.();
+      this.setStoredAuthSession?.(data.token, data.user);
+      this.applyAuthenticatedUser?.(data);
+      this.enterAppMode?.();
+      this.closeAllModals?.();
+      this.cleanPaymentQueryFromUrl?.();
+      this.showNotification?.('Pagamento confirmado. Bem-vindo ao painel premium! ✨', 'success');
+      return true;
+    } catch (error) {
+      if (!silent) {
+        const payload = error?.payload || {};
+        if (payload.waitingPayment) {
+          this.showNotification?.('Ainda estamos aguardando a confirmação do Mercado Pago. Aguarde alguns segundos e tente novamente.', 'info');
+        } else {
+          this.showNotification?.(payload.message || error.message || 'Ainda não foi possível confirmar seu pagamento.', 'error');
+        }
+      }
+      return false;
+    }
+  };
+
+  app.bindContactFormToBackend = function() {
+    const form = document.getElementById('contact-form');
+    if (!form || form.dataset.backendBound === 'true') return;
+    form.dataset.backendBound = 'true';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = String(document.getElementById('contact-name')?.value || '').trim();
+      const email = String(document.getElementById('contact-email')?.value || '').trim();
+      const message = String(document.getElementById('contact-message')?.value || '').trim();
+
+      if (!name || !email || !message) {
+        this.showNotification?.('Preencha nome, e-mail e mensagem.', 'error');
+        return;
+      }
+
+      try {
+        await this.apiFetchJson('/api/contact', {
+          method: 'POST',
+          body: JSON.stringify({ name, email, message })
+        });
+        form.reset();
+        this.showNotification?.('Mensagem enviada com sucesso. 🚀', 'success');
+      } catch (error) {
+        this.showNotification?.(error?.payload?.message || error.message || 'Não foi possível enviar a mensagem.', 'error');
+      }
+    }, true);
+  };
+
+  app.handleSignup = async function() {
+    const name = String(document.getElementById('signup-name')?.value || '').trim();
+    const email = String(document.getElementById('signup-email')?.value || '').trim();
+    const password = String(document.getElementById('signup-password')?.value || '');
+    const acceptedTerms = Boolean(document.getElementById('signup-terms')?.checked);
+
+    if (!name || !email || !password) {
+      this.showNotification?.('Preencha nome, e-mail e senha.', 'error');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      this.showNotification?.('Você precisa aceitar os Termos de Uso e a Política de Privacidade.', 'error');
+      return;
+    }
+
+    try {
+      const data = await this.apiFetchJson('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password, acceptedTerms })
+      });
+
+      this.clearStoredAuthSession?.();
+      this.enterPendingPanel?.({
+        user: data.user || { name, email },
+        pendingToken: data.pendingToken || '',
+        checkoutUrl: data.checkoutUrl || this.checkoutLinks?.premium || ''
+      });
+
+      this.showPaymentGateModal?.({
+        mode: 'payment_required',
+        title: 'Bem-vindo ao Alimente Fácil',
+        message: 'Cadastro realizado com sucesso. Agora clique abaixo para configurar o pagamento automático no Mercado Pago. Você terá 7 dias grátis e só será cobrado no oitavo dia, conforme o plano que você configurou.',
+        checkoutUrl: data.checkoutUrl || this.checkoutLinks?.premium || ''
+      });
+    } catch (error) {
+      this.showNotification?.(error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.', 'error');
+    }
+  };
+
+  const originalShowPaymentGateModal = app.showPaymentGateModal?.bind(app);
+  if (originalShowPaymentGateModal) {
+    app.showPaymentGateModal = function(payload = {}) {
+      const result = originalShowPaymentGateModal(payload);
+      const modal = document.getElementById('payment-gate-modal');
+      const btn = modal?.querySelector('#payment-gate-primary-btn');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          const pending = this.getPendingAccessSession?.();
+          if (pending) this.setPendingAccessSession?.(pending);
+        }, { once: true });
+      }
+      return result;
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    app.bindContactFormToBackend?.();
+
+    const params = new URLSearchParams(window.location.search);
+    const cameFromMercadoPago = params.get('mp_checkout') === 'success' || !!app.getMercadoPagoReturnId?.();
+    if (cameFromMercadoPago) {
+      app.showNotification?.('Estamos confirmando sua assinatura. Aguarde alguns segundos...', 'info');
+      const done = await app.tryFinalizePendingPayment?.({ silent: true });
+      if (!done) {
+        let attempts = 0;
+        const timer = setInterval(async () => {
+          attempts += 1;
+          const ok = await app.tryFinalizePendingPayment?.({ silent: true });
+          if (ok || attempts >= 10) {
+            clearInterval(timer);
+            if (!ok) {
+              app.showNotification?.('Ainda não recebemos a confirmação do Mercado Pago. Reabra o site em alguns segundos e entre novamente.', 'info');
+            }
+          }
+        }, 4000);
+      }
+    }
+  });
+})();
