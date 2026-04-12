@@ -9,8 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         intervals: [],
         
         // --- SEUS LINKS REAIS DO MERCADO PAGO ---
-        checkoutLinks: {
-            'premium_ai': 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=889c1cf8a1c040babbe3d5aeee84f125', 
+        checkoutLinks: { 
             'premium': 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=ae9349b69ef94a27ad19786352488fa5'
         },
 
@@ -2369,7 +2368,7 @@ renderPlanejador(container) {
                 </div>
                 <div class="card-footer">
                     <button class="btn btn-primary add-meal-btn" data-day-target="${dayKey}"><i class="fa-solid fa-plus"></i> Adicionar refeição</button>
-                    <button class="btn btn-secondary generate-list-btn"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerar lista</button>
+                    
                 </div>
              `;
         },
@@ -2408,7 +2407,6 @@ renderPlanejador(container) {
                 content,
                 actions: [
                     { label: 'Adicionar refeição', className: 'btn-primary', icon: 'fa-solid fa-plus', onClick: () => { this.closeModal('detail-modal'); this.currentPlannerDayTarget = dayKey; this.populateRecipePicker(); this.openModal('recipe-picker-modal'); } },
-                    { label: 'Gerar lista', className: 'btn-secondary', icon: 'fa-solid fa-list-check', onClick: () => this.handleGenerateListFromPlanner() }
                 ]
              });
         },
@@ -4501,7 +4499,7 @@ const ALL_ITEMS_DATA = [
         headerActionsEl.innerHTML = `<button class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>`;
         bodyEl.innerHTML = `<div class="detail-rich-content"><div class="detail-kpi-grid"><div class="detail-kpi"><strong>${meals.length}</strong><span>refeições planejadas</span></div><div class="detail-kpi"><strong>${meals.filter(meal => meal.completed).length}</strong><span>marcadas como usadas</span></div></div><div class="detail-stack" style="margin-top:1rem;">${meals.length ? meals.map(meal => `<div class="detail-listing-item planner-meal-item ${meal.completed ? 'completed' : ''}" data-recipe-id="${meal.recipeId || meal.id}" data-day="${dayKey}" data-meal="${meal.key}"><div><strong class="meal-item-name">${this.escapeHtml(meal.mealLabel)} • ${this.escapeHtml(meal.name)}</strong><p class="detail-note">${meal.time ? `Horário: ${this.escapeHtml(meal.time)}` : 'Toque em visualizar para abrir a receita.'}</p></div><div class="module-detail-actions meal-item-actions"><button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i></button><button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i></button><button type="button" class="icon-button meal-complete-btn ${meal.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i></button></div></div>`).join('') : '<div class="detail-listing-item"><div><strong>Nenhuma refeição planejada.</strong><p class="detail-note">Use o botão inserir para escolher uma receita.</p></div></div>'}</div></div>`;
         footerEl.className = 'modal-footer detail-modal-footer unified-detail-actions';
-        footerEl.innerHTML = `<button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button><button type="button" class="icon-button share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i><span>Compartilhar</span></button><button type="button" class="icon-button print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i><span>Imprimir</span></button><button type="button" class="icon-button pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i><span>PDF</span></button>`;
+        footerEl.innerHTML = `<button type="button" class="icon-button share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i><span>Compartilhar</span></button><button type="button" class="icon-button print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i><span>Imprimir</span></button><button type="button" class="icon-button pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i><span>PDF</span></button>`;
         this.openModal('detail-modal');
     };
     app.openPlannerMealTypeMenu = function(dayKey) {
@@ -4968,7 +4966,7 @@ const ALL_ITEMS_DATA = [
         originalOpenPlannerDayDetailModal(dayKey);
         const footer = document.getElementById('detail-modal-footer');
         if (footer) {
-            footer.innerHTML = `<button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button><button type="button" class="icon-button minimal-export-btn share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button><button type="button" class="icon-button minimal-export-btn print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i></button><button type="button" class="icon-button minimal-export-btn pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
+            footer.innerHTML = `<button type="button" class="icon-button minimal-export-btn share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button><button type="button" class="icon-button minimal-export-btn print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i></button><button type="button" class="icon-button minimal-export-btn pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
         }
     };
 
@@ -5385,7 +5383,7 @@ const ALL_ITEMS_DATA = [
             </div>`;
         footerEl.className = 'modal-footer detail-modal-footer unified-detail-actions compact-export-row';
         footerEl.innerHTML = `
-            <button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>
+            
             <button type="button" class="icon-button minimal-export-btn share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
             <button type="button" class="icon-button minimal-export-btn print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
             <button type="button" class="icon-button minimal-export-btn pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
@@ -6045,7 +6043,7 @@ const ALL_ITEMS_DATA = [
             </div>`;
         footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
         footerEl.innerHTML = `
-            <button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>
+            
             <button type="button" class="icon-button minimal-export-btn share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
             <button type="button" class="icon-button minimal-export-btn print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
             <button type="button" class="icon-button minimal-export-btn pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
@@ -7120,7 +7118,7 @@ window.app = app;
         </div>
       </div>`;
     footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
-    footerEl.innerHTML = `<button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>${this.buildExportButtons(`data-day="${dayKey}"`)}`;
+    footerEl.innerHTML = `${this.buildExportButtons(`data-day="${dayKey}"`)}`;
     this.openModal('detail-modal');
   };
 
@@ -10197,7 +10195,7 @@ window.app = app;
           </div>
         </div>`;
       footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
-      footerEl.innerHTML = `<button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>${this.buildExportButtons(`data-day="${dayKey}"`)}`;
+      footerEl.innerHTML = `${this.buildExportButtons(`data-day="${dayKey}"`)}`;
       this.openModal('detail-modal');
     };
 
@@ -10559,7 +10557,7 @@ window.app = app;
         </div>`;
 
       footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
-      footerEl.innerHTML = `<button type="button" class="icon-button generate-list-btn" data-day="${dayKey}" title="Gerar lista"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>${this.buildExportButtons(`data-day="${dayKey}"`)}`;
+      footerEl.innerHTML = `${this.buildExportButtons(`data-day="${dayKey}"`)}`;
       this.openModal('detail-modal');
     };
 
@@ -10935,4 +10933,657 @@ window.app = app;
   document.addEventListener('focusin', (e) => {
     if (e.target?.id === 'recipe-ing-name') bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document);
   });
+})();
+
+
+// === PATCH V4.1 | busca de ingredientes, listas por receita/refeição e confirmações acima de tudo ===
+(() => {
+  const app = window.app;
+  if (!app) return;
+
+  const UNIT_OPTIONS = ['un','kg','g','L','ml','pct','cx','xícara','colher','pitada','dentes','a gosto','fio','filés'];
+  const COMMON_INGREDIENTS = [
+    { name: 'Arroz', unit_desc: 'kg' },
+    { name: 'Feijão', unit_desc: 'kg' },
+    { name: 'Tomate', unit_desc: 'un' },
+    { name: 'Cebola', unit_desc: 'un' },
+    { name: 'Alho', unit_desc: 'dentes' },
+    { name: 'Banana', unit_desc: 'un' },
+    { name: 'Batata', unit_desc: 'kg' },
+    { name: 'Cenoura', unit_desc: 'un' },
+    { name: 'Peito de Frango', unit_desc: 'filés' },
+    { name: 'Carne Moída', unit_desc: 'kg' },
+    { name: 'Macarrão', unit_desc: 'pct' },
+    { name: 'Queijo', unit_desc: 'g' },
+    { name: 'Leite', unit_desc: 'L' },
+    { name: 'Ovo', unit_desc: 'un' },
+    { name: 'Farinha de Trigo', unit_desc: 'kg' },
+    { name: 'Óleo', unit_desc: 'L' },
+    { name: 'Sal', unit_desc: 'a gosto' },
+    { name: 'Pimenta', unit_desc: 'a gosto' },
+    { name: 'Limão', unit_desc: 'un' },
+    { name: 'Pastel', unit_desc: 'un' }
+  ];
+
+  app.normalizeSearchText = function(value) {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  app.getAllIngredientSuggestions = function() {
+    const catalog = (typeof ALL_ITEMS_DATA !== 'undefined' && Array.isArray(ALL_ITEMS_DATA))
+      ? ALL_ITEMS_DATA
+      : (Array.isArray(globalThis.ALL_ITEMS_DATA) ? globalThis.ALL_ITEMS_DATA : []);
+
+    const merged = [
+      ...catalog,
+      ...(this.state?.despensa || []).map(item => ({ name: item.name, unit_desc: item.unid || 'un', price: Number(item.valor || 0) })),
+      ...(this.state?.essenciais || []).map(item => ({ name: item.name, unit_desc: item.unid || 'un', price: Number(item.preco || 0) })),
+      ...Object.values(this.state?.receitas || {}).flatMap(recipe => (recipe?.ingredients || []).map(ing => ({ name: ing.name, unit_desc: ing.unit || 'un', price: 0 }))),
+      ...COMMON_INGREDIENTS
+    ];
+
+    const dedup = new Map();
+    merged.forEach(item => {
+      const name = String(item?.name || '').trim();
+      if (!name) return;
+      const key = this.normalizeSearchText(name);
+      if (!key) return;
+      if (!dedup.has(key)) dedup.set(key, { ...item, name });
+    });
+    return Array.from(dedup.values());
+  };
+
+  app.showAutocomplete = function(suggestions, query, inputElement) {
+    const suggestionsEl = this.elements?.autocompleteSuggestions;
+    if (!suggestionsEl || !inputElement) return;
+
+    const q = this.normalizeSearchText(query || '');
+    const renderLabel = (item) => {
+      const original = String(item?.name || '');
+      const isManual = original.startsWith('Insira manual:');
+      if (!q || isManual) return this.escapeHtml(original);
+      const originalWords = original.split(/(\s+)/);
+      return originalWords.map(part => {
+        if (!part.trim()) return part;
+        return this.normalizeSearchText(part).includes(q)
+          ? `<strong>${this.escapeHtml(part)}</strong>`
+          : this.escapeHtml(part);
+      }).join('');
+    };
+
+    suggestionsEl.innerHTML = suggestions.map(item => {
+      const name = String(item?.name || '');
+      const safeName = this.escapeHtml(name);
+      const isManual = name.startsWith('Insira manual:');
+      return `<button type="button" class="autocomplete-item" data-name="${safeName}" data-manual="${isManual ? '1' : '0'}">${renderLabel(item)}</button>`;
+    }).join('');
+
+    const rect = inputElement.getBoundingClientRect();
+    suggestionsEl.style.position = 'fixed';
+    suggestionsEl.style.left = `${Math.max(12, rect.left)}px`;
+    suggestionsEl.style.top = `${Math.min(window.innerHeight - 16, rect.bottom + 6)}px`;
+    suggestionsEl.style.width = `${Math.max(220, rect.width)}px`;
+    suggestionsEl.style.maxWidth = 'calc(100vw - 24px)';
+    suggestionsEl.style.display = 'block';
+    this.activeAutocompleteInput = inputElement;
+  };
+
+  app.hideAutocomplete = function() {
+    if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
+    const suggestionsEl = this.elements?.autocompleteSuggestions;
+    if (suggestionsEl) {
+      suggestionsEl.style.display = 'none';
+      suggestionsEl.innerHTML = '';
+    }
+    this.activeAutocompleteInput = null;
+  };
+
+  app.handleAutocomplete = function(inputElement) {
+    if (!inputElement) return;
+    const rawQuery = String(inputElement.value || '').trim();
+    const query = this.normalizeSearchText(rawQuery);
+    this.activeAutocompleteInput = inputElement;
+
+    if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
+    if (!query) {
+      this.hideAutocomplete();
+      return;
+    }
+
+    const source = this.getAllIngredientSuggestions();
+    this.autocompleteTimeout = setTimeout(() => {
+      const words = query.split(' ').filter(Boolean);
+      const suggestions = source
+        .map(item => {
+          const normalizedName = this.normalizeSearchText(item.name);
+          const starts = normalizedName.startsWith(query) ? 0 : 1;
+          const includesAll = words.every(word => normalizedName.includes(word));
+          if (!includesAll) return null;
+          return { ...item, __score: starts, __normalizedName: normalizedName };
+        })
+        .filter(Boolean)
+        .sort((a, b) => (a.__score - b.__score) || a.__normalizedName.localeCompare(b.__normalizedName, 'pt-BR'))
+        .slice(0, 8)
+        .map(({ __score, __normalizedName, ...item }) => item);
+
+      if (!suggestions.length) {
+        this.showAutocomplete([{ name: `Insira manual: ${rawQuery}` }], rawQuery, inputElement);
+        return;
+      }
+      this.showAutocomplete(suggestions, rawQuery, inputElement);
+    }, 40);
+  };
+
+  app.selectAutocompleteItem = function(itemName) {
+    const input = this.activeAutocompleteInput;
+    if (!input) {
+      this.hideAutocomplete();
+      return;
+    }
+
+    if (String(itemName).startsWith('Insira manual:')) {
+      input.value = String(itemName).replace('Insira manual:', '').trim();
+      this.hideAutocomplete();
+      input.focus();
+      return;
+    }
+
+    const normalizedTarget = this.normalizeSearchText(itemName);
+    const itemData = this.getAllIngredientSuggestions().find(item => this.normalizeSearchText(item.name) === normalizedTarget) || { name: itemName, unit_desc: 'un' };
+    input.value = itemData.name;
+
+    if (input.id === 'recipe-ing-name') {
+      const modal = input.closest('#custom-confirm-modal, .modal-box, form') || document;
+      const qtdInput = modal.querySelector('#recipe-ing-qtd');
+      const unitSelect = modal.querySelector('#recipe-ing-unid');
+      const unitSource = String(itemData.unit_desc || itemData.unid || itemData.unit || 'un');
+      const matchedUnit = UNIT_OPTIONS.find(unit => unitSource.toLowerCase().includes(String(unit).toLowerCase())) || 'un';
+      if (qtdInput && !String(qtdInput.value || '').trim()) qtdInput.value = '1';
+      if (unitSelect) unitSelect.value = matchedUnit;
+    }
+
+    this.hideAutocomplete();
+    input.focus();
+  };
+
+  app.createListFromIngredients = function(listName, ingredients) {
+    const validIngredients = Array.isArray(ingredients) ? ingredients.filter(ing => String(ing?.name || '').trim()) : [];
+    if (!validIngredients.length) {
+      this.showNotification('Não há ingredientes suficientes para gerar a lista.', 'info');
+      return null;
+    }
+
+    const ingredientMap = new Map();
+    validIngredients.forEach(ing => {
+      const name = String(ing.name || '').trim();
+      if (!name) return;
+      const unit = String(ing.unit || ing.unid || 'un').trim() || 'un';
+      const key = `${this.normalizeSearchText(name)}|${unit.toLowerCase()}`;
+      const qty = parseFloat(ing.qty || ing.quantity || 1);
+      const current = ingredientMap.get(key) || { id: this.generateId(), name, qtd: 0, unid: unit, valor: 0, checked: false };
+      current.qtd = Number((current.qtd + (Number.isFinite(qty) ? qty : 1)).toFixed(2));
+      ingredientMap.set(key, current);
+    });
+
+    if (!ingredientMap.size) {
+      this.showNotification('Não há ingredientes suficientes para gerar a lista.', 'info');
+      return null;
+    }
+
+    const listId = this.generateId();
+    this.state.listas[listId] = {
+      nome: listName,
+      createdAt: new Date().toISOString(),
+      items: Array.from(ingredientMap.values())
+    };
+    this.activeListId = listId;
+    this.saveState();
+    this.renderListasSalvas?.();
+    this.renderListaWidget?.();
+    this.renderOrcamento?.();
+    return { listId, count: ingredientMap.size, listName };
+  };
+
+  app.generateListFromRecipe = function(recipeId) {
+    const recipe = this.state?.receitas?.[recipeId];
+    if (!recipe) {
+      this.showNotification('Receita não encontrada.', 'error');
+      return;
+    }
+    const result = this.createListFromIngredients(`Receita de ${recipe.name}`, recipe.ingredients || []);
+    if (!result) return;
+    this.showNotification(`Lista "${result.listName}" criada com ${result.count} ingrediente(s).`, 'success');
+    this.activateModuleAndRender?.('lista');
+    setTimeout(() => {
+      document.getElementById('list-manager')?.classList.add('view-active-list');
+      this.renderListaAtiva?.(result.listId);
+    }, 40);
+  };
+
+  app.getPlannerMealLabel = function(mealKey) {
+    const key = String(mealKey || '');
+    if (key === 'cafe') return 'Café da manhã';
+    if (key === 'almoco') return 'Almoço';
+    if (key === 'jantar') return 'Janta';
+    if (key.startsWith('extra:')) return 'Refeição extra';
+    return 'Refeição';
+  };
+
+  app.getPlannerMealRecord = function(dayKey, mealKey) {
+    const dayState = this.state?.planejador?.[dayKey] || {};
+    const isExtra = String(mealKey || '').startsWith('extra:');
+    const normalizedMealKey = isExtra ? String(mealKey).replace('extra:', '') : String(mealKey || '');
+    const mealData = isExtra
+      ? (Array.isArray(dayState.extras) ? dayState.extras.find(extra => String(extra.key) === normalizedMealKey) : null)
+      : dayState[normalizedMealKey];
+    const recipeId = mealData ? (mealData.recipeId || mealData.id || null) : null;
+    const recipe = recipeId ? this.state?.receitas?.[recipeId] : null;
+    return { dayState, mealData, recipe, isExtra, normalizedMealKey };
+  };
+
+  app.handleGenerateListFromPlanner = function(dayKey = null, mealKey = null) {
+    if (dayKey && mealKey) {
+      const { mealData, recipe } = this.getPlannerMealRecord(dayKey, mealKey);
+      if (!mealData || !recipe) {
+        this.showNotification('Essa refeição ainda não tem uma receita com ingredientes.', 'info');
+        return;
+      }
+      const dayLabel = this.getPlannerDaysMap?.()[dayKey] || dayKey;
+      const mealLabel = mealData.mealLabel || this.getPlannerMealLabel(mealKey);
+      const result = this.createListFromIngredients(`${mealLabel} de ${dayLabel}`, recipe.ingredients || []);
+      if (!result) return;
+      this.showNotification(`Lista "${result.listName}" criada com ${result.count} ingrediente(s).`, 'success');
+      this.activateModuleAndRender?.('lista');
+      setTimeout(() => {
+        document.getElementById('list-manager')?.classList.add('view-active-list');
+        this.renderListaAtiva?.(result.listId);
+      }, 40);
+      return;
+    }
+
+    if (dayKey) {
+      const dayState = this.state?.planejador?.[dayKey] || {};
+      const ingredients = [];
+      ['cafe','almoco','jantar'].forEach(slot => {
+        const ref = dayState[slot];
+        const recipe = ref ? this.state?.receitas?.[ref.recipeId || ref.id] : null;
+        if (recipe?.ingredients) ingredients.push(...recipe.ingredients);
+      });
+      (Array.isArray(dayState.extras) ? dayState.extras : []).forEach(extra => {
+        const recipe = this.state?.receitas?.[extra.recipeId || extra.id];
+        if (recipe?.ingredients) ingredients.push(...recipe.ingredients);
+      });
+      const dayLabel = this.getPlannerDaysMap?.()[dayKey] || dayKey;
+      const result = this.createListFromIngredients(`Dia ${dayLabel}`, ingredients);
+      if (!result) {
+        this.showNotification('Esse dia ainda não tem receitas com ingredientes.', 'info');
+        return;
+      }
+      this.showNotification(`Lista "${result.listName}" criada com ${result.count} ingrediente(s).`, 'success');
+      this.activateModuleAndRender?.('lista');
+      setTimeout(() => {
+        document.getElementById('list-manager')?.classList.add('view-active-list');
+        this.renderListaAtiva?.(result.listId);
+      }, 40);
+      return;
+    }
+
+    const ingredients = [];
+    Object.keys(this.state?.planejador || {}).forEach(key => {
+      const dayState = this.state.planejador[key] || {};
+      ['cafe','almoco','jantar'].forEach(slot => {
+        const ref = dayState[slot];
+        const recipe = ref ? this.state?.receitas?.[ref.recipeId || ref.id] : null;
+        if (recipe?.ingredients) ingredients.push(...recipe.ingredients);
+      });
+      (Array.isArray(dayState.extras) ? dayState.extras : []).forEach(extra => {
+        const recipe = this.state?.receitas?.[extra.recipeId || extra.id];
+        if (recipe?.ingredients) ingredients.push(...recipe.ingredients);
+      });
+    });
+    const result = this.createListFromIngredients('Lista do Planejamento', ingredients);
+    if (!result) {
+      this.showNotification('Seu planejador ainda não tem receitas com ingredientes.', 'info');
+      return;
+    }
+    this.showNotification(`Lista "${result.listName}" criada com ${result.count} ingrediente(s).`, 'success');
+    this.activateModuleAndRender?.('lista');
+    setTimeout(() => {
+      document.getElementById('list-manager')?.classList.add('view-active-list');
+      this.renderListaAtiva?.(result.listId);
+    }, 40);
+  };
+
+  app.openModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    if (!this.__modalStackSeed) this.__modalStackSeed = 30000;
+    this.__modalStackSeed += 10;
+    let z = this.__modalStackSeed;
+    if (modalId === 'custom-confirm-modal') z = 61000;
+    else if (modalId === 'recipe-detail-modal') z = Math.max(z, 56000);
+    else if (modalId === 'detail-modal') z = Math.max(z, 52000);
+    else if (modalId === 'recipe-picker-modal') z = Math.max(z, 50000);
+    else if (modalId === 'ai-chat-modal') z = Math.max(z, 50500);
+    else z = Math.max(z, 48000);
+    modal.style.zIndex = String(z);
+    const box = modal.querySelector('.modal-box');
+    if (box) box.style.zIndex = String(z + 1);
+    modal.classList.add('is-visible');
+    document.body.classList.add('modal-open');
+  };
+
+  app.openConfirmModal = function(title, message, onConfirm) {
+    const confirmModal = document.getElementById('custom-confirm-modal');
+    if (!confirmModal) return;
+    confirmModal.classList.remove('recipe-editor-modal');
+    const titleEl = confirmModal.querySelector('#confirm-title');
+    const msgEl = confirmModal.querySelector('#confirm-message');
+    const okBtn = confirmModal.querySelector('#confirm-ok-btn');
+    const cancelBtn = confirmModal.querySelector('#confirm-cancel-btn');
+    if (!titleEl || !msgEl || !okBtn || !cancelBtn) return;
+
+    titleEl.textContent = title;
+    msgEl.innerHTML = message;
+    cancelBtn.style.display = 'inline-flex';
+    okBtn.textContent = 'Confirmar';
+    okBtn.classList.remove('primary');
+    okBtn.classList.add('danger');
+
+    const freshOk = okBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(freshOk, okBtn);
+    const freshCancel = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(freshCancel, cancelBtn);
+
+    freshCancel.addEventListener('click', () => this.closeModal('custom-confirm-modal'), { once: true });
+    freshOk.addEventListener('click', () => {
+      this.closeModal('custom-confirm-modal');
+      setTimeout(() => {
+        if (typeof onConfirm === 'function') onConfirm();
+      }, 20);
+    }, { once: true });
+
+    this.openModal('custom-confirm-modal');
+  };
+
+  app.renderRecipeDetail = function(recipeId, targetElementId = 'recipe-detail-desktop-body', footerElementId = 'recipe-detail-desktop-footer') {
+    const recipe = this.state?.receitas?.[recipeId];
+    const bodyEl = document.getElementById(targetElementId);
+    const footerEl = document.getElementById(footerElementId);
+    if (!recipe || !bodyEl || !footerEl) return;
+    const ingredients = recipe.ingredients || [];
+    const prepText = String(recipe.content || '')
+      .replace(/<h4>Ingredientes<\/h4>/gi, '')
+      .replace(/<ul>[\s\S]*?<\/ul>/i, '')
+      .replace(/<h4>Preparo<\/h4>/gi, '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .trim();
+    const ingredientChips = ingredients.length
+      ? ingredients.map(ing => `<li class="recipe-chip"><span>${this.escapeHtml(ing.qty || '1')} ${this.escapeHtml(ing.unit || 'un')}</span><strong>${this.escapeHtml(ing.name || '')}</strong></li>`).join('')
+      : '<li class="recipe-chip recipe-chip--empty"><strong>Sem ingredientes cadastrados</strong></li>';
+
+    bodyEl.innerHTML = `
+      <div class="recipe-rich-content recipe-luxury-view">
+        <div class="recipe-hero-head">
+          <div class="recipe-title-block">
+            <span class="recipe-eyebrow">Receita</span>
+            <h4>${this.escapeHtml(recipe.name)}</h4>
+            <p class="detail-note">${this.escapeHtml(recipe.desc || 'Receita salva no seu painel.')}</p>
+          </div>
+          <div class="recipe-meta-grid">
+            <div class="detail-kpi"><strong>${ingredients.length}</strong><span>ingredientes</span></div>
+            <div class="detail-kpi"><strong>${prepText ? prepText.split('\n').filter(Boolean).length || 1 : 1}</strong><span>etapas</span></div>
+          </div>
+        </div>
+        <div class="recipe-section-card"><h5>Ingredientes</h5><ul class="recipe-ingredient-chips">${ingredientChips}</ul></div>
+        <div class="recipe-section-card"><h5>Modo de preparo</h5><div class="recipe-prep-copy">${prepText ? prepText.split('\n').filter(Boolean).map(step => `<p>${this.escapeHtml(step)}</p>`).join('') : '<p>Adicione o modo de preparo para deixar a receita completa.</p>'}</div></div>
+      </div>`;
+
+    footerEl.className = 'card-footer module-actions-footer compact-export-row';
+    footerEl.innerHTML = `
+      <button type="button" class="icon-button generate-recipe-list-btn" data-recipe-id="${recipeId}" title="Gerar lista desta receita"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>
+      <button type="button" class="icon-button minimal-export-btn share-btn" data-recipe-id="${recipeId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+      <button type="button" class="icon-button minimal-export-btn print-btn" data-recipe-id="${recipeId}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+      <button type="button" class="icon-button minimal-export-btn pdf-btn" data-recipe-id="${recipeId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+      <button type="button" class="icon-button edit-recipe-btn" data-recipe-id="${recipeId}" title="Editar"><i class="fa-solid fa-pen"></i></button>
+      <button type="button" class="icon-button delete-recipe-btn danger" data-recipe-id="${recipeId}" title="Excluir"><i class="fa-solid fa-trash"></i></button>`;
+    footerEl.style.display = 'flex';
+  };
+
+  app.showRecipeDetailModal = function(recipeId) {
+    const recipe = this.state?.receitas?.[recipeId];
+    if (!recipe) return;
+    const titleEl = document.getElementById('recipe-detail-modal-title');
+    const bodyEl = document.getElementById('recipe-detail-modal-body');
+    const footerEl = document.getElementById('recipe-detail-modal-footer');
+    if (!titleEl || !bodyEl || !footerEl) return;
+    const ingredients = recipe.ingredients || [];
+    const prepText = String(recipe.content || '')
+      .replace(/<h4>Ingredientes<\/h4>/gi, '')
+      .replace(/<ul>[\s\S]*?<\/ul>/i, '')
+      .replace(/<h4>Preparo<\/h4>/gi, '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .trim();
+    const ingredientChips = ingredients.length
+      ? ingredients.map(ing => `<li class="recipe-chip"><span>${this.escapeHtml(ing.qty || '1')} ${this.escapeHtml(ing.unit || 'un')}</span><strong>${this.escapeHtml(ing.name || '')}</strong></li>`).join('')
+      : '<li class="recipe-chip recipe-chip--empty"><strong>Sem ingredientes cadastrados</strong></li>';
+    titleEl.textContent = recipe.name;
+    bodyEl.innerHTML = `
+      <div class="recipe-rich-content recipe-luxury-view">
+        <div class="recipe-hero-head">
+          <div class="recipe-title-block">
+            <span class="recipe-eyebrow">Receita</span>
+            <h4>${this.escapeHtml(recipe.name)}</h4>
+            <p class="detail-note">${this.escapeHtml(recipe.desc || 'Receita salva no seu painel.')}</p>
+          </div>
+          <div class="recipe-meta-grid">
+            <div class="detail-kpi"><strong>${ingredients.length}</strong><span>ingredientes</span></div>
+            <div class="detail-kpi"><strong>${prepText ? prepText.split('\n').filter(Boolean).length || 1 : 1}</strong><span>etapas</span></div>
+          </div>
+        </div>
+        <div class="recipe-section-card"><h5>Ingredientes</h5><ul class="recipe-ingredient-chips">${ingredientChips}</ul></div>
+        <div class="recipe-section-card"><h5>Modo de preparo</h5><div class="recipe-prep-copy">${prepText ? prepText.split('\n').filter(Boolean).map(step => `<p>${this.escapeHtml(step)}</p>`).join('') : '<p>Adicione o modo de preparo para deixar a receita completa.</p>'}</div></div>
+      </div>`;
+    footerEl.innerHTML = `
+      <button type="button" class="icon-button generate-recipe-list-btn" data-recipe-id="${recipeId}" title="Gerar lista desta receita"><i class="fa-solid fa-list"></i><span>Gerar lista</span></button>
+      <button type="button" class="icon-button minimal-export-btn share-btn" data-recipe-id="${recipeId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+      <button type="button" class="icon-button minimal-export-btn print-btn" data-recipe-id="${recipeId}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+      <button type="button" class="icon-button minimal-export-btn pdf-btn" data-recipe-id="${recipeId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+      <button type="button" class="icon-button edit-recipe-btn" data-recipe-id="${recipeId}" title="Editar"><i class="fa-solid fa-pen"></i></button>
+      <button type="button" class="icon-button delete-recipe-btn danger" data-recipe-id="${recipeId}" title="Excluir"><i class="fa-solid fa-trash"></i></button>`;
+    this.openModal('recipe-detail-modal');
+  };
+
+  app.renderReceitas = function(container) {
+    if (!container) container = document.getElementById('module-receitas');
+    if (!container) return;
+    const sortMeta = this.getSortMeta('recipe', this.recipeSortMode || 'name_asc');
+    container.innerHTML = `
+      <div class="master-detail-layout">
+        <div class="md-list-column dashboard-card">
+          <div class="card-header"><h3><i class="fa-solid fa-utensils"></i> Receitas</h3></div>
+          <div class="card-content">
+            <div class="module-toolbar module-toolbar--ultra">
+              <button class="btn btn-secondary add-recipe-btn luxury-create-btn"><i class="fa-solid fa-plus"></i><span>Nova Receita</span></button>
+              <button class="icon-button luxury-sort-btn recipe-cycle-sort-btn" title="Organizar receitas: ${sortMeta.label}" aria-label="Organizar receitas: ${sortMeta.label}">
+                <i class="fa-solid fa-arrow-up-short-wide"></i>
+              </button>
+            </div>
+            <div id="main-recipe-grid"></div>
+          </div>
+        </div>
+        <div class="md-detail-column dashboard-card recipe-detail-shell">
+          <div class="card-header"><h3 id="recipe-detail-title-desktop"><i class="fa-solid fa-book-open"></i> Detalhes</h3></div>
+          <div class="card-content" id="recipe-detail-desktop-body"><div class="empty-state-placeholder"><i class="fa-solid fa-utensils" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.45;"></i><p>Selecione uma receita para ver ingredientes e preparo.</p></div></div>
+          <div class="card-footer module-actions-footer" id="recipe-detail-desktop-footer" style="display:none;"></div>
+        </div>
+      </div>`;
+    const listContainer = document.getElementById('main-recipe-grid');
+    const recipes = this.sortRecipesCollection(Object.values(this.state.receitas || {}));
+    listContainer.innerHTML = recipes.map(recipe => this.renderUniversalCard({
+      type: 'recipe',
+      data: { id: recipe.id, name: recipe.name, ingredients: recipe.ingredients || [] },
+      actions: [
+        { type: 'secondary', class: 'generate-recipe-list-btn', icon: 'fa-solid fa-list', label: 'Gerar lista' },
+        { type: 'edit', class: 'edit-recipe-btn', icon: 'fa-solid fa-pencil', label: 'Editar' },
+        { type: 'danger', class: 'delete-recipe-btn', icon: 'fa-solid fa-trash', label: 'Excluir' }
+      ],
+      isClickable: true
+    })).join('') || '<p class="empty-list-message">Nenhuma receita criada.</p>';
+  };
+
+  app.openPlannerDayDetailModal = function(dayKey) {
+    const titleEl = document.getElementById('detail-modal-title');
+    const bodyEl = document.getElementById('detail-modal-body');
+    const footerEl = document.getElementById('detail-modal-footer');
+    const headerActionsEl = document.getElementById('detail-modal-header-actions');
+    if (!titleEl || !bodyEl || !footerEl || !headerActionsEl) return;
+    const dayLabel = this.getPlannerDaysMap()[dayKey] || 'Dia';
+    const dayMeals = this.state.planejador[dayKey] || {};
+    const standardSlots = [
+      { key: 'cafe', label: 'Café da Manhã', icon: 'fa-solid fa-mug-saucer' },
+      { key: 'almoco', label: 'Almoço', icon: 'fa-solid fa-bowl-food' },
+      { key: 'jantar', label: 'Jantar', icon: 'fa-solid fa-utensils' }
+    ];
+
+    const slotCards = standardSlots.map(slot => {
+      const meal = dayMeals[slot.key];
+      if (!meal) {
+        return `
+          <article class="planner-slot-card planner-slot-empty" data-day="${dayKey}" data-meal="${slot.key}">
+            <div class="planner-slot-head"><div class="planner-slot-title"><small>${slot.label}</small><strong>Sem receita definida</strong></div><i class="${slot.icon}" style="opacity:.72"></i></div>
+            <div class="planner-slot-body"><p>Escolha uma receita para organizar melhor este horário.</p></div>
+            <div class="planner-slot-actions"><button type="button" class="icon-button planner-slot-direct-btn" data-day="${dayKey}" data-meal="${slot.key}" title="Escolher receita"><i class="fa-solid fa-plus"></i></button></div>
+          </article>`;
+      }
+      const recipeId = meal.recipeId || meal.id || '';
+      return `
+        <article class="planner-slot-card planner-meal-item ${meal.completed ? 'completed' : ''}" data-day="${dayKey}" data-meal="${slot.key}" data-recipe-id="${recipeId}">
+          <div class="planner-slot-head">
+            <div class="planner-slot-title"><small>${slot.label}</small><strong>${this.escapeHtml(meal.name || 'Refeição')}</strong>${meal.time ? `<span class="planner-slot-time">${this.escapeHtml(meal.time)}</span>` : ''}</div>
+            <i class="${slot.icon}" style="opacity:.78"></i>
+          </div>
+          <div class="planner-slot-body"><p>${meal.completed ? 'Marcada como usada. Ótimo para acompanhar sua rotina.' : 'Use os botões abaixo para visualizar, concluir, remover ou gerar a lista.'}</p></div>
+          <div class="planner-slot-actions meal-item-actions">
+            <button type="button" class="icon-button generate-meal-list-btn" data-day="${dayKey}" data-meal="${slot.key}" title="Gerar lista desta refeição"><i class="fa-solid fa-list"></i></button>
+            <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i></button>
+            <button type="button" class="icon-button meal-complete-btn ${meal.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i></button>
+            <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </article>`;
+    }).join('');
+
+    const extras = (Array.isArray(dayMeals.extras) ? dayMeals.extras : []).map(extra => {
+      const recipeId = extra.recipeId || extra.id || '';
+      return `
+        <article class="planner-slot-card planner-meal-item ${extra.completed ? 'completed' : ''}" data-day="${dayKey}" data-meal="extra:${extra.key}" data-recipe-id="${recipeId}">
+          <div class="planner-slot-head"><div class="planner-slot-title"><small>${this.escapeHtml(extra.mealLabel || 'Refeição extra')}</small><strong>${this.escapeHtml(extra.name || 'Receita')}</strong>${extra.time ? `<span class="planner-slot-time">${this.escapeHtml(extra.time)}</span>` : ''}</div><i class="fa-solid fa-star" style="opacity:.78"></i></div>
+          <div class="planner-slot-body"><p>Refeição personalizada adicionada ao seu dia.</p></div>
+          <div class="planner-slot-actions meal-item-actions">
+            <button type="button" class="icon-button generate-meal-list-btn" data-day="${dayKey}" data-meal="extra:${extra.key}" title="Gerar lista desta refeição"><i class="fa-solid fa-list"></i></button>
+            <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i></button>
+            <button type="button" class="icon-button meal-complete-btn ${extra.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i></button>
+            <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </article>`;
+    }).join('');
+
+    titleEl.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${dayLabel}`;
+    headerActionsEl.innerHTML = `<button class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>`;
+    bodyEl.innerHTML = `
+      <div class="planner-day-detail-shell">
+        <div class="detail-kpi-grid">
+          <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).length}</strong><span>refeições no dia</span></div>
+          <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).filter(meal => meal.completed).length}</strong><span>marcadas como usadas</span></div>
+        </div>
+        <div class="planner-slot-grid">${slotCards}${extras}
+          <article class="planner-slot-card planner-slot-add-card">
+            <div class="planner-slot-head"><div class="planner-slot-title"><small>Personalizado</small><strong>Adicionar refeição</strong></div><i class="fa-solid fa-sparkles" style="opacity:.78"></i></div>
+            <div class="planner-slot-body"><p>Crie uma refeição com nome e horário personalizados e escolha a receita depois.</p></div>
+            <div class="planner-slot-actions"><button type="button" class="icon-button planner-custom-meal-launch" data-day="${dayKey}" title="Criar refeição"><i class="fa-solid fa-plus"></i></button></div>
+          </article>
+        </div>
+      </div>`;
+    footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+    footerEl.innerHTML = `${this.buildExportButtons(`data-day="${dayKey}"`)}`;
+    this.openModal('detail-modal');
+  };
+
+  const bindRecipeIngredientField = (scope = document) => {
+    const input = scope.querySelector?.('#recipe-ing-name');
+    if (!input || input.dataset.afBindAutocomplete === '1') return;
+    input.dataset.afBindAutocomplete = '1';
+    input.setAttribute('autocomplete', 'off');
+    input.addEventListener('input', () => app.handleAutocomplete(input));
+    input.addEventListener('focus', () => {
+      if (String(input.value || '').trim()) app.handleAutocomplete(input);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') app.hideAutocomplete();
+    });
+  };
+
+  const originalHandleOpenRecipeEditModal = app.handleOpenRecipeEditModal?.bind(app);
+  if (originalHandleOpenRecipeEditModal) {
+    app.handleOpenRecipeEditModal = function(...args) {
+      const result = originalHandleOpenRecipeEditModal(...args);
+      setTimeout(() => bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document), 10);
+      return result;
+    };
+  }
+
+  document.addEventListener('focusin', (e) => {
+    if (e.target?.id === 'recipe-ing-name') bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document);
+  });
+
+  document.addEventListener('mousedown', (e) => {
+    const itemEl = e.target.closest?.('.autocomplete-item');
+    if (!itemEl) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const name = itemEl.getAttribute('data-name') || '';
+    app.selectAutocompleteItem(name.replace(/&quot;/g, '"'));
+  }, true);
+
+  document.addEventListener('click', (e) => {
+    const closest = (sel) => e.target.closest(sel);
+
+    if (closest('.generate-recipe-list-btn')) {
+      const recipeId = closest('[data-recipe-id]')?.dataset?.recipeId || closest('.card--recipe,[data-id]')?.dataset?.id;
+      if (recipeId) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        app.generateListFromRecipe(recipeId);
+      }
+      return;
+    }
+
+    if (closest('.generate-meal-list-btn')) {
+      const btn = closest('.generate-meal-list-btn');
+      if (btn?.dataset?.day && btn?.dataset?.meal) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        app.handleGenerateListFromPlanner(btn.dataset.day, btn.dataset.meal);
+      }
+      return;
+    }
+
+    if (closest('.planner-meal-item .meal-delete-btn')) {
+      const mealItem = closest('.planner-meal-item');
+      if (mealItem) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        app.handleDeleteMeal(mealItem.dataset.day, mealItem.dataset.meal);
+      }
+      return;
+    }
+  }, true);
 })();

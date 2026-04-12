@@ -8370,3 +8370,117 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
 #autocomplete-suggestions .autocomplete-item{
   cursor:pointer;
 }
+
+
+/* === PATCH V4.1 | confirmações acima, ações de lista e autocomplete confiável === */
+#custom-confirm-modal{
+  z-index: 61000 !important;
+}
+#custom-confirm-modal .modal-box{
+  z-index: 61001 !important;
+}
+#detail-modal{ z-index: 52000 !important; }
+#recipe-detail-modal{ z-index: 56000 !important; }
+#recipe-picker-modal{ z-index: 50000 !important; }
+#autocomplete-suggestions{
+  z-index: 62000 !important;
+}
+#autocomplete-suggestions .autocomplete-item{
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+}
+#recipe-detail-modal-footer .generate-recipe-list-btn,
+#recipe-detail-desktop-footer .generate-recipe-list-btn,
+.card--recipe .generate-recipe-list-btn,
+.planner-slot-actions .generate-meal-list-btn,
+.detail-modal-footer .generate-list-btn{
+  min-width: 46px;
+}
+.planner-slot-actions.meal-item-actions{
+  flex-wrap: wrap;
+}
+.planner-slot-actions.meal-item-actions .generate-meal-list-btn{
+  border-color: rgba(0,242,234,.28) !important;
+  color: var(--primary-color) !important;
+}
+.planner-slot-actions.meal-item-actions .generate-meal-list-btn:hover,
+#recipe-detail-modal-footer .generate-recipe-list-btn:hover,
+#recipe-detail-desktop-footer .generate-recipe-list-btn:hover,
+.card--recipe .generate-recipe-list-btn:hover,
+.detail-modal-footer .generate-list-btn:hover{
+  border-color: rgba(0,242,234,.4) !important;
+  color: var(--primary-color) !important;
+}
+@media (max-width: 640px){
+  #recipe-detail-modal-footer,
+  .detail-modal-footer{
+    gap: .55rem !important;
+  }
+  #recipe-detail-modal-footer .icon-button,
+  .detail-modal-footer .icon-button,
+  .planner-slot-actions .icon-button{
+    min-width: 46px !important;
+    height: 46px !important;
+  }
+}
+
+
+/* === PATCH v4.2 | autocomplete robusto no criar/editar receita === */
+#autocomplete-suggestions{
+  position: fixed !important;
+  inset: auto auto auto auto;
+  display: none;
+  background: #1c1f24 !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.45) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  z-index: 2147483647 !important;
+}
+#autocomplete-suggestions .autocomplete-item{
+  width: 100% !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .85rem .95rem !important;
+  text-align: left;
+  color: #fff !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  cursor: pointer;
+}
+#autocomplete-suggestions .autocomplete-item:last-child{
+  border-bottom: 0 !important;
+}
+#autocomplete-suggestions .autocomplete-item:hover,
+#autocomplete-suggestions .autocomplete-item:focus{
+  background: rgba(0,242,234,.12) !important;
+  outline: none;
+}
+#autocomplete-suggestions .autocomplete-name{
+  color: #fff;
+  font-weight: 600;
+  min-width: 0;
+}
+#autocomplete-suggestions .autocomplete-unit{
+  color: rgba(255,255,255,.72);
+  flex: 0 0 auto;
+}
+#custom-confirm-modal.recipe-editor-modal,
+#custom-confirm-modal.recipe-editor-modal .modal-box{
+  overflow: visible !important;
+}
+#custom-confirm-modal.recipe-editor-modal .modal-body{
+  overflow: auto !important;
+}
+#custom-confirm-modal.recipe-editor-modal #recipe-edit-form,
+#custom-confirm-modal.recipe-editor-modal #recipe-ing-form{
+  overflow: visible !important;
+}
