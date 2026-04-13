@@ -291,6 +291,38 @@ async function refreshSubscriptionState(userId) {
   if (!subscription) return null;
 
   const currentDate = now();
+  const plan = String(subscription.plan || '').toLowerCase();
+  const status = String(subscription.status || '').toLowerCase();
+  const hasMercadoPagoProof = Boolean(
+    subscription.mercadopagoSubscriptionId ||
+    subscription.billingReadyAt ||
+    subscription.lastPaymentAt
+  );
+
+  // Corrige automaticamente usuários antigos que foram promovidos de forma errada
+  // para premium/trialing sem qualquer confirmação real do Mercado Pago.
+  if (plan === 'premium' && !hasMercadoPagoProof && (status === 'trialing' || status === 'active')) {
+    await subscriptionsCollection().updateOne(
+      { _id: subscription._id },
+      {
+        $set: {
+          plan: 'basic',
+          status: 'basic',
+          trialStart: null,
+          trialEnd: null,
+          blockedAt: null,
+          updatedAt: currentDate
+        }
+      }
+    );
+    subscription.plan = 'basic';
+    subscription.status = 'basic';
+    subscription.trialStart = null;
+    subscription.trialEnd = null;
+    subscription.blockedAt = null;
+    subscription.updatedAt = currentDate;
+    return subscription;
+  }
 
   if (
     subscription.status === 'trialing' &&

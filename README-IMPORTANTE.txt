@@ -30,3 +30,8 @@ ATUALIZAÇÃO 2026-04-13
 - Usuário BASIC pode entrar no painel e trocar abas, mas qualquer ação abre o card Premium.
 - Usuário PREMIUM tem acesso ilimitado.
 - Retorno do Mercado Pago pode ser confirmado pela rota /api/billing/confirm-premium.
+
+
+CORREÇÃO EXTRA 2026-04-13 01:30
+- Usuários antigos que foram gravados por engano como premium/trialing sem prova real do Mercado Pago agora são rebaixados automaticamente para BASIC ao fazer login ou consultar a sessão.
+- Isso evita que os testes falsos já criados continuem com acesso total.

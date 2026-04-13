@@ -1,0 +1,23 @@
+ATLAS | REBAIXAR USUÁRIOS PREMIUM FALSOS PARA BASIC
+
+Se quiser corrigir imediatamente pelo Atlas, use a coleção:
+- alimente_facil.subscriptions
+
+Filtro sugerido:
+{ "plan": "premium", "status": "trialing", "mercadopagoSubscriptionId": null }
+
+Update Many sugerido:
+{
+  "$set": {
+    "plan": "basic",
+    "status": "basic",
+    "trialStart": null,
+    "trialEnd": null,
+    "blockedAt": null,
+    "updatedAt": { "$date": "2026-04-13T00:00:00.000Z" }
+  }
+}
+
+Observação:
+- O novo backend também faz essa correção automaticamente quando o usuário abre sessão sem prova real do Mercado Pago.
+- Premium válido deve ficar com confirmação real do Mercado Pago, como mercadopagoSubscriptionId, billingReadyAt ou lastPaymentAt.
