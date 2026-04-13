@@ -1,6 +1,5 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
+  "version": 2,
   "routes": [
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/api/index.js" }
