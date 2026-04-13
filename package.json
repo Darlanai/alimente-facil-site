@@ -2,17 +2,15 @@
   "name": "alimente-facil",
   "version": "1.0.0",
   "private": true,
-  "main": "api/index.js",
+  "main": "server.js",
   "scripts": {
-    "dev": "node api/index.js",
-    "start": "node api/index.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.15.0",
-    "nodemailer": "^6.9.16"
+    "mongodb": "^6.18.0"
   }
 }

@@ -1,711 +1,407 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Alimente Fácil [Visão Futurista]</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#00f2ea">
-    <meta name="description" content="Organização alimentar premium, simples e sem ruído com o Alimente Fácil.">
-    <meta name="author" content="Alimente Fácil">
-    
-    <meta property="og:title" content="Alimente Fácil [Visão Futurista]">
-    <meta property="og:description" content="Organização alimentar premium, simples e sem ruído.">
-    <meta property="og:type" content="website">
-    
-    <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;400;600;700&family=Roboto+Mono:wght@400;500;700&family=Kalam:wght@400;700&family=Roboto:wght@400;500;700&family=Segoe+UI:wght@300;400;600&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    
-    <link rel="stylesheet" href="style.css">
-<style>
-    :root {
-        --time-scale: 1;
-        --quantum-black: linear-gradient(135deg, #000000 0%, #050505 50%, #000000 100%);
-        --starlight-gold: conic-gradient(from 0deg at 50% 50%, #FFD700 0deg, #D4AF37 180deg, #FFD700 360deg);
-    }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alimente Fácil</title>
+  <meta name="description" content="Alimente Fácil — organização alimentar premium com controle real de compras, despensa, receitas e planejamento." />
+  <meta name="theme-color" content="#10d7d2" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
+  <div class="site-bg"></div>
+  <header class="topbar">
+    <a href="#home" class="brand">ALIMENTE FÁCIL</a>
+    <nav class="topbar-actions">
+      <button type="button" class="ghost-btn" id="themeToggle" aria-label="Alternar tema"><i class="fa-solid fa-circle-half-stroke"></i></button>
+      <button type="button" class="primary-outline-btn" id="headerAuthBtn">Entrar</button>
+      <button type="button" class="menu-btn" id="mobileMenuBtn" aria-label="Abrir menu"><i class="fa-solid fa-bars"></i></button>
+    </nav>
+  </header>
 
-    <div id="landing-video-container" class="video-container">
-        <video class="background-video active" src="fundo.mp4" poster="fundo_poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
-        <video class="background-video" src="fundo3.mp4" poster="fundo3_poster.jpg" autoplay muted loop playsinline preload="none"></video>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#home">Início</a>
+    <a href="#features">Recursos</a>
+    <a href="#pricing">Plano</a>
+    <a href="#contact">Contato</a>
+    <button type="button" id="mobileMenuAuthBtn">Entrar</button>
+  </div>
+
+  <main>
+    <section class="hero section" id="home">
+      <div class="hero-copy">
+        <div class="eyebrow">Organização alimentar profissional</div>
+        <h1>Controle real de compras, despensa, receitas e planejamento.</h1>
+        <p>Sem ruído. Sem demo disfarçada. Uma experiência premium para quem quer organizar a rotina alimentar com clareza e valor.</p>
+        <div class="hero-cta-row">
+          <button type="button" class="primary-btn" id="heroStartBtn">Começar agora</button>
+          <button type="button" class="secondary-btn" id="heroPanelBtn">Acessar painel</button>
+        </div>
+        <div class="hero-note">Plano único <strong>R$ 9,90/mês</strong> com <strong>7 dias grátis</strong> após confirmação da assinatura.</div>
+      </div>
+      <div class="hero-showcase">
+        <div class="showcase-card">
+          <div class="showcase-header">
+            <span>Painel premium</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="showcase-grid">
+            <div class="metric-card">
+              <span>Listas</span>
+              <strong>Controle</strong>
+            </div>
+            <div class="metric-card">
+              <span>Despensa</span>
+              <strong>Validade</strong>
+            </div>
+            <div class="metric-card">
+              <span>Receitas</span>
+              <strong>Organização</strong>
+            </div>
+            <div class="metric-card">
+              <span>Planejador</span>
+              <strong>Semana</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="features">
+      <div class="section-head">
+        <div class="eyebrow">Recursos</div>
+        <h2>Um painel pensado para uso profissional.</h2>
+        <p>No básico, o usuário só visualiza. No Premium, tudo é liberado.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <i class="fa-solid fa-list-check"></i>
+          <h3>Listas</h3>
+          <p>Crie listas de compras com estrutura limpa, rápida e objetiva.</p>
+        </article>
+        <article class="feature-card">
+          <i class="fa-solid fa-box-open"></i>
+          <h3>Despensa</h3>
+          <p>Registre itens, quantidades e validade sem bagunça.</p>
+        </article>
+        <article class="feature-card">
+          <i class="fa-solid fa-utensils"></i>
+          <h3>Receitas</h3>
+          <p>Centralize receitas e ingredientes em um só lugar.</p>
+        </article>
+        <article class="feature-card">
+          <i class="fa-solid fa-calendar-days"></i>
+          <h3>Planejador</h3>
+          <p>Organize a semana e reduza desperdício com visão clara.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="pricing">
+      <div class="pricing-shell">
+        <div class="section-head">
+          <div class="eyebrow">Plano</div>
+          <h2>Sem plano gratuito de uso.</h2>
+          <p>O plano básico é somente visual. O Premium libera todas as ações do painel.</p>
+        </div>
+        <div class="pricing-card">
+          <div class="pricing-title">Premium</div>
+          <div class="pricing-price">R$ 9,90<span>/mês</span></div>
+          <ul>
+            <li>7 dias grátis após assinatura</li>
+            <li>Listas, despensa e receitas liberadas</li>
+            <li>Planejador e análises liberados</li>
+            <li>Experiência completa no painel</li>
+          </ul>
+          <button type="button" class="primary-btn" id="pricingPremiumBtn">Assinar Premium</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="contact">
+      <div class="section-head">
+        <div class="eyebrow">Contato</div>
+        <h2>Fale com o Alimente Fácil.</h2>
+        <p>Envie sua mensagem pelo formulário abaixo.</p>
+      </div>
+      <form class="contact-card" id="contactForm">
+        <div class="field-row">
+          <div class="field">
+            <label for="contactName">Nome</label>
+            <input id="contactName" name="name" type="text" placeholder="Seu nome" required />
+          </div>
+          <div class="field">
+            <label for="contactEmail">E-mail</label>
+            <input id="contactEmail" name="email" type="email" placeholder="voce@exemplo.com" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="contactMessage">Mensagem</label>
+          <textarea id="contactMessage" name="message" rows="6" placeholder="Escreva sua mensagem" required></textarea>
+        </div>
+        <button type="submit" class="primary-btn">Enviar mensagem</button>
+      </form>
+    </section>
+
+    <section class="panel-shell hidden" id="panelShell">
+      <aside class="panel-sidebar">
+        <div class="panel-brand">ALIMENTE FÁCIL</div>
+        <button type="button" class="tab-btn active" data-tab="inicio">Início</button>
+        <button type="button" class="tab-btn" data-tab="listas">Listas</button>
+        <button type="button" class="tab-btn" data-tab="despensa">Despensa</button>
+        <button type="button" class="tab-btn" data-tab="receitas">Receitas</button>
+        <button type="button" class="tab-btn" data-tab="planejador">Planejador</button>
+        <button type="button" class="tab-btn" data-tab="analises">Análises</button>
+        <button type="button" class="tab-btn" data-tab="configuracoes">Configurações</button>
+      </aside>
+      <section class="panel-main">
+        <div class="panel-topbar">
+          <div>
+            <div class="eyebrow">Painel</div>
+            <h2 id="panelTitle">Visão geral</h2>
+          </div>
+          <div class="panel-userbox">
+            <div>
+              <strong id="panelUserName">Visitante</strong>
+              <span id="panelPlanLabel">Plano básico</span>
+            </div>
+            <button type="button" class="secondary-btn small" id="logoutBtn">Sair</button>
+          </div>
+        </div>
+
+        <div class="readonly-banner hidden" id="readonlyBanner">
+          Plano básico ativo. Você pode navegar pelas abas, mas toda ação exige o Premium.
+        </div>
+
+        <div class="tab-panel active" data-tab-panel="inicio">
+          <div class="dashboard-grid">
+            <article class="panel-card">
+              <h3>Status da conta</h3>
+              <p id="accountSummary">Acesso básico visual.</p>
+              <button type="button" class="primary-btn small paywall-action">Assinar Premium</button>
+            </article>
+            <article class="panel-card">
+              <h3>Resumo</h3>
+              <p>O painel foi reorganizado para uma experiência mais limpa, profissional e objetiva.</p>
+            </article>
+            <article class="panel-card">
+              <h3>Domínio</h3>
+              <p>Ambiente pronto para operar no domínio profissional configurado.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-tab-panel="listas">
+          <div class="panel-card form-card">
+            <h3>Nova lista</h3>
+            <form id="listForm" class="stack-form">
+              <div class="field">
+                <label for="listTitle">Título</label>
+                <input id="listTitle" name="title" type="text" placeholder="Ex.: Compras da semana" />
+              </div>
+              <div class="field">
+                <label for="listNotes">Observações</label>
+                <textarea id="listNotes" name="notes" rows="4" placeholder="Detalhes da lista"></textarea>
+              </div>
+              <button type="submit" class="primary-btn small">Salvar lista</button>
+            </form>
+          </div>
+          <div class="panel-card">
+            <h3>Listas salvas</h3>
+            <div class="empty-state" id="listasEmpty">Nenhuma lista cadastrada.</div>
+            <div class="item-list" id="listasList"></div>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-tab-panel="despensa">
+          <div class="panel-card form-card">
+            <h3>Novo item da despensa</h3>
+            <form id="pantryForm" class="stack-form">
+              <div class="field-row">
+                <div class="field">
+                  <label for="pantryName">Item</label>
+                  <input id="pantryName" name="name" type="text" placeholder="Ex.: Arroz" />
+                </div>
+                <div class="field">
+                  <label for="pantryQuantity">Quantidade</label>
+                  <input id="pantryQuantity" name="quantity" type="text" placeholder="Ex.: 2 kg" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="pantryExpiry">Validade</label>
+                <input id="pantryExpiry" name="expiry" type="date" />
+              </div>
+              <button type="submit" class="primary-btn small">Salvar item</button>
+            </form>
+          </div>
+          <div class="panel-card">
+            <h3>Itens cadastrados</h3>
+            <div class="empty-state" id="despensaEmpty">Nenhum item cadastrado.</div>
+            <div class="item-list" id="despensaList"></div>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-tab-panel="receitas">
+          <div class="panel-card form-card">
+            <h3>Nova receita</h3>
+            <form id="recipeForm" class="stack-form">
+              <div class="field">
+                <label for="recipeTitle">Título</label>
+                <input id="recipeTitle" name="title" type="text" placeholder="Ex.: Frango grelhado" />
+              </div>
+              <div class="field">
+                <label for="recipeIngredients">Ingredientes</label>
+                <textarea id="recipeIngredients" name="ingredients" rows="4" placeholder="Liste os ingredientes"></textarea>
+              </div>
+              <div class="field">
+                <label for="recipeMethod">Modo de preparo</label>
+                <textarea id="recipeMethod" name="method" rows="5" placeholder="Descreva o preparo"></textarea>
+              </div>
+              <button type="submit" class="primary-btn small">Salvar receita</button>
+            </form>
+          </div>
+          <div class="panel-card">
+            <h3>Receitas salvas</h3>
+            <div class="empty-state" id="receitasEmpty">Nenhuma receita cadastrada.</div>
+            <div class="item-list" id="receitasList"></div>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-tab-panel="planejador">
+          <div class="panel-card form-card">
+            <h3>Planejamento da semana</h3>
+            <form id="plannerForm" class="stack-form">
+              <div class="field">
+                <label for="plannerNotes">Notas</label>
+                <textarea id="plannerNotes" name="notes" rows="10" placeholder="Organize suas refeições da semana"></textarea>
+              </div>
+              <button type="submit" class="primary-btn small">Salvar planejamento</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-tab-panel="analises">
+          <div class="dashboard-grid">
+            <article class="panel-card">
+              <h3>Total de listas</h3>
+              <strong class="stat-number" id="analyticsLists">0</strong>
+            </article>
+            <article class="panel-card">
+              <h3>Total de itens da despensa</h3>
+              <strong class="stat-number" id="analyticsPantry">0</strong>
+            </article>
+            <article class="panel-card">
+              <h3>Total de receitas</h3>
+              <strong class="stat-number" id="analyticsRecipes">0</strong>
+            </article>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-tab-panel="configuracoes">
+          <div class="panel-card form-card">
+            <h3>Perfil</h3>
+            <div class="field-row">
+              <div class="field">
+                <label>Nome</label>
+                <input type="text" id="profileName" disabled />
+              </div>
+              <div class="field">
+                <label>E-mail</label>
+                <input type="text" id="profileEmail" disabled />
+              </div>
+            </div>
+          </div>
+          <div class="panel-card">
+            <h3>Assinatura</h3>
+            <p id="subscriptionStatusText">Plano básico visual.</p>
+            <button type="button" class="primary-btn small" id="settingsUpgradeBtn">Assinar Premium</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>© <span id="year"></span> Alimente Fácil</div>
+    <div class="footer-links">
+      <a href="/termos.html">Termos de Uso</a>
+      <a href="/politica-de-privacidade.html">Política de Privacidade</a>
     </div>
-    <div id="panel-video-container" class="video-container">
-        <video class="background-video active" src="videopainel.mp4" poster="videopainel_poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
-    </div>
+  </footer>
 
-<header class="header" id="landing-header">
-  <div class="header-inner">
-    <div class="brand">ALIMENTE FÁCIL</div>
-
-    <div class="actions">
-      <div class="icon-btn" id="landing-theme-toggle" title="Tema">
-        <svg viewBox="0 0 24 24"><path d="M12 2a1 1 0 0 0 0 2 8 8 0 1 1-8 8 1 1 0 0 0-2 0 10 10 0 1 0 10-10z"/></svg>
+  <div class="modal hidden" id="authModal">
+    <div class="modal-overlay" data-close="authModal"></div>
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close="authModal"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-head">
+        <div class="eyebrow">Acesso</div>
+        <h3 id="authModalTitle">Entrar</h3>
+        <p>Use sua conta real para acessar o painel.</p>
+      </div>
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-auth-view="login">Entrar</button>
+        <button type="button" class="auth-tab" data-auth-view="signup">Criar conta</button>
       </div>
 
-      <div class="icon-btn power" id="landing-auth-btn" title="Entrar">
-        <svg viewBox="0 0 24 24"><path d="M11 2h2v10h-2zM12 22a9 9 0 0 1-6.36-15.36l1.42 1.42A7 7 0 1 0 16.94 8.06l1.42-1.42A9 9 0 0 1 12 22z"/></svg>
-      </div>
+      <form class="auth-form active" id="loginForm">
+        <div class="field">
+          <label for="loginEmail">E-mail</label>
+          <input id="loginEmail" type="email" required />
+        </div>
+        <div class="field">
+          <label for="loginPassword">Senha</label>
+          <input id="loginPassword" type="password" required />
+        </div>
+        <button type="submit" class="primary-btn">Entrar</button>
+      </form>
 
-      <div class="menu-btn" id="hamburger">
-        <span></span>
-        <span></span>
+      <form class="auth-form" id="signupForm">
+        <div class="field">
+          <label for="signupName">Nome</label>
+          <input id="signupName" type="text" required />
+        </div>
+        <div class="field">
+          <label for="signupEmail">E-mail</label>
+          <input id="signupEmail" type="email" required />
+        </div>
+        <div class="field">
+          <label for="signupPassword">Senha</label>
+          <input id="signupPassword" type="password" minlength="6" required />
+        </div>
+        <button type="submit" class="primary-btn">Criar conta</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="premiumModal">
+    <div class="modal-overlay" data-close="premiumModal"></div>
+    <div class="modal-card narrow">
+      <button type="button" class="modal-close" data-close="premiumModal"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-head">
+        <div class="eyebrow">Premium necessário</div>
+        <h3>Assine para liberar tudo.</h3>
+        <p>No plano básico você só visualiza as abas. Para criar, editar, preencher ou salvar, ative o Premium por <strong>R$ 9,90/mês</strong> com <strong>7 dias grátis</strong>.</p>
+      </div>
+      <div class="premium-actions">
+        <button type="button" class="primary-btn" id="premiumCheckoutBtn">Assinar Premium</button>
+        <button type="button" class="secondary-btn" data-close="premiumModal">Fechar</button>
+      </div>
+      <div class="premium-helper" id="premiumReturnHelper">
+        Já pagou no Mercado Pago? Informe o código da assinatura para liberar agora.
+        <div class="premium-confirm-row">
+          <input type="text" id="preapprovalIdInput" placeholder="preapproval_id" />
+          <button type="button" class="primary-outline-btn" id="confirmPremiumBtn">Liberar</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="divider"></div>
+  <div class="toast-stack" id="toastStack"></div>
 
-  <div class="menu-panel" id="menuItems">
-    <div class="menu-item"><a href="#inicio"><span>Início</span></a></div>
-    <div class="menu-item" data-action="open-plans"><span>Planos</span></div>
-    <div class="menu-item" data-action="open-calculator"><span>Calculadora</span></div>
-    <div class="menu-item" id="pwa-install-menu" data-action="pwa-install" style="display:none"><span>Adicionar à Tela Inicial</span></div>
-    <div class="menu-item"><a href="#dicas-valiosas"><span>Dicas Valiosas</span></a></div>
-    <div class="menu-item"><a href="#receitas-landing"><span>Receitas Rápidas</span></a></div>
-    <div class="menu-item"><a href="#sobre"><span>Sobre & Contato</span></a></div>
-    <div class="menu-sep"></div>
-    <div class="menu-item cta" onclick="if(window.app){window.app.showAuthModal();}"><span>Acessar Painel</span></div>
-  </div>
-</header>
-
-    <main class="main-container">
-        
-        <section id="inicio" class="page-section">
-            <div class="identity-container hero-clean-layout" data-hero-phrases="Despensa em ordem|Planejamento sem bagunça">
-                <div class="hero-clean-shell">
-                    <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
-                    <h2 class="hero-tagline">Organização alimentar premium</h2>
-                    <p class="simple-subtitle scroll-reveal">Compras, despensa e planejamento com clareza.</p>
-
-                    <div class="hero-signature scroll-reveal" aria-label="Mensagem principal">Experiência elegante. Controle real.</div>
-
-                    <div class="hero-cta-stack">
-                        <a href="#" class="modern-start-btn" onclick="if(window.app){window.app.handleStartButtonClick(); return false;}">
-                            <span class="btn-text">Começar Agora</span>
-                            <span class="btn-icon-wrapper"><i class="fa-solid fa-arrow-right"></i></span>
-                        </a>
-                        <div class="hero-pricing-note">Plano único <strong>R$ 9,90/mês</strong></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="scroll-down-indicator" aria-hidden="true">
-                <span>Role para explorar</span>
-                <i class="fa-solid fa-arrow-down"></i>
-            </div>
-        </section>
-
-        <section class="page-section landing-resources-section" id="recursos" aria-labelledby="recursos-title">
-            <div class="section-content">
-                <div class="section-heading scroll-reveal">
-                    <div class="section-eyebrow">Recursos centrais</div>
-                    <h2 id="recursos-title" class="page-title">Tudo conectado em uma experiência só</h2>
-                    <p class="page-subtitle">Listas, despensa, receitas e planejamento funcionando como um único sistema.</p>
-                </div>
-                <div class="landing-feature-grid">
-                    <article class="landing-feature-card scroll-reveal">
-                        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-                        <h3>Listas Inteligentes</h3>
-                        <p>Crie listas limpas, editáveis e prontas para virar estoque real sem fricção.</p>
-                    </article>
-                    <article class="landing-feature-card scroll-reveal">
-                        <i class="fa-solid fa-box-archive" aria-hidden="true"></i>
-                        <h3>Despensa Gerenciada</h3>
-                        <p>Validade, quantidade e nível de estoque em um fluxo visual simples e rápido.</p>
-                    </article>
-                    <article class="landing-feature-card scroll-reveal">
-                        <i class="fa-solid fa-utensils" aria-hidden="true"></i>
-                        <h3>Receitas Personalizadas</h3>
-                        <p>Transforme ingredientes disponíveis em refeições úteis para a rotina de verdade.</p>
-                    </article>
-                    <article class="landing-feature-card scroll-reveal">
-                        <i class="fa-solid fa-calendar-week" aria-hidden="true"></i>
-                        <h3>Planejador Semanal</h3>
-                        <p>Monte a semana, reaproveite ingredientes e gere compras com mais inteligência.</p>
-                    </article>
-                </div>
-            </div>
-        </section>
-
-        <section id="calculadora" class="page-section" aria-labelledby="calc-title">
-            <div class="section-content">
-                <h1 id="calc-title" class="page-title">Calculadora de Desperdício</h1>
-                <p class="page-subtitle">Veja o impacto real do desperdício no seu orçamento e no planeta.</p>
-
-                <div class="mobile-tab-nav" role="tablist">
-                    <button class="mobile-tab-btn active" data-tab-target="home-calculator" role="tab" aria-selected="true" aria-controls="home-calculator">
-                        Calculadora
-                    </button>
-                    <button class="mobile-tab-btn" data-tab-target="info-card-calculator" role="tab" aria-selected="false" aria-controls="info-card-calculator" tabindex="-1">
-                        O Custo Invisível
-                    </button>
-                </div>
-                
-                <div class="calculator-info-container">
-                    <div id="home-calculator" class="mobile-tab-content glass-card" role="tabpanel" aria-labelledby="calc-title">
-                        <div class="widget-header">
-                            <h3><i class="fa-solid fa-calculator" aria-hidden="true"></i> Calculadora Rápida</h3>
-                        </div>
-                        <div class="calculator-display-section">
-                            <div class="calculator-result-area">
-                                <p>Prejuízo anual estimado:</p>
-                                <h2 id="home-calculator-result">R$ 0,00</h2>
-                                <div id="sustainability-score-container"></div>
-                                <p id="calculator-context-sentence"></p>
-                            </div>
-                            <a href="#" id="home-calculator-clear" class="clear-link" aria-label="Limpar calculadora"><i class="fa-solid fa-undo" aria-hidden="true"></i></a>
-                        </div>
-                        <div class="calculator-items-section">
-                            <h3>Itens Desperdiçados por semana</h3>
-                            <div id="home-calculator-grid"></div>
-                        </div>
-                    </div>
-
-                    <div id="info-card-calculator" class="info-card mobile-tab-content glass-card" role="tabpanel" tabindex="-1">
-                        <h2>O Custo Invisível</h2>
-                        <p>No Brasil, o desperdício de alimentos é um problema alarmante. Milhões de toneladas de comida vão parar no lixo todos os anos.</p>
-                        <p>Estima-se que:</p>
-                        <ul>
-                            <li>Cerca de <strong>30%</strong> de toda a comida produzida no mundo é perdida ou desperdiçada.</li>
-                            <li>Para uma família média, isso pode representar mais de <strong>R$ 1.000,00</strong> jogados fora por ano.</li>
-                        </ul>
-                        <p>Usando nossa calculadora, você pode ter uma visão clara de como pequenas mudanças na sua rotina podem gerar uma economia significativa.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="dicas-valiosas" class="page-section" aria-labelledby="dicas-title">
-            <div class="section-content">
-                <h1 id="dicas-title" class="page-title">Dicas Valiosas</h1>
-                <p class="page-subtitle">Otimize sua rotina, economize e reduza o desperdício com nossas dicas.</p>
-                <div class="carousel-slider dicas-carousel"></div>
-            </div>
-        </section>
-
-        <section id="receitas-landing" class="page-section" aria-labelledby="receitas-title">
-            <div class="section-content">
-                <h1 id="receitas-title" class="page-title">Receitas Rápidas</h1>
-                <p class="page-subtitle">Inspire-se com pratos fáceis e deliciosos para o dia a dia.</p>
-                <div class="carousel-slider receitas-carousel"></div>
-            </div>
-        </section>
-
-        <section id="sobre" class="page-section" aria-labelledby="sobre-title">
-            <div class="section-content">
-                <div class="about-contact-container">
-                    <div class="about-card glass-card">
-                        <h2 id="sobre-title">Sobre o Projeto</h2>
-                        <p>O "Alimente Fácil" nasceu para simplificar a rotina alimentar com mais organização, economia e menos desperdício. A proposta é ajudar você a planejar compras, cuidar da despensa e manter a semana sob controle com clareza.</p>
-                    </div>
-                    <div class="contact-card glass-card">
-                        <h2 id="contato-title">Contato</h2>
-                        <form id="contact-form" class="contact-form">
-                            <div class="form-group">
-                                <label for="contact-name" class="sr-only">Seu Nome</label>
-                                <input type="text" id="contact-name" placeholder="Seu Nome" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="contact-email" class="sr-only">Seu E-mail</label>
-                                <input type="email" id="contact-email" placeholder="Seu E-mail" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="contact-message" class="sr-only">Sua Mensagem</label>
-                                <textarea rows="4" id="contact-message" placeholder="Sua Mensagem" required></textarea>
-                            </div>
-                            <p class="contact-note">Atendimento pelo formulário oficial do Alimente Fácil.</p>
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Mensagem</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <footer class="page-footer glass-card">
-            <div class="footer-content">
-                <div class="footer-links">
-                    <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a>
-                    <a href="/politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>
-                </div>
-                <p>Alimente Fácil &copy; 2025 - Todos os direitos reservados.</p>
-            </div>
-        </footer>
-    </main>
-
-    <div id="item-edit-modal" class="modal-overlay">
-       <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="item-edit-title">
-            <div class="modal-header">
-                <button class="icon-button close-btn" data-modal-close="item-edit-modal" aria-label="Fechar modal"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
-                <h3 id="item-edit-title"><i class="fa-solid fa-pencil" aria-hidden="true"></i> Editar Item</h3>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="edit-item-id">
-                <input type="hidden" id="edit-item-type">
-                <div class="form-group">
-                    <label for="edit-item-name">Nome</label>
-                    <input type="text" id="edit-item-name">
-                </div>
-                <div class="form-row-trio">
-                    <div class="form-group">
-                        <label for="edit-item-qtd">Qtd</label>
-                        <input type="number" id="edit-item-qtd">
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-item-unid">Unid</label>
-                        <select id="edit-item-unid">
-                            <option value="un">un</option>
-                            <option value="kg">kg</option>
-                            <option value="g">g</option>
-                            <option value="L">L</option>
-                            <option value="ml">ml</option>
-                            <option value="pct">pct</option>
-                            <option value="cx">cx</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-item-valor">Valor (R$)</label>
-                        <input type="number" id="edit-item-valor" step="0.01">
-                    </div>
-                </div>
-                <div id="edit-item-despensa-fields" style="display: none;">
-                    <hr class="divider">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="edit-item-validade">Validade</label>
-                            <input type="date" id="edit-item-validade">
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-item-stock">Estoque (%)</label>
-                            <input type="number" id="edit-item-stock" min="0" max="100" step="25">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-modal-close="item-edit-modal">Cancelar</button>
-                <button class="btn btn-primary" id="item-edit-save-btn">Salvar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="auth-modal" class="modal-overlay"> 
-         <div class="modal-box auth-modal-content" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title"> 
-             <div class="modal-header">
-                 <button class="icon-button close-btn" data-modal-close="auth-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
-                 <h3 id="auth-modal-title">Acessar Painel</h3> 
-             </div>
-             
-             <div class="modal-body">
-                 <div id="login-view" class="auth-form-container active"> 
-                     <form id="login-form"> 
-                         <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required></div> 
-                         <div class="form-group"><label for="login-password">Senha</label><input type="password" id="login-password" required></div> 
-                         <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Entrar</button> 
-                     </form> 
-                     <p class="form-footer-text">Não tem uma conta? <span class="auth-toggle-link" data-view="signup-view" role="button" tabindex="0">Cadastre-se</span></p> 
-                 </div> 
-                 <div id="signup-view" class="auth-form-container"> 
-                     <h3>Criar Conta</h3> 
-                     <form id="signup-form"> 
-                         <div class="form-group"><label for="signup-name">Nome</label><input type="text" id="signup-name" required></div> 
-                         <div class="form-group"><label for="signup-email">Email</label><input type="email" id="signup-email" required></div> 
-                         <div class="form-group"><label for="signup-password">Senha</label><input type="password" id="signup-password" required></div> 
-                         <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Criar Conta</button> 
-                     </form> 
-                     <p class="form-footer-text">Ao criar sua conta, você concorda com os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
-                     <p class="form-footer-text">Já tem uma conta? <span class="auth-toggle-link" data-view="login-view" role="button" tabindex="0">Faça o login</span></p> 
-                 </div> 
-             </div>
-         </div> 
-     </div>
-
-    <div id="plans-modal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 760px;">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-gem"></i> Plano Alimente Fácil</h3>
-                <button class="icon-button close-btn" data-modal-close="plans-modal"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="modal-body" style="padding: 2rem;">
-                <p class="page-subtitle" style="text-align: center; margin-bottom: 2rem;">Acesso premium por R$ 9,90/mês com 7 dias grátis após a ativação.</p>
-                <div class="plans-container plans-container-single">
-                    <div class="plan-card recommended" id="plan-premium" style="border-color: var(--primary-color); background: rgba(0, 242, 234, 0.05); max-width: 420px; margin: 0 auto;">
-                        <div style="background: var(--primary-color); color: #000; font-size: 0.8rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; align-self: center; margin-bottom: 1rem;">PLANO ÚNICO</div>
-                        <h4>Alimente Fácil</h4>
-                        <div class="plan-price">R$ 9,90<span>/mês</span></div>
-                        <ul>
-                            <li><i class="fa-solid fa-check"></i> Listas ilimitadas</li>
-                            <li><i class="fa-solid fa-check"></i> Receitas ilimitadas</li>
-                            <li><i class="fa-solid fa-check"></i> Planejador semanal completo</li>
-                            <li><i class="fa-solid fa-check"></i> Controle de despensa</li>
-                            <li><i class="fa-solid fa-check"></i> Análises e organização do painel</li>
-                        </ul>
-                        <div class="plan-actions">
-                            <button class="btn btn-primary" data-action="subscribe" data-plan="premium" style="width: 100%;">Assinar agora</button>
-                            <div class="cancel-link">Cancelar assinatura</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="app-panel-container-standalone">
-        <aside class="app-sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-header-logo">
-                    <span>ALIMENTE</span>
-                    <span>FÁCIL</span>
-                </div>
-            </div>
-            <nav class="main-nav" aria-label="Navegação principal do painel">
-                <button class="nav-item active" data-module="inicio"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Início</span></button>
-                <button class="nav-item" data-module="lista"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i><span>Listas</span></button>
-                <button class="nav-item" data-module="despensa"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>Despensa</span></button>
-                <button class="nav-item" data-module="receitas"><i class="fa-solid fa-utensils" aria-hidden="true"></i><span>Receitas</span></button>
-                <button class="nav-item" data-module="planejador"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i><span>Planejador</span></button>
-                <button class="nav-item" data-module="analises"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>Análises</span></button>
-                <button class="nav-item" data-module="configuracoes"><i class="fa-solid fa-sliders" aria-hidden="true"></i><span>Configurações</span></button>
-            </nav>
-            <div class="sidebar-footer">
-                 <button class="icon-button" id="logout-btn" title="Sair" aria-label="Sair da conta"><i class="fa-solid fa-power-off" aria-hidden="true"></i></button>
-            </div>
-        </aside>
-        <main class="app-main-content">
-            <header class="main-header">
-                <div class="header-left">
-                    <button class="icon-button" id="menu-toggle-btn" title="Menu" aria-label="Alternar menu lateral"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
-                </div>
-                
-                <div class="header-actions">
-                    <button class="header-budget" data-modal-open="budget-modal" title="G: Gastos da Lista Atual / T: Teto do Orçamento Definido">
-                        <i class="fa-solid fa-wallet" aria-hidden="true"></i>
-                        <div class="header-budget-values">
-                            <span>G:R$</span><span id="budget-spent-display">0</span> /
-                            <span>T:R$</span><span id="budget-total-display">500</span>
-                        </div>
-                        <div class="header-budget-bar"><div id="budget-bar-fill-display" class="header-budget-bar-fill" style="width: 0%;"></div></div>
-                    </button>
-
-                    <div class="header-utility-cluster">
-                        <button class="icon-button" data-modal-open="essentials-modal" title="Itens Essenciais" aria-label="Itens Essenciais">
-                            <i class="fa-solid fa-star" aria-hidden="true"></i>
-                        </button>
-                        <button class="icon-button" id="theme-toggle-btn-panel" title="Alternar Tema" aria-label="Alternar tema de cores">
-                            <i class="fa-solid fa-sun" aria-hidden="true"></i>
-                        </button>
-                        <button class="icon-button" title="Notificações (Simulação)" aria-label="Notificações">
-                            <i class="fa-solid fa-bell" aria-hidden="true"></i>
-                        </button>
-                        <button class="icon-button" id="home-btn-panel" title="Voltar para a página inicial" aria-label="Voltar para a página inicial">
-                            <i class="fa-solid fa-sign-out-alt" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            <div class="modules-area">
-                 <div id="module-inicio" class="module-container active"></div>
-                 <div id="module-lista" class="module-container">
-                     <div class="list-management-layout" id="list-manager">
-                        <div class="saved-lists-column">
-                            <button type="button" class="btn btn-secondary btn-create-list"><i class="fa-solid fa-plus" aria-hidden="true"></i> Criar Nova Lista</button>
-                            <div class="dashboard-card">
-                                <div class="card-header" style="cursor: default;">
-                                    <h3><i class="fa-solid fa-list-ul" aria-hidden="true"></i> Minhas Listas</h3>
-                                </div>
-                                <div class="card-content" id="saved-lists-container"></div>
-                            </div>
-                        </div>
-                        <div class="active-list-column">
-                            <div class="dashboard-card">
-                                <div class="card-header" style="cursor: default;">
-                                    <button class="icon-button mobile-back-btn" id="list-back-btn" title="Voltar" aria-label="Voltar para Minhas Listas"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
-                                    <h3 id="active-list-title"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> Carregando...</h3>
-                                </div>
-                                <div class="add-item-form-container">
-                                    <form class="add-item-form">
-                                        <input type="hidden" id="active-list-id-input" value="">
-                                        <div class="form-group form-group-flex"> <label for="lista-form-nome-full">Nome</label> <input type="text" id="lista-form-nome-full" placeholder="Ex: Arroz"> </div>
-                                        <div class="form-group form-group-small"> <label for="lista-form-qtd-full">Qtd</label> <input type="number" id="lista-form-qtd-full" value="1" min="0.1" step="any"> </div>
-                                        <div class="form-group form-group-small"> <label for="lista-form-unid-full">Unid</label> <select id="lista-form-unid-full" aria-label="Unidade do item"></select> </div>
-                                        <div class="form-group form-group-medium"> <label for="lista-form-valor-full">Valor</label> <input type="text" id="lista-form-valor-full" placeholder="0.00"> </div>
-                                        <button type="submit" class="btn btn-primary btn-add-item" id="lista-add-item-btn-full" title="Adicionar Item" aria-label="Adicionar Item"> <i class="fa-solid fa-plus" aria-hidden="true"></i> </button>
-                                    </form>
-                                </div>
-                                <div class="card-content no-padding-top" id="lista-items-full" data-group="shared-items" data-list-type="lista"></div>
-                                <div class="card-footer" id="active-list-actions">
-                                    </div>
-                            </div>
-                        </div>
-                    </div>
-                 </div>
-                 <div id="module-despensa" class="module-container"></div>
-                 <div id="module-receitas" class="module-container"></div>
-                 <div id="module-planejador" class="module-container"></div>
-                 <div id="module-analises" class="module-container"></div>
-                 <div id="module-configuracoes" class="module-container"></div>
-            </div>
-        </main>
-    </div>
-    
-    <div id="custom-confirm-modal" class="modal-overlay"> 
-        <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message"> 
-            <div class="modal-header">
-                <button class="icon-button close-btn" data-modal-close="custom-confirm-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
-                <h3 id="confirm-title">Confirmar</h3>
-            </div> 
-            <div class="modal-body"><p id="confirm-message">Tem certeza?</p></div> 
-            <div class="modal-footer"> 
-                <button id="confirm-cancel-btn" class="btn btn-secondary">Cancelar</button> 
-                <button id="confirm-ok-btn" class="btn btn-danger">Confirmar</button> 
-            </div> 
-        </div> 
-    </div>
-
-    
-    <div id="item-details-modal" class="modal-overlay">
-        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="item-detail-title">
-            <div class="modal-header">
-                <button class="icon-button close-btn" data-modal-close="item-details-modal" aria-label="Voltar"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
-                <h3 id="item-detail-title">Detalhes do Item</h3>
-            </div>
-
-            <div class="modal-body">
-                <div class="details-card">
-                    <div class="details-row"><span class="label">Quantidade</span><span class="value"><span id="item-detail-qtd">-</span> <span id="item-detail-unid">-</span></span></div>
-                    <div class="details-row"><span class="label">Valor</span><span class="value" id="item-detail-valor">-</span></div>
-                    <div class="details-row"><span class="label">Validade</span><span class="value" id="item-detail-validade">-</span></div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-secondary edit-btn-from-modal" data-item-id="" type="button"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Editar</button>
-                <button class="btn btn-primary" data-modal-close="item-details-modal" type="button">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-<div id="list-view-modal" class="modal-overlay">
-         <div class="modal-box list-fullscreen-box" role="dialog" aria-modal="true" aria-labelledby="list-view-modal-title">
-            <div class="modal-header">
-                <button class="icon-button close-btn" data-modal-close="list-view-modal"><i class="fa-solid fa-arrow-left"></i></button>
-                <h3 id="list-view-modal-title" style="flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">Lista</h3>
-                <button class="icon-button" id="list-view-edit-btn" title="Editar"><i class="fa-solid fa-pencil"></i></button>
-            </div>
-
-            <input type="hidden" id="modal-list-id-input" value="">
-
-            <div class="modal-body" id="list-view-modal-body"></div>
-            
-            <div class="modal-footer" id="list-view-modal-footer">
-                </div>
-        </div>
-    </div>
-    
-<div id="pantry-view-modal" class="modal-overlay">
-        <div class="modal-box list-fullscreen-box" role="dialog" aria-modal="true" aria-labelledby="pantry-view-title">
-            <div class="modal-header">
-                <button class="icon-button close-btn" data-modal-close="pantry-view-modal" aria-label="Voltar"><i class="fa-solid fa-arrow-left"></i></button>
-                <h3 id="pantry-view-title">Editar Despensa</h3>
-            </div>
-            <div class="modal-body" id="pantry-view-body">
-                <form id="pantry-edit-form-fullscreen">
-                    <input type="hidden" id="pantry-edit-id">
-                    <div class="form-group">
-                        <label for="pantry-edit-name">Nome do Item</label>
-                        <input type="text" id="pantry-edit-name" class="input-large" placeholder="Ex: Arroz">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Quantidade</label>
-                            <div class="stepper-control">
-                                <button type="button" class="stepper-btn minus"><i class="fa-solid fa-minus"></i></button>
-                                <input type="number" id="pantry-edit-qtd" value="1">
-                                <button type="button" class="stepper-btn plus"><i class="fa-solid fa-plus"></i></button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="pantry-edit-unid">Unidade</label>
-                            <select id="pantry-edit-unid" class="input-large">
-                                <option value="un">un</option>
-                                <option value="kg">kg</option>
-                                <option value="g">g</option>
-                                <option value="L">L</option>
-                                <option value="ml">ml</option>
-                                <option value="pct">pct</option>
-                                <option value="cx">cx</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Nível de Estoque</label>
-                        <input type="range" id="pantry-edit-stock" min="0" max="100" step="25" class="stock-range">
-                        <div class="stock-labels">
-                            <span>Vazio</span><span>Baixo</span><span>Médio</span><span>Cheio</span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="pantry-edit-validade">Data de Validade</label>
-                        <input type="date" id="pantry-edit-validade" class="input-large">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer" id="pantry-view-footer"></div>
-        </div>
-    </div>
-    
-    <div id="recipe-detail-modal" class="modal-overlay">
-        <div class="modal-box list-fullscreen-box" role="dialog" aria-modal="true" aria-labelledby="recipe-detail-modal-title">
-            <div class="modal-header">
-                <button class="icon-button close-btn" id="recipe-detail-close-btn" data-modal-close="recipe-detail-modal"><i class="fa-solid fa-arrow-left"></i></button>
-                <h3 id="recipe-detail-modal-title">Detalhes</h3>
-            </div>
-            <div class="modal-body" id="recipe-detail-modal-body"></div>
-            <div class="modal-footer" id="recipe-detail-modal-footer" style="background-color: #121212;">
-                </div>
-        </div>
-    </div>
-
-    <div id="detail-modal" class="modal-overlay detail-modal-overlay">
-        <div class="modal-box detail-modal-box" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
-            <div class="modal-header detail-modal-header">
-                <button class="icon-button close-btn" data-modal-close="detail-modal" aria-label="Voltar"><i class="fa-solid fa-arrow-left"></i></button>
-                <h3 id="detail-modal-title">Detalhes</h3>
-                <div class="detail-modal-header-actions" id="detail-modal-header-actions"></div>
-            </div>
-            <div class="modal-body detail-modal-body" id="detail-modal-body"></div>
-            <div class="modal-footer detail-modal-footer" id="detail-modal-footer"></div>
-        </div>
-    </div>
-    
-    <div id="recipe-picker-modal" class="modal-overlay"> 
-        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="recipe-picker-title"> 
-            <div class="modal-header"> 
-                <button class="icon-button close-btn" data-modal-close="recipe-picker-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
-                <h3 id="recipe-picker-title"><i class="fa-solid fa-utensils" aria-hidden="true"></i> Escolher Receita</h3> 
-            </div> 
-            <div class="modal-body"> 
-                <p>Selecione uma receita da sua lista.</p> 
-                <div class="recipe-picker-list" id="recipe-picker-list-container"></div> 
-            </div> 
-        </div> 
-    </div>
-
-    <div id="budget-modal" class="modal-overlay"> 
-        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="budget-title"> 
-            <div class="modal-header"> 
-                <button class="icon-button close-btn" data-modal-close="budget-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
-                <h3 id="budget-title"><i class="fa-solid fa-wallet" aria-hidden="true"></i> Gerenciar Orçamento</h3> 
-            </div> 
-            <div class="modal-body"> 
-                <p>Defina seu orçamento mensal total.</p> 
-                <div class="form-group"> 
-                    <label for="budget-total-input">Orçamento Total (R$)</label> 
-                    <input type="number" id="budget-total-input" value="500.00" step="50"> 
-                </div> 
-            </div> 
-            <div class="modal-footer"> 
-                <button class="btn btn-secondary" data-modal-close="budget-modal">Cancelar</button> 
-                <button class="btn btn-primary" id="budget-save-btn">Salvar</button> 
-            </div> 
-        </div> 
-    </div>
-    
-    <div id="essentials-modal" class="modal-overlay"> 
-        <div class="modal-box" style="max-width: 600px;" role="dialog" aria-modal="true" aria-labelledby="essentials-title"> 
-            <div class="modal-header"> 
-                <button class="icon-button close-btn" data-modal-close="essentials-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
-                <h3 id="essentials-title"><i class="fa-solid fa-star" aria-hidden="true"></i> Meus Itens Essenciais</h3> 
-            </div> 
-            <div class="modal-body"> 
-                <p>Gerencie seus itens comprados com frequência.</p> 
-                <div class="form-row-trio"> 
-                    <div class="form-group" style="grid-column: 1 / 2;"> 
-                        <label for="essential-name">Nome</label> 
-                        <input type="text" id="essential-name" placeholder="Ex: Arroz"> 
-                    </div> 
-                    <div class="form-group"> 
-                        <label for="essential-price">Preço</label> 
-                        <input type="number" id="essential-price" placeholder="8.50"> 
-                    </div> 
-                    <div class="form-group"> 
-                        <label for="essential-unit">Unid.</label> 
-                        <input type="text" id="essential-unit" placeholder="kg"> 
-                    </div> 
-                </div> 
-                <button class="btn btn-primary" id="essentials-add-btn" style="width: 100%;"><i class="fa-solid fa-plus" aria-hidden="true"></i> Adicionar</button> 
-                <hr class="divider"> 
-                <div id="essentials-list-container"> </div> 
-            </div> 
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-modal-close="essentials-modal">Fechar</button>
-            </div>
-        </div> 
-    </div>
-
-        <div class="glass-dock-container" aria-label="Alternar visualização">
-        <nav class="glass-dock" aria-label="Alternância entre página inicial e painel">
-            <button class="dock-item active" data-target="home" type="button" aria-label="Ir para a página inicial">
-                <i class="fa-solid fa-house" aria-hidden="true"></i>
-                <span>Home</span>
-            </button>
-            <button class="dock-item" data-target="app" type="button" aria-label="Ir para o painel">
-                <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>
-                <span>Painel</span>
-            </button>
-        </nav>
-    </div>
-
-<div id="af-chatbot" class="af-chatbot" aria-hidden="true">
-         <div class="af-chatbot-header">
-            <div class="af-header-info">
-                <div class="af-avatar"><i class="fa-solid fa-robot"></i></div>
-                <div class="af-title-group">
-                    <span class="af-bot-name">Assistente Alimente</span>
-                    <span class="af-bot-status">Online</span>
-                </div>
-            </div>
-            <div class="af-header-actions">
-                <button id="af-chatbot-home" class="af-header-btn" title="Menu Principal"><i class="fa-solid fa-house"></i></button>
-                <button id="af-chatbot-close" class="af-header-btn" title="Minimizar"><i class="fa-solid fa-chevron-down"></i></button>
-            </div>
-        </div>
-
-        <div class="af-chatbot-body" id="af-chatbot-body" role="log" aria-live="polite"></div>
-
-        <div class="af-chatbot-footer">
-            <span class="af-footer-hint">Selecione uma opção acima</span>
-        </div>
-    </div>
-    
-    <button id="af-chatbot-toggle" class="af-chatbot-toggle" aria-label="Ajuda">
-        <i class="fa-solid fa-comment-dots"></i>
-        <span class="af-notification-dot"></span>
-    </button>
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script> 
-    
-    <script src="script.js"></script>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(() => {})
-                    .catch(() => {});
-            });
-        }
-    </script>
+  <script src="/script.js"></script>
 </body>
 </html>
