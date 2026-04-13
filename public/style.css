@@ -8495,3 +8495,67 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
 .hero-clean-layout .simple-subtitle{ max-width: 720px; color: rgba(255,255,255,.86) !important; }
 .hero-clean-layout .hero-pricing-note{ background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; padding: 0 !important; color: rgba(255,255,255,.88) !important; }
 .hero-clean-layout .hero-tagline{ letter-spacing: .02em !important; }
+
+
+/* === PATCH FINAL UX + BASIC GATE === */
+.notification { z-index: 30050 !important; }
+#inicio .hero-signature{display:none !important;}
+
+#payment-gate-modal { z-index: 26000 !important; }
+#payment-gate-modal .modal-box { box-shadow: 0 24px 90px rgba(0, 0, 0, 0.48); }
+.pwa-floating-banner {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+  transform: translateX(-50%);
+  width: min(92vw, 640px);
+  z-index: 24000;
+}
+.pwa-floating-banner__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(9, 11, 19, .92);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 18px 52px rgba(0,0,0,.35);
+}
+.pwa-floating-banner__copy { display: grid; gap: 4px; }
+.pwa-floating-banner__copy strong { color: #fff; font-size: .98rem; }
+.pwa-floating-banner__copy span { color: rgba(255,255,255,.74); font-size: .9rem; line-height: 1.35; }
+.pwa-floating-banner__actions { display: flex; align-items: center; gap: 10px; }
+#module-analises .analysis-nav-item strong,
+#module-analises .analysis-nav-item span,
+#module-analises .analysis-v3-typebtn span,
+#module-analises .analysis-v3-copy h4,
+#module-analises .analysis-v3-copy p,
+#module-analises .analysis-v3-copy small,
+#module-analises .analysis-v3-breakdown-head span,
+#module-analises .analysis-v3-row span,
+#module-analises .analysis-v3-row strong,
+#module-analises .analysis-v3-summarycard strong,
+#module-analises .analysis-v3-summarycard p,
+#module-analises .analysis-v3-kpi span,
+#module-analises .analysis-v3-kpi strong,
+#module-analises .neo-analysis-pill span,
+#module-analises .neo-analysis-profile strong,
+#module-analises .neo-analysis-profile span,
+#module-analises .neo-analysis-status strong,
+#module-analises .neo-analysis-status span {
+  color: #fff !important;
+}
+#module-analises .analysis-v3-copy small,
+#module-analises .analysis-v3-row span,
+#module-analises .analysis-v3-summarycard p,
+#module-analises .analysis-v3-kpi span,
+#module-analises .neo-analysis-profile span,
+#module-analises .neo-analysis-status span {
+  color: rgba(255,255,255,.76) !important;
+}
+@media (max-width: 640px) {
+  .pwa-floating-banner__content { flex-direction: column; align-items: stretch; }
+  .pwa-floating-banner__actions { justify-content: space-between; }
+}

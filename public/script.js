@@ -13082,3 +13082,101 @@ document.addEventListener('DOMContentLoaded', () => {
   app.restoreBackendSession?.();
   app.tryConfirmPremiumAfterReturn?.({ silent: true });
 });
+
+
+/* === FINAL PATCH | BASIC GATE + PWA + ANALYSES UX | 2026-04-13 === */
+;(() => {
+  const app = window.app;
+  if (!app) return;
+
+  const BASIC_PLAN = 'basic';
+  const PREMIUM_PLAN = 'premium';
+  const PREMIUM_GATE_COPY = 'Ative o Premium por R$ 9,90/mês, teste grátis por 7 dias e cancele quando quiser. O plano básico é somente visual.';
+
+  app.showPremiumRequiredModal = function(payload = {}) {
+    const checkoutUrl = payload.checkoutUrl || this.lastCheckoutUrl || this.checkoutLinks?.premium || '';
+    this.showPaymentGateModal?.({
+      mode: 'payment_required',
+      title: 'Teste grátis por 7 dias',
+      message: payload.message || PREMIUM_GATE_COPY,
+      checkoutUrl
+    });
+  };
+
+  const originalShowAuthModalFinal = app.showAuthModal?.bind(app);
+  if (originalShowAuthModalFinal) {
+    app.showAuthModal = function() {
+      document.getElementById('payment-gate-modal')?.remove();
+      return originalShowAuthModalFinal();
+    };
+  }
+
+  function isBasicVisualMode() {
+    return app.isLoggedIn && app.isAppMode && app.userPlan === BASIC_PLAN;
+  }
+
+  function shouldIgnoreBasicGate(target) {
+    return Boolean(
+      target.closest('.nav-item') ||
+      target.closest('.dock-item') ||
+      target.closest('#menu-toggle-btn') ||
+      target.closest('#logout-btn') ||
+      target.closest('#theme-toggle-btn-panel') ||
+      target.closest('#home-btn-panel') ||
+      target.closest('.sidebar-overlay') ||
+      target.closest('.app-sidebar') ||
+      target.closest('#payment-gate-modal') ||
+      target.closest('#plans-modal') ||
+      target.closest('#auth-modal') ||
+      target.closest('[data-modal-close]') ||
+      target.closest('.close-btn')
+    );
+  }
+
+  function shouldGateTarget(target) {
+    if (!target.closest('.app-panel-container-standalone')) return false;
+    if (shouldIgnoreBasicGate(target)) return false;
+    if (target.closest('#module-analises')) return false;
+    if (target.closest('#module-planejador')) return true;
+    return Boolean(target.closest('button, input, select, textarea, a, [role="button"], .placeholder-item, .card, .saved-list-item, .recipe-list-item, .shopping-item, .detail-item, .planner-slot, .planner-meal-item, .module-toolbar, .add-item-form-container, .card-content, .planner-day-card'));
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!isBasicVisualMode()) return;
+    const target = e.target;
+    if (!target || !shouldGateTarget(target)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+    app.showPremiumRequiredModal?.();
+  }, true);
+
+  document.addEventListener('focusin', (e) => {
+    if (!isBasicVisualMode()) return;
+    const target = e.target;
+    if (!target || target.closest('#module-analises')) return;
+    if (!target.closest('.app-panel-container-standalone')) return;
+    if (shouldIgnoreBasicGate(target)) return;
+    if (!target.matches('input, textarea, select')) return;
+    e.preventDefault();
+    target.blur?.();
+    app.showPremiumRequiredModal?.();
+  }, true);
+
+  const pwaToastKey = 'alimenteFacilPwaToastDismissedAt';
+  window.addEventListener('load', () => {
+    try {
+      if (window.matchMedia('(display-mode: standalone)').matches) return;
+      const dismissedAt = Number(localStorage.getItem(pwaToastKey) || 0);
+      const oneDay = 24 * 60 * 60 * 1000;
+      if (Date.now() - dismissedAt < oneDay) return;
+      setTimeout(() => {
+        app.showNotification?.('Adicione o Alimente Fácil à tela inicial para abrir mais rápido como aplicativo.', 'info');
+      }, 1800);
+    } catch (_e) {}
+  });
+
+  document.getElementById('pwa-banner-close-btn')?.addEventListener('click', () => {
+    try { localStorage.setItem(pwaToastKey, String(Date.now())); } catch (_e) {}
+  });
+})();
