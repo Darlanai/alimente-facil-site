@@ -12212,264 +12212,178 @@ window.app = app;
 })();
 
 
-/* === ALIMENTE FACIL BILLING + CONTACT PATCH | 2026-04-12 === */
 ;(() => {
   const app = window.app;
   if (!app) return;
 
-  app.getMercadoPagoReturnId = function() {
-    const params = new URLSearchParams(window.location.search);
-    return (
-      params.get('preapproval_id') ||
-      params.get('preapprovalId') ||
-      params.get('subscription_id') ||
-      params.get('subscriptionId') ||
-      params.get('id') ||
-      ''
-    ).trim();
-  };
+  const AUTH_TOKEN_KEY = 'alimenteFacilAuthToken_final';
+  const AUTH_USER_KEY = 'alimenteFacilAuthUser_final';
 
-  app.cleanPaymentQueryFromUrl = function() {
-    const url = new URL(window.location.href);
-    ['mp_checkout','status','preapproval_id','preapprovalId','subscription_id','subscriptionId','id'].forEach((key) => url.searchParams.delete(key));
-    window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : '') + url.hash);
-  };
+  const deepCopy = (value) => JSON.parse(JSON.stringify(value));
+  const premiumStatuses = new Set(['active', 'trialing']);
 
-  app.tryFinalizePendingPayment = async function({ silent = false } = {}) {
-    const pending = this.getPendingAccessSession?.();
-    if (!pending?.pendingToken) return false;
+  app.defaultState = app.defaultState || {};
+  app.defaultState.user = { nome: null, email: '', id: '' };
+  app.defaultState.listas = { listaDaSemana: { nome: 'Minha primeira lista', items: [] } };
+  app.defaultState.despensa = [];
+  app.defaultState.essenciais = [];
+  app.defaultState.receitas = {};
+  app.defaultState.planejador = {};
 
-    try {
-      const data = await this.apiFetchJson('/api/auth/finalize-pending', {
-        method: 'POST',
-        body: JSON.stringify({
-          pendingToken: pending.pendingToken,
-          preapprovalId: this.getMercadoPagoReturnId?.() || ''
-        })
-      });
-
-      this.clearPendingAccessSession?.();
-      this.clearPendingSignup?.();
-      this.setStoredAuthSession?.(data.token, data.user);
-      this.applyAuthenticatedUser?.(data);
-      this.enterAppMode?.();
-      this.closeAllModals?.();
-      this.cleanPaymentQueryFromUrl?.();
-      this.showNotification?.('Pagamento confirmado. Bem-vindo ao painel premium! ✨', 'success');
-      return true;
-    } catch (error) {
-      if (!silent) {
-        const payload = error?.payload || {};
-        if (payload.waitingPayment) {
-          this.showNotification?.('Ainda estamos aguardando a confirmação do Mercado Pago. Aguarde alguns segundos e tente novamente.', 'info');
-        } else {
-          this.showNotification?.(payload.message || error.message || 'Ainda não foi possível confirmar seu pagamento.', 'error');
-        }
+  app.apiFetchJson = async function(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
       }
-      return false;
-    }
-  };
-
-  app.bindContactFormToBackend = function() {
-    const form = document.getElementById('contact-form');
-    if (!form || form.dataset.backendBound === 'true') return;
-    form.dataset.backendBound = 'true';
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = String(document.getElementById('contact-name')?.value || '').trim();
-      const email = String(document.getElementById('contact-email')?.value || '').trim();
-      const message = String(document.getElementById('contact-message')?.value || '').trim();
-
-      if (!name || !email || !message) {
-        this.showNotification?.('Preencha nome, e-mail e mensagem.', 'error');
-        return;
-      }
-
-      try {
-        await this.apiFetchJson('/api/contact', {
-          method: 'POST',
-          body: JSON.stringify({ name, email, message })
-        });
-        form.reset();
-        this.showNotification?.('Mensagem enviada com sucesso. 🚀', 'success');
-      } catch (error) {
-        this.showNotification?.(error?.payload?.message || error.message || 'Não foi possível enviar a mensagem.', 'error');
-      }
-    }, true);
-  };
-
-  app.handleSignup = async function() {
-    const name = String(document.getElementById('signup-name')?.value || '').trim();
-    const email = String(document.getElementById('signup-email')?.value || '').trim();
-    const password = String(document.getElementById('signup-password')?.value || '');
-    const acceptedTerms = Boolean(document.getElementById('signup-terms')?.checked);
-
-    if (!name || !email || !password) {
-      this.showNotification?.('Preencha nome, e-mail e senha.', 'error');
-      return;
-    }
-
-    if (!acceptedTerms) {
-      this.showNotification?.('Você precisa aceitar os Termos de Uso e a Política de Privacidade.', 'error');
-      return;
-    }
-
-    try {
-      const data = await this.apiFetchJson('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ name, email, password, acceptedTerms })
-      });
-
-      this.clearStoredAuthSession?.();
-      this.enterPendingPanel?.({
-        user: data.user || { name, email },
-        pendingToken: data.pendingToken || '',
-        checkoutUrl: data.checkoutUrl || this.checkoutLinks?.premium || ''
-      });
-
-      this.showPaymentGateModal?.({
-        mode: 'payment_required',
-        title: 'Bem-vindo ao Alimente Fácil',
-        message: 'Cadastro realizado com sucesso. Agora clique abaixo para configurar o pagamento automático no Mercado Pago. Você terá 7 dias grátis e só será cobrado no oitavo dia, conforme o plano que você configurou.',
-        checkoutUrl: data.checkoutUrl || this.checkoutLinks?.premium || ''
-      });
-    } catch (error) {
-      this.showNotification?.(error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.', 'error');
-    }
-  };
-
-  const originalShowPaymentGateModal = app.showPaymentGateModal?.bind(app);
-  if (originalShowPaymentGateModal) {
-    app.showPaymentGateModal = function(payload = {}) {
-      const result = originalShowPaymentGateModal(payload);
-      const modal = document.getElementById('payment-gate-modal');
-      const btn = modal?.querySelector('#payment-gate-primary-btn');
-      if (btn) {
-        btn.addEventListener('click', () => {
-          const pending = this.getPendingAccessSession?.();
-          if (pending) this.setPendingAccessSession?.(pending);
-        }, { once: true });
-      }
-      return result;
-    };
-  }
-
-  document.addEventListener('DOMContentLoaded', async () => {
-    app.bindContactFormToBackend?.();
-
-    const params = new URLSearchParams(window.location.search);
-    const cameFromMercadoPago = params.get('mp_checkout') === 'success' || !!app.getMercadoPagoReturnId?.();
-    if (cameFromMercadoPago) {
-      app.showNotification?.('Estamos confirmando sua assinatura. Aguarde alguns segundos...', 'info');
-      const done = await app.tryFinalizePendingPayment?.({ silent: true });
-      if (!done) {
-        let attempts = 0;
-        const timer = setInterval(async () => {
-          attempts += 1;
-          const ok = await app.tryFinalizePendingPayment?.({ silent: true });
-          if (ok || attempts >= 10) {
-            clearInterval(timer);
-            if (!ok) {
-              app.showNotification?.('Ainda não recebemos a confirmação do Mercado Pago. Reabra o site em alguns segundos e entre novamente.', 'info');
-            }
-          }
-        }, 4000);
-      }
-    }
-  });
-})();
-
-
-/* === BASIC VISUAL MODE + PREMIUM UNLIMITED PATCH | 2026-04-13 === */
-;(() => {
-  const app = window.app;
-  if (!app) return;
-
-  const BASIC_PLAN = 'basic';
-  const PREMIUM_PLAN = 'premium';
-  const BASIC_GATE_MESSAGE = 'No plano básico você pode apenas navegar pelas abas e sentir o painel. Para criar, editar, preencher, marcar, salvar e usar a IA, assine o Premium por R$ 9,90/mês e ative seus 7 dias grátis.';
-
-  const clearLegacyPendingState = () => {
-    try { localStorage.removeItem('alimenteFacilPendingAccess'); } catch (_e) {}
-    try { localStorage.removeItem('alimenteFacilPendingSignup'); } catch (_e) {}
-    app.pendingAccessOnly = false;
-  };
-
-  app.normalizePlanFromSession = function(sessionData = {}) {
-    const subscriptionPlan = String(sessionData?.subscription?.plan || '').toLowerCase();
-    const canPerformActions = Boolean(sessionData?.access?.canPerformActions);
-    if (subscriptionPlan === PREMIUM_PLAN && canPerformActions) return PREMIUM_PLAN;
-    return BASIC_PLAN;
-  };
-
-  app.getPremiumCheckoutUrl = function(payload = {}) {
-    return payload.checkoutUrl || payload?.subscription?.checkoutUrl || this.checkoutLinks?.premium || '';
-  };
-
-  app.showPremiumRequiredModal = function(payload = {}) {
-    this.showPaymentGateModal?.({
-      mode: 'payment_required',
-      title: 'Premium por R$ 9,90/mês',
-      message: payload.message || BASIC_GATE_MESSAGE,
-      checkoutUrl: this.getPremiumCheckoutUrl(payload)
     });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error(payload?.message || 'Erro na requisição.');
+      error.payload = payload;
+      throw error;
+    }
+    return payload;
+  };
+
+  app.setStoredAuthSession = function(token, user) {
+    if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
+    if (user) localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  };
+  app.getStoredAuthToken = function() { return localStorage.getItem(AUTH_TOKEN_KEY) || ''; };
+  app.clearStoredAuthSession = function() {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
+  };
+
+  app.getCheckoutUrl = function(sessionData = {}) {
+    return sessionData?.subscription?.checkoutUrl || this.checkoutLinks?.premium || '';
+  };
+
+  app.isPremiumAccount = function(sessionData = {}) {
+    const plan = sessionData?.subscription?.plan;
+    const status = sessionData?.subscription?.status;
+    return plan === 'premium' && premiumStatuses.has(status);
+  };
+
+  app.isBasicReadOnly = function() {
+    return Boolean(this.isLoggedIn) && this.userPlan === 'basic';
   };
 
   app.applyAuthenticatedUser = function(sessionData = {}) {
-    clearLegacyPendingState();
     const user = sessionData?.user || {};
+    const premium = this.isPremiumAccount(sessionData);
     this.isLoggedIn = true;
-    this.userPlan = this.normalizePlanFromSession(sessionData);
-    this.lastCheckoutUrl = this.getPremiumCheckoutUrl(sessionData);
-    this.state.user = this.state.user || {};
-    this.state.user.nome = user.name || user.nome || 'Usuário';
-    this.state.user.email = user.email || '';
-    this.state.user.id = user.id || '';
-    this.saveState?.();
+    this.userPlan = premium ? 'premium' : 'basic';
+    this.state = this.state || deepCopy(this.defaultState);
+    this.state.user = { nome: user.name || user.nome || 'Usuário', email: user.email || '', id: user.id || '' };
     this.updateStartButton?.();
     this.syncRealUserInfoInDOM?.();
+    this.saveState?.();
   };
 
-  const originalForceLoggedOutLandingBasic = app.forceLoggedOutLanding?.bind(app);
-  if (originalForceLoggedOutLandingBasic) {
-    app.forceLoggedOutLanding = function() {
-      clearLegacyPendingState();
-      this.userPlan = 'free';
-      return originalForceLoggedOutLandingBasic();
+  app.forceLoggedOutLanding = function() {
+    this.isLoggedIn = false;
+    this.userPlan = 'free';
+    this.state = deepCopy(this.defaultState);
+    this.clearStoredAuthSession?.();
+    try { localStorage.removeItem('alimenteFacilState_vFinal'); } catch (_e) {}
+    this.updateStartButton?.();
+    if (this.isAppMode) this.exitAppMode?.();
+    this.saveState?.();
+  };
+
+  app.syncRealUserInfoInDOM = function() {
+    const email = this.state?.user?.email || '';
+    const name = this.state?.user?.nome || '';
+    const setValue = (selector, value) => {
+      const el = document.querySelector(selector);
+      if (el) el.value = value;
     };
-  }
+    setValue('#config-name', name);
+    setValue('#config-name-modal', name);
+    setValue('#config-email', email);
+    setValue('#config-email-modal', email);
+    document.querySelectorAll('*').forEach((el) => {
+      if (email && el.childNodes.length === 1 && el.textContent.trim() === 'user@email.com') el.textContent = email;
+      if (name && el.childNodes.length === 1 && el.textContent.trim() === 'Antonio') el.textContent = name;
+    });
+  };
+
+  app.showPaymentGateModal = function({ title, message, checkoutUrl }) {
+    const existing = document.getElementById('payment-gate-modal');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'payment-gate-modal';
+    overlay.className = 'modal-overlay is-visible';
+    overlay.style.zIndex = '6000';
+    overlay.innerHTML = `
+      <div class="modal-box" style="max-width:560px; z-index:6001;">
+        <div class="modal-header">
+          <h3>${title || 'Assine o Premium'}</h3>
+          <button class="icon-button close-btn" type="button" data-close-payment-gate aria-label="Fechar"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:1.5rem;">
+          <div class="premium-gate-price">R$ 9,90<span style="font-size:1rem; color:var(--glass-text-secondary);">/mês</span></div>
+          <p class="premium-gate-note">${message || 'Ative seu Premium com 7 dias grátis para liberar listas, despensa, receitas, planejador, análises e todas as ações do painel.'}</p>
+          <ul class="premium-gate-list">
+            <li>7 dias grátis na ativação</li>
+            <li>Liberação completa do painel</li>
+            <li>Checkout oficial no Mercado Pago</li>
+          </ul>
+          <div style="display:flex; gap:.75rem; flex-wrap:wrap; margin-top:1.25rem;">
+            <button type="button" class="btn btn-primary" id="payment-gate-primary-btn" style="flex:1 1 240px;">Ativar Premium</button>
+            <button type="button" class="btn btn-secondary" id="payment-gate-close-btn" style="flex:1 1 180px;">Fechar</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const closeModal = () => overlay.remove();
+    overlay.querySelector('[data-close-payment-gate]')?.addEventListener('click', closeModal);
+    overlay.querySelector('#payment-gate-close-btn')?.addEventListener('click', closeModal);
+    overlay.querySelector('#payment-gate-primary-btn')?.addEventListener('click', () => {
+      if (checkoutUrl) window.location.href = checkoutUrl;
+      else this.showNotification?.('Link de pagamento não encontrado.', 'error');
+    });
+  };
+
+  app.showPremiumRequiredModal = function(message = '') {
+    this.showPaymentGateModal({
+      title: 'Premium necessário',
+      message: message || 'No plano básico você pode navegar pelas abas. Para criar, editar, preencher, salvar ou usar recursos do painel, ative o Premium agora.',
+      checkoutUrl: this.getCheckoutUrl()
+    });
+  };
+
+  app.handleRealSubscription = function() {
+    if (!this.isLoggedIn) {
+      this.showAuthModal?.();
+      return;
+    }
+    const link = this.getCheckoutUrl();
+    if (!link) {
+      this.showNotification?.('Link do Mercado Pago não encontrado.', 'error');
+      return;
+    }
+    window.location.href = link;
+  };
 
   app.handleSignup = async function() {
     const name = String(document.getElementById('signup-name')?.value || '').trim();
     const email = String(document.getElementById('signup-email')?.value || '').trim();
     const password = String(document.getElementById('signup-password')?.value || '');
-    const acceptedTerms = Boolean(document.getElementById('signup-terms')?.checked);
-
     if (!name || !email || !password) {
       this.showNotification?.('Preencha nome, e-mail e senha.', 'error');
       return;
     }
-
-    if (!acceptedTerms) {
-      this.showNotification?.('Você precisa aceitar os Termos de Uso e a Política de Privacidade.', 'error');
-      return;
-    }
-
     try {
-      const data = await this.apiFetchJson('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ name, email, password, acceptedTerms })
-      });
-
-      clearLegacyPendingState();
-      this.setStoredAuthSession?.(data.token, data.user);
-      this.applyAuthenticatedUser?.(data);
+      const data = await this.apiFetchJson('/api/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password }) });
+      this.setStoredAuthSession(data.token, data.user);
+      this.applyAuthenticatedUser(data);
       this.closeAllModals?.();
       this.enterAppMode?.();
-      this.activeModule = 'inicio';
-      this.activateModuleUI?.('inicio');
-      this.showNotification?.('Cadastro concluído. Seu plano básico já pode navegar pelo painel.', 'success');
+      this.showNotification?.('Conta criada. Seu acesso começou no plano básico visual.', 'success');
     } catch (error) {
       this.showNotification?.(error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.', 'error');
     }
@@ -12478,78 +12392,36 @@ window.app = app;
   app.handleLogin = async function() {
     const email = String(document.getElementById('login-email')?.value || '').trim();
     const password = String(document.getElementById('login-password')?.value || '');
-
     if (!email || !password) {
       this.showNotification?.('Informe e-mail e senha.', 'error');
       return;
     }
-
     try {
-      const data = await this.apiFetchJson('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password })
-      });
-
-      clearLegacyPendingState();
-      this.setStoredAuthSession?.(data.token, data.user);
-      this.applyAuthenticatedUser?.(data);
+      const data = await this.apiFetchJson('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+      this.setStoredAuthSession(data.token, data.user);
+      this.applyAuthenticatedUser(data);
       this.closeAllModals?.();
       this.enterAppMode?.();
-      this.showNotification?.(this.userPlan === PREMIUM_PLAN ? 'Login premium realizado com sucesso.' : 'Login realizado. Seu plano básico pode navegar pelo painel.', 'success');
+      this.showNotification?.('Login realizado com sucesso.', 'success');
     } catch (error) {
-      const payload = error?.payload || {};
-      this.showNotification?.(payload.message || error.message || 'Não foi possível fazer login.', 'error');
+      this.showNotification?.(error?.payload?.message || error.message || 'Não foi possível fazer login.', 'error');
     }
   };
 
-  app.handleLogout = async function() {
-    clearLegacyPendingState();
-    this.clearStoredAuthSession?.();
-    this.isLoggedIn = false;
-    this.userPlan = 'free';
-    this.state = JSON.parse(JSON.stringify(this.defaultState));
-    this.state.user = { nome: null, email: '' };
-    this.activeListId = 'listaDaSemana';
-    this.activeModule = 'inicio';
-    this.updateStartButton?.();
-    if (this.isAppMode) this.exitAppMode?.();
-    this.saveState?.();
+  app.handleLogout = function() {
+    this.forceLoggedOutLanding();
     this.showNotification?.('Você saiu da sua conta.', 'info');
   };
 
-  app.checkAccessAndEnter = async function() {
-    const token = this.getStoredAuthToken?.();
-    if (!token) {
-      this.forceLoggedOutLanding?.();
-      this.showAuthModal?.();
-      return;
-    }
-
-    try {
-      const me = await this.apiFetchJson('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      this.applyAuthenticatedUser?.(me);
-      this.enterAppMode?.();
-    } catch (_error) {
-      this.forceLoggedOutLanding?.();
-      this.showAuthModal?.();
-    }
-  };
-
   app.restoreBackendSession = async function() {
-    clearLegacyPendingState();
     const token = this.getStoredAuthToken?.();
     if (!token) {
       this.forceLoggedOutLanding?.();
       return;
     }
-
     try {
-      const me = await this.apiFetchJson('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      this.applyAuthenticatedUser?.(me);
+      const data = await this.apiFetchJson('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+      this.applyAuthenticatedUser(data);
     } catch (_error) {
       this.forceLoggedOutLanding?.();
     }
@@ -12563,114 +12435,132 @@ window.app = app;
     this.enterAppMode?.();
   };
 
-  app.handleRealSubscription = async function(planId) {
-    if (planId !== PREMIUM_PLAN) return;
-    if (!this.isLoggedIn) {
-      this.showAuthModal?.();
+  const originalActivateModuleAndRender = app.activateModuleAndRender?.bind(app);
+  if (originalActivateModuleAndRender) {
+    app.activateModuleAndRender = function(moduleKey) {
+      if (!moduleKey) return;
+      this.activeModule = moduleKey;
+      this.activateModuleUI?.(moduleKey);
+      this.renderModuleContent?.(moduleKey);
+      this.closeSidebar?.();
+      this.saveState?.();
+      this.syncRealUserInfoInDOM?.();
+    };
+  }
+
+  const originalInitLandingPage = app.initLandingPage?.bind(app);
+  if (originalInitLandingPage) {
+    app.initLandingPage = function() {
+      const result = originalInitLandingPage();
+      setTimeout(() => {
+        document.querySelectorAll('.hero-rotator').forEach((el) => el.remove());
+        const signature = document.querySelector('.hero-signature');
+        if (signature) {
+          signature.textContent = 'Experiência elegante. Controle real.';
+          signature.classList.add('is-static');
+        }
+        const subtitle = document.querySelector('.simple-subtitle');
+        if (subtitle && !subtitle.textContent.trim()) {
+          subtitle.textContent = 'Compras, despensa e planejamento com clareza.';
+        }
+      }, 50);
+      return result;
+    };
+  }
+
+  app.handleContactSubmit = async function(form) {
+    const name = String(form.querySelector('#contact-name')?.value || '').trim();
+    const email = String(form.querySelector('#contact-email')?.value || '').trim();
+    const message = String(form.querySelector('#contact-message')?.value || '').trim();
+    if (!name || !email || !message) {
+      this.showNotification?.('Preencha nome, e-mail e mensagem.', 'error');
       return;
     }
-
-    const checkoutUrl = this.getPremiumCheckoutUrl({ checkoutUrl: this.checkoutLinks?.premium || this.lastCheckoutUrl || '' });
-    if (!checkoutUrl) {
-      this.showNotification?.('Link do Mercado Pago não encontrado.', 'error');
-      return;
+    try {
+      await this.apiFetchJson('/api/contact', { method: 'POST', body: JSON.stringify({ name, email, message }) });
+      form.reset();
+      this.showNotification?.('Mensagem recebida com sucesso.', 'success');
+    } catch (error) {
+      this.showNotification?.(error?.payload?.message || error.message || 'Não foi possível enviar sua mensagem.', 'error');
     }
-
-    window.location.href = checkoutUrl;
   };
 
-  app.tryConfirmPremiumAfterReturn = async function({ silent = false } = {}) {
+  app.handlePaymentReturn = async function() {
     const token = this.getStoredAuthToken?.();
-    if (!token) return false;
-
+    if (!token) return;
     const params = new URLSearchParams(window.location.search);
-    const preapprovalId = this.getMercadoPagoReturnId?.() || '';
-    const cameBack = params.get('mp_checkout') === 'success' || Boolean(preapprovalId);
-    if (!cameBack) return false;
-
+    const approved = ['success', 'approved'].includes((params.get('mp_checkout') || params.get('status') || params.get('collection_status') || '').toLowerCase()) || params.has('preapproval_id');
+    if (!approved) return;
     try {
       const data = await this.apiFetchJson('/api/billing/confirm-premium', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ preapprovalId })
+        body: JSON.stringify({ preapprovalId: params.get('preapproval_id') || '' })
       });
-
-      this.setStoredAuthSession?.(data.token || token, data.user);
-      this.applyAuthenticatedUser?.(data);
-      this.cleanPaymentQueryFromUrl?.();
-      if (!silent) {
-        this.showNotification?.(this.userPlan === PREMIUM_PLAN ? 'Premium ativado com sucesso! ✨' : 'Assinatura registrada. Aguarde a confirmação final do Mercado Pago.', this.userPlan === PREMIUM_PLAN ? 'success' : 'info');
-      }
-      return true;
+      this.applyAuthenticatedUser(data);
+      this.showNotification?.('Premium ativado com 7 dias grátis.', 'success');
+      history.replaceState({}, document.title, window.location.pathname);
     } catch (error) {
-      if (!silent) {
-        this.showNotification?.(error?.payload?.message || error.message || 'Ainda não foi possível confirmar o Premium.', 'info');
-      }
-      return false;
+      this.showNotification?.(error?.payload?.message || error.message || 'Não foi possível ativar o premium.', 'error');
     }
   };
 
-  const isBasicVisualMode = () => app.isLoggedIn && app.isAppMode && app.userPlan === BASIC_PLAN;
-
-  const allowedBasicTarget = (target) => {
-    return Boolean(
-      target.closest('.nav-item') ||
-      target.closest('.dock-item') ||
-      target.closest('#menu-toggle-btn') ||
-      target.closest('#logout-btn') ||
-      target.closest('#theme-toggle-btn-panel') ||
-      target.closest('#home-btn-panel') ||
-      target.closest('.sidebar-overlay') ||
-      target.closest('.app-sidebar') ||
-      target.closest('[data-modal-close]') ||
-      target.closest('.close-btn') ||
-      target.closest('#payment-gate-modal') ||
-      target.closest('#plans-modal') ||
-      target.closest('[data-action="subscribe"]')
-    );
+  app.isAllowedBasicTarget = function(target) {
+    return Boolean(target.closest(
+      '.nav-item, .dock-item, [data-module-target], #menu-toggle-btn, #home-btn-panel, #logout-btn, #theme-toggle-btn-panel, .sidebar-overlay, .app-sidebar, .modal-overlay, [data-modal-close], .close-btn, .icon-button.close-btn, .auth-toggle-link, #payment-gate-modal, #plan-premium, .btn[data-action="subscribe"], .cancel-link, #af-chatbot-close, #af-chatbot-home'
+    ));
   };
 
-  const actionableTarget = (target) => {
-    return target.closest(
-      'button, input, select, textarea, a, [role="button"], .placeholder-item, .card, .saved-list-item, .recipe-list-item, .home-calc-item, .planner-meal-item, .planner-slot, .analysis-mobile-open-btn, .shopping-item, .list-item, .detail-item'
-    );
-  };
-
-  const blockBasicInteraction = (e) => {
-    if (!isBasicVisualMode()) return;
-    const target = e.target;
-    if (!target || !target.closest('.app-panel-container-standalone')) return;
-    if (allowedBasicTarget(target)) return;
-    if (!actionableTarget(target)) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+  const blockBasicInteraction = (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+    if (!app.isBasicReadOnly?.() || !document.body.classList.contains('app-mode')) return;
+    if (app.isAllowedBasicTarget?.(target)) return;
+    const insideModule = Boolean(target.closest('.module-container, .dashboard-card, .main-header, .modules-area, .app-panel-container-standalone'));
+    if (!insideModule) return;
+    event.preventDefault?.();
+    event.stopImmediatePropagation?.();
+    event.stopPropagation?.();
+    if (target.blur) target.blur();
     app.showPremiumRequiredModal?.();
   };
 
   document.addEventListener('click', blockBasicInteraction, true);
-
-  document.addEventListener('focusin', (e) => {
-    if (!isBasicVisualMode()) return;
-    const target = e.target;
-    if (!target || !target.closest('.app-panel-container-standalone')) return;
-    if (allowedBasicTarget(target)) return;
-    if (!target.matches('input, textarea, select') && !target.closest('input, textarea, select')) return;
-    e.preventDefault();
-    target.blur?.();
+  document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    if (form.id === 'contact-form') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      app.handleContactSubmit?.(form);
+      return;
+    }
+    if (form.id === 'login-form' || form.id === 'signup-form') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (form.id === 'login-form') app.handleLogin?.();
+      else app.handleSignup?.();
+      return;
+    }
+    if (!app.isBasicReadOnly?.() || !document.body.classList.contains('app-mode')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
     app.showPremiumRequiredModal?.();
   }, true);
-
-  document.addEventListener('input', (e) => {
-    if (!isBasicVisualMode()) return;
-    const target = e.target;
-    if (!target || !target.closest('.app-panel-container-standalone')) return;
-    if (!target.matches('input, textarea, select')) return;
-    target.value = target.defaultValue || '';
+  document.addEventListener('focusin', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+    if (!app.isBasicReadOnly?.() || !document.body.classList.contains('app-mode')) return;
+    if (target.matches('input, textarea, select') && target.closest('.module-container, .dashboard-card, .modules-area')) {
+      target.blur();
+      app.showPremiumRequiredModal?.();
+    }
   }, true);
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    await app.tryConfirmPremiumAfterReturn?.({ silent: false });
-  });
+  if (!app.getStoredAuthToken?.()) {
+    app.forceLoggedOutLanding?.();
+  }
+  app.restoreBackendSession?.();
+  app.handlePaymentReturn?.();
+  setTimeout(() => app.syncRealUserInfoInDOM?.(), 120);
 })();

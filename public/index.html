@@ -82,9 +82,9 @@
                 <div class="hero-clean-shell">
                     <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
                     <h2 class="hero-tagline">Organização alimentar premium</h2>
-                    <p class="simple-subtitle scroll-reveal"></p>
+                    <p class="simple-subtitle scroll-reveal">Compras, despensa e planejamento com clareza.</p>
 
-                    <div class="hero-signature scroll-reveal" aria-label="Frase rotativa">Despensa em ordem</div>
+                    <div class="hero-signature scroll-reveal" aria-label="Mensagem principal">Experiência elegante. Controle real.</div>
 
                     <div class="hero-cta-stack">
                         <a href="#" class="modern-start-btn" onclick="if(window.app){window.app.handleStartButtonClick(); return false;}">
@@ -220,7 +220,8 @@
                                 <label for="contact-message" class="sr-only">Sua Mensagem</label>
                                 <textarea rows="4" id="contact-message" placeholder="Sua Mensagem" required></textarea>
                             </div>
-                            <p style="font-size:.92rem; color:var(--glass-text-secondary); margin-bottom:.85rem;">As mensagens enviadas aqui vão direto para <strong>projetosdarlan@gmail.com</strong> quando o SMTP estiver configurado na Vercel.</p><button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Mensagem</button>
+                            <p class="contact-note">Atendimento pelo formulário oficial do Alimente Fácil.</p>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Mensagem</button>
                         </form>
                     </div>
                 </div>
@@ -316,12 +317,9 @@
                          <div class="form-group"><label for="signup-name">Nome</label><input type="text" id="signup-name" required></div> 
                          <div class="form-group"><label for="signup-email">Email</label><input type="email" id="signup-email" required></div> 
                          <div class="form-group"><label for="signup-password">Senha</label><input type="password" id="signup-password" required></div> 
-                         <label class="terms-check" for="signup-terms" style="display:flex; gap:.6rem; align-items:flex-start; margin-top:.75rem; font-size:.92rem; line-height:1.45; color:var(--glass-text-secondary);">
-                            <input type="checkbox" id="signup-terms" required style="margin-top:.2rem;">
-                            <span>Ao criar a conta, eu concordo com os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> e com a <a href="/politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
-                         </label>
                          <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Criar Conta</button> 
                      </form> 
+                     <p class="form-footer-text">Ao criar sua conta, você concorda com os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
                      <p class="form-footer-text">Já tem uma conta? <span class="auth-toggle-link" data-view="login-view" role="button" tabindex="0">Faça o login</span></p> 
                  </div> 
              </div>
@@ -335,12 +333,12 @@
                 <button class="icon-button close-btn" data-modal-close="plans-modal"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="modal-body" style="padding: 2rem;">
-                <p class="page-subtitle" style="text-align: center; margin-bottom: 2rem;">Uma assinatura simples para organizar sua rotina alimentar sem complicação.</p>
+                <p class="page-subtitle" style="text-align: center; margin-bottom: 2rem;">Acesso premium por R$ 9,90/mês com 7 dias grátis após a ativação.</p>
                 <div class="plans-container plans-container-single">
                     <div class="plan-card recommended" id="plan-premium" style="border-color: var(--primary-color); background: rgba(0, 242, 234, 0.05); max-width: 420px; margin: 0 auto;">
                         <div style="background: var(--primary-color); color: #000; font-size: 0.8rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; align-self: center; margin-bottom: 1rem;">PLANO ÚNICO</div>
                         <h4>Alimente Fácil</h4>
-                        <div class="plan-price">R$ 9,90<span>/mês</span></div><p style="margin:.35rem 0 1rem; color:var(--primary-color); font-weight:700;">7 dias grátis no Premium</p>
+                        <div class="plan-price">R$ 9,90<span>/mês</span></div>
                         <ul>
                             <li><i class="fa-solid fa-check"></i> Listas ilimitadas</li>
                             <li><i class="fa-solid fa-check"></i> Receitas ilimitadas</li>
@@ -349,7 +347,7 @@
                             <li><i class="fa-solid fa-check"></i> Análises e organização do painel</li>
                         </ul>
                         <div class="plan-actions">
-                            <button class="btn btn-primary" data-action="subscribe" data-plan="premium" style="width: 100%;">Assinar Premium</button>
+                            <button class="btn btn-primary" data-action="subscribe" data-plan="premium" style="width: 100%;">Assinar agora</button>
                             <div class="cancel-link">Cancelar assinatura</div>
                         </div>
                     </div>
@@ -704,8 +702,8 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => { console.log('ServiceWorker registrado com sucesso: ', registration.scope); })
-                    .catch(err => { console.log('Registro do ServiceWorker falhou: ', err); });
+                    .then(() => {})
+                    .catch(() => {});
             });
         }
     </script>
