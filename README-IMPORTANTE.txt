@@ -23,3 +23,10 @@ Arquivos principais:
 - public/politica-de-privacidade.html
 - .env.example -> variáveis de ambiente
 - vercel.json -> configuração da Vercel
+
+
+ATUALIZAÇÃO 2026-04-13
+- Cadastro agora cria usuário no plano BASIC (visual).
+- Usuário BASIC pode entrar no painel e trocar abas, mas qualquer ação abre o card Premium.
+- Usuário PREMIUM tem acesso ilimitado.
+- Retorno do Mercado Pago pode ser confirmado pela rota /api/billing/confirm-premium.

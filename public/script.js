@@ -12379,3 +12379,298 @@ window.app = app;
     }
   });
 })();
+
+
+/* === BASIC VISUAL MODE + PREMIUM UNLIMITED PATCH | 2026-04-13 === */
+;(() => {
+  const app = window.app;
+  if (!app) return;
+
+  const BASIC_PLAN = 'basic';
+  const PREMIUM_PLAN = 'premium';
+  const BASIC_GATE_MESSAGE = 'No plano básico você pode apenas navegar pelas abas e sentir o painel. Para criar, editar, preencher, marcar, salvar e usar a IA, assine o Premium por R$ 9,90/mês e ative seus 7 dias grátis.';
+
+  const clearLegacyPendingState = () => {
+    try { localStorage.removeItem('alimenteFacilPendingAccess'); } catch (_e) {}
+    try { localStorage.removeItem('alimenteFacilPendingSignup'); } catch (_e) {}
+    app.pendingAccessOnly = false;
+  };
+
+  app.normalizePlanFromSession = function(sessionData = {}) {
+    const subscriptionPlan = String(sessionData?.subscription?.plan || '').toLowerCase();
+    const canPerformActions = Boolean(sessionData?.access?.canPerformActions);
+    if (subscriptionPlan === PREMIUM_PLAN && canPerformActions) return PREMIUM_PLAN;
+    return BASIC_PLAN;
+  };
+
+  app.getPremiumCheckoutUrl = function(payload = {}) {
+    return payload.checkoutUrl || payload?.subscription?.checkoutUrl || this.checkoutLinks?.premium || '';
+  };
+
+  app.showPremiumRequiredModal = function(payload = {}) {
+    this.showPaymentGateModal?.({
+      mode: 'payment_required',
+      title: 'Premium por R$ 9,90/mês',
+      message: payload.message || BASIC_GATE_MESSAGE,
+      checkoutUrl: this.getPremiumCheckoutUrl(payload)
+    });
+  };
+
+  app.applyAuthenticatedUser = function(sessionData = {}) {
+    clearLegacyPendingState();
+    const user = sessionData?.user || {};
+    this.isLoggedIn = true;
+    this.userPlan = this.normalizePlanFromSession(sessionData);
+    this.lastCheckoutUrl = this.getPremiumCheckoutUrl(sessionData);
+    this.state.user = this.state.user || {};
+    this.state.user.nome = user.name || user.nome || 'Usuário';
+    this.state.user.email = user.email || '';
+    this.state.user.id = user.id || '';
+    this.saveState?.();
+    this.updateStartButton?.();
+    this.syncRealUserInfoInDOM?.();
+  };
+
+  const originalForceLoggedOutLandingBasic = app.forceLoggedOutLanding?.bind(app);
+  if (originalForceLoggedOutLandingBasic) {
+    app.forceLoggedOutLanding = function() {
+      clearLegacyPendingState();
+      this.userPlan = 'free';
+      return originalForceLoggedOutLandingBasic();
+    };
+  }
+
+  app.handleSignup = async function() {
+    const name = String(document.getElementById('signup-name')?.value || '').trim();
+    const email = String(document.getElementById('signup-email')?.value || '').trim();
+    const password = String(document.getElementById('signup-password')?.value || '');
+    const acceptedTerms = Boolean(document.getElementById('signup-terms')?.checked);
+
+    if (!name || !email || !password) {
+      this.showNotification?.('Preencha nome, e-mail e senha.', 'error');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      this.showNotification?.('Você precisa aceitar os Termos de Uso e a Política de Privacidade.', 'error');
+      return;
+    }
+
+    try {
+      const data = await this.apiFetchJson('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password, acceptedTerms })
+      });
+
+      clearLegacyPendingState();
+      this.setStoredAuthSession?.(data.token, data.user);
+      this.applyAuthenticatedUser?.(data);
+      this.closeAllModals?.();
+      this.enterAppMode?.();
+      this.activeModule = 'inicio';
+      this.activateModuleUI?.('inicio');
+      this.showNotification?.('Cadastro concluído. Seu plano básico já pode navegar pelo painel.', 'success');
+    } catch (error) {
+      this.showNotification?.(error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.', 'error');
+    }
+  };
+
+  app.handleLogin = async function() {
+    const email = String(document.getElementById('login-email')?.value || '').trim();
+    const password = String(document.getElementById('login-password')?.value || '');
+
+    if (!email || !password) {
+      this.showNotification?.('Informe e-mail e senha.', 'error');
+      return;
+    }
+
+    try {
+      const data = await this.apiFetchJson('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+
+      clearLegacyPendingState();
+      this.setStoredAuthSession?.(data.token, data.user);
+      this.applyAuthenticatedUser?.(data);
+      this.closeAllModals?.();
+      this.enterAppMode?.();
+      this.showNotification?.(this.userPlan === PREMIUM_PLAN ? 'Login premium realizado com sucesso.' : 'Login realizado. Seu plano básico pode navegar pelo painel.', 'success');
+    } catch (error) {
+      const payload = error?.payload || {};
+      this.showNotification?.(payload.message || error.message || 'Não foi possível fazer login.', 'error');
+    }
+  };
+
+  app.handleLogout = async function() {
+    clearLegacyPendingState();
+    this.clearStoredAuthSession?.();
+    this.isLoggedIn = false;
+    this.userPlan = 'free';
+    this.state = JSON.parse(JSON.stringify(this.defaultState));
+    this.state.user = { nome: null, email: '' };
+    this.activeListId = 'listaDaSemana';
+    this.activeModule = 'inicio';
+    this.updateStartButton?.();
+    if (this.isAppMode) this.exitAppMode?.();
+    this.saveState?.();
+    this.showNotification?.('Você saiu da sua conta.', 'info');
+  };
+
+  app.checkAccessAndEnter = async function() {
+    const token = this.getStoredAuthToken?.();
+    if (!token) {
+      this.forceLoggedOutLanding?.();
+      this.showAuthModal?.();
+      return;
+    }
+
+    try {
+      const me = await this.apiFetchJson('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      this.applyAuthenticatedUser?.(me);
+      this.enterAppMode?.();
+    } catch (_error) {
+      this.forceLoggedOutLanding?.();
+      this.showAuthModal?.();
+    }
+  };
+
+  app.restoreBackendSession = async function() {
+    clearLegacyPendingState();
+    const token = this.getStoredAuthToken?.();
+    if (!token) {
+      this.forceLoggedOutLanding?.();
+      return;
+    }
+
+    try {
+      const me = await this.apiFetchJson('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      this.applyAuthenticatedUser?.(me);
+    } catch (_error) {
+      this.forceLoggedOutLanding?.();
+    }
+  };
+
+  app.handleStartButtonClick = function() {
+    if (!this.isLoggedIn) {
+      this.showAuthModal?.();
+      return;
+    }
+    this.enterAppMode?.();
+  };
+
+  app.handleRealSubscription = async function(planId) {
+    if (planId !== PREMIUM_PLAN) return;
+    if (!this.isLoggedIn) {
+      this.showAuthModal?.();
+      return;
+    }
+
+    const checkoutUrl = this.getPremiumCheckoutUrl({ checkoutUrl: this.checkoutLinks?.premium || this.lastCheckoutUrl || '' });
+    if (!checkoutUrl) {
+      this.showNotification?.('Link do Mercado Pago não encontrado.', 'error');
+      return;
+    }
+
+    window.location.href = checkoutUrl;
+  };
+
+  app.tryConfirmPremiumAfterReturn = async function({ silent = false } = {}) {
+    const token = this.getStoredAuthToken?.();
+    if (!token) return false;
+
+    const params = new URLSearchParams(window.location.search);
+    const preapprovalId = this.getMercadoPagoReturnId?.() || '';
+    const cameBack = params.get('mp_checkout') === 'success' || Boolean(preapprovalId);
+    if (!cameBack) return false;
+
+    try {
+      const data = await this.apiFetchJson('/api/billing/confirm-premium', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ preapprovalId })
+      });
+
+      this.setStoredAuthSession?.(data.token || token, data.user);
+      this.applyAuthenticatedUser?.(data);
+      this.cleanPaymentQueryFromUrl?.();
+      if (!silent) {
+        this.showNotification?.(this.userPlan === PREMIUM_PLAN ? 'Premium ativado com sucesso! ✨' : 'Assinatura registrada. Aguarde a confirmação final do Mercado Pago.', this.userPlan === PREMIUM_PLAN ? 'success' : 'info');
+      }
+      return true;
+    } catch (error) {
+      if (!silent) {
+        this.showNotification?.(error?.payload?.message || error.message || 'Ainda não foi possível confirmar o Premium.', 'info');
+      }
+      return false;
+    }
+  };
+
+  const isBasicVisualMode = () => app.isLoggedIn && app.isAppMode && app.userPlan === BASIC_PLAN;
+
+  const allowedBasicTarget = (target) => {
+    return Boolean(
+      target.closest('.nav-item') ||
+      target.closest('.dock-item') ||
+      target.closest('#menu-toggle-btn') ||
+      target.closest('#logout-btn') ||
+      target.closest('#theme-toggle-btn-panel') ||
+      target.closest('#home-btn-panel') ||
+      target.closest('.sidebar-overlay') ||
+      target.closest('.app-sidebar') ||
+      target.closest('[data-modal-close]') ||
+      target.closest('.close-btn') ||
+      target.closest('#payment-gate-modal') ||
+      target.closest('#plans-modal') ||
+      target.closest('[data-action="subscribe"]')
+    );
+  };
+
+  const actionableTarget = (target) => {
+    return target.closest(
+      'button, input, select, textarea, a, [role="button"], .placeholder-item, .card, .saved-list-item, .recipe-list-item, .home-calc-item, .planner-meal-item, .planner-slot, .analysis-mobile-open-btn, .shopping-item, .list-item, .detail-item'
+    );
+  };
+
+  const blockBasicInteraction = (e) => {
+    if (!isBasicVisualMode()) return;
+    const target = e.target;
+    if (!target || !target.closest('.app-panel-container-standalone')) return;
+    if (allowedBasicTarget(target)) return;
+    if (!actionableTarget(target)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+    app.showPremiumRequiredModal?.();
+  };
+
+  document.addEventListener('click', blockBasicInteraction, true);
+
+  document.addEventListener('focusin', (e) => {
+    if (!isBasicVisualMode()) return;
+    const target = e.target;
+    if (!target || !target.closest('.app-panel-container-standalone')) return;
+    if (allowedBasicTarget(target)) return;
+    if (!target.matches('input, textarea, select') && !target.closest('input, textarea, select')) return;
+    e.preventDefault();
+    target.blur?.();
+    app.showPremiumRequiredModal?.();
+  }, true);
+
+  document.addEventListener('input', (e) => {
+    if (!isBasicVisualMode()) return;
+    const target = e.target;
+    if (!target || !target.closest('.app-panel-container-standalone')) return;
+    if (!target.matches('input, textarea, select')) return;
+    target.value = target.defaultValue || '';
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    await app.tryConfirmPremiumAfterReturn?.({ silent: false });
+  });
+})();

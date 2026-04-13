@@ -109,6 +109,7 @@ async function syncSubscriptionFromMercadoPago(userId, preapprovalId) {
   const mpStatus = String(mpSubscription?.status || '').trim().toLowerCase();
   const currentDate = now();
   const updates = {
+    plan: 'premium',
     mercadopagoSubscriptionId: String(mpSubscription?.id || preapprovalId),
     mercadopagoStatus: mpStatus || null,
     billingReadyAt: current.billingReadyAt || currentDate,
@@ -298,9 +299,17 @@ async function refreshSubscriptionState(userId) {
   ) {
     await subscriptionsCollection().updateOne(
       { _id: subscription._id },
-      { $set: { status: 'blocked', blockedAt: currentDate, updatedAt: currentDate } }
+      {
+        $set: {
+          plan: 'basic',
+          status: 'basic',
+          blockedAt: currentDate,
+          updatedAt: currentDate
+        }
+      }
     );
-    subscription.status = 'standby';
+    subscription.plan = 'basic';
+    subscription.status = 'basic';
     subscription.blockedAt = currentDate;
     subscription.updatedAt = currentDate;
   }
@@ -312,47 +321,34 @@ function getAccessDecision(subscription) {
   if (!subscription) {
     return {
       allowed: false,
+      canPerformActions: false,
+      tier: 'guest',
       reason: 'missing_subscription',
       message: 'Assinatura não encontrada. Faça login novamente ou entre em contato.'
     };
   }
 
-  if (subscription.status === 'active') {
-    return { allowed: true, reason: 'active', message: 'Acesso liberado.' };
-  }
+  const plan = String(subscription.plan || 'basic').toLowerCase();
+  const status = String(subscription.status || 'basic').toLowerCase();
 
-  if (subscription.status === 'trialing') {
-    return { allowed: true, reason: 'trialing', message: 'Acesso liberado no teste grátis.' };
-  }
-
-  if (subscription.status === 'pending_checkout') {
+  if (plan === 'premium' && (status === 'active' || status === 'trialing')) {
     return {
-      allowed: false,
-      reason: 'pending_checkout',
-      message: 'Seu cadastro foi criado, mas o painel só é liberado depois que o pagamento automático for configurado no Mercado Pago.'
-    };
-  }
-
-  if (subscription.status === 'blocked' || subscription.status === 'standby') {
-    return {
-      allowed: false,
-      reason: subscription.status === 'standby' ? 'standby' : 'blocked',
-      message: 'Seu período grátis terminou ou o pagamento não foi confirmado. O acesso ficou em stand by até a regularização.'
-    };
-  }
-
-  if (subscription.status === 'past_due' || subscription.status === 'canceled') {
-    return {
-      allowed: false,
-      reason: subscription.status,
-      message: 'Seu acesso está pausado. Regularize o pagamento para voltar a usar o Alimente Fácil.'
+      allowed: true,
+      canPerformActions: true,
+      tier: 'premium',
+      reason: status,
+      message: status === 'trialing'
+        ? 'Premium liberado com 7 dias grátis ativos.'
+        : 'Premium liberado.'
     };
   }
 
   return {
-    allowed: false,
-    reason: 'unknown',
-    message: 'Seu acesso está indisponível no momento.'
+    allowed: true,
+    canPerformActions: false,
+    tier: 'basic',
+    reason: plan === 'basic' ? 'basic' : status || 'basic',
+    message: 'Plano básico ativo: você pode navegar pelo painel e pelas abas, mas criar, editar, preencher e salvar exige o Premium de R$ 9,90 com 7 dias grátis.'
   };
 }
 
@@ -420,9 +416,14 @@ app.post('/api/auth/register', async (req, res) => {
     const name = String(req.body?.name || '').trim();
     const email = normalizeEmail(req.body?.email);
     const password = String(req.body?.password || '');
+    const acceptedTerms = Boolean(req.body?.acceptedTerms);
 
     if (!name || !email || !password) {
       return res.status(400).json({ ok: false, message: 'Nome, e-mail e senha são obrigatórios.' });
+    }
+
+    if (!acceptedTerms) {
+      return res.status(400).json({ ok: false, message: 'Você precisa aceitar os Termos de Uso e a Política de Privacidade.' });
     }
 
     if (password.length < 6) {
@@ -441,6 +442,7 @@ app.post('/api/auth/register', async (req, res) => {
       name,
       email,
       passwordHash,
+      acceptedTermsAt: createdAt,
       createdAt,
       updatedAt: createdAt
     });
@@ -449,12 +451,15 @@ app.post('/api/auth/register', async (req, res) => {
 
     await subscriptionsCollection().insertOne({
       userId,
-      plan: 'premium',
-      status: 'pending_checkout',
+      plan: 'basic',
+      status: 'basic',
       trialStart: null,
       trialEnd: null,
       mercadopagoPreapprovalPlanId: 'ae9349b69ef94a27ad19786352488fa5',
       mercadopagoSubscriptionId: null,
+      mercadopagoStatus: null,
+      billingReadyAt: null,
+      nextPaymentDate: null,
       lastPaymentAt: null,
       blockedAt: null,
       createdAt,
@@ -462,19 +467,14 @@ app.post('/api/auth/register', async (req, res) => {
     });
 
     const user = await usersCollection().findOne({ _id: userId });
+    const session = await buildSessionPayload(user);
 
     return res.status(201).json({
       ok: true,
-      message: 'Cadastro realizado com sucesso. Agora configure seu pagamento para liberar o teste grátis de 7 dias.',
-      pendingCheckout: true,
-      pendingToken: signPendingToken(user),
+      message: 'Cadastro realizado com sucesso. Seu plano básico já está ativo para navegação visual.',
+      token: signAuthToken(user),
       checkoutUrl: PREMIUM_CHECKOUT_URL,
-      user: sanitizeUser(user),
-      access: {
-        allowed: false,
-        reason: 'pending_checkout',
-        message: 'Configure o pagamento automático no Mercado Pago para ativar o teste grátis.'
-      }
+      ...session
     });
   } catch (error) {
     return res.status(500).json({
@@ -541,21 +541,11 @@ app.post('/api/auth/login', async (req, res) => {
 
     const session = await buildSessionPayload(user);
 
-    if (!session.access.allowed) {
-      return res.status(403).json({
-        ok: false,
-        message: session.access.message,
-        requiresPayment: true,
-        checkoutUrl: PREMIUM_CHECKOUT_URL,
-        pendingToken: signPendingToken(user),
-        ...session
-      });
-    }
-
     return res.json({
       ok: true,
       message: 'Login realizado com sucesso.',
       token: signAuthToken(user),
+      checkoutUrl: PREMIUM_CHECKOUT_URL,
       ...session
     });
   } catch (error) {
@@ -610,6 +600,72 @@ app.get('/api/billing/checkout-link', (_req, res) => {
  * Rota auxiliar para teste local/manual.
  * Para automação real após o checkout do Mercado Pago, substitua por webhook.
  */
+app.post('/api/billing/confirm-premium', authMiddleware, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.auth.sub);
+    const preapprovalId = String(req.body?.preapprovalId || extractMercadoPagoSubscriptionId(req) || '').trim();
+    const currentDate = now();
+
+    const current = await subscriptionsCollection().findOne({ userId });
+    if (!current) {
+      return res.status(404).json({ ok: false, message: 'Assinatura não encontrada.' });
+    }
+
+    if (preapprovalId) {
+      await subscriptionsCollection().updateOne(
+        { userId },
+        {
+          $set: {
+            plan: 'premium',
+            mercadopagoSubscriptionId: preapprovalId,
+            updatedAt: currentDate
+          }
+        }
+      );
+
+      if (MP_ACCESS_TOKEN) {
+        await syncSubscriptionFromMercadoPago(userId, preapprovalId);
+      } else {
+        await subscriptionsCollection().updateOne(
+          { userId },
+          {
+            $set: {
+              plan: 'premium',
+              status: 'trialing',
+              trialStart: currentDate,
+              trialEnd: addDays(currentDate, TRIAL_DAYS),
+              updatedAt: currentDate
+            }
+          }
+        );
+      }
+    } else if (String(current.plan || '').toLowerCase() !== 'premium') {
+      return res.status(400).json({
+        ok: false,
+        message: 'Não foi possível confirmar o Premium porque o identificador da assinatura do Mercado Pago não foi enviado.'
+      });
+    }
+
+    const user = await usersCollection().findOne({ _id: userId });
+    const session = await buildSessionPayload(user);
+
+    return res.json({
+      ok: true,
+      message: session.access.canPerformActions
+        ? 'Premium ativado com sucesso.'
+        : 'A assinatura foi registrada, mas ainda estamos aguardando a confirmação final do Mercado Pago.',
+      checkoutUrl: PREMIUM_CHECKOUT_URL,
+      token: signAuthToken(user),
+      ...session
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: error.message || 'Não foi possível confirmar o Premium agora.'
+    });
+  }
+});
+
 app.post('/api/billing/activate-trial', authMiddleware, async (req, res) => {
   try {
     const userId = new ObjectId(req.auth.sub);
@@ -627,6 +683,7 @@ app.post('/api/billing/activate-trial', authMiddleware, async (req, res) => {
       { _id: subscription._id },
       {
         $set: {
+          plan: 'premium',
           status: 'trialing',
           trialStart,
           trialEnd,
