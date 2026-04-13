@@ -12675,185 +12675,76 @@ window.app = app;
   });
 })();
 
-/* === ALIMENTE FÁCIL | PATCH FINAL AUTH + PREMIUM REAL | 2026-04-13 === */
-document.addEventListener('DOMContentLoaded', () => {
+
+/* === PATCH FINAL UX + CHECKOUT GATE | 2026-04-13 === */
+;(() => {
   const app = window.app;
-  if (!app) return;
+  if (!app || window.__afFinalCheckoutPatchApplied) return;
+  window.__afFinalCheckoutPatchApplied = true;
 
-  const AUTH_TOKEN_KEY = 'alimenteFacilAuthToken';
-  const AUTH_USER_KEY = 'alimenteFacilAuthUser';
-  const LEGACY_STATE_KEY = 'alimenteFacilState_vFinal';
-  const PREMIUM_PLAN = 'premium';
   const BASIC_PLAN = 'basic';
+  const PREMIUM_PLAN = 'premium';
+  const PREMIUM_MESSAGE = 'Ative o Premium para liberar todas as ações do Alimente Fácil. Você ganha 7 dias grátis. Depois, paga apenas R$ 9,90 por mês. Cancele quando quiser.';
 
-  function emptyDataState() {
-    return {
-      user: { nome: null, email: '', id: '' },
-      listas: {},
-      despensa: [],
-      essenciais: [],
-      orcamento: { total: 500.0 },
-      aiUsage: {
-        tokensThisMonth: 0,
-        dailyMsgs: 0,
-        lastMsgDate: null,
-        minuteHistory: []
-      },
-      receitas: {},
-      planejador: {}
-    };
-  }
+  document.body.classList.add('af-clean-hero');
 
-  function getAuthToken() {
-    return localStorage.getItem(AUTH_TOKEN_KEY) || '';
-  }
+  const isMobile = () => window.matchMedia('(max-width: 991px)').matches;
 
-  function setAuthSession(token, user) {
-    if (!token) return;
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
-    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user || {}));
-  }
-
-  function clearAuthSession() {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem(AUTH_USER_KEY);
-  }
-
-  async function apiFetchJson(url, options = {}) {
-    const headers = new Headers(options.headers || {});
-    const token = getAuthToken();
-    if (token && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`);
-    if (!headers.has('Content-Type') && options.body) headers.set('Content-Type', 'application/json');
-    const response = await fetch(url, { ...options, headers });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const error = new Error(payload?.message || 'Falha na comunicação com o servidor.');
-      error.payload = payload;
-      error.status = response.status;
-      throw error;
-    }
-    return payload;
-  }
-
-  function resetAppData() {
-    const newState = emptyDataState();
-    app.state = JSON.parse(JSON.stringify(newState));
-    app.defaultState = JSON.parse(JSON.stringify(newState));
-    app.activeListId = 'listaDaSemana';
-    app.activeModule = 'inicio';
-    app.userPlan = 'free';
-    app.isLoggedIn = false;
-    app.isAppMode = false;
-    try { localStorage.removeItem(LEGACY_STATE_KEY); } catch (_e) {}
-  }
-
-  function syncUserInDom() {
-    const name = app.state?.user?.nome || '';
-    const email = app.state?.user?.email || '';
-    document.querySelectorAll('#profile-name, [data-user-name]').forEach((el) => { el.textContent = name; });
-    document.querySelectorAll('#profile-email, [data-user-email]').forEach((el) => { el.textContent = email; });
-  }
-
-  function applySession(sessionData) {
-    const user = sessionData?.user || {};
-    const access = sessionData?.access || {};
-    const subscription = sessionData?.subscription || {};
-    app.isLoggedIn = true;
-    app.userPlan = access?.canPerformActions ? PREMIUM_PLAN : BASIC_PLAN;
-    app.lastCheckoutUrl = subscription?.checkoutUrl || app.checkoutLinks?.premium || '';
-    app.state = app.state && typeof app.state === 'object' ? app.state : emptyDataState();
-    app.state.user = {
-      nome: user.name || user.nome || '',
-      email: user.email || '',
-      id: user.id || ''
-    };
-    app.updateStartButton?.();
-    syncUserInDom();
-  }
-
-  async function loadServerState() {
-    const token = getAuthToken();
-    if (!token) return;
-    try {
-      const me = await apiFetchJson('/api/auth/me');
-      applySession(me);
-      const panelState = await apiFetchJson('/api/app-state');
-      const incoming = panelState?.appState || {};
-      app.state = {
-        ...emptyDataState(),
-        ...incoming,
-        user: {
-          nome: me?.user?.name || '',
-          email: me?.user?.email || '',
-          id: me?.user?.id || ''
-        }
-      };
-      app.activeModule = panelState?.activeModule || 'inicio';
-      app.activeListId = panelState?.activeListId || 'listaDaSemana';
-      if (app.isAppMode) {
-        app.activateModuleUI?.(app.activeModule);
-        app.renderAllPanelContent?.();
-      }
-      syncUserInDom();
-    } catch (_error) {
-      clearAuthSession();
-      resetAppData();
-      app.updateStartButton?.();
-    }
-  }
-
-  let saveTimer = null;
-  async function pushStateToServer() {
-    if (!app.isLoggedIn || app.userPlan !== PREMIUM_PLAN) return;
-    try {
-      await apiFetchJson('/api/app-state', {
-        method: 'PUT',
-        body: JSON.stringify({
-          state: {
-            listas: app.state?.listas || {},
-            despensa: app.state?.despensa || [],
-            essenciais: app.state?.essenciais || [],
-            orcamento: app.state?.orcamento || { total: 500 },
-            aiUsage: app.state?.aiUsage || { tokensThisMonth: 0, dailyMsgs: 0, lastMsgDate: null, minuteHistory: [] },
-            receitas: app.state?.receitas || {},
-            planejador: app.state?.planejador || {}
-          },
-          activeModule: app.activeModule || 'inicio',
-          activeListId: app.activeListId || 'listaDaSemana'
-        })
-      });
-    } catch (_error) {}
-  }
-
-  const originalSaveState = app.saveState?.bind(app);
-  app.saveState = function() {
-    if (originalSaveState) originalSaveState();
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => { pushStateToServer(); }, 500);
+  const clearAuthInlineErrors = () => {
+    document.querySelectorAll('.auth-inline-error').forEach((el) => el.remove());
   };
 
-  app.apiFetchJson = apiFetchJson;
-  app.getStoredAuthToken = getAuthToken;
-  app.setStoredAuthSession = setAuthSession;
-  app.clearStoredAuthSession = clearAuthSession;
+  const showAuthInlineError = (message, mode = 'login') => {
+    const form = document.querySelector(mode === 'signup' ? '#signup-form' : '#login-form');
+    if (!form) return;
+    clearAuthInlineErrors();
+    const box = document.createElement('div');
+    box.className = 'auth-inline-error';
+    box.textContent = message;
+    form.prepend(box);
+  };
 
-  app.forceLoggedOutLanding = function() {
-    clearAuthSession();
-    resetAppData();
-    app.closeAllModals?.();
-    app.updateStartButton?.();
-    if (app.isAppMode) app.exitAppMode?.();
-    syncUserInDom();
+  app.showNotification = function(message, type = 'info') {
+    document.querySelector('.notification')?.remove();
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.zIndex = '30000';
+    notification.style.top = '24px';
+    notification.style.bottom = 'auto';
+    document.body.appendChild(notification);
+
+    const styleId = 'notification-style';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.innerHTML = `.notification { position: fixed; left: 50%; transform: translateX(-50%); padding: 1rem 1.25rem; border-radius: 12px; color: #fff; z-index: 30000; opacity: 0; transition: opacity .25s, top .25s; font-family: 'Roboto', sans-serif; box-shadow: 0 14px 40px rgba(0,0,0,.35); border: 1px solid var(--glass-border); background: rgba(16,18,24,.94); backdrop-filter: blur(10px); max-width:min(92vw,520px); text-align:center; } .notification.info { background: var(--glass-on-color); color: var(--glass-on-text); } .notification.success { background: #1a8f5b; } .notification.error { background: #b3261e; } .notification.show { opacity: 1; top: 36px; }`;
+      document.head.appendChild(style);
+    }
+
+    setTimeout(() => notification.classList.add('show'), 10);
+    setTimeout(() => { notification.classList.remove('show'); setTimeout(() => notification.remove(), 260); }, 3200);
   };
 
   app.showPremiumRequiredModal = function(payload = {}) {
-    const checkoutUrl = payload.checkoutUrl || app.lastCheckoutUrl || app.checkoutLinks?.premium || '';
-    app.showPaymentGateModal?.({
+    this.showPaymentGateModal?.({
       mode: 'payment_required',
-      title: 'Assine o Premium',
-      message: 'Para usar listas, despensa, receitas, planejador, análises, preenchimento de campos, IA e salvamento, assine o Premium por R$ 9,90/mês. O acesso completo só é liberado após a confirmação real do Mercado Pago.',
-      checkoutUrl
+      title: payload.title || 'Teste grátis por 7 dias',
+      message: payload.message || PREMIUM_MESSAGE,
+      checkoutUrl: payload.checkoutUrl || this.checkoutLinks?.premium || this.lastCheckoutUrl || ''
     });
+  };
+
+  const applyLoginSession = (data) => {
+    clearAuthInlineErrors();
+    app.clearPendingSignup?.();
+    app.setStoredAuthSession?.(data.token, data.user);
+    app.applyAuthenticatedUser?.(data);
+    app.closeAllModals?.();
+    app.enterAppMode?.();
+    app.activeModule = 'inicio';
+    app.activateModuleUI?.('inicio');
+    setTimeout(() => app.syncRealUserInfoInDOM?.(), 80);
   };
 
   app.handleSignup = async function() {
@@ -12862,321 +12753,176 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = String(document.getElementById('signup-password')?.value || '');
     const acceptedTerms = Boolean(document.getElementById('signup-terms')?.checked);
 
+    clearAuthInlineErrors();
+
     if (!name || !email || !password) {
-      app.showNotification?.('Preencha nome, e-mail e senha.', 'error');
+      const msg = 'Preencha nome, e-mail e senha.';
+      showAuthInlineError(msg, 'signup');
+      this.showNotification(msg, 'error');
       return;
     }
+
     if (!acceptedTerms) {
-      app.showNotification?.('Você precisa aceitar os Termos de Uso e a Política de Privacidade.', 'error');
+      const msg = 'Você precisa aceitar os Termos de Uso e a Política de Privacidade.';
+      showAuthInlineError(msg, 'signup');
+      this.showNotification(msg, 'error');
       return;
     }
 
     try {
-      const data = await apiFetchJson('/api/auth/register', {
+      const data = await this.apiFetchJson('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify({ name, email, password, acceptedTerms })
       });
-      setAuthSession(data.token, data.user);
-      resetAppData();
-      applySession(data);
-      app.closeAllModals?.();
-      app.enterAppMode?.();
-      app.activateModuleUI?.('inicio');
-      app.renderAllPanelContent?.();
-      app.showNotification?.('Cadastro concluído. O painel está em modo visual até a confirmação do pagamento.', 'success');
+
+      applyLoginSession(data);
+      this.showNotification('Cadastro concluído. Você entrou no modo visual.', 'success');
+      setTimeout(() => {
+        this.showPremiumRequiredModal({
+          title: 'Teste grátis por 7 dias',
+          message: 'Seu cadastro foi criado com sucesso. Ative agora o Premium para liberar listas, receitas, despensa, planejador e todas as ações. Você ganha 7 dias grátis. Depois, paga R$ 9,90 por mês. Cancele quando quiser.',
+          checkoutUrl: data.checkoutUrl || this.checkoutLinks?.premium || this.lastCheckoutUrl || ''
+        });
+      }, 240);
     } catch (error) {
-      app.showNotification?.(error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.', 'error');
+      const msg = error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.';
+      showAuthInlineError(msg, 'signup');
+      this.showNotification(msg, 'error');
     }
   };
 
   app.handleLogin = async function() {
     const email = String(document.getElementById('login-email')?.value || '').trim();
     const password = String(document.getElementById('login-password')?.value || '');
+
+    clearAuthInlineErrors();
+
     if (!email || !password) {
-      app.showNotification?.('Informe e-mail e senha.', 'error');
+      const msg = 'Informe e-mail e senha.';
+      showAuthInlineError(msg, 'login');
+      this.showNotification(msg, 'error');
       return;
     }
 
     try {
-      const data = await apiFetchJson('/api/auth/login', {
+      const data = await this.apiFetchJson('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password })
       });
-      setAuthSession(data.token, data.user);
-      resetAppData();
-      applySession(data);
-      await loadServerState();
-      app.closeAllModals?.();
-      app.enterAppMode?.();
-      app.showNotification?.(app.userPlan === PREMIUM_PLAN ? 'Login premium realizado com sucesso.' : 'Login realizado. Seu acesso ainda depende da confirmação do pagamento.', 'success');
+
+      applyLoginSession(data);
+      if (this.userPlan === PREMIUM_PLAN) this.showNotification('Login premium realizado com sucesso.', 'success');
+      else this.showNotification('Login realizado. Seu plano básico está em modo visual.', 'success');
     } catch (error) {
-      app.showNotification?.(error?.payload?.message || error.message || 'E-mail ou senha inválidos.', 'error');
+      const msg = error?.payload?.message || error.message || 'Não foi possível fazer login.';
+      showAuthInlineError(msg, 'login');
+      this.showNotification(msg, 'error');
     }
   };
 
-  app.handleLogout = async function() {
-    app.forceLoggedOutLanding?.();
-    app.showNotification?.('Você saiu da sua conta.', 'info');
-  };
+  const isBasicVisualMode = () => app.isLoggedIn && app.isAppMode && app.userPlan === BASIC_PLAN;
 
-  app.handleStartButtonClick = function() {
-    if (!getAuthToken()) {
-      app.showAuthModal?.();
-      return;
-    }
-    app.checkAccessAndEnter?.();
-  };
+  const allowedBasicTarget = (target) => Boolean(
+    target.closest('.nav-item') ||
+    target.closest('.module-nav-item') ||
+    target.closest('.analysis-nav-item') ||
+    target.closest('.analysis-mobile-open-btn') ||
+    target.closest('.dock-item') ||
+    target.closest('#menu-toggle-btn') ||
+    target.closest('#logout-btn') ||
+    target.closest('#theme-toggle-btn-panel') ||
+    target.closest('#home-btn-panel') ||
+    target.closest('.sidebar-overlay') ||
+    target.closest('.app-sidebar') ||
+    target.closest('[data-modal-close]') ||
+    target.closest('.close-btn') ||
+    target.closest('#payment-gate-modal') ||
+    target.closest('#plans-modal') ||
+    target.closest('#detail-modal') ||
+    target.closest('[data-action="subscribe"]')
+  );
 
-  app.checkAccessAndEnter = async function() {
-    const token = getAuthToken();
-    if (!token) {
-      app.forceLoggedOutLanding?.();
-      app.showAuthModal?.();
-      return;
-    }
+  const actionableSelector = 'button, input, textarea, select, a, [role="button"], .placeholder-item, .card, .saved-list-item, .recipe-list-item, .shopping-item, .list-item, .detail-listing-item, .planner-slot-card, .planner-day-detail-shell, .planner-slot-grid, .action-card, .module-actions-footer, .module-detail-actions, .planner-meal-item, .planner-slot-direct-btn, .planner-custom-meal-launch';
 
-    try {
-      const me = await apiFetchJson('/api/auth/me');
-      applySession(me);
-      await loadServerState();
-      app.enterAppMode?.();
-    } catch (_error) {
-      app.forceLoggedOutLanding?.();
-      app.showAuthModal?.();
-    }
-  };
-
-  app.restoreBackendSession = async function() {
-    const token = getAuthToken();
-    if (!token) {
-      app.forceLoggedOutLanding?.();
-      return;
-    }
-
-    try {
-      const me = await apiFetchJson('/api/auth/me');
-      applySession(me);
-      await loadServerState();
-    } catch (_error) {
-      app.forceLoggedOutLanding?.();
-    }
-  };
-
-  app.handleRealSubscription = async function(planId) {
-    if (planId !== PREMIUM_PLAN) return;
-    if (!getAuthToken()) {
-      app.showAuthModal?.();
-      return;
-    }
-    const checkoutUrl = app.lastCheckoutUrl || app.checkoutLinks?.premium || '';
-    if (!checkoutUrl) {
-      app.showNotification?.('Link do Mercado Pago não encontrado.', 'error');
-      return;
-    }
-    window.location.href = checkoutUrl;
-  };
-
-  app.tryConfirmPremiumAfterReturn = async function({ silent = false } = {}) {
-    const token = getAuthToken();
-    if (!token) return false;
-
-    const params = new URLSearchParams(window.location.search);
-    const preapprovalId =
-      params.get('preapproval_id') ||
-      params.get('preapprovalId') ||
-      params.get('subscription_id') ||
-      params.get('subscriptionId') ||
-      '';
-    const cameBack = params.get('mp_checkout') === 'success' || Boolean(preapprovalId);
-    if (!cameBack) return false;
-
-    try {
-      const data = await apiFetchJson('/api/billing/confirm-premium', {
-        method: 'POST',
-        body: JSON.stringify({ preapprovalId })
-      });
-      setAuthSession(data.token || token, data.user);
-      applySession(data);
-      await loadServerState();
-      const cleanUrl = `${window.location.origin}${window.location.pathname}`;
-      window.history.replaceState({}, document.title, cleanUrl);
-      if (!silent) app.showNotification?.('Pagamento confirmado. Premium liberado com sucesso.', 'success');
-      return true;
-    } catch (error) {
-      if (!silent) app.showNotification?.(error?.payload?.message || error.message || 'Ainda estamos aguardando a confirmação do Mercado Pago.', 'info');
-      return false;
-    }
-  };
-
-  const allowedBasicTargets = [
-    '.nav-item',
-    '.dock-item',
-    '#menu-toggle-btn',
-    '#logout-btn',
-    '#theme-toggle-btn-panel',
-    '#home-btn-panel',
-    '.sidebar-overlay',
-    '.app-sidebar',
-    '#payment-gate-modal',
-    '#plans-modal',
-    '[data-action="subscribe"]',
-    '.close-btn',
-    '.modal-overlay'
-  ];
-
-  const actionableSelector = 'button, input, select, textarea, a, [role="button"], .placeholder-item, .card, .saved-list-item, .recipe-list-item, .planner-slot, .planner-meal-item, .shopping-item, .detail-item';
-
-  function isBasicVisualMode() {
-    return app.isLoggedIn && app.isAppMode && app.userPlan === BASIC_PLAN;
-  }
-
-  function allowedBasicTarget(target) {
-    return allowedBasicTargets.some((selector) => target.closest(selector));
-  }
-
-  document.addEventListener('click', (e) => {
-    if (!isBasicVisualMode()) return;
-    const target = e.target;
-    if (!target || !target.closest('.app-panel-container-standalone')) return;
-    if (allowedBasicTarget(target)) return;
-    if (!target.closest(actionableSelector)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
-    app.showPremiumRequiredModal?.();
-  }, true);
-
-  document.addEventListener('focusin', (e) => {
-    if (!isBasicVisualMode()) return;
-    const target = e.target;
-    if (!target || !target.closest('.app-panel-container-standalone')) return;
-    if (allowedBasicTarget(target)) return;
-    if (!target.matches('input, textarea, select')) return;
-    e.preventDefault();
-    target.blur?.();
-    app.showPremiumRequiredModal?.();
-  }, true);
-
-  document.addEventListener('input', (e) => {
-    if (!isBasicVisualMode()) return;
-    const target = e.target;
-    if (!target || !target.closest('.app-panel-container-standalone')) return;
-    if (!target.matches('input, textarea, select')) return;
-    target.value = target.defaultValue || '';
-  }, true);
-
-  const legacyRaw = localStorage.getItem(LEGACY_STATE_KEY);
-  if (legacyRaw) {
-    try {
-      const legacy = JSON.parse(legacyRaw);
-      if (!getAuthToken() || legacy?.userPlan === 'premium_ai') {
-        localStorage.removeItem(LEGACY_STATE_KEY);
-      }
-    } catch (_e) {
-      localStorage.removeItem(LEGACY_STATE_KEY);
-    }
-  }
-
-  document.querySelectorAll('.hero-signature').forEach((el) => { el.textContent = ''; });
-  resetAppData();
-  app.restoreBackendSession?.();
-  app.tryConfirmPremiumAfterReturn?.({ silent: true });
-});
-
-
-/* === FINAL PATCH | BASIC GATE + PWA + ANALYSES UX | 2026-04-13 === */
-;(() => {
-  const app = window.app;
-  if (!app) return;
-
-  const BASIC_PLAN = 'basic';
-  const PREMIUM_PLAN = 'premium';
-  const PREMIUM_GATE_COPY = 'Ative o Premium por R$ 9,90/mês, teste grátis por 7 dias e cancele quando quiser. O plano básico é somente visual.';
-
-  app.showPremiumRequiredModal = function(payload = {}) {
-    const checkoutUrl = payload.checkoutUrl || this.lastCheckoutUrl || this.checkoutLinks?.premium || '';
-    this.showPaymentGateModal?.({
-      mode: 'payment_required',
-      title: 'Teste grátis por 7 dias',
-      message: payload.message || PREMIUM_GATE_COPY,
-      checkoutUrl
-    });
-  };
-
-  const originalShowAuthModalFinal = app.showAuthModal?.bind(app);
-  if (originalShowAuthModalFinal) {
-    app.showAuthModal = function() {
-      document.getElementById('payment-gate-modal')?.remove();
-      return originalShowAuthModalFinal();
-    };
-  }
-
-  function isBasicVisualMode() {
-    return app.isLoggedIn && app.isAppMode && app.userPlan === BASIC_PLAN;
-  }
-
-  function shouldIgnoreBasicGate(target) {
-    return Boolean(
-      target.closest('.nav-item') ||
-      target.closest('.dock-item') ||
-      target.closest('#menu-toggle-btn') ||
-      target.closest('#logout-btn') ||
-      target.closest('#theme-toggle-btn-panel') ||
-      target.closest('#home-btn-panel') ||
-      target.closest('.sidebar-overlay') ||
-      target.closest('.app-sidebar') ||
-      target.closest('#payment-gate-modal') ||
-      target.closest('#plans-modal') ||
-      target.closest('#auth-modal') ||
-      target.closest('[data-modal-close]') ||
-      target.closest('.close-btn')
-    );
-  }
-
-  function shouldGateTarget(target) {
-    if (!target.closest('.app-panel-container-standalone')) return false;
-    if (shouldIgnoreBasicGate(target)) return false;
+  const targetNeedsPremiumGate = (target) => {
     if (target.closest('#module-analises')) return false;
     if (target.closest('#module-planejador')) return true;
-    return Boolean(target.closest('button, input, select, textarea, a, [role="button"], .placeholder-item, .card, .saved-list-item, .recipe-list-item, .shopping-item, .detail-item, .planner-slot, .planner-meal-item, .module-toolbar, .add-item-form-container, .card-content, .planner-day-card'));
-  }
+    const blockedModule = target.closest('#module-lista, #module-despensa, #module-receitas, #module-configuracoes');
+    if (!blockedModule) return false;
+    return Boolean(target.closest(actionableSelector));
+  };
 
-  document.addEventListener('click', (e) => {
+  const gateBasicClick = (e) => {
     if (!isBasicVisualMode()) return;
     const target = e.target;
-    if (!target || !shouldGateTarget(target)) return;
+    if (!target || !target.closest('.app-panel-container-standalone')) return;
+    if (allowedBasicTarget(target)) return;
+    if (!targetNeedsPremiumGate(target)) return;
     e.preventDefault();
     e.stopPropagation();
     if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
-    app.showPremiumRequiredModal?.();
-  }, true);
+    app.showPremiumRequiredModal();
+  };
+
+  document.addEventListener('click', gateBasicClick, true);
 
   document.addEventListener('focusin', (e) => {
     if (!isBasicVisualMode()) return;
     const target = e.target;
-    if (!target || target.closest('#module-analises')) return;
-    if (!target.closest('.app-panel-container-standalone')) return;
-    if (shouldIgnoreBasicGate(target)) return;
-    if (!target.matches('input, textarea, select')) return;
-    e.preventDefault();
+    if (!target || !target.closest('.app-panel-container-standalone')) return;
+    if (allowedBasicTarget(target)) return;
+    if (!targetNeedsPremiumGate(target)) return;
     target.blur?.();
-    app.showPremiumRequiredModal?.();
+    app.showPremiumRequiredModal();
   }, true);
 
-  const pwaToastKey = 'alimenteFacilPwaToastDismissedAt';
-  window.addEventListener('load', () => {
-    try {
-      if (window.matchMedia('(display-mode: standalone)').matches) return;
-      const dismissedAt = Number(localStorage.getItem(pwaToastKey) || 0);
-      const oneDay = 24 * 60 * 60 * 1000;
-      if (Date.now() - dismissedAt < oneDay) return;
-      setTimeout(() => {
-        app.showNotification?.('Adicione o Alimente Fácil à tela inicial para abrir mais rápido como aplicativo.', 'info');
-      }, 1800);
-    } catch (_e) {}
-  });
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.Chart) {
+      try {
+        Chart.defaults.color = '#ffffff';
+        if (Chart.defaults.plugins?.legend?.labels) Chart.defaults.plugins.legend.labels.color = '#ffffff';
+      } catch (_e) {}
+    }
 
-  document.getElementById('pwa-banner-close-btn')?.addEventListener('click', () => {
-    try { localStorage.setItem(pwaToastKey, String(Date.now())); } catch (_e) {}
+    const banner = document.getElementById('pwa-floating-banner');
+    const closeBtn = document.getElementById('pwa-banner-close-btn');
+
+    const hideBanner = () => { if (banner) banner.style.display = 'none'; };
+    const showBanner = () => {
+      if (!banner) return;
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) return;
+      if (!isMobile()) return;
+      try { if (localStorage.getItem('af_pwa_banner_dismissed') === '1') return; } catch (_e) {}
+      banner.style.display = 'flex';
+    };
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      app._deferredPwaPrompt = e;
+      showBanner();
+    });
+
+    closeBtn?.addEventListener('click', () => {
+      hideBanner();
+      try { localStorage.setItem('af_pwa_banner_dismissed', '1'); } catch (_e) {}
+    });
+
+    document.querySelectorAll('.btn-install-pwa, #pwa-install-menu').forEach((el) => {
+      el.addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (app._deferredPwaPrompt) {
+          app._deferredPwaPrompt.prompt();
+          try { await app._deferredPwaPrompt.userChoice; } catch (_e) {}
+          app._deferredPwaPrompt = null;
+          hideBanner();
+          return;
+        }
+        app.showNotification('No Chrome do celular, toque em ⋮ e depois em "Adicionar à tela inicial".', 'info');
+      });
+    });
+
+    window.addEventListener('appinstalled', hideBanner);
+    setTimeout(showBanner, 1800);
   });
 })();
