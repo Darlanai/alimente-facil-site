@@ -211,6 +211,10 @@ function subscriptionsCollection() {
   return db.collection('subscriptions');
 }
 
+function appStatesCollection() {
+  return db.collection('app_states');
+}
+
 function now() {
   return new Date();
 }
@@ -271,6 +275,7 @@ function publicSubscription(subscription) {
 async function ensureIndexes() {
   await usersCollection().createIndex({ email: 1 }, { unique: true });
   await subscriptionsCollection().createIndex({ userId: 1 }, { unique: true });
+  await appStatesCollection().createIndex({ userId: 1 }, { unique: true });
 }
 
 async function connectToMongo() {
@@ -391,6 +396,39 @@ async function buildSessionPayload(user) {
     user: sanitizeUser(user),
     subscription: publicSubscription(subscription),
     access
+  };
+}
+
+function getEmptyAppStatePayload() {
+  return {
+    listas: {},
+    despensa: [],
+    essenciais: [],
+    orcamento: { total: 500 },
+    aiUsage: {
+      tokensThisMonth: 0,
+      dailyMsgs: 0,
+      lastMsgDate: null,
+      minuteHistory: []
+    },
+    receitas: {},
+    planejador: {}
+  };
+}
+
+function sanitizeIncomingAppState(input) {
+  const source = input && typeof input === 'object' ? input : {};
+  const fallback = getEmptyAppStatePayload();
+  return {
+    listas: source.listas && typeof source.listas === 'object' ? source.listas : fallback.listas,
+    despensa: Array.isArray(source.despensa) ? source.despensa : fallback.despensa,
+    essenciais: Array.isArray(source.essenciais) ? source.essenciais : fallback.essenciais,
+    orcamento: source.orcamento && typeof source.orcamento === 'object'
+      ? { total: Number(source.orcamento.total || 500) }
+      : fallback.orcamento,
+    aiUsage: source.aiUsage && typeof source.aiUsage === 'object' ? source.aiUsage : fallback.aiUsage,
+    receitas: source.receitas && typeof source.receitas === 'object' ? source.receitas : fallback.receitas,
+    planejador: source.planejador && typeof source.planejador === 'object' ? source.planejador : fallback.planejador
   };
 }
 
@@ -634,58 +672,45 @@ app.get('/api/billing/checkout-link', (_req, res) => {
  */
 app.post('/api/billing/confirm-premium', authMiddleware, async (req, res) => {
   try {
-    const userId = new ObjectId(req.auth.sub);
-    const preapprovalId = String(req.body?.preapprovalId || extractMercadoPagoSubscriptionId(req) || '').trim();
-    const currentDate = now();
-
-    const current = await subscriptionsCollection().findOne({ userId });
-    if (!current) {
-      return res.status(404).json({ ok: false, message: 'Assinatura não encontrada.' });
+    if (!MP_ACCESS_TOKEN) {
+      return res.status(500).json({
+        ok: false,
+        message: 'A confirmação automática do Premium ainda não foi configurada. Preencha MP_ACCESS_TOKEN no ambiente.'
+      });
     }
 
-    if (preapprovalId) {
-      await subscriptionsCollection().updateOne(
-        { userId },
-        {
-          $set: {
-            plan: 'premium',
-            mercadopagoSubscriptionId: preapprovalId,
-            updatedAt: currentDate
-          }
-        }
-      );
+    const userId = new ObjectId(req.auth.sub);
+    const preapprovalId = String(req.body?.preapprovalId || extractMercadoPagoSubscriptionId(req) || '').trim();
 
-      if (MP_ACCESS_TOKEN) {
-        await syncSubscriptionFromMercadoPago(userId, preapprovalId);
-      } else {
-        await subscriptionsCollection().updateOne(
-          { userId },
-          {
-            $set: {
-              plan: 'premium',
-              status: 'trialing',
-              trialStart: currentDate,
-              trialEnd: addDays(currentDate, TRIAL_DAYS),
-              updatedAt: currentDate
-            }
-          }
-        );
-      }
-    } else if (String(current.plan || '').toLowerCase() !== 'premium') {
+    if (!preapprovalId) {
       return res.status(400).json({
         ok: false,
         message: 'Não foi possível confirmar o Premium porque o identificador da assinatura do Mercado Pago não foi enviado.'
       });
     }
 
+    const current = await subscriptionsCollection().findOne({ userId });
+    if (!current) {
+      return res.status(404).json({ ok: false, message: 'Assinatura não encontrada.' });
+    }
+
+    const synced = await syncSubscriptionFromMercadoPago(userId, preapprovalId);
     const user = await usersCollection().findOne({ _id: userId });
     const session = await buildSessionPayload(user);
 
+    if (!session.access.canPerformActions) {
+      return res.status(409).json({
+        ok: false,
+        message: 'Ainda estamos aguardando a confirmação final do Mercado Pago. Assim que a assinatura for autorizada, o Premium será liberado.',
+        checkoutUrl: PREMIUM_CHECKOUT_URL,
+        subscription: publicSubscription(synced || current),
+        access: session.access
+      });
+    }
+
     return res.json({
       ok: true,
-      message: session.access.canPerformActions
-        ? 'Premium ativado com sucesso.'
-        : 'A assinatura foi registrada, mas ainda estamos aguardando a confirmação final do Mercado Pago.',
+      message: 'Premium ativado com sucesso.',
       checkoutUrl: PREMIUM_CHECKOUT_URL,
       token: signAuthToken(user),
       ...session
@@ -698,47 +723,11 @@ app.post('/api/billing/confirm-premium', authMiddleware, async (req, res) => {
   }
 });
 
-app.post('/api/billing/activate-trial', authMiddleware, async (req, res) => {
-  try {
-    const userId = new ObjectId(req.auth.sub);
-    const subscription = await subscriptionsCollection().findOne({ userId });
-
-    if (!subscription) {
-      return res.status(404).json({ ok: false, message: 'Assinatura não encontrada.' });
-    }
-
-    const currentDate = now();
-    const trialStart = currentDate;
-    const trialEnd = addDays(currentDate, TRIAL_DAYS);
-
-    await subscriptionsCollection().updateOne(
-      { _id: subscription._id },
-      {
-        $set: {
-          plan: 'premium',
-          status: 'trialing',
-          trialStart,
-          trialEnd,
-          updatedAt: currentDate
-        }
-      }
-    );
-
-    const user = await usersCollection().findOne({ _id: userId });
-    const session = await buildSessionPayload(user);
-
-    return res.json({
-      ok: true,
-      message: 'Teste grátis ativado.',
-      ...session
-    });
-  } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      message: 'Não foi possível ativar o teste grátis.',
-      error: error.message
-    });
-  }
+app.post('/api/billing/activate-trial', authMiddleware, async (_req, res) => {
+  return res.status(410).json({
+    ok: false,
+    message: 'Essa rota de teste foi desativada. O Premium só é liberado após confirmação real do Mercado Pago.'
+  });
 });
 
 
@@ -757,6 +746,80 @@ app.post('/api/auth/finalize-pending', async (req, res) => {
       ok: false,
       message: error.message || 'Ainda estamos aguardando a confirmação do Mercado Pago.',
       ...(error.payload || {})
+    });
+  }
+});
+
+app.get('/api/app-state', authMiddleware, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.auth.sub);
+    const user = await usersCollection().findOne({ _id: userId });
+    if (!user) return res.status(404).json({ ok: false, message: 'Usuário não encontrado.' });
+
+    const session = await buildSessionPayload(user);
+    const saved = await appStatesCollection().findOne({ userId });
+    return res.json({
+      ok: true,
+      appState: sanitizeIncomingAppState(saved?.state || getEmptyAppStatePayload()),
+      activeModule: saved?.activeModule || 'inicio',
+      activeListId: saved?.activeListId || 'listaDaSemana',
+      access: session.access,
+      subscription: session.subscription
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: 'Não foi possível carregar os dados do painel.',
+      error: error.message
+    });
+  }
+});
+
+app.put('/api/app-state', authMiddleware, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.auth.sub);
+    const user = await usersCollection().findOne({ _id: userId });
+    if (!user) return res.status(404).json({ ok: false, message: 'Usuário não encontrado.' });
+
+    const session = await buildSessionPayload(user);
+    if (!session.access.canPerformActions) {
+      return res.status(403).json({
+        ok: false,
+        message: 'Seu plano atual não permite salvar alterações. Assine o Premium para liberar o uso completo.',
+        requiresPayment: true,
+        checkoutUrl: PREMIUM_CHECKOUT_URL,
+        access: session.access
+      });
+    }
+
+    const sanitizedState = sanitizeIncomingAppState(req.body?.state);
+    const activeModule = String(req.body?.activeModule || 'inicio').trim() || 'inicio';
+    const activeListId = String(req.body?.activeListId || 'listaDaSemana').trim() || 'listaDaSemana';
+    const currentDate = now();
+
+    await appStatesCollection().updateOne(
+      { userId },
+      {
+        $set: {
+          userId,
+          state: sanitizedState,
+          activeModule,
+          activeListId,
+          updatedAt: currentDate
+        },
+        $setOnInsert: {
+          createdAt: currentDate
+        }
+      },
+      { upsert: true }
+    );
+
+    return res.json({ ok: true, message: 'Dados salvos com sucesso.' });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: 'Não foi possível salvar os dados do painel.',
+      error: error.message
     });
   }
 });

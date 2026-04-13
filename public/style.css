@@ -8488,3 +8488,10 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
 
 .terms-check a { color: var(--primary-color); text-decoration: underline; }
 .terms-check input[type='checkbox'] { transform: translateY(2px); }
+
+
+/* === ALIMENTE FÁCIL | AJUSTES PROFISSIONAIS FINAIS === */
+.hero-clean-layout .hero-signature{ display:none !important; }
+.hero-clean-layout .simple-subtitle{ max-width: 720px; color: rgba(255,255,255,.86) !important; }
+.hero-clean-layout .hero-pricing-note{ background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; padding: 0 !important; color: rgba(255,255,255,.88) !important; }
+.hero-clean-layout .hero-tagline{ letter-spacing: .02em !important; }

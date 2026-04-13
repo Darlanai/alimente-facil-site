@@ -12674,3 +12674,411 @@ window.app = app;
     await app.tryConfirmPremiumAfterReturn?.({ silent: false });
   });
 })();
+
+/* === ALIMENTE FÁCIL | PATCH FINAL AUTH + PREMIUM REAL | 2026-04-13 === */
+document.addEventListener('DOMContentLoaded', () => {
+  const app = window.app;
+  if (!app) return;
+
+  const AUTH_TOKEN_KEY = 'alimenteFacilAuthToken';
+  const AUTH_USER_KEY = 'alimenteFacilAuthUser';
+  const LEGACY_STATE_KEY = 'alimenteFacilState_vFinal';
+  const PREMIUM_PLAN = 'premium';
+  const BASIC_PLAN = 'basic';
+
+  function emptyDataState() {
+    return {
+      user: { nome: null, email: '', id: '' },
+      listas: {},
+      despensa: [],
+      essenciais: [],
+      orcamento: { total: 500.0 },
+      aiUsage: {
+        tokensThisMonth: 0,
+        dailyMsgs: 0,
+        lastMsgDate: null,
+        minuteHistory: []
+      },
+      receitas: {},
+      planejador: {}
+    };
+  }
+
+  function getAuthToken() {
+    return localStorage.getItem(AUTH_TOKEN_KEY) || '';
+  }
+
+  function setAuthSession(token, user) {
+    if (!token) return;
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user || {}));
+  }
+
+  function clearAuthSession() {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
+  }
+
+  async function apiFetchJson(url, options = {}) {
+    const headers = new Headers(options.headers || {});
+    const token = getAuthToken();
+    if (token && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`);
+    if (!headers.has('Content-Type') && options.body) headers.set('Content-Type', 'application/json');
+    const response = await fetch(url, { ...options, headers });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error(payload?.message || 'Falha na comunicação com o servidor.');
+      error.payload = payload;
+      error.status = response.status;
+      throw error;
+    }
+    return payload;
+  }
+
+  function resetAppData() {
+    const newState = emptyDataState();
+    app.state = JSON.parse(JSON.stringify(newState));
+    app.defaultState = JSON.parse(JSON.stringify(newState));
+    app.activeListId = 'listaDaSemana';
+    app.activeModule = 'inicio';
+    app.userPlan = 'free';
+    app.isLoggedIn = false;
+    app.isAppMode = false;
+    try { localStorage.removeItem(LEGACY_STATE_KEY); } catch (_e) {}
+  }
+
+  function syncUserInDom() {
+    const name = app.state?.user?.nome || '';
+    const email = app.state?.user?.email || '';
+    document.querySelectorAll('#profile-name, [data-user-name]').forEach((el) => { el.textContent = name; });
+    document.querySelectorAll('#profile-email, [data-user-email]').forEach((el) => { el.textContent = email; });
+  }
+
+  function applySession(sessionData) {
+    const user = sessionData?.user || {};
+    const access = sessionData?.access || {};
+    const subscription = sessionData?.subscription || {};
+    app.isLoggedIn = true;
+    app.userPlan = access?.canPerformActions ? PREMIUM_PLAN : BASIC_PLAN;
+    app.lastCheckoutUrl = subscription?.checkoutUrl || app.checkoutLinks?.premium || '';
+    app.state = app.state && typeof app.state === 'object' ? app.state : emptyDataState();
+    app.state.user = {
+      nome: user.name || user.nome || '',
+      email: user.email || '',
+      id: user.id || ''
+    };
+    app.updateStartButton?.();
+    syncUserInDom();
+  }
+
+  async function loadServerState() {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const me = await apiFetchJson('/api/auth/me');
+      applySession(me);
+      const panelState = await apiFetchJson('/api/app-state');
+      const incoming = panelState?.appState || {};
+      app.state = {
+        ...emptyDataState(),
+        ...incoming,
+        user: {
+          nome: me?.user?.name || '',
+          email: me?.user?.email || '',
+          id: me?.user?.id || ''
+        }
+      };
+      app.activeModule = panelState?.activeModule || 'inicio';
+      app.activeListId = panelState?.activeListId || 'listaDaSemana';
+      if (app.isAppMode) {
+        app.activateModuleUI?.(app.activeModule);
+        app.renderAllPanelContent?.();
+      }
+      syncUserInDom();
+    } catch (_error) {
+      clearAuthSession();
+      resetAppData();
+      app.updateStartButton?.();
+    }
+  }
+
+  let saveTimer = null;
+  async function pushStateToServer() {
+    if (!app.isLoggedIn || app.userPlan !== PREMIUM_PLAN) return;
+    try {
+      await apiFetchJson('/api/app-state', {
+        method: 'PUT',
+        body: JSON.stringify({
+          state: {
+            listas: app.state?.listas || {},
+            despensa: app.state?.despensa || [],
+            essenciais: app.state?.essenciais || [],
+            orcamento: app.state?.orcamento || { total: 500 },
+            aiUsage: app.state?.aiUsage || { tokensThisMonth: 0, dailyMsgs: 0, lastMsgDate: null, minuteHistory: [] },
+            receitas: app.state?.receitas || {},
+            planejador: app.state?.planejador || {}
+          },
+          activeModule: app.activeModule || 'inicio',
+          activeListId: app.activeListId || 'listaDaSemana'
+        })
+      });
+    } catch (_error) {}
+  }
+
+  const originalSaveState = app.saveState?.bind(app);
+  app.saveState = function() {
+    if (originalSaveState) originalSaveState();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { pushStateToServer(); }, 500);
+  };
+
+  app.apiFetchJson = apiFetchJson;
+  app.getStoredAuthToken = getAuthToken;
+  app.setStoredAuthSession = setAuthSession;
+  app.clearStoredAuthSession = clearAuthSession;
+
+  app.forceLoggedOutLanding = function() {
+    clearAuthSession();
+    resetAppData();
+    app.closeAllModals?.();
+    app.updateStartButton?.();
+    if (app.isAppMode) app.exitAppMode?.();
+    syncUserInDom();
+  };
+
+  app.showPremiumRequiredModal = function(payload = {}) {
+    const checkoutUrl = payload.checkoutUrl || app.lastCheckoutUrl || app.checkoutLinks?.premium || '';
+    app.showPaymentGateModal?.({
+      mode: 'payment_required',
+      title: 'Assine o Premium',
+      message: 'Para usar listas, despensa, receitas, planejador, análises, preenchimento de campos, IA e salvamento, assine o Premium por R$ 9,90/mês. O acesso completo só é liberado após a confirmação real do Mercado Pago.',
+      checkoutUrl
+    });
+  };
+
+  app.handleSignup = async function() {
+    const name = String(document.getElementById('signup-name')?.value || '').trim();
+    const email = String(document.getElementById('signup-email')?.value || '').trim();
+    const password = String(document.getElementById('signup-password')?.value || '');
+    const acceptedTerms = Boolean(document.getElementById('signup-terms')?.checked);
+
+    if (!name || !email || !password) {
+      app.showNotification?.('Preencha nome, e-mail e senha.', 'error');
+      return;
+    }
+    if (!acceptedTerms) {
+      app.showNotification?.('Você precisa aceitar os Termos de Uso e a Política de Privacidade.', 'error');
+      return;
+    }
+
+    try {
+      const data = await apiFetchJson('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password, acceptedTerms })
+      });
+      setAuthSession(data.token, data.user);
+      resetAppData();
+      applySession(data);
+      app.closeAllModals?.();
+      app.enterAppMode?.();
+      app.activateModuleUI?.('inicio');
+      app.renderAllPanelContent?.();
+      app.showNotification?.('Cadastro concluído. O painel está em modo visual até a confirmação do pagamento.', 'success');
+    } catch (error) {
+      app.showNotification?.(error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.', 'error');
+    }
+  };
+
+  app.handleLogin = async function() {
+    const email = String(document.getElementById('login-email')?.value || '').trim();
+    const password = String(document.getElementById('login-password')?.value || '');
+    if (!email || !password) {
+      app.showNotification?.('Informe e-mail e senha.', 'error');
+      return;
+    }
+
+    try {
+      const data = await apiFetchJson('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+      setAuthSession(data.token, data.user);
+      resetAppData();
+      applySession(data);
+      await loadServerState();
+      app.closeAllModals?.();
+      app.enterAppMode?.();
+      app.showNotification?.(app.userPlan === PREMIUM_PLAN ? 'Login premium realizado com sucesso.' : 'Login realizado. Seu acesso ainda depende da confirmação do pagamento.', 'success');
+    } catch (error) {
+      app.showNotification?.(error?.payload?.message || error.message || 'E-mail ou senha inválidos.', 'error');
+    }
+  };
+
+  app.handleLogout = async function() {
+    app.forceLoggedOutLanding?.();
+    app.showNotification?.('Você saiu da sua conta.', 'info');
+  };
+
+  app.handleStartButtonClick = function() {
+    if (!getAuthToken()) {
+      app.showAuthModal?.();
+      return;
+    }
+    app.checkAccessAndEnter?.();
+  };
+
+  app.checkAccessAndEnter = async function() {
+    const token = getAuthToken();
+    if (!token) {
+      app.forceLoggedOutLanding?.();
+      app.showAuthModal?.();
+      return;
+    }
+
+    try {
+      const me = await apiFetchJson('/api/auth/me');
+      applySession(me);
+      await loadServerState();
+      app.enterAppMode?.();
+    } catch (_error) {
+      app.forceLoggedOutLanding?.();
+      app.showAuthModal?.();
+    }
+  };
+
+  app.restoreBackendSession = async function() {
+    const token = getAuthToken();
+    if (!token) {
+      app.forceLoggedOutLanding?.();
+      return;
+    }
+
+    try {
+      const me = await apiFetchJson('/api/auth/me');
+      applySession(me);
+      await loadServerState();
+    } catch (_error) {
+      app.forceLoggedOutLanding?.();
+    }
+  };
+
+  app.handleRealSubscription = async function(planId) {
+    if (planId !== PREMIUM_PLAN) return;
+    if (!getAuthToken()) {
+      app.showAuthModal?.();
+      return;
+    }
+    const checkoutUrl = app.lastCheckoutUrl || app.checkoutLinks?.premium || '';
+    if (!checkoutUrl) {
+      app.showNotification?.('Link do Mercado Pago não encontrado.', 'error');
+      return;
+    }
+    window.location.href = checkoutUrl;
+  };
+
+  app.tryConfirmPremiumAfterReturn = async function({ silent = false } = {}) {
+    const token = getAuthToken();
+    if (!token) return false;
+
+    const params = new URLSearchParams(window.location.search);
+    const preapprovalId =
+      params.get('preapproval_id') ||
+      params.get('preapprovalId') ||
+      params.get('subscription_id') ||
+      params.get('subscriptionId') ||
+      '';
+    const cameBack = params.get('mp_checkout') === 'success' || Boolean(preapprovalId);
+    if (!cameBack) return false;
+
+    try {
+      const data = await apiFetchJson('/api/billing/confirm-premium', {
+        method: 'POST',
+        body: JSON.stringify({ preapprovalId })
+      });
+      setAuthSession(data.token || token, data.user);
+      applySession(data);
+      await loadServerState();
+      const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+      window.history.replaceState({}, document.title, cleanUrl);
+      if (!silent) app.showNotification?.('Pagamento confirmado. Premium liberado com sucesso.', 'success');
+      return true;
+    } catch (error) {
+      if (!silent) app.showNotification?.(error?.payload?.message || error.message || 'Ainda estamos aguardando a confirmação do Mercado Pago.', 'info');
+      return false;
+    }
+  };
+
+  const allowedBasicTargets = [
+    '.nav-item',
+    '.dock-item',
+    '#menu-toggle-btn',
+    '#logout-btn',
+    '#theme-toggle-btn-panel',
+    '#home-btn-panel',
+    '.sidebar-overlay',
+    '.app-sidebar',
+    '#payment-gate-modal',
+    '#plans-modal',
+    '[data-action="subscribe"]',
+    '.close-btn',
+    '.modal-overlay'
+  ];
+
+  const actionableSelector = 'button, input, select, textarea, a, [role="button"], .placeholder-item, .card, .saved-list-item, .recipe-list-item, .planner-slot, .planner-meal-item, .shopping-item, .detail-item';
+
+  function isBasicVisualMode() {
+    return app.isLoggedIn && app.isAppMode && app.userPlan === BASIC_PLAN;
+  }
+
+  function allowedBasicTarget(target) {
+    return allowedBasicTargets.some((selector) => target.closest(selector));
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!isBasicVisualMode()) return;
+    const target = e.target;
+    if (!target || !target.closest('.app-panel-container-standalone')) return;
+    if (allowedBasicTarget(target)) return;
+    if (!target.closest(actionableSelector)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+    app.showPremiumRequiredModal?.();
+  }, true);
+
+  document.addEventListener('focusin', (e) => {
+    if (!isBasicVisualMode()) return;
+    const target = e.target;
+    if (!target || !target.closest('.app-panel-container-standalone')) return;
+    if (allowedBasicTarget(target)) return;
+    if (!target.matches('input, textarea, select')) return;
+    e.preventDefault();
+    target.blur?.();
+    app.showPremiumRequiredModal?.();
+  }, true);
+
+  document.addEventListener('input', (e) => {
+    if (!isBasicVisualMode()) return;
+    const target = e.target;
+    if (!target || !target.closest('.app-panel-container-standalone')) return;
+    if (!target.matches('input, textarea, select')) return;
+    target.value = target.defaultValue || '';
+  }, true);
+
+  const legacyRaw = localStorage.getItem(LEGACY_STATE_KEY);
+  if (legacyRaw) {
+    try {
+      const legacy = JSON.parse(legacyRaw);
+      if (!getAuthToken() || legacy?.userPlan === 'premium_ai') {
+        localStorage.removeItem(LEGACY_STATE_KEY);
+      }
+    } catch (_e) {
+      localStorage.removeItem(LEGACY_STATE_KEY);
+    }
+  }
+
+  document.querySelectorAll('.hero-signature').forEach((el) => { el.textContent = ''; });
+  resetAppData();
+  app.restoreBackendSession?.();
+  app.tryConfirmPremiumAfterReturn?.({ silent: true });
+});
