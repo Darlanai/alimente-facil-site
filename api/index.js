@@ -35,10 +35,18 @@ let db = null;
 
 let mongoReadyPromise = null;
 
-function ensureMongoConnection() {
-  if (db) return Promise.resolve();
-  if (!mongoReadyPromise) mongoReadyPromise = connectToMongo();
-  return mongoReadyPromise;
+async function ensureMongoConnection() {
+  if (db) return db;
+  if (!mongoReadyPromise) {
+    mongoReadyPromise = connectToMongo().catch((error) => {
+      mongoReadyPromise = null;
+      db = null;
+      mongoClient = null;
+      throw error;
+    });
+  }
+  await mongoReadyPromise;
+  return db;
 }
 
 function subscriptionsFilterByUserId(userId) {
@@ -275,9 +283,17 @@ async function ensureIndexes() {
 
 async function connectToMongo() {
   if (!MONGODB_URI) throw new Error('MONGODB_URI não configurada no .env');
-  mongoClient = new MongoClient(MONGODB_URI);
-  await mongoClient.connect();
-  db = mongoClient.db('alimente_facil');
+
+  const client = new MongoClient(MONGODB_URI, {
+    maxPoolSize: 5,
+    minPoolSize: 0,
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 20000
+  });
+
+  await client.connect();
+  db = client.db('alimente_facil');
+  mongoClient = client;
   await ensureIndexes();
   console.log('✅ Conectado ao MongoDB Atlas');
 }
@@ -411,14 +427,33 @@ function authMiddleware(req, res, next) {
 
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(async (_req, _res, next) => {
+
+function requestNeedsDatabase(req) {
+  const routeKey = `${req.method.toUpperCase()} ${req.path}`;
+
+  return (
+    routeKey === 'GET /api/db-test' ||
+    routeKey === 'POST /api/auth/register' ||
+    routeKey === 'POST /api/auth/cancel-pending' ||
+    routeKey === 'POST /api/auth/login' ||
+    routeKey === 'GET /api/auth/me' ||
+    routeKey === 'GET /api/access-status' ||
+    routeKey === 'POST /api/billing/confirm-premium' ||
+    routeKey === 'POST /api/auth/finalize-pending' ||
+    req.path === '/api/mercadopago/webhook'
+  );
+}
+
+app.use(async (req, _res, next) => {
   try {
+    if (!requestNeedsDatabase(req)) return next();
     await ensureMongoConnection();
     next();
   } catch (error) {
     next(error);
   }
 });
+
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/api/health', (_req, res) => {
@@ -508,13 +543,6 @@ app.post('/api/auth/register', async (req, res) => {
       ...session
     });
   } catch (error) {
-    if (error?.code === 11000) {
-      return res.status(409).json({
-        ok: false,
-        message: 'Já existe uma conta com esse e-mail.'
-      });
-    }
-
     return res.status(500).json({
       ok: false,
       message: 'Não foi possível concluir o cadastro agora.',
@@ -820,6 +848,18 @@ app.post('/api/chef', async (req, res) => {
 
 app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
+app.use((error, _req, res, _next) => {
+  console.error('❌ Erro no servidor:', error);
+  if (res.headersSent) return;
+
+  const status = Number(error?.statusCode || 500);
+  res.status(status).json({
+    ok: false,
+    message: error?.message || 'Erro interno do servidor.',
+    code: error?.code || 'SERVER_ERROR'
+  });
 });
 
 if (require.main === module) {
