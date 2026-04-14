@@ -2611,48 +2611,316 @@ renderOrcamento() {
              if (window.innerWidth >= 992) this.renderConfigDetailDesktop('perfil');
         },
 
-        renderConfigDetailDesktop(section = 'perfil') {
-             const container = document.getElementById('config-detail-desktop');
-             if (!container) return;
-             let title = 'Configurações';
-             let content = '';
-             let footer = '';
-             if (section === 'perfil') {
-                 title = 'Perfil';
-                 content = `<div class="detail-stack"><div class="form-group"><label for="config-name">Nome</label><input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}"></div><div class="form-group"><label for="config-email">Email</label><input type="text" id="config-email" value="${this.escapeHtml(this.state.user.email || "")}" disabled></div><p class="detail-note">Mantenha os dados básicos consistentes para reforçar a sensação de produto confiável.</p></div>`;
-                 footer = `<button class="btn btn-primary">Salvar alterações</button>`;
-             } else if (section === 'notificacoes') {
-                 title = 'Notificações';
-                 content = `<div class="detail-stack"><div class="form-group inline"><label for="notif-validade">Notificar sobre validade</label><label class="toggle-switch"><input type="checkbox" id="notif-validade" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-ia">Sugestões rápidas</label><label class="toggle-switch"><input type="checkbox" id="notif-ia" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-email">Notificações por e-mail</label><label class="toggle-switch"><input type="checkbox" id="notif-email"><span class="toggle-slider"></span></label></div></div>`;
-                 footer = `<button class="btn btn-primary">Salvar preferências</button>`;
-             } else {
-                 title = 'Gerenciamento de Dados';
-                 content = `<div class="detail-stack"><div class="detail-listing-item"><div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div><button class="btn btn-secondary">Exportar</button></div><div class="detail-listing-item"><div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div><button class="btn btn-danger" id="config-delete-account-btn">Apagar conta</button></div></div>`;
-             }
-             container.innerHTML = `<div class="card-header"><h3><i class="fa-solid fa-sliders"></i> ${title}</h3></div><div class="card-content">${content}</div><div class="card-footer">${footer}</div>`;
-             container.querySelector('#config-delete-account-btn')?.addEventListener('click', () => { this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => { this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.'); this.handleLogout(); }); });
-        },
+renderConfigDetailDesktop(section = 'perfil') {
+  const container = document.getElementById('config-detail-desktop');
+  if (!container) return;
+  let title = 'Configurações';
+  let content = '';
+  let footer = '';
 
-        openConfigSectionModal(section = 'perfil') {
-             let title = 'Configurações';
-             let content = '';
-             let actions = [{ label: 'Fechar', className: 'btn-secondary', onClick: () => this.closeModal('detail-modal') }];
-             if (section === 'perfil') {
-                 title = 'Perfil';
-                 content = `<div class="detail-stack"><div class="form-group"><label for="config-name-modal">Nome</label><input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}"></div><div class="form-group"><label for="config-email-modal">Email</label><input type="text" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || "")}" disabled></div></div>`;
-                 actions.unshift({ label: 'Salvar alterações', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
-             } else if (section === 'notificacoes') {
-                 title = 'Notificações';
-                 content = `<div class="detail-stack"><div class="form-group inline"><label for="notif-validade-modal">Notificar sobre validade</label><label class="toggle-switch"><input type="checkbox" id="notif-validade-modal" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-ia-modal">Sugestões rápidas</label><label class="toggle-switch"><input type="checkbox" id="notif-ia-modal" checked><span class="toggle-slider"></span></label></div><div class="form-group inline"><label for="notif-email-modal">Notificações por e-mail</label><label class="toggle-switch"><input type="checkbox" id="notif-email-modal"><span class="toggle-slider"></span></label></div></div>`;
-                 actions.unshift({ label: 'Salvar preferências', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
-             } else {
-                 title = 'Gerenciamento de Dados';
-                 content = `<div class="detail-stack"><div class="detail-listing-item"><div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div><button class="btn btn-secondary">Exportar</button></div><div class="detail-listing-item"><div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div><button class="btn btn-danger" id="config-delete-account-btn-modal">Apagar conta</button></div></div>`;
-             }
-             this.openDetailModal({ title: `<i class="fa-solid fa-sliders"></i> ${title}`, content, actions });
-             document.getElementById('config-delete-account-btn-modal')?.addEventListener('click', () => { this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => { this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.'); this.handleLogout(); }); });
-        },
+  if (section === 'perfil') {
+    title = 'Perfil';
+    content = `
+      <div class="detail-stack">
+        <div class="form-group">
+          <label for="config-name">Nome</label>
+          <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}">
+        </div>
+        <div class="form-group">
+          <label for="config-email">Email</label>
+          <input type="text" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" disabled>
+        </div>
 
+        <hr class="divider" />
+
+        <h4 style="margin: 0.5rem 0 0.25rem;">Alterar Senha</h4>
+        <div class="form-group">
+          <label for="config-current-password">Senha Atual</label>
+          <input type="password" id="config-current-password" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label for="config-new-password">Nova Senha</label>
+          <input type="password" id="config-new-password" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="form-group">
+          <label for="config-confirm-password">Confirmar Nova Senha</label>
+          <input type="password" id="config-confirm-password" placeholder="Repita a nova senha">
+        </div>
+        <p class="detail-note" id="config-password-feedback" style="display: none;"></p>
+        <p class="detail-note">Mantenha os dados básicos consistentes para reforçar a sensação de produto confiável.</p>
+      </div>
+    `;
+    footer = `<button class="btn btn-primary" id="config-save-profile-btn">Salvar alterações</button>`;
+  } else if (section === 'notificacoes') {
+    title = 'Notificações';
+    content = `
+      <div class="detail-stack">
+        <div class="form-group inline">
+          <label for="notif-validade">Notificar sobre validade</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-validade" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="form-group inline">
+          <label for="notif-ia">Sugestões rápidas</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-ia" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="form-group inline">
+          <label for="notif-email">Notificações por e-mail</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-email"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    `;
+    footer = `<button class="btn btn-primary">Salvar preferências</button>`;
+  } else {
+    title = 'Gerenciamento de Dados';
+    content = `
+      <div class="detail-stack">
+        <div class="detail-listing-item">
+          <div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div>
+          <button class="btn btn-secondary">Exportar</button>
+        </div>
+        <div class="detail-listing-item">
+          <div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div>
+          <button class="btn btn-danger" id="config-delete-account-btn">Apagar conta</button>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <div class="card-header"><h3><i class="fa-solid fa-sliders"></i> ${title}</h3></div>
+    <div class="card-content">${content}</div>
+    <div class="card-footer">${footer}</div>
+  `;
+
+  // Listener para salvar perfil (incluindo senha)
+  if (section === 'perfil') {
+    const saveBtn = container.querySelector('#config-save-profile-btn');
+    saveBtn?.addEventListener('click', async () => {
+      const newName = container.querySelector('#config-name')?.value.trim();
+      const currentPassword = container.querySelector('#config-current-password')?.value;
+      const newPassword = container.querySelector('#config-new-password')?.value;
+      const confirmPassword = container.querySelector('#config-confirm-password')?.value;
+      const feedbackEl = container.querySelector('#config-password-feedback');
+
+      // Atualizar nome se necessário (opcional – sem backend por enquanto)
+      if (newName && newName !== this.state.user.nome) {
+        // Poderia chamar uma API de update profile futuramente
+        this.state.user.nome = newName;
+        this.saveState();
+        this.showNotification('Nome atualizado.', 'success');
+      }
+
+      // Se algum campo de senha foi preenchido, valida e envia
+      if (currentPassword || newPassword || confirmPassword) {
+        if (newPassword !== confirmPassword) {
+          if (feedbackEl) {
+            feedbackEl.style.display = 'block';
+            feedbackEl.textContent = 'As senhas não coincidem.';
+            feedbackEl.style.color = 'var(--red)';
+          }
+          this.showNotification('As senhas não coincidem.', 'error');
+          return;
+        }
+        if (newPassword.length < 6) {
+          if (feedbackEl) {
+            feedbackEl.style.display = 'block';
+            feedbackEl.textContent = 'A nova senha deve ter pelo menos 6 caracteres.';
+            feedbackEl.style.color = 'var(--red)';
+          }
+          this.showNotification('A nova senha deve ter pelo menos 6 caracteres.', 'error');
+          return;
+        }
+
+        try {
+          const token = this.getStoredAuthToken();
+          const response = await this.apiFetchJson('/api/auth/change-password', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ currentPassword, newPassword })
+          });
+
+          if (feedbackEl) {
+            feedbackEl.style.display = 'block';
+            feedbackEl.textContent = response.message || 'Senha alterada com sucesso!';
+            feedbackEl.style.color = 'var(--green)';
+          }
+          this.showNotification(response.message || 'Senha alterada com sucesso!', 'success');
+
+          // Limpa os campos de senha
+          container.querySelector('#config-current-password').value = '';
+          container.querySelector('#config-new-password').value = '';
+          container.querySelector('#config-confirm-password').value = '';
+        } catch (error) {
+          if (feedbackEl) {
+            feedbackEl.style.display = 'block';
+            feedbackEl.textContent = error.message || 'Erro ao alterar senha.';
+            feedbackEl.style.color = 'var(--red)';
+          }
+          this.showNotification(error.message || 'Erro ao alterar senha.', 'error');
+        }
+      }
+    });
+  }
+
+  // Listener para apagar conta
+  container.querySelector('#config-delete-account-btn')?.addEventListener('click', () => {
+    this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
+      this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
+      this.handleLogout();
+    });
+  });
+},
+
+openConfigSectionModal(section = 'perfil') {
+  let title = 'Configurações';
+  let content = '';
+  let actions = [{ label: 'Fechar', className: 'btn-secondary', onClick: () => this.closeModal('detail-modal') }];
+
+  if (section === 'perfil') {
+    title = 'Perfil';
+    content = `
+      <div class="detail-stack">
+        <div class="form-group">
+          <label for="config-name-modal">Nome</label>
+          <input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}">
+        </div>
+        <div class="form-group">
+          <label for="config-email-modal">Email</label>
+          <input type="text" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || '')}" disabled>
+        </div>
+
+        <hr class="divider" />
+
+        <h4 style="margin: 0.5rem 0 0.25rem;">Alterar Senha</h4>
+        <div class="form-group">
+          <label for="config-current-password-modal">Senha Atual</label>
+          <input type="password" id="config-current-password-modal" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label for="config-new-password-modal">Nova Senha</label>
+          <input type="password" id="config-new-password-modal" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="form-group">
+          <label for="config-confirm-password-modal">Confirmar Nova Senha</label>
+          <input type="password" id="config-confirm-password-modal" placeholder="Repita a nova senha">
+        </div>
+        <p class="detail-note" id="config-password-feedback-modal" style="display: none;"></p>
+      </div>
+    `;
+    actions.unshift({
+      label: 'Salvar alterações',
+      className: 'btn-primary',
+      onClick: async () => {
+        const modal = document.getElementById('detail-modal');
+        const newName = modal.querySelector('#config-name-modal')?.value.trim();
+        const currentPassword = modal.querySelector('#config-current-password-modal')?.value;
+        const newPassword = modal.querySelector('#config-new-password-modal')?.value;
+        const confirmPassword = modal.querySelector('#config-confirm-password-modal')?.value;
+        const feedbackEl = modal.querySelector('#config-password-feedback-modal');
+
+        if (newName && newName !== this.state.user.nome) {
+          this.state.user.nome = newName;
+          this.saveState();
+          this.showNotification('Nome atualizado.', 'success');
+        }
+
+        if (currentPassword || newPassword || confirmPassword) {
+          if (newPassword !== confirmPassword) {
+            if (feedbackEl) {
+              feedbackEl.style.display = 'block';
+              feedbackEl.textContent = 'As senhas não coincidem.';
+              feedbackEl.style.color = 'var(--red)';
+            }
+            this.showNotification('As senhas não coincidem.', 'error');
+            return;
+          }
+          if (newPassword.length < 6) {
+            if (feedbackEl) {
+              feedbackEl.style.display = 'block';
+              feedbackEl.textContent = 'A nova senha deve ter pelo menos 6 caracteres.';
+              feedbackEl.style.color = 'var(--red)';
+            }
+            this.showNotification('A nova senha deve ter pelo menos 6 caracteres.', 'error');
+            return;
+          }
+
+          try {
+            const token = this.getStoredAuthToken();
+            const response = await this.apiFetchJson('/api/auth/change-password', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ currentPassword, newPassword })
+            });
+
+            if (feedbackEl) {
+              feedbackEl.style.display = 'block';
+              feedbackEl.textContent = response.message || 'Senha alterada com sucesso!';
+              feedbackEl.style.color = 'var(--green)';
+            }
+            this.showNotification(response.message || 'Senha alterada com sucesso!', 'success');
+
+            modal.querySelector('#config-current-password-modal').value = '';
+            modal.querySelector('#config-new-password-modal').value = '';
+            modal.querySelector('#config-confirm-password-modal').value = '';
+          } catch (error) {
+            if (feedbackEl) {
+              feedbackEl.style.display = 'block';
+              feedbackEl.textContent = error.message || 'Erro ao alterar senha.';
+              feedbackEl.style.color = 'var(--red)';
+            }
+            this.showNotification(error.message || 'Erro ao alterar senha.', 'error');
+          }
+        }
+
+        this.closeModal('detail-modal');
+      }
+    });
+  } else if (section === 'notificacoes') {
+    title = 'Notificações';
+    content = `
+      <div class="detail-stack">
+        <div class="form-group inline">
+          <label for="notif-validade-modal">Notificar sobre validade</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-validade-modal" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="form-group inline">
+          <label for="notif-ia-modal">Sugestões rápidas</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-ia-modal" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="form-group inline">
+          <label for="notif-email-modal">Notificações por e-mail</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-email-modal"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    `;
+    actions.unshift({ label: 'Salvar preferências', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
+  } else {
+    title = 'Gerenciamento de Dados';
+    content = `
+      <div class="detail-stack">
+        <div class="detail-listing-item">
+          <div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div>
+          <button class="btn btn-secondary">Exportar</button>
+        </div>
+        <div class="detail-listing-item">
+          <div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div>
+          <button class="btn btn-danger" id="config-delete-account-btn-modal">Apagar conta</button>
+        </div>
+      </div>
+    `;
+  }
+
+  this.openDetailModal({ title: `<i class="fa-solid fa-sliders"></i> ${title}`, content, actions });
+
+  if (section !== 'perfil') {
+    document.getElementById('config-delete-account-btn-modal')?.addEventListener('click', () => {
+      this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
+        this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
+        this.handleLogout();
+      });
+    });
+  }
+},
         parseCurrency(value) {
             if (!value) return 0;
             if (typeof value === 'number') return value;

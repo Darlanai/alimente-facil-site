@@ -624,6 +624,41 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   }
 });
 
+// NOVA ROTA: Alteração de senha
+app.post('/api/auth/change-password', authMiddleware, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.auth.sub);
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ ok: false, message: 'Senha atual e nova são obrigatórias.' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ ok: false, message: 'A nova senha precisa ter pelo menos 6 caracteres.' });
+    }
+
+    const user = await usersCollection().findOne({ _id: userId });
+    if (!user) {
+      return res.status(404).json({ ok: false, message: 'Usuário não encontrado.' });
+    }
+
+    const passwordOk = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!passwordOk) {
+      return res.status(401).json({ ok: false, message: 'Senha atual incorreta.' });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await usersCollection().updateOne(
+      { _id: userId },
+      { $set: { passwordHash: newHash, updatedAt: new Date() } }
+    );
+
+    return res.json({ ok: true, message: 'Senha alterada com sucesso.' });
+  } catch (error) {
+    return res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
 app.get('/api/access-status', authMiddleware, async (req, res) => {
   try {
     const user = await usersCollection().findOne({ _id: new ObjectId(req.auth.sub) });
