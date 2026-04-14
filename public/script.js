@@ -11961,3 +11961,240 @@ window.app = app;
   app.handleMercadoPagoReturn?.();
   app.restoreBackendSession?.();
 })();
+
+/* === STRICT PREMIUM GATE HOTFIX | 2026-04-14 === */
+(() => {
+  const app = window.app;
+  if (!app) return;
+
+  const AUTH_TOKEN_KEY = 'alimenteFacilAuthToken';
+  const LEGACY_STATE_KEY = 'alimenteFacilState_vFinal';
+  const PREMIUM_PLAN = 'premium';
+
+  const originalEnterAppMode = typeof app.enterAppMode === 'function' ? app.enterAppMode.bind(app) : null;
+  const originalActivateModuleAndRender = typeof app.activateModuleAndRender === 'function'
+    ? app.activateModuleAndRender.bind(app)
+    : null;
+  const originalExitAppMode = typeof app.exitAppMode === 'function' ? app.exitAppMode.bind(app) : null;
+
+  const clearLegacyPanelState = () => {
+    try {
+      const raw = localStorage.getItem(LEGACY_STATE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return;
+      parsed.isAppMode = false;
+      parsed.isLoggedIn = Boolean(app.isLoggedIn);
+      parsed.userPlan = app.userPlan || 'free';
+      localStorage.setItem(LEGACY_STATE_KEY, JSON.stringify(parsed));
+    } catch (_error) {
+      localStorage.removeItem(LEGACY_STATE_KEY);
+    }
+  };
+
+  app.isPremiumSession = function(sessionData = {}) {
+    const plan = String(sessionData?.subscription?.plan || '').toLowerCase();
+    const status = String(sessionData?.subscription?.status || '').toLowerCase();
+    return plan === PREMIUM_PLAN && (status === 'active' || status === 'trialing');
+  };
+
+  app.hasStrictPremiumAccess = function() {
+    return Boolean(this.isLoggedIn && this.userPlan === PREMIUM_PLAN);
+  };
+
+  app.showPremiumRequiredCard = function(message) {
+    this.showPaymentGateModal?.({
+      title: 'Ative seu Premium',
+      message: message || 'Para acessar o painel do Alimente Fácil, ative agora seu Premium com 7 dias grátis. Depois, R$ 9,90 por mês. Cancele quando quiser.',
+      checkoutUrl: this.checkoutLinks?.premium || ''
+    });
+  };
+
+  app.applyAuthenticatedUser = function(sessionData = {}) {
+    const user = sessionData.user || {};
+    this.isLoggedIn = true;
+    this.userPlan = this.isPremiumSession(sessionData) ? PREMIUM_PLAN : 'basic';
+    this.state = this.state || JSON.parse(JSON.stringify(this.defaultState || {}));
+    this.state.user = this.state.user || {};
+    this.state.user.nome = user.name || user.nome || 'Usuário';
+    this.state.user.email = user.email || '';
+    this.state.user.id = user.id || '';
+    if (this.userPlan !== PREMIUM_PLAN) {
+      this.isAppMode = false;
+      clearLegacyPanelState();
+    }
+    this.updateStartButton?.();
+    this.saveState?.();
+  };
+
+  app.forceLoggedOutLanding = function() {
+    try {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem('alimenteFacilAuthUser');
+    } catch (_error) {}
+    this.isLoggedIn = false;
+    this.userPlan = 'free';
+    this.isAppMode = false;
+    this.state = JSON.parse(JSON.stringify(this.defaultState || {}));
+    this.state.user = { nome: null, email: '', id: '' };
+    this.activeModule = 'inicio';
+    this.activeListId = 'listaDaSemana';
+    clearLegacyPanelState();
+    if (originalExitAppMode) originalExitAppMode();
+    this.updateStartButton?.();
+    this.saveState?.();
+  };
+
+  app.enterAppMode = function(...args) {
+    if (!this.hasStrictPremiumAccess?.()) {
+      this.isAppMode = false;
+      clearLegacyPanelState();
+      this.showPremiumRequiredCard?.();
+      return;
+    }
+    return originalEnterAppMode ? originalEnterAppMode(...args) : undefined;
+  };
+
+  app.activateModuleAndRender = function(moduleKey, ...args) {
+    if (!this.hasStrictPremiumAccess?.()) {
+      this.isAppMode = false;
+      clearLegacyPanelState();
+      this.showPremiumRequiredCard?.();
+      return;
+    }
+    return originalActivateModuleAndRender ? originalActivateModuleAndRender(moduleKey, ...args) : undefined;
+  };
+
+  app.handleStartButtonClick = async function() {
+    const token = this.getStoredAuthToken?.();
+    if (!token) {
+      this.showAuthModal?.();
+      return;
+    }
+
+    try {
+      const me = await this.apiFetchJson('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      this.applyAuthenticatedUser?.(me);
+      if (this.isPremiumSession(me)) {
+        this.enterAppMode?.();
+      } else {
+        this.isAppMode = false;
+        clearLegacyPanelState();
+        this.showPremiumRequiredCard?.();
+      }
+      setTimeout(() => this.syncRealUserInfoInDOM?.(), 80);
+    } catch (_error) {
+      this.forceLoggedOutLanding?.();
+      this.showAuthModal?.();
+    }
+  };
+
+  app.restoreBackendSession = async function() {
+    const token = this.getStoredAuthToken?.();
+    if (!token) {
+      this.forceLoggedOutLanding?.();
+      return;
+    }
+
+    try {
+      const me = await this.apiFetchJson('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      this.applyAuthenticatedUser?.(me);
+      if (this.isPremiumSession(me)) {
+        if (this.isAppMode) this.enterAppMode?.();
+      } else {
+        this.isAppMode = false;
+        clearLegacyPanelState();
+        if (originalExitAppMode) originalExitAppMode();
+      }
+      setTimeout(() => this.syncRealUserInfoInDOM?.(), 80);
+    } catch (_error) {
+      this.forceLoggedOutLanding?.();
+    }
+  };
+
+  app.handleMercadoPagoReturn = async function() {
+    const url = new URL(window.location.href);
+    const preapprovalId = url.searchParams.get('preapproval_id') || url.searchParams.get('preapprovalId') || url.searchParams.get('subscription_id') || url.searchParams.get('id') || '';
+    const token = this.getStoredAuthToken?.();
+
+    if (!token) return;
+
+    if (!preapprovalId) {
+      const status = String(url.searchParams.get('status') || '').toLowerCase();
+      if (status && status !== 'approved' && status !== 'authorized') {
+        this.applyAuthenticatedUser?.({ user: this.state?.user || {}, subscription: { plan: 'basic', status: 'basic' } });
+        this.isAppMode = false;
+        clearLegacyPanelState();
+        if (originalExitAppMode) originalExitAppMode();
+        this.showNotification?.('Pagamento ainda não confirmado. O painel continua bloqueado até a ativação no Mercado Pago.', 'info');
+      }
+      return;
+    }
+
+    try {
+      const data = await this.apiFetchJson('/api/billing/confirm-premium', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ preapprovalId })
+      });
+      this.setStoredAuthSession?.(data.token || token, data.user);
+      this.applyAuthenticatedUser?.(data);
+      if (this.isPremiumSession(data)) {
+        this.enterAppMode?.();
+        this.showNotification?.('Premium ativado com sucesso! ✨', 'success');
+      } else {
+        this.isAppMode = false;
+        clearLegacyPanelState();
+        if (originalExitAppMode) originalExitAppMode();
+        this.showNotification?.(data?.message || 'O Mercado Pago ainda não confirmou sua assinatura.', 'info');
+      }
+    } catch (error) {
+      this.isAppMode = false;
+      clearLegacyPanelState();
+      if (originalExitAppMode) originalExitAppMode();
+      this.showNotification?.(error?.payload?.message || error.message || 'Ainda não foi possível confirmar seu pagamento.', 'error');
+    } finally {
+      ['preapproval_id','preapprovalId','subscription_id','id','status','collection_id','collection_status','payment_id','external_reference','merchant_order_id','preference_id'].forEach((key) => url.searchParams.delete(key));
+      window.history.replaceState({}, document.title, url.pathname + (url.searchParams.toString() ? `?${url.searchParams}` : '') + url.hash);
+    }
+  };
+
+  const strictPanelGate = (event) => {
+    const appRef = window.app;
+    if (!appRef || !appRef.isLoggedIn || appRef.userPlan === PREMIUM_PLAN) return;
+    const target = event.target;
+    if (!target) return;
+    if (!target.closest('.app-panel-container-standalone, .app-sidebar, .modules-area, .module-container, .nav-item, #menu-toggle-btn')) return;
+    if (target.closest('#logout-btn, #home-btn-panel, #theme-toggle-btn-panel, .sidebar-overlay, .close-modal-btn, [data-action="close-payment-gate"]')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    appRef.isAppMode = false;
+    clearLegacyPanelState();
+    appRef.showPremiumRequiredCard?.();
+  };
+
+  document.addEventListener('click', strictPanelGate, true);
+  document.addEventListener('submit', (event) => {
+    const appRef = window.app;
+    if (!appRef || !appRef.isLoggedIn || appRef.userPlan === PREMIUM_PLAN) return;
+    if (!event.target?.closest('.app-panel-container-standalone, .app-sidebar')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    appRef.isAppMode = false;
+    clearLegacyPanelState();
+    appRef.showPremiumRequiredCard?.();
+  }, true);
+
+  const token = app.getStoredAuthToken?.();
+  if (!token) {
+    app.forceLoggedOutLanding?.();
+  } else {
+    clearLegacyPanelState();
+  }
+})();
