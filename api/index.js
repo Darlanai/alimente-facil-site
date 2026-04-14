@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
@@ -31,7 +30,6 @@ try { nodemailer = require('nodemailer'); } catch (_error) { nodemailer = null; 
 
 let mongoClient = null;
 let db = null;
-
 
 let mongoReadyPromise = null;
 
@@ -300,7 +298,6 @@ async function refreshSubscriptionState(userId) {
   );
 
   // Corrige automaticamente usuários antigos que foram promovidos de forma errada
-  // para premium/trialing sem qualquer confirmação real do Mercado Pago.
   if (plan === 'premium' && !hasMercadoPagoProof && (status === 'trialing' || status === 'active')) {
     await subscriptionsCollection().updateOne(
       { _id: subscription._id },
@@ -628,7 +625,6 @@ app.get('/api/billing/checkout-link', (_req, res) => {
   return res.json({ ok: true, checkoutUrl: PREMIUM_CHECKOUT_URL });
 });
 
-/* Confirmação do Premium após retorno real do Mercado Pago. */
 app.post('/api/billing/confirm-premium', authMiddleware, async (req, res) => {
   try {
     const userId = new ObjectId(req.auth.sub);
@@ -816,7 +812,6 @@ app.post('/api/chef', async (req, res) => {
 app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
-
 
 if (require.main === module) {
   ensureMongoConnection()
