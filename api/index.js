@@ -6,6 +6,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const app = express();
+const cors = require('cors');
+app.use(cors());
 const PORT = Number(process.env.PORT || 3000);
 const XAI_API_KEY = process.env.XAI_API_KEY || process.env.GROK_API_KEY || '';
 const XAI_MODEL = process.env.XAI_MODEL || 'grok-3-mini';
@@ -506,6 +508,13 @@ app.post('/api/auth/register', async (req, res) => {
       ...session
     });
   } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(409).json({
+        ok: false,
+        message: 'Já existe uma conta com esse e-mail.'
+      });
+    }
+
     return res.status(500).json({
       ok: false,
       message: 'Não foi possível concluir o cadastro agora.',

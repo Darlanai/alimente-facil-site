@@ -8495,3 +8495,51 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
 #payment-gate-modal{z-index:7000 !important;}
 .auth-feedback-message{margin:.75rem 0 0;padding:.85rem 1rem;border-radius:12px;background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.35);color:#fff;font-size:.95rem;line-height:1.4;}
 .chartjs-render-monitor, canvas{color:#fff;}
+
+/* === AUTH FIX FINAL | 2026-04-14 === */
+.auth-feedback-slot {
+    min-height: 0;
+    margin-bottom: 0.9rem;
+}
+
+.auth-feedback-message {
+    display: block;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: var(--glass-text-primary);
+    line-height: 1.45;
+    font-size: 0.95rem;
+}
+
+.auth-feedback-message.is-error {
+    border-color: rgba(255, 59, 48, 0.35);
+    background: rgba(255, 59, 48, 0.10);
+    color: #ffd8d5;
+}
+
+.auth-feedback-message.is-success {
+    border-color: rgba(52, 199, 89, 0.35);
+    background: rgba(52, 199, 89, 0.10);
+    color: #d9ffe4;
+}
+
+.auth-feedback-message.is-info {
+    border-color: rgba(0, 242, 234, 0.35);
+    background: rgba(0, 242, 234, 0.08);
+    color: #d7fffd;
+}
+
+.auth-submit-busy {
+    opacity: 0.75;
+    cursor: wait !important;
+}
+
+#login-form .btn[disabled],
+#signup-form .btn[disabled] {
+    opacity: 0.72;
+    cursor: not-allowed !important;
+    filter: saturate(0.85);
+}
