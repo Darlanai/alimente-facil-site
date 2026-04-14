@@ -78,13 +78,13 @@
     <main class="main-container">
         
         <section id="inicio" class="page-section">
-            <div class="identity-container hero-clean-layout" data-hero-phrases="Despensa em ordem|Planejamento sem bagunça">
+            <div class="identity-container hero-clean-layout" >
                 <div class="hero-clean-shell">
                     <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
                     <h2 class="hero-tagline">Organização alimentar premium</h2>
                     <p class="simple-subtitle scroll-reveal"></p>
 
-                    <div class="hero-signature scroll-reveal" aria-label="Frase rotativa">Despensa em ordem</div>
+                    
 
                     <div class="hero-cta-stack">
                         <a href="#" class="modern-start-btn" onclick="if(window.app){window.app.handleStartButtonClick(); return false;}">
@@ -220,7 +220,7 @@
                                 <label for="contact-message" class="sr-only">Sua Mensagem</label>
                                 <textarea rows="4" id="contact-message" placeholder="Sua Mensagem" required></textarea>
                             </div>
-                            <p style="font-size:.92rem; color:var(--glass-text-secondary); margin-bottom:.85rem;">As mensagens enviadas aqui vão direto para <strong>projetosdarlan@gmail.com</strong> quando o SMTP estiver configurado na Vercel.</p><button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Mensagem</button>
+                            <p style="font-size:.92rem; color:var(--glass-text-secondary); margin-bottom:.85rem;">As mensagens enviadas aqui serão encaminhadas automaticamente para a equipe do Alimente Fácil quando o envio estiver configurado.</p><button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Mensagem</button>
                         </form>
                     </div>
                 </div>
@@ -709,20 +709,5 @@
             });
         }
     </script>
-
-    <div id="pwa-floating-banner" class="pwa-banner" style="display:none;">
-        <div class="pwa-banner-content">
-            <div class="pwa-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
-            <div class="pwa-text">
-                <strong>Adicionar à tela inicial</strong>
-                <span>Instale o Alimente Fácil para abrir como app no seu celular.</span>
-            </div>
-        </div>
-        <div class="pwa-banner-actions">
-            <button type="button" class="btn btn-primary btn-install-pwa">Instalar</button>
-            <button type="button" class="icon-button" id="pwa-banner-close-btn" aria-label="Fechar"><i class="fa-solid fa-times"></i></button>
-        </div>
-    </div>
-
 </body>
 </html>

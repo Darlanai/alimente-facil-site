@@ -376,11 +376,11 @@ function getAccessDecision(subscription) {
   }
 
   return {
-    allowed: true,
+    allowed: false,
     canPerformActions: false,
     tier: 'basic',
     reason: plan === 'basic' ? 'basic' : status || 'basic',
-    message: 'Plano básico ativo: você pode navegar pelo painel e pelas abas, mas criar, editar, preencher e salvar exige o Premium de R$ 9,90 com 7 dias grátis.'
+    message: 'Seu cadastro foi criado, mas o painel completo só é liberado no Premium. Ative agora 7 dias grátis e depois pague R$ 9,90/mês. Cancele quando quiser.'
   };
 }
 
@@ -503,7 +503,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     return res.status(201).json({
       ok: true,
-      message: 'Cadastro realizado com sucesso. Seu plano básico já está ativo para navegação visual.',
+      message: 'Cadastro realizado com sucesso. Ative agora seu Premium com 7 dias grátis e depois R$ 9,90/mês.',
       token: signAuthToken(user),
       checkoutUrl: PREMIUM_CHECKOUT_URL,
       ...session
@@ -628,10 +628,7 @@ app.get('/api/billing/checkout-link', (_req, res) => {
   return res.json({ ok: true, checkoutUrl: PREMIUM_CHECKOUT_URL });
 });
 
-/*
- * Rota auxiliar para teste local/manual.
- * Para automação real após o checkout do Mercado Pago, substitua por webhook.
- */
+/* Confirmação do Premium após retorno real do Mercado Pago. */
 app.post('/api/billing/confirm-premium', authMiddleware, async (req, res) => {
   try {
     const userId = new ObjectId(req.auth.sub);
@@ -644,6 +641,10 @@ app.post('/api/billing/confirm-premium', authMiddleware, async (req, res) => {
     }
 
     if (preapprovalId) {
+      if (!MP_ACCESS_TOKEN) {
+        return res.status(503).json({ ok: false, message: 'MP_ACCESS_TOKEN não configurado no servidor. Não é possível confirmar o Premium automaticamente.' });
+      }
+
       await subscriptionsCollection().updateOne(
         { userId },
         {
@@ -655,22 +656,7 @@ app.post('/api/billing/confirm-premium', authMiddleware, async (req, res) => {
         }
       );
 
-      if (MP_ACCESS_TOKEN) {
-        await syncSubscriptionFromMercadoPago(userId, preapprovalId);
-      } else {
-        await subscriptionsCollection().updateOne(
-          { userId },
-          {
-            $set: {
-              plan: 'premium',
-              status: 'trialing',
-              trialStart: currentDate,
-              trialEnd: addDays(currentDate, TRIAL_DAYS),
-              updatedAt: currentDate
-            }
-          }
-        );
-      }
+      await syncSubscriptionFromMercadoPago(userId, preapprovalId);
     } else if (String(current.plan || '').toLowerCase() !== 'premium') {
       return res.status(400).json({
         ok: false,
@@ -698,49 +684,9 @@ app.post('/api/billing/confirm-premium', authMiddleware, async (req, res) => {
   }
 });
 
-app.post('/api/billing/activate-trial', authMiddleware, async (req, res) => {
-  try {
-    const userId = new ObjectId(req.auth.sub);
-    const subscription = await subscriptionsCollection().findOne({ userId });
-
-    if (!subscription) {
-      return res.status(404).json({ ok: false, message: 'Assinatura não encontrada.' });
-    }
-
-    const currentDate = now();
-    const trialStart = currentDate;
-    const trialEnd = addDays(currentDate, TRIAL_DAYS);
-
-    await subscriptionsCollection().updateOne(
-      { _id: subscription._id },
-      {
-        $set: {
-          plan: 'premium',
-          status: 'trialing',
-          trialStart,
-          trialEnd,
-          updatedAt: currentDate
-        }
-      }
-    );
-
-    const user = await usersCollection().findOne({ _id: userId });
-    const session = await buildSessionPayload(user);
-
-    return res.json({
-      ok: true,
-      message: 'Teste grátis ativado.',
-      ...session
-    });
-  } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      message: 'Não foi possível ativar o teste grátis.',
-      error: error.message
-    });
-  }
+app.post('/api/billing/activate-trial', authMiddleware, async (_req, res) => {
+  return res.status(410).json({ ok: false, message: 'Esta rota de teste foi desativada em produção.' });
 });
-
 
 app.post('/api/auth/finalize-pending', async (req, res) => {
   try {

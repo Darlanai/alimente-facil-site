@@ -8490,21 +8490,8 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
 .terms-check input[type='checkbox'] { transform: translateY(2px); }
 
 
-/* === PATCH FINAL UX + BILLING | 2026-04-13 === */
-body.af-clean-hero .hero-clean-shell{background:transparent !important;backdrop-filter:none !important;border:none !important;box-shadow:none !important;}
-body.af-clean-hero .hero-clean-layout .simple-subtitle,
-body.af-clean-hero .hero-clean-layout .hero-signature{display:none !important;}
-body.af-clean-hero .hero-clean-layout .hero-cta-stack{margin-top:1rem !important;}
-.auth-inline-error{margin:0 0 .85rem 0;padding:.8rem 1rem;border-radius:12px;background:rgba(255,59,48,.14);border:1px solid rgba(255,59,48,.32);color:#fff;font-size:.95rem;line-height:1.45;}
-.notification{top:24px !important;bottom:auto !important;z-index:30000 !important;}
-.notification.show{top:36px !important;bottom:auto !important;}
-.pwa-banner{justify-content:space-between;gap:12px;}
-.pwa-banner-actions{display:flex;align-items:center;gap:8px;}
-#module-analises .analysis-nav-item strong,
-#module-analises .analysis-nav-item span,
-#module-analises .analysis-kpi-card strong,
-#module-analises .analysis-kpi-card small,
-#module-analises .analysis-premium-note,
-#module-analises .chart-canvas-container,
-#module-analises .card-header,
-#module-analises label{color:#fff !important;}
+/* Patch auth/premium clean */
+.hero-signature{display:none !important;}
+#payment-gate-modal{z-index:7000 !important;}
+.auth-feedback-message{margin:.75rem 0 0;padding:.85rem 1rem;border-radius:12px;background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.35);color:#fff;font-size:.95rem;line-height:1.4;}
+.chartjs-render-monitor, canvas{color:#fff;}
