@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.04.14.2';
+const VERSION = '2026.04.14.3';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -13,6 +13,7 @@ const APP_SHELL = [
   '/style.css',
   '/script.js',
   '/auth-premium-gate-fix.js',
+  '/reset-password.html',
   '/manifest.webmanifest',
   '/offline.html',
   '/icons/icon-192x192.png',

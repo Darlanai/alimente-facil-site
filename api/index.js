@@ -4,6 +4,7 @@ const path = require('path');
 const { MongoClient, ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const app = express();
 const cors = require('cors');
@@ -228,6 +229,27 @@ function addDays(date, days) {
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
+}
+
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(String(value || '')).digest('hex');
+}
+
+function createPasswordResetToken() {
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  return {
+    rawToken,
+    tokenHash: sha256(rawToken)
+  };
+}
+
+function getPublicBaseUrl(req) {
+  if (APP_BASE_URL) return APP_BASE_URL;
+  const protocol = String(req.headers['x-forwarded-proto'] || req.protocol || 'https');
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').trim();
+  if (!host) return '';
+  return `${protocol}://${host}`.replace(/\/$/, '');
 }
 
 function sanitizeUser(user) {
@@ -758,6 +780,110 @@ app.post('/api/auth/finalize-pending', async (req, res) => {
       message: error.message || 'Ainda estamos aguardando a confirmação do Mercado Pago.',
       ...(error.payload || {})
     });
+  }
+});
+
+
+app.post('/api/auth/request-password-reset', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    if (!email) {
+      return res.status(400).json({ ok: false, message: 'Informe um e-mail válido.' });
+    }
+
+    const transporter = createMailTransport();
+    if (!transporter) {
+      return res.status(500).json({ ok: false, message: 'O envio por e-mail ainda não foi configurado no servidor.' });
+    }
+
+    const user = await usersCollection().findOne({ email });
+    if (!user) {
+      return res.json({ ok: true, message: 'Se o e-mail existir, você receberá um link para redefinir sua senha.' });
+    }
+
+    const { rawToken, tokenHash } = createPasswordResetToken();
+    const expiresAt = addDays(now(), 1 / 24);
+
+    await usersCollection().updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          resetPasswordTokenHash: tokenHash,
+          resetPasswordExpiresAt: expiresAt,
+          updatedAt: now()
+        }
+      }
+    );
+
+    const baseUrl = getPublicBaseUrl(req);
+    const resetLink = `${baseUrl}/reset-password.html?token=${encodeURIComponent(rawToken)}`;
+
+    await transporter.sendMail({
+      from: `Alimente Fácil <${SMTP_USER}>`,
+      to: email,
+      subject: 'Redefinição de senha - Alimente Fácil',
+      text: `Olá,
+
+Recebemos um pedido para redefinir sua senha.
+
+Use este link para criar uma nova senha:
+${resetLink}
+
+Se você não solicitou essa alteração, ignore este e-mail.
+`,
+      html: `<p>Olá,</p><p>Recebemos um pedido para redefinir sua senha.</p><p><a href="${resetLink}">Clique aqui para criar uma nova senha</a></p><p>Se você não solicitou essa alteração, ignore este e-mail.</p>`
+    });
+
+    return res.json({ ok: true, message: 'Se o e-mail existir, você receberá um link para redefinir sua senha.' });
+  } catch (error) {
+    return res.status(500).json({ ok: false, message: error.message || 'Não foi possível iniciar a redefinição da senha.' });
+  }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const token = String(req.body?.token || '').trim();
+    const password = String(req.body?.password || '');
+    const confirmPassword = String(req.body?.confirmPassword || '');
+
+    if (!token || !password || !confirmPassword) {
+      return res.status(400).json({ ok: false, message: 'Token, nova senha e confirmação são obrigatórios.' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ ok: false, message: 'A senha precisa ter pelo menos 6 caracteres.' });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ ok: false, message: 'As senhas não coincidem.' });
+    }
+
+    const tokenHash = sha256(token);
+    const user = await usersCollection().findOne({
+      resetPasswordTokenHash: tokenHash,
+      resetPasswordExpiresAt: { $gt: now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ ok: false, message: 'O link de redefinição é inválido ou expirou.' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    await usersCollection().updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          passwordHash,
+          updatedAt: now()
+        },
+        $unset: {
+          resetPasswordTokenHash: '',
+          resetPasswordExpiresAt: ''
+        }
+      }
+    );
+
+    return res.json({ ok: true, message: 'Senha redefinida com sucesso. Agora você já pode fazer login.' });
+  } catch (error) {
+    return res.status(500).json({ ok: false, message: error.message || 'Não foi possível redefinir sua senha.' });
   }
 });
 

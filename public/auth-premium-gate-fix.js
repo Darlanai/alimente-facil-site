@@ -23,25 +23,14 @@
   const BASIC_PLAN = 'basic';
   const PANEL_ROOT_SELECTOR = '.app-panel-container-standalone';
   const ALLOWED_PANEL_SELECTOR = '#logout-btn, #payment-gate-modal, #payment-gate-modal *, [data-action="close-payment-gate"], [data-action="go-checkout"]';
-  const originalEnterAppMode = typeof app.enterAppMode === 'function' ? app.enterAppMode.bind(app) : null;
-  const originalActivateModuleAndRender = typeof app.activateModuleAndRender === 'function' ? app.activateModuleAndRender.bind(app) : null;
-  const originalHandleLogout = typeof app.handleLogout === 'function' ? app.handleLogout.bind(app) : null;
-  const originalCloseAllModals = typeof app.closeAllModals === 'function' ? app.closeAllModals.bind(app) : null;
+
   const originalShowNotification = typeof app.showNotification === 'function' ? app.showNotification.bind(app) : function () {};
+  const originalCloseAllModals = typeof app.closeAllModals === 'function' ? app.closeAllModals.bind(app) : function () {};
 
   const state = {
     refreshing: false,
-    lastRefreshAt: 0,
-    paymentModalOpenCount: 0
+    lastRefreshAt: 0
   };
-
-  function safeParse(value, fallback) {
-    try {
-      return JSON.parse(value);
-    } catch (_error) {
-      return fallback;
-    }
-  }
 
   function getToken() {
     return String(storage.getItem(AUTH_TOKEN_KEY) || '').trim();
@@ -88,60 +77,29 @@
     return plan === PREMIUM_PLAN && (status === 'active' || status === 'trialing');
   }
 
-  function syncUserInState(payload) {
-    const user = payload?.user || {};
-    app.state = app.state || JSON.parse(JSON.stringify(app.defaultState || {}));
-    app.state.user = app.state.user || {};
-    app.state.user.nome = user.name || user.nome || app.state.user.nome || 'Usuário';
-    app.state.user.email = user.email || app.state.user.email || '';
-    app.state.user.id = user.id || app.state.user.id || '';
+  function clearInlineErrors() {
+    documentRef.querySelectorAll('.auth-feedback-message').forEach(function (node) { node.remove(); });
   }
 
-  function clearLegacyVisualAppState() {
-    try {
-      const raw = storage.getItem('alimenteFacilState_vFinal');
-      if (!raw) return;
-      const parsed = safeParse(raw, null);
-      if (!parsed || typeof parsed !== 'object') return;
-      parsed.isLoggedIn = Boolean(app.isLoggedIn);
-      parsed.userPlan = app.userPlan || 'free';
-      parsed.isAppMode = Boolean(app.isAppMode);
-      parsed.activeModule = app.activeModule || 'inicio';
-      parsed.data = parsed.data || {};
-      parsed.data.user = Object.assign({}, parsed.data.user || {}, app.state?.user || {});
-      storage.setItem('alimenteFacilState_vFinal', JSON.stringify(parsed));
-    } catch (_error) {}
-  }
-
-  function applySessionPayload(payload) {
-    syncUserInState(payload);
-    app.isLoggedIn = true;
-    app.userPlan = isPremiumPayload(payload) ? PREMIUM_PLAN : BASIC_PLAN;
-    if (app.userPlan !== PREMIUM_PLAN) {
-      app.activeModule = 'inicio';
+  function showInlineError(formId, message, kind) {
+    const form = documentRef.getElementById(formId);
+    if (!form) return;
+    form.querySelectorAll('.auth-feedback-message').forEach(function (node) { node.remove(); });
+    const box = documentRef.createElement('div');
+    box.className = 'auth-feedback-message';
+    box.style.marginTop = '12px';
+    box.style.padding = '10px 12px';
+    box.style.borderRadius = '12px';
+    if (kind === 'success') {
+      box.style.border = '1px solid rgba(52,199,89,.35)';
+      box.style.background = 'rgba(52,199,89,.12)';
+    } else {
+      box.style.border = '1px solid rgba(255,59,48,.35)';
+      box.style.background = 'rgba(255,59,48,.12)';
     }
-    if (typeof app.updateStartButton === 'function') app.updateStartButton();
-    if (typeof app.saveState === 'function') app.saveState();
-    clearLegacyVisualAppState();
-    return app.userPlan;
-  }
-
-  function forceLogoutToLanding() {
-    clearSession();
-    app.isLoggedIn = false;
-    app.userPlan = 'free';
-    app.isAppMode = false;
-    app.activeModule = 'inicio';
-    if (app.defaultState) {
-      app.state = JSON.parse(JSON.stringify(app.defaultState));
-      app.state.user = { nome: null, email: '', id: '' };
-    }
-    if (typeof app.updateStartButton === 'function') app.updateStartButton();
-    if (typeof app.saveState === 'function') app.saveState();
-    clearLegacyVisualAppState();
-    if (typeof app.exitAppMode === 'function') {
-      try { app.exitAppMode(); } catch (_error) {}
-    }
+    box.style.color = '#fff';
+    box.textContent = message;
+    form.appendChild(box);
   }
 
   function closePaymentGateModal() {
@@ -150,7 +108,6 @@
   }
 
   function showPaymentGateModal(payload) {
-    state.paymentModalOpenCount += 1;
     closePaymentGateModal();
     const checkoutUrl = getCheckoutUrl(payload || {});
     const overlay = documentRef.createElement('div');
@@ -160,7 +117,7 @@
     overlay.innerHTML = [
       '<div class="modal-box" style="max-width:560px; width:min(92vw,560px);">',
       '  <button type="button" class="close-modal-btn" data-action="close-payment-gate" aria-label="Fechar">×</button>',
-      '  <div class="modal-header"><h3 style="margin:0;">Ative seu Premium</h3></div>',
+      '  <div class="modal-header"><h3 style="margin:0;">' + ((payload && payload.title) || 'Ative seu Premium') + '</h3></div>',
       '  <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">',
       '    <p style="margin:0; color:var(--glass-text-primary); line-height:1.55;">',
       (payload && payload.message) || 'Seu cadastro básico pode visualizar apenas a tela inicial do painel. Para liberar listas, despensa, receitas, planejador, análises e configurações, ative agora 7 dias grátis e depois pague R$ 9,90 por mês. Cancele quando quiser.',
@@ -189,45 +146,89 @@
           originalShowNotification('Link do Mercado Pago não encontrado.', 'error');
           return;
         }
-        if (windowRef && windowRef.location) {
-          windowRef.location.href = checkoutUrl;
-        }
+        windowRef.location.href = checkoutUrl;
       }
     });
 
     documentRef.body.appendChild(overlay);
   }
 
-  function openLockedHomePanel() {
+  function saveLegacyVisualState() {
+    try {
+      const raw = storage.getItem('alimenteFacilState_vFinal');
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return;
+      parsed.isLoggedIn = Boolean(app.isLoggedIn);
+      parsed.userPlan = app.userPlan || 'free';
+      parsed.isAppMode = Boolean(app.isAppMode);
+      parsed.activeModule = app.activeModule || 'inicio';
+      parsed.data = parsed.data || {};
+      parsed.data.user = Object.assign({}, parsed.data.user || {}, app.state?.user || {});
+      storage.setItem('alimenteFacilState_vFinal', JSON.stringify(parsed));
+    } catch (_error) {}
+  }
+
+  function rawEnterPanelHome() {
     app.activeModule = 'inicio';
     app.isAppMode = true;
-    if (originalEnterAppMode) {
-      originalEnterAppMode();
+    if (typeof app.clearIntervals === 'function') app.clearIntervals();
+    if (typeof app.setVideoPlayback === 'function') {
+      app.setVideoPlayback('landing-video-container', false);
+      app.setVideoPlayback('panel-video-container', true);
     }
-    if (originalActivateModuleAndRender) {
-      originalActivateModuleAndRender('inicio');
-    }
-    clearLegacyVisualAppState();
+    if (typeof app.updateBodyClasses === 'function') app.updateBodyClasses();
+    if (typeof app.activateModuleUI === 'function') app.activateModuleUI('inicio');
+    if (typeof app.renderAllPanelContent === 'function') app.renderAllPanelContent();
+    if (typeof app.saveState === 'function') app.saveState();
+    saveLegacyVisualState();
+    if (windowRef && typeof windowRef.scrollTo === 'function') windowRef.scrollTo(0, 0);
   }
 
-  function showInlineError(formId, message) {
-    const form = documentRef.getElementById(formId);
-    if (!form) return;
-    form.querySelectorAll('.auth-feedback-message').forEach(function (node) { node.remove(); });
-    const box = documentRef.createElement('div');
-    box.className = 'auth-feedback-message';
-    box.style.marginTop = '12px';
-    box.style.padding = '10px 12px';
-    box.style.borderRadius = '12px';
-    box.style.border = '1px solid rgba(255,59,48,.35)';
-    box.style.background = 'rgba(255,59,48,.12)';
-    box.style.color = '#fff';
-    box.textContent = message;
-    form.appendChild(box);
+  function rawExitToLanding() {
+    if (typeof app.clearIntervals === 'function') app.clearIntervals();
+    app.isAppMode = false;
+    if (typeof app.updateBodyClasses === 'function') app.updateBodyClasses();
+    if (typeof app.closeSidebar === 'function') app.closeSidebar();
+    if (typeof app.setVideoPlayback === 'function') {
+      app.setVideoPlayback('panel-video-container', false);
+      app.setVideoPlayback('landing-video-container', true);
+    }
+    if (typeof app.saveState === 'function') app.saveState();
+    saveLegacyVisualState();
+    if (windowRef && typeof windowRef.scrollTo === 'function') windowRef.scrollTo(0, 0);
+    if (typeof app.initLandingPage === 'function') app.initLandingPage();
   }
 
-  function clearInlineErrors() {
-    documentRef.querySelectorAll('.auth-feedback-message').forEach(function (node) { node.remove(); });
+  function applySessionPayload(payload) {
+    const user = payload?.user || {};
+    app.state = app.state || JSON.parse(JSON.stringify(app.defaultState || {}));
+    app.state.user = app.state.user || {};
+    app.state.user.nome = user.name || user.nome || app.state.user.nome || 'Usuário';
+    app.state.user.email = user.email || app.state.user.email || '';
+    app.state.user.id = user.id || app.state.user.id || '';
+    app.isLoggedIn = true;
+    app.userPlan = isPremiumPayload(payload) ? PREMIUM_PLAN : BASIC_PLAN;
+    if (typeof app.updateStartButton === 'function') app.updateStartButton();
+    if (typeof app.saveState === 'function') app.saveState();
+    saveLegacyVisualState();
+    return app.userPlan;
+  }
+
+  function forceLogoutToLanding() {
+    clearSession();
+    app.isLoggedIn = false;
+    app.userPlan = 'free';
+    app.isAppMode = false;
+    app.activeModule = 'inicio';
+    if (app.defaultState) {
+      app.state = JSON.parse(JSON.stringify(app.defaultState));
+      app.state.user = { nome: null, email: '', id: '' };
+    }
+    if (typeof app.updateStartButton === 'function') app.updateStartButton();
+    if (typeof app.saveState === 'function') app.saveState();
+    saveLegacyVisualState();
+    rawExitToLanding();
   }
 
   function isAllowedPanelInteraction(target) {
@@ -258,8 +259,6 @@
       const plan = applySessionPayload(payload);
       if (plan === PREMIUM_PLAN) {
         closePaymentGateModal();
-      } else if (app.isAppMode) {
-        openLockedHomePanel();
       }
       return payload;
     } catch (error) {
@@ -288,7 +287,11 @@
         const plan = applySessionPayload(payload);
         if (plan === PREMIUM_PLAN) {
           closePaymentGateModal();
+          rawEnterPanelHome();
           originalShowNotification('Premium ativado com sucesso! ✨', 'success');
+        } else {
+          rawEnterPanelHome();
+          windowRef.setTimeout(function () { showPaymentGateModal(payload); }, 30);
         }
       } else {
         await refreshAccessFromServer(true).catch(function () { return null; });
@@ -301,6 +304,33 @@
     }
   }
 
+  async function handleForgotPasswordRequest() {
+    clearInlineErrors();
+    const email = String(documentRef.getElementById('forgot-email')?.value || '').trim();
+    if (!email) {
+      showInlineError('forgot-password-form', 'Informe seu e-mail.', 'error');
+      return;
+    }
+    try {
+      const payload = await apiFetchJson('/api/auth/request-password-reset', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
+      showInlineError('forgot-password-form', payload?.message || 'Se o e-mail existir, você receberá um link para redefinir sua senha.', 'success');
+      originalShowNotification(payload?.message || 'Verifique seu e-mail para redefinir sua senha.', 'success');
+    } catch (error) {
+      showInlineError('forgot-password-form', error?.payload?.message || error.message || 'Não foi possível iniciar a redefinição da senha.', 'error');
+    }
+  }
+
+  function switchAuthView(viewId) {
+    documentRef.querySelectorAll('#auth-modal .auth-form-container').forEach(function (node) {
+      node.classList.remove('active');
+    });
+    const target = documentRef.getElementById(viewId);
+    if (target) target.classList.add('active');
+  }
+
   app.apiFetchJson = apiFetchJson;
   app.getStoredAuthToken = getToken;
   app.setStoredAuthSession = setSession;
@@ -309,13 +339,14 @@
   app.closePaymentGateModal = closePaymentGateModal;
   app.refreshAccessFromServer = refreshAccessFromServer;
   app.handleMercadoPagoReturn = handleMercadoPagoReturn;
+  app.forceLoggedOutLanding = forceLogoutToLanding;
 
   app.handleLogin = async function handleLogin() {
     clearInlineErrors();
     const email = String(documentRef.getElementById('login-email')?.value || '').trim();
     const password = String(documentRef.getElementById('login-password')?.value || '');
     if (!email || !password) {
-      showInlineError('login-form', 'Informe e-mail e senha.');
+      showInlineError('login-form', 'Informe e-mail e senha.', 'error');
       return;
     }
     try {
@@ -325,16 +356,23 @@
       });
       setSession(payload.token, payload.user);
       const plan = applySessionPayload(payload);
-      if (originalCloseAllModals) originalCloseAllModals();
+      originalCloseAllModals();
       if (plan === PREMIUM_PLAN) {
-        if (originalEnterAppMode) originalEnterAppMode();
+        rawEnterPanelHome();
         originalShowNotification('Login premium realizado com sucesso.', 'success');
       } else {
-        openLockedHomePanel();
+        rawEnterPanelHome();
+        windowRef.setTimeout(function () {
+          showPaymentGateModal({
+            title: 'Ative seu Premium',
+            message: 'Sua conta está ativa, mas o painel completo só é liberado após a assinatura premium. Ative agora 7 dias grátis e depois pague R$ 9,90 por mês. Cancele quando quiser.',
+            checkoutUrl: getCheckoutUrl(payload)
+          });
+        }, 60);
         originalShowNotification('Conta básica conectada. O painel completo é liberado no Premium.', 'info');
       }
     } catch (error) {
-      showInlineError('login-form', error?.payload?.message || error.message || 'Não foi possível fazer login.');
+      showInlineError('login-form', error?.payload?.message || error.message || 'Não foi possível fazer login.', 'error');
     }
   };
 
@@ -345,11 +383,11 @@
     const password = String(documentRef.getElementById('signup-password')?.value || '');
     const acceptedTerms = Boolean(documentRef.getElementById('signup-terms')?.checked);
     if (!name || !email || !password) {
-      showInlineError('signup-form', 'Preencha nome, e-mail e senha.');
+      showInlineError('signup-form', 'Preencha nome, e-mail e senha.', 'error');
       return;
     }
     if (!acceptedTerms) {
-      showInlineError('signup-form', 'Você precisa aceitar os Termos de Uso e a Política de Privacidade.');
+      showInlineError('signup-form', 'Você precisa aceitar os Termos de Uso e a Política de Privacidade.', 'error');
       return;
     }
     try {
@@ -359,37 +397,48 @@
       });
       setSession(payload.token, payload.user);
       applySessionPayload(payload);
-      if (originalCloseAllModals) originalCloseAllModals();
-      openLockedHomePanel();
+      originalCloseAllModals();
+      rawEnterPanelHome();
+      windowRef.setTimeout(function () {
+        showPaymentGateModal({
+          title: 'Cadastro concluído',
+          message: 'Sua conta foi criada com sucesso. Para liberar o painel completo, ative agora seu Premium com 7 dias grátis. Depois, R$ 9,90 por mês. Cancele quando quiser.',
+          checkoutUrl: getCheckoutUrl(payload)
+        });
+      }, 60);
       originalShowNotification('Cadastro concluído. Conta básica criada com sucesso.', 'success');
     } catch (error) {
-      showInlineError('signup-form', error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.');
+      showInlineError('signup-form', error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.', 'error');
     }
   };
 
   app.handleLogout = function handleLogout() {
     forceLogoutToLanding();
-    if (originalHandleLogout) {
-      try { originalHandleLogout(); } catch (_error) {}
-    }
+    originalShowNotification('Você saiu da sua conta.', 'info');
   };
 
   app.enterAppMode = function enterAppMode() {
     if (app.userPlan === PREMIUM_PLAN) {
-      return originalEnterAppMode ? originalEnterAppMode() : undefined;
+      return rawEnterPanelHome();
     }
-    return openLockedHomePanel();
+    rawEnterPanelHome();
+    windowRef.setTimeout(function () { showPaymentGateModal({}); }, 40);
   };
 
   app.activateModuleAndRender = function activateModuleAndRender(moduleKey) {
     if (app.userPlan === PREMIUM_PLAN) {
-      return originalActivateModuleAndRender ? originalActivateModuleAndRender(moduleKey) : undefined;
-    }
-    if (moduleKey && moduleKey !== 'inicio') {
-      showPaymentGateModal({});
+      if (typeof app.activateModuleUI === 'function') app.activateModuleUI(moduleKey);
+      if (typeof app.renderAllPanelContent === 'function') app.renderAllPanelContent();
+      app.activeModule = moduleKey;
+      if (typeof app.saveState === 'function') app.saveState();
+      saveLegacyVisualState();
       return;
     }
-    return originalActivateModuleAndRender ? originalActivateModuleAndRender('inicio') : undefined;
+    app.activeModule = 'inicio';
+    rawEnterPanelHome();
+    if (moduleKey && moduleKey !== 'inicio') {
+      windowRef.setTimeout(function () { showPaymentGateModal({}); }, 20);
+    }
   };
 
   app.handleStartButtonClick = async function handleStartButtonClick() {
@@ -405,18 +454,39 @@
         return;
       }
       if (isPremiumPayload(payload)) {
-        if (originalEnterAppMode) originalEnterAppMode();
+        rawEnterPanelHome();
       } else {
-        openLockedHomePanel();
+        rawEnterPanelHome();
+        windowRef.setTimeout(function () { showPaymentGateModal({ checkoutUrl: getCheckoutUrl(payload) }); }, 40);
       }
     } catch (_error) {
       if (typeof app.showAuthModal === 'function') app.showAuthModal();
     }
   };
 
+  app.restoreBackendSession = async function restoreBackendSession() {
+    const token = getToken();
+    if (!token) {
+      forceLogoutToLanding();
+      return;
+    }
+    try {
+      const payload = await refreshAccessFromServer(true);
+      if (!payload) return;
+      if (isPremiumPayload(payload)) {
+        if (app.isAppMode) rawEnterPanelHome();
+      } else if (app.isAppMode) {
+        rawEnterPanelHome();
+      }
+    } catch (_error) {
+      forceLogoutToLanding();
+    }
+  };
+
   function bindAuthForms() {
     const loginForm = documentRef.getElementById('login-form');
     const signupForm = documentRef.getElementById('signup-form');
+    const forgotForm = documentRef.getElementById('forgot-password-form');
     if (loginForm && loginForm.dataset.premiumGateBind !== '1') {
       loginForm.dataset.premiumGateBind = '1';
       loginForm.addEventListener('submit', function (event) {
@@ -433,6 +503,22 @@
         app.handleSignup();
       }, true);
     }
+    if (forgotForm && forgotForm.dataset.premiumGateBind !== '1') {
+      forgotForm.dataset.premiumGateBind = '1';
+      forgotForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        handleForgotPasswordRequest();
+      }, true);
+    }
+    documentRef.querySelectorAll('[data-view="forgot-view"]').forEach(function (node) {
+      if (node.dataset.afForgotBind === '1') return;
+      node.dataset.afForgotBind = '1';
+      node.addEventListener('click', function (event) {
+        event.preventDefault();
+        switchAuthView('forgot-view');
+      });
+    });
   }
 
   function gatePanelClick(event) {
@@ -481,16 +567,7 @@
   if (!token) {
     forceLogoutToLanding();
   } else {
-    refreshAccessFromServer(true)
-      .then(function (payload) {
-        if (!payload) return;
-        if (isPremiumPayload(payload)) {
-          if (app.isAppMode && originalEnterAppMode) originalEnterAppMode();
-        } else if (app.isLoggedIn) {
-          openLockedHomePanel();
-        }
-      })
-      .catch(function () { return null; });
+    refreshAccessFromServer(true).catch(function () { return null; });
   }
 
   handleMercadoPagoReturn().catch(function () { return null; });
@@ -500,7 +577,6 @@
 
 (function autoBoot() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
-
   function start() {
     const installer = window.installAlimentePremiumGateFix;
     if (typeof installer !== 'function') return;
@@ -511,6 +587,7 @@
         clearInterval(timer);
         try {
           installer(window.app);
+          window.__alimentePremiumGateFixInstalled = true;
         } catch (error) {
           console.error('Falha ao instalar premium gate fix:', error);
         }
@@ -519,48 +596,9 @@
       if (attempts >= 200) clearInterval(timer);
     }, 25);
   }
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start, { once: true });
   } else {
     start();
-  }
-})();
-
-
-(function bootstrapAlimentePremiumGateFix() {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return;
-  if (window.__alimentePremiumGateFixBootstrapBound) return;
-  window.__alimentePremiumGateFixBootstrapBound = true;
-
-  const tryInstall = () => {
-    if (window.__alimentePremiumGateFixInstalled) return true;
-    if (typeof window.installAlimentePremiumGateFix !== 'function' || !window.app) return false;
-
-    try {
-      window.installAlimentePremiumGateFix(window.app);
-      window.__alimentePremiumGateFixInstalled = true;
-      return true;
-    } catch (error) {
-      console.error('Falha ao instalar auth-premium-gate-fix:', error);
-      return false;
-    }
-  };
-
-  const startPolling = () => {
-    if (tryInstall()) return;
-    let attempts = 0;
-    const timer = window.setInterval(() => {
-      attempts += 1;
-      if (tryInstall() || attempts >= 200) {
-        window.clearInterval(timer);
-      }
-    }, 50);
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startPolling, { once: true });
-  } else {
-    startPolling();
   }
 })();

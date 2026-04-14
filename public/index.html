@@ -308,7 +308,7 @@
                          <div class="form-group"><label for="login-password">Senha</label><input type="password" id="login-password" required></div> 
                          <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Entrar</button> 
                      </form> 
-                     <p class="form-footer-text">Não tem uma conta? <span class="auth-toggle-link" data-view="signup-view" role="button" tabindex="0">Cadastre-se</span></p> 
+                     <p class="form-footer-text" style="display:flex; flex-direction:column; gap:.45rem; align-items:flex-start;">Não tem uma conta? <span class="auth-toggle-link" data-view="signup-view" role="button" tabindex="0">Cadastre-se</span><span class="auth-toggle-link" data-view="forgot-view" role="button" tabindex="0">Esqueci minha senha</span></p> 
                  </div> 
                  <div id="signup-view" class="auth-form-container"> 
                      <h3>Criar Conta</h3> 
@@ -323,6 +323,14 @@
                          <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Criar Conta</button> 
                      </form> 
                      <p class="form-footer-text">Já tem uma conta? <span class="auth-toggle-link" data-view="login-view" role="button" tabindex="0">Faça o login</span></p> 
+                 </div> 
+                 <div id="forgot-view" class="auth-form-container">
+                     <h3>Recuperar Senha</h3>
+                     <form id="forgot-password-form">
+                         <div class="form-group"><label for="forgot-email">Email</label><input type="email" id="forgot-email" required></div>
+                         <button type="submit" class="btn btn-primary" style="width:100%; margin-top:1rem;">Enviar link de redefinição</button>
+                     </form>
+                     <p class="form-footer-text">Lembrou sua senha? <span class="auth-toggle-link" data-view="login-view" role="button" tabindex="0">Voltar para o login</span></p>
                  </div> 
              </div>
          </div> 
@@ -695,6 +703,19 @@
         <span class="af-notification-dot"></span>
     </button>
     
+
+    <div id="pwa-floating-banner" class="pwa-banner" style="display:none;">
+        <div class="pwa-banner-content">
+            <div class="pwa-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+            <div class="pwa-text">
+                <strong>Instale o Alimente Fácil</strong>
+                <span>Adicione à tela inicial para abrir como app.</span>
+            </div>
+        </div>
+        <button type="button" class="icon-button" id="pwa-banner-close-btn" aria-label="Fechar aviso de instalação"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" class="btn btn-primary btn-install-pwa">Instalar</button>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script> 
     
