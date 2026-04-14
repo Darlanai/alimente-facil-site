@@ -700,6 +700,29 @@
     
     <script src="script.js"></script>
     <script src="auth-premium-gate-fix.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            let attempts = 0;
+            const timer = setInterval(() => {
+                attempts += 1;
+                if (window.__alimentePremiumGateFixInstalled) {
+                    clearInterval(timer);
+                    return;
+                }
+                if (window.app && typeof window.installAlimentePremiumGateFix === 'function') {
+                    try {
+                        window.installAlimentePremiumGateFix(window.app);
+                        window.__alimentePremiumGateFixInstalled = true;
+                    } catch (error) {
+                        console.error('Falha ao instalar auth-premium-gate-fix:', error);
+                    }
+                    clearInterval(timer);
+                    return;
+                }
+                if (attempts >= 200) clearInterval(timer);
+            }, 50);
+        });
+    </script>
 
     <script>
         if ('serviceWorker' in navigator) {

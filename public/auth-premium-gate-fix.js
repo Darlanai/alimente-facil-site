@@ -526,3 +526,41 @@
     start();
   }
 })();
+
+
+(function bootstrapAlimentePremiumGateFix() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  if (window.__alimentePremiumGateFixBootstrapBound) return;
+  window.__alimentePremiumGateFixBootstrapBound = true;
+
+  const tryInstall = () => {
+    if (window.__alimentePremiumGateFixInstalled) return true;
+    if (typeof window.installAlimentePremiumGateFix !== 'function' || !window.app) return false;
+
+    try {
+      window.installAlimentePremiumGateFix(window.app);
+      window.__alimentePremiumGateFixInstalled = true;
+      return true;
+    } catch (error) {
+      console.error('Falha ao instalar auth-premium-gate-fix:', error);
+      return false;
+    }
+  };
+
+  const startPolling = () => {
+    if (tryInstall()) return;
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      if (tryInstall() || attempts >= 200) {
+        window.clearInterval(timer);
+      }
+    }, 50);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startPolling, { once: true });
+  } else {
+    startPolling();
+  }
+})();
