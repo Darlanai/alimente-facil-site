@@ -304,7 +304,6 @@ async function refreshSubscriptionState(userId) {
     subscription.lastPaymentAt
   );
 
-  // Corrige automaticamente usuários antigos que foram promovidos de forma errada
   if (plan === 'premium' && !hasMercadoPagoProof && (status === 'trialing' || status === 'active')) {
     await subscriptionsCollection().updateOne(
       { _id: subscription._id },
@@ -414,31 +413,27 @@ function authMiddleware(req, res, next) {
   }
 }
 
-
-function routeNeedsMongo(req) {
-  const pathName = String(req.path || '');
-  if (!pathName.startsWith('/api/')) return false;
-
-  const noDbRoutes = new Set([
-    '/api/health',
-    '/api/contact',
-    '/api/billing/checkout-link'
-  ]);
-
-  if (noDbRoutes.has(pathName)) return false;
-  return true;
-}
-
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(async (req, res, next) => {
-  if (!routeNeedsMongo(req)) return next();
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+app.use('/api', async (req, res, next) => {
+  const noDbRoutes = new Set([
+    '/health',
+    '/contact',
+    '/billing/checkout-link',
+    '/chef'
+  ]);
+
+  if (noDbRoutes.has(req.path)) {
+    return next();
+  }
 
   try {
     await ensureMongoConnection();
-    next();
+    return next();
   } catch (error) {
-    console.error(`❌ MongoDB indisponível para ${req.method} ${req.path}:`, error.message);
+    console.error(`❌ MongoDB indisponível para ${req.method} ${req.originalUrl}:`, error.message);
     return res.status(503).json({
       ok: false,
       message: 'Não foi possível conectar ao banco de dados agora.',
@@ -446,7 +441,6 @@ app.use(async (req, res, next) => {
     });
   }
 });
-app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/api/health', (_req, res) => {
   res.json({
@@ -838,10 +832,13 @@ app.post('/api/chef', async (req, res) => {
   }
 });
 
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+app.all(/^\/api(?:\/.*)?$/, (_req, res) => {
+  return res.status(404).json({ ok: false, message: 'Rota de API não encontrada.' });
 });
 
+app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
 
 app.use((error, req, res, next) => {
   console.error('❌ Erro não tratado no Express:', error);
