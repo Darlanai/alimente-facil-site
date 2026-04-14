@@ -68,12 +68,14 @@ orcamento: {
             this.attachEventListeners();
             this.applySavedTheme();
             this.updateBodyClasses();
-            this.updateStartButton(); // Atualiza também o botão de login da Home
+            this.updateStartButton();
             this.setupSpeechRecognition();
             this.initDockMenu(); 
             this.initDraggableDock();
             this.initPWA();
             this.initRoboAssistant();
+
+            this.forceCleanFakeAuthState();   // <-- LINHA NOVA
 
             if (this.isAppMode) {
                  this.activateModuleUI(this.activeModule);
@@ -1076,29 +1078,41 @@ updateStartButton() {
             this.saveState();
             this.showNotification("Você saiu da sua conta.", "info");
         },
-
-        handleLogin() { 
-            this.isLoggedIn = true; 
-            this.userPlan = 'premium'; 
-            this.state.user.nome = "Usuário"; 
-            this.showNotification("Bem-vindo(a) de volta! ✨", "success"); 
-            this.closeAllModals(); 
-            this.updateStartButton(); 
-            this.enterAppMode(); 
-            this.saveState(); 
+        // ========== MÉTODOS CORRIGIDOS DE AUTENTICAÇÃO ==========
+        handleLogin() {
+            // Redireciona para a implementação real definida nos patches
+            if (typeof this._realHandleLogin === 'function') {
+                this._realHandleLogin();
+            } else {
+                this.showAuthModal();
+            }
         },
         
-        handleSignup() { 
-            const nome = document.getElementById('signup-name').value.trim(); 
-            this.isLoggedIn = true; 
-            this.userPlan = 'free'; 
-            this.state.user.nome = nome || "Visitante"; 
-            this.showNotification("Conta criada! Bem-vindo(a)! 🚀", "success"); 
-            this.closeAllModals(); 
-            this.updateStartButton(); 
-            this.enterAppMode(); 
-            this.saveState(); 
+        handleSignup() {
+            if (typeof this._realHandleSignup === 'function') {
+                this._realHandleSignup();
+            } else {
+                this.showAuthModal();
+            }
         },
+        
+        forceCleanFakeAuthState() {
+            try {
+                const raw = localStorage.getItem('alimenteFacilState_vFinal');
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (parsed.isLoggedIn && parsed.userPlan === 'premium' && !localStorage.getItem('alimenteFacilAuthToken')) {
+                    parsed.isLoggedIn = false;
+                    parsed.userPlan = 'free';
+                    parsed.isAppMode = false;
+                    localStorage.setItem('alimenteFacilState_vFinal', JSON.stringify(parsed));
+                    this.isLoggedIn = false;
+                    this.userPlan = 'free';
+                    this.isAppMode = false;
+                }
+            } catch (e) {}
+        },
+        // ========================================================
 
         toggleTheme() {
             document.body.classList.toggle('lua-mode');
