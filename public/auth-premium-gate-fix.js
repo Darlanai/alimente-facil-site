@@ -427,15 +427,33 @@
 
   app.activateModuleAndRender = function activateModuleAndRender(moduleKey) {
     if (app.userPlan === PREMIUM_PLAN) {
-      if (typeof app.activateModuleUI === 'function') app.activateModuleUI(moduleKey);
-      if (typeof app.renderAllPanelContent === 'function') app.renderAllPanelContent();
-      app.activeModule = moduleKey;
-      if (typeof app.saveState === 'function') app.saveState();
+      app.activeModule = moduleKey || 'inicio';
+
+      if (typeof app.activateModuleUI === 'function') {
+        app.activateModuleUI(app.activeModule);
+      }
+
+      if (typeof app.renderModuleContent === 'function') {
+        app.renderModuleContent(app.activeModule);
+      } else if (typeof app.renderAllPanelContent === 'function') {
+        app.renderAllPanelContent();
+      }
+
+      if (typeof app.closeSidebar === 'function') {
+        app.closeSidebar();
+      }
+
+      if (typeof app.saveState === 'function') {
+        app.saveState();
+      }
+
       saveLegacyVisualState();
       return;
     }
+
     app.activeModule = 'inicio';
     rawEnterPanelHome();
+
     if (moduleKey && moduleKey !== 'inicio') {
       windowRef.setTimeout(function () { showPaymentGateModal({}); }, 20);
     }
