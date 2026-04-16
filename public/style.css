@@ -3095,8 +3095,7 @@ body.app-mode .module-container{ overflow: hidden !important; }
 /* Oculta de vez TODOS os rodapés soltos com botões de Compartilhar/Imprimir que sobraram no seu JS */
 .md-list-column .card-footer,
 #module-planejador .card-footer,
-#module-analises .card-footer,
-#module-configuracoes .card-footer {
+#module-analises .card-footer {
     display: none !important;
 }
 /* --- BANNER DE INSTALAÇÃO PWA (APP NATIVO) --- */
@@ -6872,6 +6871,53 @@ body.modal-open{ overflow:hidden; }
 }
 #module-configuracoes .card-footer .btn{
   min-height: 46px;
+}
+#module-configuracoes .config-security-hint{
+  padding: .9rem 1rem;
+}
+#module-configuracoes .config-profile-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:.35rem;
+}
+#module-configuracoes .config-profile-actions .btn{
+  width:auto;
+  min-width:190px;
+}
+
+#module-configuracoes .config-profile-stack,
+#detail-modal-body .config-profile-stack{
+  gap: 1rem !important;
+}
+#module-configuracoes .config-profile-stack .form-group,
+#detail-modal-body .config-profile-stack .form-group{
+  margin-bottom: 0;
+  min-width: 0;
+}
+#module-configuracoes #config-profile-feedback,
+#detail-modal-body #config-profile-feedback-modal{
+  margin-top: 0;
+}
+#module-configuracoes .config-profile-security-grid,
+#detail-modal-body .config-profile-security-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin-top: 0;
+}
+#module-configuracoes .config-profile-security-grid .form-group,
+#detail-modal-body .config-profile-security-grid .form-group{
+  margin: 0;
+}
+#module-configuracoes .card-footer{
+  justify-content: flex-end;
+}
+@media (max-width: 768px){
+  #module-configuracoes .config-profile-security-grid,
+  #detail-modal-body .config-profile-security-grid{
+    grid-template-columns: 1fr;
+  }
 }
 
 /* 2) Dock de alternância: manter visível também no painel */

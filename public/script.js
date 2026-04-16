@@ -69,6 +69,7 @@ orcamento: {
             this.cacheDOMElements();
             this.createAutocompleteElement();
             this.attachEventListeners();
+            this.bindGlobalAutocompleteFields?.(document);
             this.applySavedTheme();
             this.updateBodyClasses();
             this.updateStartButton();
@@ -668,7 +669,23 @@ document.addEventListener('click', (e) => {
                 }
             });
 
-            this.elements.contactForm?.addEventListener('submit', (e) => { e.preventDefault(); this.showNotification('Sua mensagem foi enviada! Obrigado pelo contato. 🚀'); this.elements.contactForm.reset(); });
+            this.elements.contactForm?.addEventListener('submit', async (e) => { 
+                e.preventDefault();
+                const form = this.elements.contactForm;
+                const name = String(form?.querySelector('#contact-name')?.value || '').trim();
+                const email = String(form?.querySelector('#contact-email')?.value || '').trim();
+                const message = String(form?.querySelector('#contact-message')?.value || '').trim();
+                try {
+                    const response = await this.apiFetchJson('/api/contact', {
+                        method: 'POST',
+                        body: JSON.stringify({ name, email, message })
+                    });
+                    this.showNotification(response?.message || 'Sua mensagem foi enviada! Obrigado pelo contato. 🚀', 'success');
+                    form?.reset();
+                } catch (error) {
+                    this.showNotification(error?.message || 'Não foi possível enviar sua mensagem.', 'error');
+                }
+            });
             this.elements.menuToggleBtn?.addEventListener('click', (e) => { e.stopPropagation(); this.elements.appSidebar?.classList.toggle('is-open'); this.elements.sidebarOverlay?.classList.toggle('is-visible'); });
             this.elements.sidebarOverlay?.addEventListener('click', () => this.closeSidebar());
             this.elements.navItems.forEach(item => { item.addEventListener('click', () => this.activateModuleAndRender(item.dataset.module)); });
@@ -978,6 +995,8 @@ this.elements.body.addEventListener('submit', e => {
     } else if (e.target.closest('#signup-form')) {
         console.log('Chamando handleSignup');
         this.handleSignup();
+    } else if (e.target.closest('#forgot-password-form')) {
+        this.handleForgotPassword();
     } else if (e.target.closest('#module-lista-widget .add-item-form')) {
         this.handleAddItem('lista', e.target);
     } else if (e.target.closest('#module-lista .add-item-form')) {
@@ -1002,6 +1021,21 @@ this.elements.body.addEventListener('submit', e => {
             this.elements.autocompleteSuggestions?.addEventListener('mousedown', e => {
                  const itemEl = e.target.closest('.autocomplete-item');
                  if (itemEl) { this.selectAutocompleteItem(itemEl.dataset.name); e.preventDefault(); }
+            });
+
+        },
+
+        bindGlobalAutocompleteFields(scope = document) {
+            ['#lista-form-nome-dash','#lista-form-nome-full','#edit-item-name','#essential-name','#recipe-ing-name','#pantry-edit-name','#config-name','#config-email','#config-name-modal','#config-email-modal'].forEach((selector) => {
+                scope.querySelectorAll?.(selector).forEach((input) => {
+                    if (input.dataset.afBindAutocomplete === '1') return;
+                    input.dataset.afBindAutocomplete = '1';
+                    input.setAttribute('autocomplete', 'off');
+                    input.addEventListener('input', () => this.handleAutocomplete(input));
+                    input.addEventListener('focus', () => {
+                        if (String(input.value || '').trim()) this.handleAutocomplete(input);
+                    });
+                });
             });
         },
 
@@ -2608,70 +2642,76 @@ renderOrcamento() {
                       <div class="md-detail-column dashboard-card" id="config-detail-desktop"></div>
                   </div>
              `;
+             this.bindGlobalAutocompleteFields?.(container);
              if (window.innerWidth >= 992) this.renderConfigDetailDesktop('perfil');
         },
 
 renderConfigDetailDesktop(section = 'perfil') {
   const container = document.getElementById('config-detail-desktop');
   if (!container) return;
+
   let title = 'Configurações';
+  let subtitle = '';
   let content = '';
   let footer = '';
 
   if (section === 'perfil') {
     title = 'Perfil';
+    subtitle = 'Altere nome ou e-mail com confirmação da sua senha atual.';
     content = `
-      <div class="detail-stack">
+      <div class="detail-stack config-profile-stack">
         <div class="form-group">
           <label for="config-name">Nome</label>
-          <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}">
+          <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name">
         </div>
         <div class="form-group">
           <label for="config-email">Email</label>
-          <input type="text" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" disabled>
+          <input type="email" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com" autocomplete="email">
         </div>
-
+        <div id="config-profile-feedback" class="auth-feedback-message is-info" style="display:none;"></div>
+        <div id="config-profile-security-fields" class="config-profile-security-grid">
+          <div class="form-group">
+            <label for="config-password">Senha atual</label>
+            <input type="password" id="config-password" placeholder="Digite sua senha atual" autocomplete="current-password">
+          </div>
+          <div class="form-group">
+            <label for="config-password-confirm">Confirmar senha atual</label>
+            <input type="password" id="config-password-confirm" placeholder="Repita sua senha atual" autocomplete="current-password">
+          </div>
+        </div>
         <hr class="divider" />
-
-        <h4 style="margin: 0.5rem 0 0.25rem;">Alterar Senha</h4>
-        <div class="form-group">
-          <label for="config-current-password">Senha Atual</label>
-          <input type="password" id="config-current-password" placeholder="••••••••">
+        <div class="detail-listing-item" style="align-items:flex-start; gap:16px;">
+          <div>
+            <strong>Troca de senha</strong>
+            <p class="detail-note" style="margin-top:6px;">Para alterar sua senha com segurança, clique em <strong>Esqueci minha senha</strong>. O link será enviado para o e-mail cadastrado e a alteração acontecerá conectada ao banco de dados.</p>
+          </div>
+          <button type="button" class="btn btn-secondary" id="config-open-forgot-password-btn">Esqueci minha senha</button>
         </div>
-        <div class="form-group">
-          <label for="config-new-password">Nova Senha</label>
-          <input type="password" id="config-new-password" placeholder="Mínimo 6 caracteres">
-        </div>
-        <div class="form-group">
-          <label for="config-confirm-password">Confirmar Nova Senha</label>
-          <input type="password" id="config-confirm-password" placeholder="Repita a nova senha">
-        </div>
-        <p class="detail-note" id="config-password-feedback" style="display: none;"></p>
-        <p class="detail-note">Mantenha os dados básicos consistentes para reforçar a sensação de produto confiável.</p>
       </div>
     `;
     footer = `<button class="btn btn-primary" id="config-save-profile-btn">Salvar alterações</button>`;
   } else if (section === 'notificacoes') {
     title = 'Notificações';
+    subtitle = 'Alertas de validade, IA e lembretes.';
     content = `
       <div class="detail-stack">
-        <div class="form-group inline">
-          <label for="notif-validade">Notificar sobre validade</label>
+        <div class="detail-listing-item">
+          <div><strong>Validade</strong><p class="detail-note">Receba aviso quando houver item vencido ou perto de vencer.</p></div>
           <label class="toggle-switch"><input type="checkbox" id="notif-validade" checked><span class="toggle-slider"></span></label>
         </div>
-        <div class="form-group inline">
-          <label for="notif-ia">Sugestões rápidas</label>
+        <div class="detail-listing-item">
+          <div><strong>Sugestões rápidas</strong><p class="detail-note">Permite receber sugestões rápidas no fluxo do app.</p></div>
           <label class="toggle-switch"><input type="checkbox" id="notif-ia" checked><span class="toggle-slider"></span></label>
         </div>
-        <div class="form-group inline">
-          <label for="notif-email">Notificações por e-mail</label>
+        <div class="detail-listing-item">
+          <div><strong>E-mail</strong><p class="detail-note">Envia lembretes e resumos por e-mail quando necessário.</p></div>
           <label class="toggle-switch"><input type="checkbox" id="notif-email"><span class="toggle-slider"></span></label>
         </div>
-      </div>
-    `;
+      </div>`;
     footer = `<button class="btn btn-primary">Salvar preferências</button>`;
   } else {
-    title = 'Gerenciamento de Dados';
+    title = 'Dados';
+    subtitle = 'Exportação, limpeza e manutenção das informações do app.';
     content = `
       <div class="detail-stack">
         <div class="detail-listing-item">
@@ -2682,87 +2722,30 @@ renderConfigDetailDesktop(section = 'perfil') {
           <div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div>
           <button class="btn btn-danger" id="config-delete-account-btn">Apagar conta</button>
         </div>
-      </div>
-    `;
+      </div>`;
   }
 
   container.innerHTML = `
     <div class="card-header"><h3><i class="fa-solid fa-sliders"></i> ${title}</h3></div>
-    <div class="card-content">${content}</div>
-    <div class="card-footer">${footer}</div>
-  `;
+    <div class="card-content">
+      <p class="detail-note">${subtitle}</p>
+      ${content}
+    </div>
+    ${footer ? `<div class="card-footer">${footer}</div>` : ''}`;
+  this.bindGlobalAutocompleteFields?.(container);
 
-  // Listener para salvar perfil (incluindo senha)
   if (section === 'perfil') {
     const saveBtn = container.querySelector('#config-save-profile-btn');
-    saveBtn?.addEventListener('click', async () => {
-      const newName = container.querySelector('#config-name')?.value.trim();
-      const currentPassword = container.querySelector('#config-current-password')?.value;
-      const newPassword = container.querySelector('#config-new-password')?.value;
-      const confirmPassword = container.querySelector('#config-confirm-password')?.value;
-      const feedbackEl = container.querySelector('#config-password-feedback');
-
-      // Atualizar nome se necessário (opcional – sem backend por enquanto)
-      if (newName && newName !== this.state.user.nome) {
-        // Poderia chamar uma API de update profile futuramente
-        this.state.user.nome = newName;
-        this.saveState();
-        this.showNotification('Nome atualizado.', 'success');
-      }
-
-      // Se algum campo de senha foi preenchido, valida e envia
-      if (currentPassword || newPassword || confirmPassword) {
-        if (newPassword !== confirmPassword) {
-          if (feedbackEl) {
-            feedbackEl.style.display = 'block';
-            feedbackEl.textContent = 'As senhas não coincidem.';
-            feedbackEl.style.color = 'var(--red)';
-          }
-          this.showNotification('As senhas não coincidem.', 'error');
-          return;
-        }
-        if (newPassword.length < 6) {
-          if (feedbackEl) {
-            feedbackEl.style.display = 'block';
-            feedbackEl.textContent = 'A nova senha deve ter pelo menos 6 caracteres.';
-            feedbackEl.style.color = 'var(--red)';
-          }
-          this.showNotification('A nova senha deve ter pelo menos 6 caracteres.', 'error');
-          return;
-        }
-
-        try {
-          const token = this.getStoredAuthToken();
-          const response = await this.apiFetchJson('/api/auth/change-password', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ currentPassword, newPassword })
-          });
-
-          if (feedbackEl) {
-            feedbackEl.style.display = 'block';
-            feedbackEl.textContent = response.message || 'Senha alterada com sucesso!';
-            feedbackEl.style.color = 'var(--green)';
-          }
-          this.showNotification(response.message || 'Senha alterada com sucesso!', 'success');
-
-          // Limpa os campos de senha
-          container.querySelector('#config-current-password').value = '';
-          container.querySelector('#config-new-password').value = '';
-          container.querySelector('#config-confirm-password').value = '';
-        } catch (error) {
-          if (feedbackEl) {
-            feedbackEl.style.display = 'block';
-            feedbackEl.textContent = error.message || 'Erro ao alterar senha.';
-            feedbackEl.style.color = 'var(--red)';
-          }
-          this.showNotification(error.message || 'Erro ao alterar senha.', 'error');
-        }
-      }
+    if (saveBtn) {
+      saveBtn.onclick = async () => {
+        await this.saveProfileSettings(container);
+      };
+    }
+    container.querySelector('#config-open-forgot-password-btn')?.addEventListener('click', () => {
+      this.openForgotPasswordFromSettings?.();
     });
   }
 
-  // Listener para apagar conta
   container.querySelector('#config-delete-account-btn')?.addEventListener('click', () => {
     this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
       this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
@@ -2773,153 +2756,87 @@ renderConfigDetailDesktop(section = 'perfil') {
 
 openConfigSectionModal(section = 'perfil') {
   let title = 'Configurações';
+  let subtitle = '';
   let content = '';
   let actions = [{ label: 'Fechar', className: 'btn-secondary', onClick: () => this.closeModal('detail-modal') }];
 
   if (section === 'perfil') {
     title = 'Perfil';
+    subtitle = 'Altere nome ou e-mail com confirmação da sua senha atual.';
     content = `
-      <div class="detail-stack">
+      <p class="detail-note">${subtitle}</p>
+      <div class="detail-stack config-profile-stack">
         <div class="form-group">
           <label for="config-name-modal">Nome</label>
-          <input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}">
+          <input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name">
         </div>
         <div class="form-group">
           <label for="config-email-modal">Email</label>
-          <input type="text" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || '')}" disabled>
+          <input type="email" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com" autocomplete="email">
         </div>
-
+        <div id="config-profile-feedback-modal" class="auth-feedback-message is-info" style="display:none;"></div>
+        <div id="config-profile-security-fields-modal" class="config-profile-security-grid">
+          <div class="form-group">
+            <label for="config-password-modal">Senha atual</label>
+            <input type="password" id="config-password-modal" placeholder="Digite sua senha atual" autocomplete="current-password">
+          </div>
+          <div class="form-group">
+            <label for="config-password-confirm-modal">Confirmar senha atual</label>
+            <input type="password" id="config-password-confirm-modal" placeholder="Repita sua senha atual" autocomplete="current-password">
+          </div>
+        </div>
         <hr class="divider" />
-
-        <h4 style="margin: 0.5rem 0 0.25rem;">Alterar Senha</h4>
-        <div class="form-group">
-          <label for="config-current-password-modal">Senha Atual</label>
-          <input type="password" id="config-current-password-modal" placeholder="••••••••">
+        <div class="detail-listing-item" style="align-items:flex-start; gap:16px;">
+          <div>
+            <strong>Troca de senha</strong>
+            <p class="detail-note" style="margin-top:6px;">Para alterar sua senha com segurança, clique em <strong>Esqueci minha senha</strong>. O link será enviado para o e-mail cadastrado e a alteração acontecerá conectada ao banco de dados.</p>
+          </div>
+          <button type="button" class="btn btn-secondary" id="config-open-forgot-password-btn-modal">Esqueci minha senha</button>
         </div>
-        <div class="form-group">
-          <label for="config-new-password-modal">Nova Senha</label>
-          <input type="password" id="config-new-password-modal" placeholder="Mínimo 6 caracteres">
-        </div>
-        <div class="form-group">
-          <label for="config-confirm-password-modal">Confirmar Nova Senha</label>
-          <input type="password" id="config-confirm-password-modal" placeholder="Repita a nova senha">
-        </div>
-        <p class="detail-note" id="config-password-feedback-modal" style="display: none;"></p>
       </div>
     `;
     actions.unshift({
       label: 'Salvar alterações',
       className: 'btn-primary',
       onClick: async () => {
-        const modal = document.getElementById('detail-modal');
-        const newName = modal.querySelector('#config-name-modal')?.value.trim();
-        const currentPassword = modal.querySelector('#config-current-password-modal')?.value;
-        const newPassword = modal.querySelector('#config-new-password-modal')?.value;
-        const confirmPassword = modal.querySelector('#config-confirm-password-modal')?.value;
-        const feedbackEl = modal.querySelector('#config-password-feedback-modal');
-
-        if (newName && newName !== this.state.user.nome) {
-          this.state.user.nome = newName;
-          this.saveState();
-          this.showNotification('Nome atualizado.', 'success');
-        }
-
-        if (currentPassword || newPassword || confirmPassword) {
-          if (newPassword !== confirmPassword) {
-            if (feedbackEl) {
-              feedbackEl.style.display = 'block';
-              feedbackEl.textContent = 'As senhas não coincidem.';
-              feedbackEl.style.color = 'var(--red)';
-            }
-            this.showNotification('As senhas não coincidem.', 'error');
-            return;
-          }
-          if (newPassword.length < 6) {
-            if (feedbackEl) {
-              feedbackEl.style.display = 'block';
-              feedbackEl.textContent = 'A nova senha deve ter pelo menos 6 caracteres.';
-              feedbackEl.style.color = 'var(--red)';
-            }
-            this.showNotification('A nova senha deve ter pelo menos 6 caracteres.', 'error');
-            return;
-          }
-
-          try {
-            const token = this.getStoredAuthToken();
-            const response = await this.apiFetchJson('/api/auth/change-password', {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ currentPassword, newPassword })
-            });
-
-            if (feedbackEl) {
-              feedbackEl.style.display = 'block';
-              feedbackEl.textContent = response.message || 'Senha alterada com sucesso!';
-              feedbackEl.style.color = 'var(--green)';
-            }
-            this.showNotification(response.message || 'Senha alterada com sucesso!', 'success');
-
-            modal.querySelector('#config-current-password-modal').value = '';
-            modal.querySelector('#config-new-password-modal').value = '';
-            modal.querySelector('#config-confirm-password-modal').value = '';
-          } catch (error) {
-            if (feedbackEl) {
-              feedbackEl.style.display = 'block';
-              feedbackEl.textContent = error.message || 'Erro ao alterar senha.';
-              feedbackEl.style.color = 'var(--red)';
-            }
-            this.showNotification(error.message || 'Erro ao alterar senha.', 'error');
-          }
-        }
-
-        this.closeModal('detail-modal');
+        const modal = document.getElementById('detail-modal-body') || document.getElementById('detail-modal') || document;
+        const ok = await this.saveProfileSettings(modal);
+        if (ok) this.closeModal('detail-modal');
       }
     });
   } else if (section === 'notificacoes') {
     title = 'Notificações';
+    subtitle = 'Alertas de validade, IA e lembretes.';
     content = `
+      <p class="detail-note">${subtitle}</p>
       <div class="detail-stack">
-        <div class="form-group inline">
-          <label for="notif-validade-modal">Notificar sobre validade</label>
-          <label class="toggle-switch"><input type="checkbox" id="notif-validade-modal" checked><span class="toggle-slider"></span></label>
-        </div>
-        <div class="form-group inline">
-          <label for="notif-ia-modal">Sugestões rápidas</label>
-          <label class="toggle-switch"><input type="checkbox" id="notif-ia-modal" checked><span class="toggle-slider"></span></label>
-        </div>
-        <div class="form-group inline">
-          <label for="notif-email-modal">Notificações por e-mail</label>
-          <label class="toggle-switch"><input type="checkbox" id="notif-email-modal"><span class="toggle-slider"></span></label>
-        </div>
-      </div>
-    `;
+        <div class="detail-listing-item"><div><strong>Validade</strong><p class="detail-note">Receba aviso quando houver item vencido ou perto de vencer.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-validade-modal" checked><span class="toggle-slider"></span></label></div>
+        <div class="detail-listing-item"><div><strong>Sugestões rápidas</strong><p class="detail-note">Permite receber sugestões rápidas.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-ia-modal" checked><span class="toggle-slider"></span></label></div>
+        <div class="detail-listing-item"><div><strong>E-mail</strong><p class="detail-note">Envia lembretes e resumos por e-mail.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-email-modal"><span class="toggle-slider"></span></label></div>
+      </div>`;
     actions.unshift({ label: 'Salvar preferências', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
   } else {
-    title = 'Gerenciamento de Dados';
+    title = 'Dados';
+    subtitle = 'Exportação, limpeza e manutenção das informações do app.';
     content = `
+      <p class="detail-note">${subtitle}</p>
       <div class="detail-stack">
-        <div class="detail-listing-item">
-          <div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div>
-          <button class="btn btn-secondary">Exportar</button>
-        </div>
-        <div class="detail-listing-item">
-          <div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div>
-          <button class="btn btn-danger" id="config-delete-account-btn-modal">Apagar conta</button>
-        </div>
-      </div>
-    `;
+        <div class="detail-listing-item"><div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div><button class="btn btn-secondary">Exportar</button></div>
+        <div class="detail-listing-item"><div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div><button class="btn btn-danger" id="config-delete-account-btn-modal">Apagar conta</button></div>
+      </div>`;
   }
 
   this.openDetailModal({ title: `<i class="fa-solid fa-sliders"></i> ${title}`, content, actions });
 
-  if (section !== 'perfil') {
-    document.getElementById('config-delete-account-btn-modal')?.addEventListener('click', () => {
-      this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
-        this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
-        this.handleLogout();
-      });
+  document.getElementById('config-delete-account-btn-modal')?.addEventListener('click', () => {
+    this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
+      this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
+      this.handleLogout();
     });
-  }
+  });
+  document.getElementById('config-open-forgot-password-btn-modal')?.addEventListener('click', () => {
+    this.openForgotPasswordFromSettings?.();
+  });
 },
         parseCurrency(value) {
             if (!value) return 0;
@@ -10215,64 +10132,69 @@ window.app = app;
 
       if (section === 'perfil') {
         title = 'Perfil';
-        subtitle = 'Identidade básica do usuário e preferências principais.';
+        subtitle = 'Altere nome ou e-mail com confirmação da sua senha atual.';
         content = `
-          <div class="detail-stack">
+          <div class="detail-stack config-profile-stack">
             <div class="form-group">
               <label for="config-name">Nome</label>
-              <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}">
+              <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name">
             </div>
             <div class="form-group">
               <label for="config-email">Email</label>
-              <input type="text" id="config-email" value="${this.escapeHtml(this.state.user.email || "")}" disabled>
+              <input type="email" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com" autocomplete="email">
             </div>
-          </div>`;
-        footer = `<button class="btn btn-primary">Salvar alterações</button>`;
+            <div id="config-profile-feedback" class="auth-feedback-message is-info" style="display:none;"></div>
+            <div id="config-profile-security-fields" class="config-profile-security-grid">
+              <div class="form-group">
+                <label for="config-password">Senha atual</label>
+                <input type="password" id="config-password" placeholder="Digite sua senha atual" autocomplete="current-password">
+              </div>
+              <div class="form-group">
+                <label for="config-password-confirm">Confirmar senha atual</label>
+                <input type="password" id="config-password-confirm" placeholder="Repita sua senha atual" autocomplete="current-password">
+              </div>
+            </div>
+            <hr class="divider" />
+            <div class="detail-listing-item" style="align-items:flex-start; gap:16px;">
+              <div>
+                <strong>Troca de senha</strong>
+                <p class="detail-note" style="margin-top:6px;">Para alterar sua senha com segurança, clique em <strong>Esqueci minha senha</strong>. O link será enviado para o e-mail cadastrado e a alteração acontecerá conectada ao banco de dados.</p>
+              </div>
+              <button type="button" class="btn btn-secondary" id="config-open-forgot-password-btn">Esqueci minha senha</button>
+            </div>
+          </div>
+        `;
+        footer = `<button class="btn btn-primary" id="config-save-profile-btn">Salvar alterações</button>`;
       } else if (section === 'notificacoes') {
         title = 'Notificações';
         subtitle = 'Alertas de validade, IA e lembretes.';
         content = `
           <div class="detail-stack">
             <div class="detail-listing-item">
-              <div>
-                <strong>Validade</strong>
-                <p class="detail-note">Receba aviso quando houver item vencido ou perto de vencer.</p>
-              </div>
+              <div><strong>Validade</strong><p class="detail-note">Receba aviso quando houver item vencido ou perto de vencer.</p></div>
               <label class="toggle-switch"><input type="checkbox" id="notif-validade" checked><span class="toggle-slider"></span></label>
             </div>
             <div class="detail-listing-item">
-              <div>
-                <strong>Sugestões rápidas</strong>
-                <p class="detail-note">Permite receber sugestões rápidas no fluxo do app.</p>
-              </div>
+              <div><strong>Sugestões rápidas</strong><p class="detail-note">Permite receber sugestões rápidas no fluxo do app.</p></div>
               <label class="toggle-switch"><input type="checkbox" id="notif-ia" checked><span class="toggle-slider"></span></label>
             </div>
             <div class="detail-listing-item">
-              <div>
-                <strong>E-mail</strong>
-                <p class="detail-note">Envia lembretes e resumos por e-mail quando necessário.</p>
-              </div>
+              <div><strong>E-mail</strong><p class="detail-note">Envia lembretes e resumos por e-mail quando necessário.</p></div>
               <label class="toggle-switch"><input type="checkbox" id="notif-email"><span class="toggle-slider"></span></label>
             </div>
           </div>`;
-        footer = `<button class="btn btn-primary">Salvar preferências</button>`;
+        footer = `<button type="button" class="btn btn-primary">Salvar preferências</button>`;
       } else {
         title = 'Dados';
         subtitle = 'Exportação, limpeza e manutenção das informações do app.';
         content = `
           <div class="detail-stack">
             <div class="detail-listing-item">
-              <div>
-                <strong>Exportar dados</strong>
-                <p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p>
-              </div>
+              <div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div>
               <button class="btn btn-secondary">Exportar</button>
             </div>
             <div class="detail-listing-item">
-              <div>
-                <strong>Apagar todos os dados</strong>
-                <p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p>
-              </div>
+              <div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div>
               <button class="btn btn-danger" id="config-delete-account-btn">Apagar conta</button>
             </div>
           </div>`;
@@ -10284,7 +10206,19 @@ window.app = app;
           <p class="detail-note">${subtitle}</p>
           ${content}
         </div>
-        <div class="card-footer">${footer}</div>`;
+        ${footer ? `<div class="card-footer">${footer}</div>` : ''}`;
+
+      if (section === 'perfil') {
+        const saveBtn = container.querySelector('#config-save-profile-btn');
+        if (saveBtn) {
+          saveBtn.onclick = async () => {
+            await this.saveProfileSettings(container);
+          };
+        }
+        container.querySelector('#config-open-forgot-password-btn')?.addEventListener('click', () => {
+          this.openForgotPasswordFromSettings?.();
+        });
+      }
 
       container.querySelector('#config-delete-account-btn')?.addEventListener('click', () => {
         this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
@@ -10302,14 +10236,35 @@ window.app = app;
 
       if (section === 'perfil') {
         title = 'Perfil';
-        subtitle = 'Identidade básica do usuário e preferências principais.';
+        subtitle = 'Altere nome ou e-mail com confirmação da sua senha atual.';
         content = `
           <p class="detail-note">${subtitle}</p>
-          <div class="detail-stack">
-            <div class="form-group"><label for="config-name-modal">Nome</label><input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}"></div>
-            <div class="form-group"><label for="config-email-modal">Email</label><input type="text" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || "")}" disabled></div>
+          <div class="detail-stack config-profile-stack">
+            <div class="form-group"><label for="config-name-modal">Nome</label><input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name"></div>
+            <div class="form-group"><label for="config-email-modal">Email</label><input type="email" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || '')}" autocomplete="email"></div>
+            <div id="config-profile-feedback-modal" class="auth-feedback-message is-info" style="display:none;"></div>
+            <div id="config-profile-security-fields-modal" class="config-profile-security-grid">
+              <div class="form-group"><label for="config-password-modal">Senha atual</label><input type="password" id="config-password-modal" placeholder="Digite sua senha atual" autocomplete="current-password"></div>
+              <div class="form-group"><label for="config-password-confirm-modal">Confirmar senha atual</label><input type="password" id="config-password-confirm-modal" placeholder="Repita sua senha atual" autocomplete="current-password"></div>
+            </div>
+            <hr class="divider" />
+            <div class="detail-listing-item" style="align-items:flex-start; gap:16px;">
+              <div>
+                <strong>Troca de senha</strong>
+                <p class="detail-note" style="margin-top:6px;">Para trocar a senha, use <strong>Esqueci minha senha</strong>. O link será enviado ao e-mail cadastrado.</p>
+              </div>
+              <button type="button" class="btn btn-secondary" id="config-open-forgot-password-btn-modal">Esqueci minha senha</button>
+            </div>
           </div>`;
-        actions.unshift({ label: 'Salvar alterações', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
+        actions.unshift({
+          label: 'Salvar alterações',
+          className: 'btn-primary',
+          onClick: async () => {
+            const modal = document.getElementById('detail-modal-body') || document.getElementById('detail-modal') || document;
+            const ok = await this.saveProfileSettings(modal);
+            if (ok) this.closeModal('detail-modal');
+          }
+        });
       } else if (section === 'notificacoes') {
         title = 'Notificações';
         subtitle = 'Alertas de validade, IA e lembretes.';
@@ -10333,11 +10288,15 @@ window.app = app;
       }
 
       this.openDetailModal({ title: `<i class="fa-solid fa-sliders"></i> ${title}`, content, actions });
+
       document.getElementById('config-delete-account-btn-modal')?.addEventListener('click', () => {
         this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
           this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
           this.handleLogout();
         });
+      });
+      document.getElementById('config-open-forgot-password-btn-modal')?.addEventListener('click', () => {
+        this.openForgotPasswordFromSettings?.();
       });
     };
 
@@ -12030,6 +11989,191 @@ app.apiFetchJson = async function(url, options = {}) {
     document.body.appendChild(overlay);
   };
 
+
+  app.handleForgotPassword = async function() {
+    const email = String(document.getElementById('forgot-email')?.value || '').trim();
+    this.clearAuthInlineError?.();
+    if (!email) {
+      this.showNotification?.('Informe seu e-mail para redefinir a senha.', 'error');
+      return;
+    }
+    try {
+      const data = await this.apiFetchJson('/api/auth/request-password-reset', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
+      this.showNotification?.(data?.message || 'Se o e-mail existir, você receberá um link para redefinir sua senha.', 'success');
+      const form = document.getElementById('forgot-password-form');
+      form?.reset();
+    } catch (error) {
+      const msg = error?.payload?.message || error.message || 'Não foi possível enviar o e-mail de redefinição.';
+      this.showNotification?.(msg, 'error');
+    }
+  };
+
+  app.openForgotPasswordFromSettings = function() {
+    const email = String(this.state?.user?.email || '').trim();
+    this.showAuthModal?.();
+    document.querySelectorAll('#auth-modal .auth-form-container').forEach((node) => node.classList.remove('active'));
+    document.getElementById('forgot-view')?.classList.add('active');
+    const forgotEmailInput = document.getElementById('forgot-email');
+    if (forgotEmailInput) {
+      forgotEmailInput.value = email;
+      forgotEmailInput.focus();
+      forgotEmailInput.select?.();
+    }
+    this.showNotification?.('Confira seu e-mail cadastrado e clique em "Enviar link de redefinição".', 'info');
+  };
+
+  app.bindProfileSettingsSecurityFields = function(scope) {
+    const root = scope || document;
+    const passwordWrap = root.querySelector('#config-profile-security-fields, #config-profile-security-fields-modal');
+    const passwordInput = root.querySelector('#config-password, #config-password-modal');
+    const confirmInput = root.querySelector('#config-password-confirm, #config-password-confirm-modal');
+    if (!passwordWrap) return;
+
+    passwordWrap.style.display = 'grid';
+    passwordWrap.dataset.persistent = 'true';
+    if (passwordInput) passwordInput.autocomplete = 'current-password';
+    if (confirmInput) confirmInput.autocomplete = 'current-password';
+  };
+
+  app.saveProfileSettings = async function(scope) {
+    const root = scope || document;
+    const nameInput = root.querySelector('#config-name, #config-name-modal');
+    const emailInput = root.querySelector('#config-email, #config-email-modal');
+    const passwordInput = root.querySelector('#config-password, #config-password-modal');
+    const confirmPasswordInput = root.querySelector('#config-password-confirm, #config-password-confirm-modal');
+    const passwordWrap = root.querySelector('#config-profile-security-fields, #config-profile-security-fields-modal');
+    const feedbackEl = root.querySelector('#config-profile-feedback, #config-profile-feedback-modal');
+    const saveBtn = root.querySelector('#config-save-profile-btn') || document.querySelector('#config-save-profile-btn');
+    const newName = String(nameInput?.value || '').trim();
+    const newEmail = String(emailInput?.value || '').trim().toLowerCase();
+    const currentName = String(this.state?.user?.nome || '').trim();
+    const currentEmail = String(this.state?.user?.email || '').trim().toLowerCase();
+    const password = String(passwordInput?.value || '');
+    const confirmPassword = String(confirmPasswordInput?.value || '');
+    const token = this.getStoredAuthToken?.();
+
+    const setFeedback = (message, kind = 'info') => {
+      if (!feedbackEl) return;
+      feedbackEl.style.display = 'block';
+      feedbackEl.textContent = message;
+      feedbackEl.className = `auth-feedback-message is-${kind}`;
+    };
+
+    if (!token) {
+      setFeedback('Sua sessão expirou. Faça login novamente.', 'error');
+      this.showNotification?.('Sua sessão expirou. Faça login novamente.', 'error');
+      return false;
+    }
+    if (!newName) {
+      setFeedback('Informe seu nome.', 'error');
+      nameInput?.focus();
+      this.showNotification?.('Informe seu nome.', 'error');
+      return false;
+    }
+    if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      setFeedback('Informe um e-mail válido.', 'error');
+      emailInput?.focus();
+      this.showNotification?.('Informe um e-mail válido.', 'error');
+      return false;
+    }
+
+    const changed = newName !== currentName || newEmail !== currentEmail;
+    if (!changed) {
+      setFeedback('Nenhuma alteração detectada no nome ou no e-mail.', 'info');
+      this.showNotification?.('Nenhuma alteração detectada no nome ou no e-mail.', 'info');
+      return false;
+    }
+
+    if (passwordWrap) passwordWrap.style.display = 'grid';
+
+    if (!password || !confirmPassword) {
+      setFeedback('Digite sua senha atual e confirme a senha para salvar.', 'error');
+      passwordInput?.focus();
+      this.showNotification?.('Digite sua senha atual e confirme a senha para salvar.', 'error');
+      return false;
+    }
+
+    if (password !== confirmPassword) {
+      setFeedback('A senha e a confirmação precisam ser iguais.', 'error');
+      confirmPasswordInput?.focus();
+      this.showNotification?.('A senha e a confirmação precisam ser iguais.', 'error');
+      return false;
+    }
+
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.dataset.originalText = saveBtn.dataset.originalText || saveBtn.textContent;
+      saveBtn.textContent = 'Salvando...';
+    }
+
+    setFeedback('Salvando seus dados...', 'info');
+
+    try {
+      const response = await this.apiFetchJson('/api/auth/profile', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          name: newName,
+          email: newEmail,
+          password,
+          confirmPassword
+        })
+      });
+
+      const refreshedToken = response?.token || token;
+      if (response?.user) {
+        this.setStoredAuthSession?.(refreshedToken, response.user);
+      }
+      this.applyAuthenticatedUser?.({
+        user: response?.user || { name: newName, email: newEmail },
+        subscription: response?.subscription || {},
+        access: response?.access || {}
+      });
+      this.syncRealUserInfoInDOM?.();
+      this.saveState?.();
+
+      if (passwordInput) passwordInput.value = '';
+      if (confirmPasswordInput) confirmPasswordInput.value = '';
+      this.bindProfileSettingsSecurityFields?.(root);
+
+      setFeedback(response?.message || 'Dados atualizados com sucesso.', 'success');
+      this.showNotification?.(response?.message || 'Dados atualizados com sucesso.', 'success');
+      return true;
+    } catch (error) {
+      const msg = error?.payload?.message || error.message || 'Erro ao atualizar perfil.';
+      setFeedback(msg, 'error');
+      this.showNotification?.(msg, 'error');
+      return false;
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = saveBtn.dataset.originalText || 'Salvar alterações';
+      }
+    }
+  };
+
+  document.addEventListener('click', async (event) => {
+    const saveDesktopBtn = event.target.closest?.('#config-save-profile-btn');
+    if (saveDesktopBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      const desktopScope = document.getElementById('config-detail-desktop') || document;
+      await app.saveProfileSettings(desktopScope);
+      return;
+    }
+
+    const forgotDesktopBtn = event.target.closest?.('#config-open-forgot-password-btn');
+    if (forgotDesktopBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      app.openForgotPasswordFromSettings?.();
+    }
+  });
+
+
 app.handleSignup = async function() {
 console.log('handleSignup chamada');
   const name = String(document.getElementById('signup-name')?.value || '').trim();
@@ -12486,5 +12630,8 @@ console.log('handleSignup chamada');
     app.forceLoggedOutLanding?.();
   } else {
     clearLegacyPanelState();
+
   }
+
+
 })();

@@ -17,6 +17,7 @@ const JWT_SECRET = process.env.JWT_SECRET || '';
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
 const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET || '';
 const APP_BASE_URL = (process.env.APP_BASE_URL || '').replace(/\/$/, '');
+const OFFICIAL_SITE_URL = (process.env.OFFICIAL_SITE_URL || 'https://www.alimentefacil.com.br').replace(/\/$/, '');
 const CONTACT_TO_EMAIL = process.env.CONTACT_TO_EMAIL || 'projetosdarlan@gmail.com';
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
@@ -246,6 +247,7 @@ function createPasswordResetToken() {
 
 function getPublicBaseUrl(req) {
   if (APP_BASE_URL) return APP_BASE_URL;
+  if (OFFICIAL_SITE_URL) return OFFICIAL_SITE_URL;
   const protocol = String(req.headers['x-forwarded-proto'] || req.protocol || 'https');
   const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').trim();
   if (!host) return '';
@@ -256,7 +258,7 @@ function sanitizeUser(user) {
   if (!user) return null;
   return {
     id: String(user._id),
-    name: user.name || '',
+    name: user.name || user.nome || '',
     email: user.email || '',
     createdAt: user.createdAt || null
   };
@@ -681,6 +683,66 @@ app.post('/api/auth/change-password', authMiddleware, async (req, res) => {
   }
 });
 
+
+app.put('/api/auth/profile', authMiddleware, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.auth.sub);
+    const name = String(req.body?.name || req.body?.nome || '').trim();
+    const email = normalizeEmail(req.body?.email);
+    const password = String(req.body?.password || '');
+    const confirmPassword = String(req.body?.confirmPassword || '');
+
+    if (!name) {
+      return res.status(400).json({ ok: false, message: 'Informe seu nome.' });
+    }
+    if (!email) {
+      return res.status(400).json({ ok: false, message: 'Informe um e-mail válido.' });
+    }
+    if (!password || !confirmPassword) {
+      return res.status(400).json({ ok: false, message: 'Digite sua senha e confirme a senha para salvar as alterações.' });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ ok: false, message: 'A senha e a confirmação precisam ser iguais.' });
+    }
+
+    const currentUser = await usersCollection().findOne({ _id: userId });
+    if (!currentUser) {
+      return res.status(404).json({ ok: false, message: 'Usuário não encontrado.' });
+    }
+
+    const storedHash = String(currentUser.passwordHash || '').trim();
+    const legacyPassword = String(currentUser.password || '');
+    let passwordOk = false;
+
+    if (storedHash) {
+      passwordOk = await bcrypt.compare(password, storedHash);
+    } else if (legacyPassword) {
+      passwordOk = password === legacyPassword;
+    }
+
+    if (!passwordOk) {
+      return res.status(401).json({ ok: false, message: 'Senha inválida. Confirme sua senha atual para alterar nome ou e-mail.' });
+    }
+
+    const emailOwner = await usersCollection().findOne({ email, _id: { $ne: userId } });
+    if (emailOwner) {
+      return res.status(409).json({ ok: false, message: 'Este e-mail já está em uso por outra conta.' });
+    }
+
+    await usersCollection().updateOne(
+      { _id: userId },
+      { $set: { name, nome: name, email, updatedAt: now() } }
+    );
+
+    const updatedUser = await usersCollection().findOne({ _id: userId });
+    const session = await buildSessionPayload(updatedUser);
+    const token = signAuthToken(updatedUser);
+    return res.json({ ok: true, message: 'Perfil atualizado com sucesso.', token, ...session });
+  } catch (error) {
+    return res.status(500).json({ ok: false, message: error.message || 'Não foi possível atualizar o perfil.' });
+  }
+});
+
 app.get('/api/access-status', authMiddleware, async (req, res) => {
   try {
     const user = await usersCollection().findOne({ _id: new ObjectId(req.auth.sub) });
@@ -802,7 +864,7 @@ app.post('/api/auth/request-password-reset', async (req, res) => {
     }
 
     const { rawToken, tokenHash } = createPasswordResetToken();
-    const expiresAt = addDays(now(), 1 / 24);
+    const expiresAt = new Date(Date.now() + (60 * 60 * 1000));
 
     await usersCollection().updateOne(
       { _id: user._id },
