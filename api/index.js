@@ -689,8 +689,7 @@ app.put('/api/auth/profile', authMiddleware, async (req, res) => {
     const userId = new ObjectId(req.auth.sub);
     const name = String(req.body?.name || req.body?.nome || '').trim();
     const email = normalizeEmail(req.body?.email);
-    const password = String(req.body?.password || '');
-    const confirmPassword = String(req.body?.confirmPassword || '');
+    const password = String(req.body?.password || '').trim();
 
     if (!name) {
       return res.status(400).json({ ok: false, message: 'Informe seu nome.' });
@@ -698,16 +697,28 @@ app.put('/api/auth/profile', authMiddleware, async (req, res) => {
     if (!email) {
       return res.status(400).json({ ok: false, message: 'Informe um e-mail válido.' });
     }
-    if (!password || !confirmPassword) {
-      return res.status(400).json({ ok: false, message: 'Digite sua senha e confirme a senha para salvar as alterações.' });
-    }
-    if (password !== confirmPassword) {
-      return res.status(400).json({ ok: false, message: 'A senha e a confirmação precisam ser iguais.' });
-    }
 
     const currentUser = await usersCollection().findOne({ _id: userId });
     if (!currentUser) {
       return res.status(404).json({ ok: false, message: 'Usuário não encontrado.' });
+    }
+
+    const currentName = String(currentUser.name || currentUser.nome || '').trim();
+    const currentEmail = normalizeEmail(currentUser.email);
+    const nameChanged = name !== currentName;
+    const emailChanged = email !== currentEmail;
+
+    if (!nameChanged && !emailChanged) {
+      return res.json({
+        ok: true,
+        message: 'Nenhuma alteração foi feita.',
+        ...(await buildSessionPayload(currentUser)),
+        token: signAuthToken(currentUser)
+      });
+    }
+
+    if (!password) {
+      return res.status(400).json({ ok: false, message: 'Digite sua senha atual para alterar nome ou e-mail.' });
     }
 
     const storedHash = String(currentUser.passwordHash || '').trim();
@@ -721,12 +732,14 @@ app.put('/api/auth/profile', authMiddleware, async (req, res) => {
     }
 
     if (!passwordOk) {
-      return res.status(401).json({ ok: false, message: 'Senha inválida. Confirme sua senha atual para alterar nome ou e-mail.' });
+      return res.status(401).json({ ok: false, message: 'Senha atual incorreta.' });
     }
 
-    const emailOwner = await usersCollection().findOne({ email, _id: { $ne: userId } });
-    if (emailOwner) {
-      return res.status(409).json({ ok: false, message: 'Este e-mail já está em uso por outra conta.' });
+    if (emailChanged) {
+      const emailOwner = await usersCollection().findOne({ email, _id: { $ne: userId } });
+      if (emailOwner) {
+        return res.status(409).json({ ok: false, message: 'Este e-mail já está em uso por outra conta.' });
+      }
     }
 
     await usersCollection().updateOne(

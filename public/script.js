@@ -2649,69 +2649,67 @@ renderOrcamento() {
 renderConfigDetailDesktop(section = 'perfil') {
   const container = document.getElementById('config-detail-desktop');
   if (!container) return;
-
   let title = 'Configurações';
-  let subtitle = '';
   let content = '';
   let footer = '';
 
-  if (section === 'perfil') {
-    title = 'Perfil';
-    subtitle = 'Altere nome ou e-mail com confirmação da sua senha atual.';
+if (section === 'perfil') {
+  title = 'Perfil';
+  content = `
+    <div class="detail-stack">
+      <div class="form-group">
+        <label for="config-name">Nome</label>
+        <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label for="config-email">Email</label>
+        <input type="email" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com" autocomplete="email">
+      </div>
+      <div id="config-profile-feedback" class="auth-feedback-message is-info" style="display:none;"></div>
+
+      <!-- CAMPOS DE SENHA (AGORA JÁ INCLUÍDOS) -->
+      <div id="config-profile-security-fields" class="detail-stack" style="margin-top:16px; display:block;">
+        <div class="form-group">
+          <label for="config-password">Senha atual</label>
+          <input type="password" id="config-password" placeholder="Digite sua senha atual" autocomplete="current-password">
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="detail-listing-item" style="align-items:flex-start; gap:16px;">
+        <div>
+          <strong>Troca de senha</strong>
+          <p class="detail-note" style="margin-top:6px;">Para alterar sua senha com segurança, clique em <strong>Esqueci minha senha</strong>. O link será enviado para o e-mail cadastrado e a alteração acontecerá conectada ao banco de dados.</p>
+        </div>
+        <button type="button" class="btn btn-secondary" id="config-open-forgot-password-btn">Esqueci minha senha</button>
+      </div>
+    </div>
+  `;
+  footer = `<button class="btn btn-primary" id="config-save-profile-btn">Salvar alterações</button>`;
+}
+
+ else if (section === 'notificacoes') {
+    title = 'Notificações';
     content = `
-      <div class="detail-stack config-profile-stack">
-        <div class="form-group">
-          <label for="config-name">Nome</label>
-          <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name">
+      <div class="detail-stack">
+        <div class="form-group inline">
+          <label for="notif-validade">Notificar sobre validade</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-validade" checked><span class="toggle-slider"></span></label>
         </div>
-        <div class="form-group">
-          <label for="config-email">Email</label>
-          <input type="email" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com" autocomplete="email">
+        <div class="form-group inline">
+          <label for="notif-ia">Sugestões rápidas</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-ia" checked><span class="toggle-slider"></span></label>
         </div>
-        <div id="config-profile-feedback" class="auth-feedback-message is-info" style="display:none;"></div>
-        <div id="config-profile-security-fields" class="config-profile-security-grid">
-          <div class="form-group">
-            <label for="config-password">Senha atual</label>
-            <input type="password" id="config-password" placeholder="Digite sua senha atual" autocomplete="current-password">
-          </div>
-          <div class="form-group">
-            <label for="config-password-confirm">Confirmar senha atual</label>
-            <input type="password" id="config-password-confirm" placeholder="Repita sua senha atual" autocomplete="current-password">
-          </div>
-        </div>
-        <hr class="divider" />
-        <div class="detail-listing-item" style="align-items:flex-start; gap:16px;">
-          <div>
-            <strong>Troca de senha</strong>
-            <p class="detail-note" style="margin-top:6px;">Para alterar sua senha com segurança, clique em <strong>Esqueci minha senha</strong>. O link será enviado para o e-mail cadastrado e a alteração acontecerá conectada ao banco de dados.</p>
-          </div>
-          <button type="button" class="btn btn-secondary" id="config-open-forgot-password-btn">Esqueci minha senha</button>
+        <div class="form-group inline">
+          <label for="notif-email">Notificações por e-mail</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-email"><span class="toggle-slider"></span></label>
         </div>
       </div>
     `;
-    footer = `<button class="btn btn-primary" id="config-save-profile-btn">Salvar alterações</button>`;
-  } else if (section === 'notificacoes') {
-    title = 'Notificações';
-    subtitle = 'Alertas de validade, IA e lembretes.';
-    content = `
-      <div class="detail-stack">
-        <div class="detail-listing-item">
-          <div><strong>Validade</strong><p class="detail-note">Receba aviso quando houver item vencido ou perto de vencer.</p></div>
-          <label class="toggle-switch"><input type="checkbox" id="notif-validade" checked><span class="toggle-slider"></span></label>
-        </div>
-        <div class="detail-listing-item">
-          <div><strong>Sugestões rápidas</strong><p class="detail-note">Permite receber sugestões rápidas no fluxo do app.</p></div>
-          <label class="toggle-switch"><input type="checkbox" id="notif-ia" checked><span class="toggle-slider"></span></label>
-        </div>
-        <div class="detail-listing-item">
-          <div><strong>E-mail</strong><p class="detail-note">Envia lembretes e resumos por e-mail quando necessário.</p></div>
-          <label class="toggle-switch"><input type="checkbox" id="notif-email"><span class="toggle-slider"></span></label>
-        </div>
-      </div>`;
     footer = `<button class="btn btn-primary">Salvar preferências</button>`;
   } else {
-    title = 'Dados';
-    subtitle = 'Exportação, limpeza e manutenção das informações do app.';
+    title = 'Gerenciamento de Dados';
     content = `
       <div class="detail-stack">
         <div class="detail-listing-item">
@@ -2722,30 +2720,30 @@ renderConfigDetailDesktop(section = 'perfil') {
           <div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div>
           <button class="btn btn-danger" id="config-delete-account-btn">Apagar conta</button>
         </div>
-      </div>`;
+      </div>
+    `;
   }
 
   container.innerHTML = `
     <div class="card-header"><h3><i class="fa-solid fa-sliders"></i> ${title}</h3></div>
-    <div class="card-content">
-      <p class="detail-note">${subtitle}</p>
-      ${content}
-    </div>
-    ${footer ? `<div class="card-footer">${footer}</div>` : ''}`;
+    <div class="card-content">${content}</div>
+    <div class="card-footer">${footer}</div>
+  `;
   this.bindGlobalAutocompleteFields?.(container);
 
-  if (section === 'perfil') {
+if (section === 'perfil') {
     const saveBtn = container.querySelector('#config-save-profile-btn');
     if (saveBtn) {
-      saveBtn.onclick = async () => {
-        await this.saveProfileSettings(container);
-      };
+        saveBtn.onclick = async () => {
+            await this.saveProfileSettings(container);
+        };
     }
     container.querySelector('#config-open-forgot-password-btn')?.addEventListener('click', () => {
       this.openForgotPasswordFromSettings?.();
     });
-  }
+}
 
+  // Listener para apagar conta
   container.querySelector('#config-delete-account-btn')?.addEventListener('click', () => {
     this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
       this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
@@ -2756,16 +2754,13 @@ renderConfigDetailDesktop(section = 'perfil') {
 
 openConfigSectionModal(section = 'perfil') {
   let title = 'Configurações';
-  let subtitle = '';
   let content = '';
   let actions = [{ label: 'Fechar', className: 'btn-secondary', onClick: () => this.closeModal('detail-modal') }];
 
   if (section === 'perfil') {
     title = 'Perfil';
-    subtitle = 'Altere nome ou e-mail com confirmação da sua senha atual.';
     content = `
-      <p class="detail-note">${subtitle}</p>
-      <div class="detail-stack config-profile-stack">
+      <div class="detail-stack">
         <div class="form-group">
           <label for="config-name-modal">Nome</label>
           <input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name">
@@ -2775,21 +2770,13 @@ openConfigSectionModal(section = 'perfil') {
           <input type="email" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com" autocomplete="email">
         </div>
         <div id="config-profile-feedback-modal" class="auth-feedback-message is-info" style="display:none;"></div>
-        <div id="config-profile-security-fields-modal" class="config-profile-security-grid">
-          <div class="form-group">
-            <label for="config-password-modal">Senha atual</label>
-            <input type="password" id="config-password-modal" placeholder="Digite sua senha atual" autocomplete="current-password">
-          </div>
-          <div class="form-group">
-            <label for="config-password-confirm-modal">Confirmar senha atual</label>
-            <input type="password" id="config-password-confirm-modal" placeholder="Repita sua senha atual" autocomplete="current-password">
-          </div>
-        </div>
+
         <hr class="divider" />
+
         <div class="detail-listing-item" style="align-items:flex-start; gap:16px;">
           <div>
             <strong>Troca de senha</strong>
-            <p class="detail-note" style="margin-top:6px;">Para alterar sua senha com segurança, clique em <strong>Esqueci minha senha</strong>. O link será enviado para o e-mail cadastrado e a alteração acontecerá conectada ao banco de dados.</p>
+            <p class="detail-note" style="margin-top:6px;">Para alterar sua senha com segurança, clique em <strong>Esqueci minha senha</strong>. O link será enviado para o e-mail cadastrado.</p>
           </div>
           <button type="button" class="btn btn-secondary" id="config-open-forgot-password-btn-modal">Esqueci minha senha</button>
         </div>
@@ -2799,44 +2786,60 @@ openConfigSectionModal(section = 'perfil') {
       label: 'Salvar alterações',
       className: 'btn-primary',
       onClick: async () => {
-        const modal = document.getElementById('detail-modal-body') || document.getElementById('detail-modal') || document;
-        const ok = await this.saveProfileSettings(modal);
+        const modal = document.getElementById('detail-modal');
+        const ok = await this.saveProfileSettings(modal || document);
         if (ok) this.closeModal('detail-modal');
       }
     });
   } else if (section === 'notificacoes') {
     title = 'Notificações';
-    subtitle = 'Alertas de validade, IA e lembretes.';
     content = `
-      <p class="detail-note">${subtitle}</p>
       <div class="detail-stack">
-        <div class="detail-listing-item"><div><strong>Validade</strong><p class="detail-note">Receba aviso quando houver item vencido ou perto de vencer.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-validade-modal" checked><span class="toggle-slider"></span></label></div>
-        <div class="detail-listing-item"><div><strong>Sugestões rápidas</strong><p class="detail-note">Permite receber sugestões rápidas.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-ia-modal" checked><span class="toggle-slider"></span></label></div>
-        <div class="detail-listing-item"><div><strong>E-mail</strong><p class="detail-note">Envia lembretes e resumos por e-mail.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-email-modal"><span class="toggle-slider"></span></label></div>
-      </div>`;
+        <div class="form-group inline">
+          <label for="notif-validade-modal">Notificar sobre validade</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-validade-modal" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="form-group inline">
+          <label for="notif-ia-modal">Sugestões rápidas</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-ia-modal" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="form-group inline">
+          <label for="notif-email-modal">Notificações por e-mail</label>
+          <label class="toggle-switch"><input type="checkbox" id="notif-email-modal"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    `;
     actions.unshift({ label: 'Salvar preferências', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
   } else {
-    title = 'Dados';
-    subtitle = 'Exportação, limpeza e manutenção das informações do app.';
+    title = 'Gerenciamento de Dados';
     content = `
-      <p class="detail-note">${subtitle}</p>
       <div class="detail-stack">
-        <div class="detail-listing-item"><div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div><button class="btn btn-secondary">Exportar</button></div>
-        <div class="detail-listing-item"><div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div><button class="btn btn-danger" id="config-delete-account-btn-modal">Apagar conta</button></div>
-      </div>`;
+        <div class="detail-listing-item">
+          <div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div>
+          <button class="btn btn-secondary">Exportar</button>
+        </div>
+        <div class="detail-listing-item">
+          <div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div>
+          <button class="btn btn-danger" id="config-delete-account-btn-modal">Apagar conta</button>
+        </div>
+      </div>
+    `;
   }
 
   this.openDetailModal({ title: `<i class="fa-solid fa-sliders"></i> ${title}`, content, actions });
 
-  document.getElementById('config-delete-account-btn-modal')?.addEventListener('click', () => {
-    this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
-      this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
-      this.handleLogout();
-    });
-  });
   document.getElementById('config-open-forgot-password-btn-modal')?.addEventListener('click', () => {
     this.openForgotPasswordFromSettings?.();
   });
+
+  if (section !== 'perfil') {
+    document.getElementById('config-delete-account-btn-modal')?.addEventListener('click', () => {
+      this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
+        this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
+        this.handleLogout();
+      });
+    });
+  }
 },
         parseCurrency(value) {
             if (!value) return 0;
@@ -10134,7 +10137,7 @@ window.app = app;
         title = 'Perfil';
         subtitle = 'Altere nome ou e-mail com confirmação da sua senha atual.';
         content = `
-          <div class="detail-stack config-profile-stack">
+          <div class="detail-stack">
             <div class="form-group">
               <label for="config-name">Nome</label>
               <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name">
@@ -10144,17 +10147,18 @@ window.app = app;
               <input type="email" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com" autocomplete="email">
             </div>
             <div id="config-profile-feedback" class="auth-feedback-message is-info" style="display:none;"></div>
-            <div id="config-profile-security-fields" class="config-profile-security-grid">
+
+            <!-- CAMPOS DE SENHA (agora permanentes e visíveis) -->
+            <div id="config-profile-security-fields" class="detail-stack" style="margin-top:16px; display:block;">
               <div class="form-group">
                 <label for="config-password">Senha atual</label>
                 <input type="password" id="config-password" placeholder="Digite sua senha atual" autocomplete="current-password">
-              </div>
-              <div class="form-group">
-                <label for="config-password-confirm">Confirmar senha atual</label>
-                <input type="password" id="config-password-confirm" placeholder="Repita sua senha atual" autocomplete="current-password">
+          
               </div>
             </div>
+
             <hr class="divider" />
+
             <div class="detail-listing-item" style="align-items:flex-start; gap:16px;">
               <div>
                 <strong>Troca de senha</strong>
@@ -10239,14 +10243,20 @@ window.app = app;
         subtitle = 'Altere nome ou e-mail com confirmação da sua senha atual.';
         content = `
           <p class="detail-note">${subtitle}</p>
-          <div class="detail-stack config-profile-stack">
+          <div class="detail-stack">
             <div class="form-group"><label for="config-name-modal">Nome</label><input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name"></div>
             <div class="form-group"><label for="config-email-modal">Email</label><input type="email" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || '')}" autocomplete="email"></div>
-            <div id="config-profile-feedback-modal" class="auth-feedback-message is-info" style="display:none;"></div>
-            <div id="config-profile-security-fields-modal" class="config-profile-security-grid">
+            <div class="detail-listing-item config-security-hint" style="align-items:flex-start; gap:16px;">
+              <div>
+                <strong>Confirmação obrigatória</strong>
+                <p class="detail-note" style="margin-top:6px;">Ao alterar nome ou e-mail, confirme sua senha atual duas vezes para gravar no banco de dados.</p>
+              </div>
+            </div>
+            <div id="config-profile-security-fields-modal" class="detail-stack" style="display:none;">
               <div class="form-group"><label for="config-password-modal">Senha atual</label><input type="password" id="config-password-modal" placeholder="Digite sua senha atual" autocomplete="current-password"></div>
               <div class="form-group"><label for="config-password-confirm-modal">Confirmar senha atual</label><input type="password" id="config-password-confirm-modal" placeholder="Repita sua senha atual" autocomplete="current-password"></div>
             </div>
+            <div id="config-profile-feedback-modal" class="auth-feedback-message is-info" style="display:none;"></div>
             <hr class="divider" />
             <div class="detail-listing-item" style="align-items:flex-start; gap:16px;">
               <div>
@@ -10260,7 +10270,7 @@ window.app = app;
           label: 'Salvar alterações',
           className: 'btn-primary',
           onClick: async () => {
-            const modal = document.getElementById('detail-modal-body') || document.getElementById('detail-modal') || document;
+            const modal = document.getElementById('detail-modal-body') || document;
             const ok = await this.saveProfileSettings(modal);
             if (ok) this.closeModal('detail-modal');
           }
@@ -10288,6 +10298,10 @@ window.app = app;
       }
 
       this.openDetailModal({ title: `<i class="fa-solid fa-sliders"></i> ${title}`, content, actions });
+
+      if (section === 'perfil') {
+        this.bindProfileSettingsSecurityFields?.(document.getElementById('detail-modal-body') || document);
+      }
 
       document.getElementById('config-delete-account-btn-modal')?.addEventListener('click', () => {
         this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
@@ -12027,134 +12041,95 @@ app.apiFetchJson = async function(url, options = {}) {
 
   app.bindProfileSettingsSecurityFields = function(scope) {
     const root = scope || document;
+    const nameInput = root.querySelector('#config-name, #config-name-modal');
+    const emailInput = root.querySelector('#config-email, #config-email-modal');
     const passwordWrap = root.querySelector('#config-profile-security-fields, #config-profile-security-fields-modal');
     const passwordInput = root.querySelector('#config-password, #config-password-modal');
-    const confirmInput = root.querySelector('#config-password-confirm, #config-password-confirm-modal');
-    if (!passwordWrap) return;
+    const confirmInput = root.querySelector('#config-password-confirm-modal');
+    if (!nameInput || !emailInput || !passwordWrap) return;
 
-    passwordWrap.style.display = 'grid';
-    passwordWrap.dataset.persistent = 'true';
-    if (passwordInput) passwordInput.autocomplete = 'current-password';
-    if (confirmInput) confirmInput.autocomplete = 'current-password';
+    const originalName = String(this.state?.user?.nome || '').trim();
+    const originalEmail = String(this.state?.user?.email || '').trim().toLowerCase();
+
+    const syncVisibility = () => {
+      const changed = String(nameInput.value || '').trim() !== originalName || String(emailInput.value || '').trim().toLowerCase() !== originalEmail;
+      passwordWrap.style.display = changed ? 'grid' : 'none';
+      if (!changed) {
+        if (passwordInput) passwordInput.value = '';
+        if (confirmInput) confirmInput.value = '';
+      }
+    };
+
+    nameInput.addEventListener('input', syncVisibility);
+    emailInput.addEventListener('input', syncVisibility);
+    syncVisibility();
   };
 
-  app.saveProfileSettings = async function(scope) {
+app.saveProfileSettings = async function(scope) {
     const root = scope || document;
     const nameInput = root.querySelector('#config-name, #config-name-modal');
     const emailInput = root.querySelector('#config-email, #config-email-modal');
     const passwordInput = root.querySelector('#config-password, #config-password-modal');
-    const confirmPasswordInput = root.querySelector('#config-password-confirm, #config-password-confirm-modal');
-    const passwordWrap = root.querySelector('#config-profile-security-fields, #config-profile-security-fields-modal');
-    const feedbackEl = root.querySelector('#config-profile-feedback, #config-profile-feedback-modal');
     const saveBtn = root.querySelector('#config-save-profile-btn') || document.querySelector('#config-save-profile-btn');
-    const newName = String(nameInput?.value || '').trim();
-    const newEmail = String(emailInput?.value || '').trim().toLowerCase();
-    const currentName = String(this.state?.user?.nome || '').trim();
-    const currentEmail = String(this.state?.user?.email || '').trim().toLowerCase();
-    const password = String(passwordInput?.value || '');
-    const confirmPassword = String(confirmPasswordInput?.value || '');
+
+    const newName = (nameInput?.value || '').trim();
+    const newEmail = (emailInput?.value || '').trim().toLowerCase();
+    const currentName = (this.state?.user?.nome || '').trim();
+    const currentEmail = (this.state?.user?.email || '').trim().toLowerCase();
+    const password = (passwordInput?.value || '').trim();
+
+    const nameChanged = newName !== currentName;
+    const emailChanged = newEmail !== currentEmail;
+
+    if (!nameChanged && !emailChanged) {
+        this.showNotification('Nenhuma alteração foi feita.', 'info');
+        return false;
+    }
+
+    if (!password) {
+        this.showNotification('Digite sua senha atual para alterar nome ou e-mail.', 'error');
+        passwordInput?.focus();
+        return false;
+    }
+
     const token = this.getStoredAuthToken?.();
-
-    const setFeedback = (message, kind = 'info') => {
-      if (!feedbackEl) return;
-      feedbackEl.style.display = 'block';
-      feedbackEl.textContent = message;
-      feedbackEl.className = `auth-feedback-message is-${kind}`;
-    };
-
     if (!token) {
-      setFeedback('Sua sessão expirou. Faça login novamente.', 'error');
-      this.showNotification?.('Sua sessão expirou. Faça login novamente.', 'error');
-      return false;
-    }
-    if (!newName) {
-      setFeedback('Informe seu nome.', 'error');
-      nameInput?.focus();
-      this.showNotification?.('Informe seu nome.', 'error');
-      return false;
-    }
-    if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
-      setFeedback('Informe um e-mail válido.', 'error');
-      emailInput?.focus();
-      this.showNotification?.('Informe um e-mail válido.', 'error');
-      return false;
-    }
-
-    const changed = newName !== currentName || newEmail !== currentEmail;
-    if (!changed) {
-      setFeedback('Nenhuma alteração detectada no nome ou no e-mail.', 'info');
-      this.showNotification?.('Nenhuma alteração detectada no nome ou no e-mail.', 'info');
-      return false;
-    }
-
-    if (passwordWrap) passwordWrap.style.display = 'grid';
-
-    if (!password || !confirmPassword) {
-      setFeedback('Digite sua senha atual e confirme a senha para salvar.', 'error');
-      passwordInput?.focus();
-      this.showNotification?.('Digite sua senha atual e confirme a senha para salvar.', 'error');
-      return false;
-    }
-
-    if (password !== confirmPassword) {
-      setFeedback('A senha e a confirmação precisam ser iguais.', 'error');
-      confirmPasswordInput?.focus();
-      this.showNotification?.('A senha e a confirmação precisam ser iguais.', 'error');
-      return false;
+        this.showNotification('Sessão expirada. Faça login novamente.', 'error');
+        return false;
     }
 
     if (saveBtn) {
-      saveBtn.disabled = true;
-      saveBtn.dataset.originalText = saveBtn.dataset.originalText || saveBtn.textContent;
-      saveBtn.textContent = 'Salvando...';
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Salvando...';
     }
-
-    setFeedback('Salvando seus dados...', 'info');
 
     try {
-      const response = await this.apiFetchJson('/api/auth/profile', {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          name: newName,
-          email: newEmail,
-          password,
-          confirmPassword
-        })
-      });
+        const response = await this.apiFetchJson('/api/auth/profile', {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ name: newName, email: newEmail, password })
+        });
 
-      const refreshedToken = response?.token || token;
-      if (response?.user) {
-        this.setStoredAuthSession?.(refreshedToken, response.user);
-      }
-      this.applyAuthenticatedUser?.({
-        user: response?.user || { name: newName, email: newEmail },
-        subscription: response?.subscription || {},
-        access: response?.access || {}
-      });
-      this.syncRealUserInfoInDOM?.();
-      this.saveState?.();
+        const refreshedToken = response?.token || token;
+        if (response?.user) this.setStoredAuthSession?.(refreshedToken, response.user);
+        this.applyAuthenticatedUser?.(response);
+        this.syncRealUserInfoInDOM?.();
+        this.saveState?.();
 
-      if (passwordInput) passwordInput.value = '';
-      if (confirmPasswordInput) confirmPasswordInput.value = '';
-      this.bindProfileSettingsSecurityFields?.(root);
-
-      setFeedback(response?.message || 'Dados atualizados com sucesso.', 'success');
-      this.showNotification?.(response?.message || 'Dados atualizados com sucesso.', 'success');
-      return true;
+        if (passwordInput) passwordInput.value = '';
+        this.showNotification(response?.message || 'Perfil atualizado com sucesso!', 'success');
+        return true;
     } catch (error) {
-      const msg = error?.payload?.message || error.message || 'Erro ao atualizar perfil.';
-      setFeedback(msg, 'error');
-      this.showNotification?.(msg, 'error');
-      return false;
+        const msg = error?.payload?.message || error.message || 'Erro ao atualizar perfil.';
+        this.showNotification(msg, 'error');
+        return false;
     } finally {
-      if (saveBtn) {
-        saveBtn.disabled = false;
-        saveBtn.textContent = saveBtn.dataset.originalText || 'Salvar alterações';
-      }
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Salvar alterações';
+        }
     }
-  };
-
+};
   document.addEventListener('click', async (event) => {
     const saveDesktopBtn = event.target.closest?.('#config-save-profile-btn');
     if (saveDesktopBtn) {
@@ -12363,6 +12338,17 @@ console.log('handleSignup chamada');
     if (appRef.userPlan === PREMIUM_PLAN) return;
     const target = event.target;
     if (!target) return;
+
+    const allowAccountSettings = Boolean(
+      target.closest('#module-configuracoes') ||
+      target.closest('#config-save-profile-btn, #config-open-forgot-password-btn, #config-open-forgot-password-btn-modal, #config-delete-account-btn, #config-delete-account-btn-modal') ||
+      (
+        target.closest('#detail-modal') &&
+        document.querySelector('#detail-modal-body #config-name-modal, #detail-modal-body #config-email-modal')
+      )
+    );
+    if (allowAccountSettings) return;
+
     if (!target.closest('.app-panel-container-standalone')) return;
     if (target.closest('#logout-btn, #home-btn-panel, #theme-toggle-btn-panel, #menu-toggle-btn, .sidebar-overlay, .close-modal-btn, [data-action="close-payment-gate"]')) return;
     event.preventDefault();
@@ -12602,6 +12588,17 @@ console.log('handleSignup chamada');
     if (!appRef || !appRef.isLoggedIn || appRef.userPlan === PREMIUM_PLAN) return;
     const target = event.target;
     if (!target) return;
+
+    const allowAccountSettings = Boolean(
+      target.closest('#module-configuracoes') ||
+      target.closest('#config-save-profile-btn, #config-open-forgot-password-btn, #config-open-forgot-password-btn-modal, #config-delete-account-btn, #config-delete-account-btn-modal') ||
+      (
+        target.closest('#detail-modal') &&
+        document.querySelector('#detail-modal-body #config-name-modal, #detail-modal-body #config-email-modal')
+      )
+    );
+    if (allowAccountSettings) return;
+
     if (!target.closest('.app-panel-container-standalone, .app-sidebar, .modules-area, .module-container, .nav-item, #menu-toggle-btn')) return;
     if (target.closest('#logout-btn, #home-btn-panel, #theme-toggle-btn-panel, .sidebar-overlay, .close-modal-btn, [data-action="close-payment-gate"]')) return;
     event.preventDefault();
@@ -12634,4 +12631,795 @@ console.log('handleSignup chamada');
   }
 
 
+})();
+
+
+/* === PATCH V5.0 | autocomplete multisseleção + voz no painel === */
+(() => {
+  const app = window.app;
+  if (!app) return;
+
+  const FIELD_IDS = new Set([
+    'lista-form-nome-full',
+    'lista-form-nome-dash',
+    'edit-item-name',
+    'edit-item-name-dt',
+    'pantry-edit-name',
+    'recipe-ing-name'
+  ]);
+
+  const UNIT_OPTIONS = ['un','kg','g','L','ml','pct','cx','xícara','colher','pitada','dentes','a gosto','fio','filés'];
+  const COMMON_ITEMS = [
+    { name: 'Arroz', unit_desc: 'kg' },
+    { name: 'Feijão', unit_desc: 'kg' },
+    { name: 'Açúcar', unit_desc: 'kg' },
+    { name: 'Café', unit_desc: 'pct' },
+    { name: 'Sal', unit_desc: 'a gosto' },
+    { name: 'Óleo de soja', unit_desc: 'L' },
+    { name: 'Leite', unit_desc: 'L' },
+    { name: 'Ovos', unit_desc: 'un' },
+    { name: 'Tomate', unit_desc: 'un' },
+    { name: 'Cebola', unit_desc: 'un' },
+    { name: 'Alho', unit_desc: 'dentes' },
+    { name: 'Macarrão', unit_desc: 'pct' },
+    { name: 'Farinha de trigo', unit_desc: 'kg' },
+    { name: 'Manteiga', unit_desc: 'g' },
+    { name: 'Pão', unit_desc: 'un' },
+    { name: 'Banana', unit_desc: 'un' },
+    { name: 'Maçã', unit_desc: 'un' },
+    { name: 'Batata', unit_desc: 'kg' },
+    { name: 'Cenoura', unit_desc: 'kg' },
+    { name: 'Abóbora', unit_desc: 'kg' },
+    { name: 'Frango', unit_desc: 'kg' },
+    { name: 'Carne moída', unit_desc: 'kg' },
+    { name: 'Queijo', unit_desc: 'g' },
+    { name: 'Presunto', unit_desc: 'g' },
+    { name: 'Milho', unit_desc: 'pct' }
+  ];
+
+  const escapeAttr = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const normalize = app.normalizeSearchText || function(value) {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  app.normalizeSearchText = normalize;
+
+  app.__afAutocomplete = app.__afAutocomplete || {
+    input: null,
+    query: '',
+    suggestions: [],
+    selected: new Map(),
+    context: null,
+    recognition: null,
+    listening: false
+  };
+
+  app.ensureAutocompleteContainer = function() {
+    if (!this.elements) this.elements = {};
+    let el = this.elements.autocompleteSuggestions || document.getElementById('autocomplete-suggestions');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'autocomplete-suggestions';
+      document.body.appendChild(el);
+    }
+    this.elements.autocompleteSuggestions = el;
+    return el;
+  };
+
+  app.isIngredientAutocompleteInput = function(input) {
+    return !!input && FIELD_IDS.has(String(input.id || ''));
+  };
+
+  app.getIngredientAutocompleteContext = function(input) {
+    const id = String(input?.id || '');
+    const isBulkList = id === 'lista-form-nome-full' || id === 'lista-form-nome-dash';
+    const isRecipe = id === 'recipe-ing-name';
+    const isDesktopEdit = id === 'edit-item-name-dt';
+    const isInlinePantryModal = id === 'edit-item-name';
+    const isFullEdit = id === 'pantry-edit-name';
+    const editItemId = document.getElementById('edit-item-id')?.value?.trim();
+    const editItemType = document.getElementById('edit-item-type')?.value?.trim();
+
+    if (isBulkList) return { entity: 'lista', mode: 'bulk', label: 'Adicionar itens na lista' };
+    if (isRecipe) return { entity: 'receita', mode: 'bulk', label: 'Adicionar ingredientes' };
+    if (isInlinePantryModal && !editItemId && editItemType === 'despensa') {
+      return { entity: 'despensa', mode: 'bulk', label: 'Adicionar itens na despensa' };
+    }
+    if (isInlinePantryModal && editItemType === 'despensa') {
+      return { entity: 'despensa', mode: 'single', label: 'Editar item da despensa' };
+    }
+    if (isInlinePantryModal && editItemType === 'lista') {
+      return { entity: 'lista', mode: 'single', label: 'Editar item da lista' };
+    }
+    if (isFullEdit) {
+      const type = document.getElementById('pantry-edit-form-fullscreen')?.dataset?.editType || 'despensa';
+      return { entity: type === 'lista' ? 'lista' : 'despensa', mode: 'single', label: type === 'lista' ? 'Editar item da lista' : 'Editar item da despensa' };
+    }
+    if (isDesktopEdit) return { entity: 'lista', mode: 'single', label: 'Editar item da lista' };
+    return { entity: 'geral', mode: 'single', label: 'Selecionar item' };
+  };
+
+  app.decorateIngredientAutocompleteInput = function(input) {
+    if (!this.isIngredientAutocompleteInput(input) || input.dataset.afAutocompleteDecorated === '1') return;
+    const parent = input.parentElement;
+    if (!parent) return;
+
+    let wrap = input.closest('.af-autocomplete-input-wrap');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.className = 'af-autocomplete-input-wrap';
+      parent.insertBefore(wrap, input);
+      wrap.appendChild(input);
+    }
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'af-voice-trigger';
+    button.setAttribute('aria-label', 'Pesquisar por voz');
+    button.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+    wrap.appendChild(button);
+    input.dataset.afAutocompleteDecorated = '1';
+    input.setAttribute('autocomplete', 'off');
+  };
+
+  app.getIngredientUsageMap = function() {
+    const usage = new Map();
+    const bump = (name, amount = 1) => {
+      const key = normalize(name);
+      if (!key) return;
+      usage.set(key, (usage.get(key) || 0) + amount);
+    };
+    Object.values(this.state?.listas || {}).forEach((lista) => {
+      (lista?.items || []).forEach((item) => bump(item?.name, 3));
+    });
+    (this.state?.despensa || []).forEach((item) => bump(item?.name, 2));
+    Object.values(this.state?.receitas || {}).forEach((recipe) => {
+      (recipe?.ingredients || []).forEach((ing) => bump(ing?.name, 2));
+    });
+    return usage;
+  };
+
+  app.getAutocompleteCatalog = function() {
+    const usage = this.getIngredientUsageMap();
+    const catalog = [];
+    const globalItems = Array.isArray(window.ALL_ITEMS_DATA) ? window.ALL_ITEMS_DATA : [];
+    catalog.push(...globalItems);
+    catalog.push(...(this.state?.despensa || []).map((item) => ({ name: item.name, unit_desc: item.unid || 'un', price: Number(item.valor || 0) })));
+    catalog.push(...Object.values(this.state?.listas || {}).flatMap((lista) => (lista?.items || []).map((item) => ({ name: item.name, unit_desc: item.unid || 'un', price: Number(item.valor || 0) }))));
+    catalog.push(...Object.values(this.state?.receitas || {}).flatMap((recipe) => (recipe?.ingredients || []).map((ing) => ({ name: ing.name, unit_desc: ing.unit || 'un', price: 0 }))));
+    catalog.push(...COMMON_ITEMS.map((item) => ({ ...item, isCommon: true })));
+
+    const dedup = new Map();
+    catalog.forEach((item) => {
+      const name = String(item?.name || '').trim();
+      const key = normalize(name);
+      if (!name || !key) return;
+      const unitDesc = String(item?.unit_desc || item?.unid || item?.unit || 'un').trim() || 'un';
+      const base = dedup.get(key) || {
+        name,
+        unit_desc: unitDesc,
+        price: Number(item?.price || item?.valor || item?.preco || 0) || 0,
+        usageCount: usage.get(key) || 0,
+        commonBoost: item?.isCommon ? 4 : 0
+      };
+      if (!base.name || base.name.length > name.length) base.name = name;
+      if (item?.isCommon) base.commonBoost = Math.max(base.commonBoost, 4);
+      if ((!base.unit_desc || base.unit_desc === 'un') && unitDesc) base.unit_desc = unitDesc;
+      if ((!base.price || base.price === 0) && Number(item?.price || item?.valor || item?.preco || 0) > 0) base.price = Number(item?.price || item?.valor || item?.preco || 0);
+      base.usageCount = Math.max(base.usageCount || 0, usage.get(key) || 0);
+      dedup.set(key, base);
+    });
+    return Array.from(dedup.values());
+  };
+
+  app.highlightAutocompleteLabel = function(label, rawQuery) {
+    const safeLabel = this.escapeHtml ? this.escapeHtml(label) : escapeAttr(label);
+    const q = normalize(rawQuery);
+    if (!q) return safeLabel;
+    const normalizedLabel = normalize(label);
+    const idx = normalizedLabel.indexOf(q);
+    if (idx < 0) return safeLabel;
+    return `${safeLabel.slice(0, idx)}<mark>${safeLabel.slice(idx, idx + String(rawQuery).trim().length)}</mark>${safeLabel.slice(idx + String(rawQuery).trim().length)}`;
+  };
+
+  app.searchAutocompleteSuggestions = function(rawQuery) {
+    const source = this.getAutocompleteCatalog();
+    const query = normalize(rawQuery);
+    if (!query) {
+      return source
+        .sort((a, b) => ((b.usageCount + b.commonBoost) - (a.usageCount + a.commonBoost)) || a.name.localeCompare(b.name, 'pt-BR'))
+        .slice(0, 14);
+    }
+
+    const words = query.split(' ').filter(Boolean);
+    const exactThreshold = words.join(' ');
+    const ranked = source
+      .map((item) => {
+        const normalizedName = normalize(item.name);
+        if (!normalizedName) return null;
+        const includesAll = words.every((word) => normalizedName.includes(word));
+        if (!includesAll) return null;
+        let score = 0;
+        if (normalizedName === exactThreshold) score += 90;
+        if (normalizedName.startsWith(query)) score += 60;
+        if (normalizedName.includes(` ${query}`)) score += 30;
+        score += Math.max(0, 12 - normalizedName.length / 3);
+        score += (item.usageCount || 0) * 5;
+        score += item.commonBoost || 0;
+        return { ...item, __score: score };
+      })
+      .filter(Boolean)
+      .sort((a, b) => (b.__score - a.__score) || a.name.localeCompare(b.name, 'pt-BR'))
+      .slice(0, 14)
+      .map(({ __score, ...item }) => item);
+
+    return ranked;
+  };
+
+  app.positionAutocompleteCard = function(input) {
+    const container = this.ensureAutocompleteContainer();
+    if (!container || !input) return;
+    const rect = input.getBoundingClientRect();
+    const width = Math.max(290, rect.width);
+    const estimatedHeight = Math.min(420, window.innerHeight * 0.55);
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const showAbove = spaceBelow < 260 && rect.top > estimatedHeight;
+    container.style.position = 'fixed';
+    container.style.left = `${Math.max(12, Math.min(rect.left, window.innerWidth - width - 12))}px`;
+    container.style.top = showAbove ? `${Math.max(12, rect.top - estimatedHeight - 10)}px` : `${Math.min(window.innerHeight - 12, rect.bottom + 8)}px`;
+    container.style.width = `${Math.min(width, window.innerWidth - 24)}px`;
+    container.style.maxWidth = 'calc(100vw - 24px)';
+  };
+
+  app.renderIngredientAutocomplete = function(input, rawQuery = null) {
+    if (!this.isIngredientAutocompleteInput(input)) return;
+    this.decorateIngredientAutocompleteInput(input);
+    const state = this.__afAutocomplete;
+    const container = this.ensureAutocompleteContainer();
+    const query = rawQuery === null ? String(input.value || '') : String(rawQuery || '');
+    const context = this.getIngredientAutocompleteContext(input);
+    const suggestions = this.searchAutocompleteSuggestions(query);
+    const queryNorm = normalize(query);
+
+    state.input = input;
+    state.query = query;
+    state.context = context;
+    state.suggestions = suggestions;
+    this.activeAutocompleteInput = input;
+
+    const selectedNames = Array.from(state.selected.values());
+    const selectedChips = selectedNames.length
+      ? `<div class="af-autocomplete-selected">${selectedNames.map((name) => `<button type="button" class="af-selected-chip" data-af-chip-remove="${escapeAttr(name)}"><span>${this.escapeHtml ? this.escapeHtml(name) : escapeAttr(name)}</span><i class="fa-solid fa-xmark"></i></button>`).join('')}</div>`
+      : '';
+
+    const rows = suggestions.length
+      ? suggestions.map((item) => {
+          const key = normalize(item.name);
+          const checked = state.selected.has(key);
+          const meta = [];
+          if (item.unit_desc) meta.push(item.unit_desc);
+          if (item.usageCount) meta.push(`${item.usageCount}x usado`);
+          return `
+            <button type="button" class="af-autocomplete-option ${checked ? 'is-checked' : ''}" data-af-name="${escapeAttr(item.name)}" data-af-option="1">
+              ${context.mode === 'bulk' ? `<span class="af-autocomplete-box"><i class="fa-solid fa-check"></i></span>` : `<span class="af-autocomplete-box af-single-box"><i class="fa-solid fa-arrow-turn-down-left"></i></span>`}
+              <span class="af-autocomplete-copy">
+                <strong>${this.highlightAutocompleteLabel(item.name, query)}</strong>
+                <small>${this.escapeHtml ? this.escapeHtml(meta.join(' • ')) : escapeAttr(meta.join(' • '))}</small>
+              </span>
+            </button>`;
+        }).join('')
+      : `<div class="af-autocomplete-empty">Nenhum item encontrado. Você pode inserir manualmente ou usar áudio.</div>`;
+
+    const footerCount = selectedNames.length;
+    const exactExists = suggestions.some((item) => normalize(item.name) === queryNorm);
+    const manualText = query.trim();
+    const canUseManual = !!manualText && !exactExists;
+    const footerPrimary = context.mode === 'bulk'
+      ? `Adicionar ${footerCount || (canUseManual ? 1 : 0)} item${footerCount + (canUseManual && footerCount === 0 ? 1 : 0) > 1 ? 's' : ''}`
+      : 'Usar item';
+
+    container.innerHTML = `
+      <div class="af-autocomplete-card ${context.mode === 'bulk' ? 'is-bulk' : 'is-single'} ${state.listening ? 'is-listening' : ''}">
+        <div class="af-autocomplete-head">
+          <div class="af-autocomplete-title-wrap">
+            <span class="af-autocomplete-eyebrow">${this.escapeHtml ? this.escapeHtml(context.label) : escapeAttr(context.label)}</span>
+            <strong>${context.mode === 'bulk' ? 'Selecione um ou vários itens' : 'Escolha um item'}</strong>
+          </div>
+          <button type="button" class="af-autocomplete-audio ${state.listening ? 'is-active' : ''}" data-af-voice="1">
+            <i class="fa-solid fa-microphone"></i>
+            <span>${state.listening ? 'Ouvindo...' : 'Áudio'}</span>
+          </button>
+        </div>
+        ${selectedChips}
+        <div class="af-autocomplete-list">${rows}</div>
+        <div class="af-autocomplete-footer">
+          <button type="button" class="af-autocomplete-action secondary" data-af-action="clear">Limpar</button>
+          ${canUseManual ? `<button type="button" class="af-autocomplete-action secondary" data-af-action="manual">Usar "${this.escapeHtml ? this.escapeHtml(manualText) : escapeAttr(manualText)}"</button>` : ''}
+          <button type="button" class="af-autocomplete-action primary" data-af-action="apply">${footerPrimary}</button>
+        </div>
+      </div>`;
+
+    this.positionAutocompleteCard(input);
+    container.style.display = 'block';
+  };
+
+  app.hideAutocomplete = function(forceClearSelection = false) {
+    const state = this.__afAutocomplete;
+    if (state?.recognition && state.listening) {
+      try { state.recognition.stop(); } catch (_) {}
+    }
+    if (forceClearSelection && state?.selected) state.selected.clear();
+    const container = this.ensureAutocompleteContainer();
+    if (container) {
+      container.style.display = 'none';
+      container.innerHTML = '';
+    }
+    if (state) {
+      state.input = null;
+      state.query = '';
+      state.suggestions = [];
+      state.context = null;
+      state.listening = false;
+    }
+    this.activeAutocompleteInput = null;
+    document.querySelectorAll('.af-voice-trigger, .af-autocomplete-audio').forEach((btn) => btn.classList.remove('is-active'));
+  };
+
+  app.clearAutocompleteSelection = function() {
+    const state = this.__afAutocomplete;
+    state.selected.clear();
+    if (state.input) this.renderIngredientAutocomplete(state.input, state.input.value || '');
+  };
+
+  app.resolveAutocompleteMeta = function(name) {
+    const key = normalize(name);
+    return this.getAutocompleteCatalog().find((item) => normalize(item.name) === key) || { name, unit_desc: 'un', price: 0 };
+  };
+
+  app.applyUnitToSelect = function(select, sourceUnit) {
+    if (!select) return;
+    const unitSource = String(sourceUnit || 'un').toLowerCase();
+    const option = Array.from(select.options || []).find((opt) => unitSource.includes(String(opt.value || '').toLowerCase()));
+    select.value = option ? option.value : (select.value || 'un');
+  };
+
+  app.applySuggestionMetadataToInput = function(input, itemData) {
+    if (!input || !itemData) return;
+    const id = String(input.id || '');
+    const unit = String(itemData.unit_desc || itemData.unid || itemData.unit || 'un');
+    const price = Number(itemData.price || itemData.valor || itemData.preco || 0);
+
+    if (id === 'recipe-ing-name') {
+      const wrap = input.closest('#recipe-ing-form, #custom-confirm-modal, form') || document;
+      const qtyInput = wrap.querySelector('#recipe-ing-qtd');
+      const unitSelect = wrap.querySelector('#recipe-ing-unid');
+      if (qtyInput && !String(qtyInput.value || '').trim()) qtyInput.value = '1';
+      this.applyUnitToSelect(unitSelect, unit);
+      return;
+    }
+
+    if (id === 'lista-form-nome-full' || id === 'lista-form-nome-dash') {
+      const qtyInput = document.getElementById('lista-form-qtd-full') || document.getElementById('lista-form-qtd-dash');
+      const unitSelect = document.getElementById('lista-form-unid-full') || document.getElementById('lista-form-unid-dash');
+      const priceInput = document.getElementById('lista-form-valor-full') || document.getElementById('lista-form-valor-dash');
+      if (qtyInput && !String(qtyInput.value || '').trim()) qtyInput.value = '1';
+      this.applyUnitToSelect(unitSelect, unit);
+      if (priceInput && !String(priceInput.value || '').trim() && price > 0) priceInput.value = price.toFixed(2);
+      return;
+    }
+
+    const root = input.closest('#item-edit-modal, #pantry-edit-form-fullscreen, #lista-detail-desktop, .modal-box, form, .card-content') || document;
+    const qtyInput = root.querySelector('#edit-item-qtd, #pantry-edit-qtd') || document.getElementById('edit-item-qtd') || document.getElementById('pantry-edit-qtd');
+    const unitSelect = root.querySelector('#edit-item-unid, #pantry-edit-unid') || document.getElementById('edit-item-unid') || document.getElementById('pantry-edit-unid');
+    const priceInput = root.querySelector('#edit-item-valor') || document.getElementById('edit-item-valor');
+    if (qtyInput && !String(qtyInput.value || '').trim()) qtyInput.value = '1';
+    this.applyUnitToSelect(unitSelect, unit);
+    if (priceInput && !String(priceInput.value || '').trim() && price > 0) priceInput.value = price.toFixed(2);
+  };
+
+  app.setBulkSelectionByNames = function(names) {
+    const state = this.__afAutocomplete;
+    state.selected.clear();
+    (Array.isArray(names) ? names : []).forEach((name) => {
+      const clean = String(name || '').trim();
+      if (!clean) return;
+      const key = normalize(clean);
+      const meta = this.resolveAutocompleteMeta(clean);
+      state.selected.set(key, meta.name || clean);
+    });
+  };
+
+  app.parseVoiceIngredientTokens = function(transcript) {
+    const text = String(transcript || '').trim();
+    if (!text) return [];
+    const cleaned = text.replace(/^adicionar\s+/i, '').replace(/^inserir\s+/i, '').trim();
+    if (/[;,\n]/.test(cleaned)) {
+      return cleaned.split(/[;,\n]+/).map((part) => part.trim()).filter(Boolean);
+    }
+    return [cleaned];
+  };
+
+  app.startIngredientVoiceSearch = function(input) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      this.showNotification?.('Seu navegador não liberou pesquisa por áudio neste campo.', 'info');
+      return;
+    }
+
+    this.decorateIngredientAutocompleteInput(input);
+    const state = this.__afAutocomplete;
+    if (state.recognition && state.listening) {
+      try { state.recognition.stop(); } catch (_) {}
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    state.recognition = recognition;
+    state.listening = true;
+    state.input = input;
+    document.querySelectorAll('.af-voice-trigger, .af-autocomplete-audio').forEach((btn) => btn.classList.add('is-active'));
+    this.renderIngredientAutocomplete(input, input.value || '');
+
+    recognition.onresult = (event) => {
+      const transcript = String(event.results?.[0]?.[0]?.transcript || '').trim();
+      input.value = transcript;
+      const tokens = this.parseVoiceIngredientTokens(transcript);
+      const context = this.getIngredientAutocompleteContext(input);
+      if (context.mode === 'bulk' && tokens.length > 1) {
+        this.setBulkSelectionByNames(tokens);
+        this.renderIngredientAutocomplete(input, '');
+        this.showNotification?.(`${tokens.length} item(ns) captado(s) por voz.`, 'success');
+        return;
+      }
+      this.renderIngredientAutocomplete(input, transcript);
+    };
+
+    recognition.onerror = () => {
+      state.listening = false;
+      document.querySelectorAll('.af-voice-trigger, .af-autocomplete-audio').forEach((btn) => btn.classList.remove('is-active'));
+      this.showNotification?.('Não consegui entender o áudio. Tente novamente.', 'error');
+      if (state.input) this.renderIngredientAutocomplete(state.input, state.input.value || '');
+    };
+
+    recognition.onend = () => {
+      state.listening = false;
+      document.querySelectorAll('.af-voice-trigger, .af-autocomplete-audio').forEach((btn) => btn.classList.remove('is-active'));
+      if (state.input) this.renderIngredientAutocomplete(state.input, state.input.value || '');
+    };
+
+    try {
+      recognition.start();
+    } catch (_) {
+      state.listening = false;
+      document.querySelectorAll('.af-voice-trigger, .af-autocomplete-audio').forEach((btn) => btn.classList.remove('is-active'));
+    }
+  };
+
+  app.applySingleAutocompleteItem = function(name) {
+    const state = this.__afAutocomplete;
+    const input = state.input;
+    if (!input) return;
+    const itemData = this.resolveAutocompleteMeta(name);
+    input.value = itemData.name || name;
+    this.applySuggestionMetadataToInput(input, itemData);
+    this.hideAutocomplete(true);
+    input.focus();
+  };
+
+  app.getBulkNamesToApply = function() {
+    const state = this.__afAutocomplete;
+    const selected = Array.from(state.selected.values()).map((name) => String(name || '').trim()).filter(Boolean);
+    if (selected.length) return selected;
+    const manual = String(state.query || state.input?.value || '').trim();
+    return manual ? this.parseVoiceIngredientTokens(manual) : [];
+  };
+
+  app.addManyItemsToActiveList = function(names) {
+    const cleanNames = Array.from(new Map((Array.isArray(names) ? names : []).map((name) => [normalize(name), String(name || '').trim()]).filter(([, name]) => !!name))).map(([, name]) => name);
+    if (!cleanNames.length) {
+      this.showNotification?.('Selecione pelo menos um item para adicionar na lista.', 'info');
+      return false;
+    }
+
+    let targetListId = document.getElementById('active-list-id-input')?.value || this.activeListId;
+    if (!this.state?.listas?.[targetListId]) {
+      const typedListName = document.getElementById('active-list-name-input')?.value?.trim() || document.getElementById('widget-list-name-input')?.value?.trim();
+      if (!typedListName) {
+        this.showNotification?.('Dê um nome para sua lista antes de adicionar itens.', 'error');
+        return false;
+      }
+      const newListId = this.generateId();
+      this.state.listas[newListId] = { nome: typedListName, items: [] };
+      this.activeListId = newListId;
+      targetListId = newListId;
+    }
+
+    const currentItems = this.state.listas[targetListId].items || [];
+    if (this.userPlan === 'free' && currentItems.length + cleanNames.length > 10) {
+      this.showPlansModal?.('Limite de 10 itens por lista no plano Gratuito atingido. Faça upgrade para listas ilimitadas!');
+      return false;
+    }
+
+    const newItems = cleanNames.map((name) => {
+      const item = this.resolveAutocompleteMeta(name);
+      return {
+        id: this.generateId(),
+        name: item.name,
+        qtd: 1,
+        unid: String(item.unit_desc || 'un'),
+        valor: Number(item.price || 0).toFixed(2),
+        checked: false
+      };
+    });
+
+    this.state.listas[targetListId].items.unshift(...newItems.reverse());
+    this.activeListId = targetListId;
+    this.renderListaAtiva?.(targetListId);
+    this.renderListaWidget?.();
+    this.renderListasSalvas?.();
+    this.renderOrcamento?.();
+    this.saveState?.();
+    return newItems.length;
+  };
+
+  app.addManyItemsToPantry = function(names) {
+    const cleanNames = Array.from(new Map((Array.isArray(names) ? names : []).map((name) => [normalize(name), String(name || '').trim()]).filter(([, name]) => !!name))).map(([, name]) => name);
+    if (!cleanNames.length) {
+      this.showNotification?.('Selecione pelo menos um item para adicionar na despensa.', 'info');
+      return false;
+    }
+
+    const newItems = cleanNames.map((name) => {
+      const item = this.resolveAutocompleteMeta(name);
+      return {
+        id: this.generateId(),
+        name: item.name,
+        qtd: 1,
+        unid: String(item.unit_desc || 'un'),
+        valor: Number(item.price || 0).toFixed(2),
+        validade: '',
+        stock: 100
+      };
+    });
+
+    this.state.despensa.unshift(...newItems.reverse());
+    this.renderDespensaWidget?.();
+    if (this.activeModule === 'despensa') this.renderDespensa?.();
+    this.saveState?.();
+    return newItems.length;
+  };
+
+  app.addManyIngredientsToRecipeEditor = function(names) {
+    const cleanNames = Array.from(new Map((Array.isArray(names) ? names : []).map((name) => [normalize(name), String(name || '').trim()]).filter(([, name]) => !!name))).map(([, name]) => name);
+    if (!cleanNames.length) {
+      this.showNotification?.('Selecione pelo menos um ingrediente.', 'info');
+      return false;
+    }
+
+    this.tempRecipeIngredients = Array.isArray(this.tempRecipeIngredients) ? this.tempRecipeIngredients : [];
+    cleanNames.forEach((name) => {
+      const item = this.resolveAutocompleteMeta(name);
+      this.tempRecipeIngredients.push({ name: item.name, qty: '1', unit: String(item.unit_desc || 'un') });
+    });
+    this.renderModalIngredientList?.();
+    return cleanNames.length;
+  };
+
+  app.applyBulkAutocompleteSelection = function() {
+    const state = this.__afAutocomplete;
+    const context = state.context || this.getIngredientAutocompleteContext(state.input);
+    const names = this.getBulkNamesToApply();
+    if (!names.length) {
+      this.showNotification?.('Selecione um ou mais itens antes de adicionar.', 'info');
+      return;
+    }
+
+    let added = 0;
+    if (context.entity === 'lista') added = this.addManyItemsToActiveList(names) || 0;
+    if (context.entity === 'despensa') added = this.addManyItemsToPantry(names) || 0;
+    if (context.entity === 'receita') added = this.addManyIngredientsToRecipeEditor(names) || 0;
+    if (!added) return;
+
+    if (state.input) state.input.value = '';
+    state.selected.clear();
+    if (context.entity === 'receita') {
+      const qtyInput = document.getElementById('recipe-ing-qtd');
+      const unitSelect = document.getElementById('recipe-ing-unid');
+      if (qtyInput) qtyInput.value = '1';
+      if (unitSelect) unitSelect.value = 'un';
+      this.renderIngredientAutocomplete(state.input, '');
+    } else {
+      this.hideAutocomplete(true);
+      if (context.entity === 'despensa') this.closeModal?.('item-edit-modal');
+    }
+
+    const labels = {
+      lista: 'adicionado(s) à lista',
+      despensa: 'adicionado(s) à despensa',
+      receita: 'adicionado(s) à receita'
+    };
+    this.showNotification?.(`${added} item(ns) ${labels[context.entity] || 'adicionado(s)'}.`, 'success');
+  };
+
+  app.handleAutocomplete = function(input) {
+    if (!this.isIngredientAutocompleteInput(input)) return;
+    this.renderIngredientAutocomplete(input, input.value || '');
+  };
+
+  const previousHandleSaveEditModal = app.handleSaveEditModal?.bind(app);
+  app.handleSaveEditModal = function() {
+    const id = document.getElementById('edit-item-id')?.value?.trim();
+    const type = document.getElementById('edit-item-type')?.value?.trim();
+    if (!id && type === 'despensa') {
+      const name = document.getElementById('edit-item-name')?.value?.trim();
+      if (!name) {
+        this.showNotification?.('Informe o nome do item da despensa.', 'error');
+        document.getElementById('edit-item-name')?.focus();
+        return;
+      }
+      this.state.despensa.unshift({
+        id: this.generateId(),
+        name,
+        qtd: parseFloat(document.getElementById('edit-item-qtd')?.value) || 1,
+        unid: document.getElementById('edit-item-unid')?.value || 'un',
+        valor: (parseFloat(document.getElementById('edit-item-valor')?.value) || 0).toFixed(2),
+        validade: document.getElementById('edit-item-validade')?.value || '',
+        stock: parseInt(document.getElementById('edit-item-stock')?.value || '100', 10)
+      });
+      this.saveState?.();
+      this.renderDespensaWidget?.();
+      if (this.activeModule === 'despensa') this.renderDespensa?.();
+      this.closeModal?.('item-edit-modal');
+      this.showNotification?.('Item adicionado à despensa!', 'success');
+      return;
+    }
+    return previousHandleSaveEditModal ? previousHandleSaveEditModal() : undefined;
+  };
+
+  document.addEventListener('focusin', (event) => {
+    const input = event.target;
+    if (!app.isIngredientAutocompleteInput(input)) return;
+    app.decorateIngredientAutocompleteInput(input);
+    setTimeout(() => app.renderIngredientAutocomplete(input, input.value || ''), 10);
+  });
+
+  document.addEventListener('input', (event) => {
+    const input = event.target;
+    if (!app.isIngredientAutocompleteInput(input)) return;
+    app.renderIngredientAutocomplete(input, input.value || '');
+  }, true);
+
+  document.addEventListener('keydown', (event) => {
+    const input = event.target;
+    if (!app.isIngredientAutocompleteInput(input)) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      app.hideAutocomplete(true);
+      return;
+    }
+    if (event.key === 'Enter' && app.__afAutocomplete?.input === input) {
+      const context = app.getIngredientAutocompleteContext(input);
+      if (context.mode === 'bulk') {
+        event.preventDefault();
+        app.applyBulkAutocompleteSelection();
+      } else {
+        const first = app.__afAutocomplete?.suggestions?.[0];
+        if (first) {
+          event.preventDefault();
+          app.applySingleAutocompleteItem(first.name);
+        }
+      }
+    }
+  }, true);
+
+  document.addEventListener('mousedown', (event) => {
+    const option = event.target.closest?.('.af-autocomplete-option');
+    const action = event.target.closest?.('[data-af-action]');
+    const voice = event.target.closest?.('[data-af-voice]');
+    const chip = event.target.closest?.('[data-af-chip-remove]');
+    const voiceBtn = event.target.closest?.('.af-voice-trigger');
+    if (option || action || voice || chip || voiceBtn) {
+      event.preventDefault();
+    }
+  }, true);
+
+  document.addEventListener('click', (event) => {
+    const voiceBtn = event.target.closest?.('.af-voice-trigger');
+    if (voiceBtn) {
+      const input = voiceBtn.parentElement?.querySelector('input');
+      if (input) app.startIngredientVoiceSearch(input);
+      return;
+    }
+
+    const panelVoiceBtn = event.target.closest?.('[data-af-voice]');
+    if (panelVoiceBtn) {
+      const input = app.__afAutocomplete?.input;
+      if (input) app.startIngredientVoiceSearch(input);
+      return;
+    }
+
+    const option = event.target.closest?.('.af-autocomplete-option');
+    if (option) {
+      const name = option.getAttribute('data-af-name') || '';
+      const state = app.__afAutocomplete;
+      const context = state.context || app.getIngredientAutocompleteContext(state.input);
+      if (context.mode === 'bulk') {
+        const key = normalize(name);
+        if (state.selected.has(key)) state.selected.delete(key);
+        else state.selected.set(key, name);
+        app.renderIngredientAutocomplete(state.input, state.input?.value || '');
+      } else {
+        app.applySingleAutocompleteItem(name);
+      }
+      return;
+    }
+
+    const removeChip = event.target.closest?.('[data-af-chip-remove]');
+    if (removeChip) {
+      const name = removeChip.getAttribute('data-af-chip-remove') || '';
+      app.__afAutocomplete.selected.delete(normalize(name));
+      if (app.__afAutocomplete.input) app.renderIngredientAutocomplete(app.__afAutocomplete.input, app.__afAutocomplete.input.value || '');
+      return;
+    }
+
+    const action = event.target.closest?.('[data-af-action]');
+    if (action) {
+      const act = action.getAttribute('data-af-action');
+      if (act === 'clear') {
+        app.clearAutocompleteSelection();
+      } else if (act === 'manual') {
+        const input = app.__afAutocomplete?.input;
+        const context = app.__afAutocomplete?.context || app.getIngredientAutocompleteContext(input);
+        if (context.mode === 'bulk') app.applyBulkAutocompleteSelection();
+        else if (input) app.applySingleAutocompleteItem(input.value || '');
+      } else if (act === 'apply') {
+        const input = app.__afAutocomplete?.input;
+        const context = app.__afAutocomplete?.context || app.getIngredientAutocompleteContext(input);
+        if (context.mode === 'bulk') app.applyBulkAutocompleteSelection();
+        else if (app.__afAutocomplete?.suggestions?.[0]) app.applySingleAutocompleteItem(app.__afAutocomplete.suggestions[0].name);
+        else if (input?.value?.trim()) app.applySingleAutocompleteItem(input.value.trim());
+      }
+      return;
+    }
+
+    const input = event.target.closest?.('input');
+    if (app.isIngredientAutocompleteInput(input)) {
+      app.decorateIngredientAutocompleteInput(input);
+      app.renderIngredientAutocomplete(input, input.value || '');
+      return;
+    }
+
+    if (!event.target.closest?.('#autocomplete-suggestions')) {
+      app.hideAutocomplete(true);
+    }
+  }, true);
+
+  window.addEventListener('resize', () => {
+    const input = app.__afAutocomplete?.input;
+    if (input && app.ensureAutocompleteContainer().style.display === 'block') {
+      app.positionAutocompleteCard(input);
+    }
+  });
+
+  window.addEventListener('scroll', () => {
+    const input = app.__afAutocomplete?.input;
+    if (input && app.ensureAutocompleteContainer().style.display === 'block') {
+      app.positionAutocompleteCard(input);
+    }
+  }, true);
 })();
