@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <!-- Google tag (gtag.js) -->
+
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-MJGVLT9S16"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -17,20 +17,20 @@
     <meta name="theme-color" content="#00f2ea">
     <meta name="description" content="Organização alimentar premium, simples e sem ruído com o Alimente Fácil.">
     <meta name="author" content="Alimente Fácil">
-    
+
     <meta property="og:title" content="Alimente Fácil">
     <meta property="og:description" content="Organização alimentar premium, simples e sem ruído.">
     <meta property="og:type" content="website">
-    
+
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;400;600;700&family=Roboto+Mono:wght@400;500;700&family=Kalam:wght@400;700&family=Roboto:wght@400;500;700&family=Segoe+UI:wght@300;400;600&display=swap" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    
+
     <link rel="stylesheet" href="style.css">
 <style>
     :root {
@@ -86,15 +86,13 @@
 </header>
 
     <main class="main-container">
-        
+
         <section id="inicio" class="page-section">
             <div class="identity-container hero-clean-layout" >
                 <div class="hero-clean-shell">
                     <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
                     <h2 class="hero-tagline">Organização alimentar premium</h2>
                     <p class="simple-subtitle scroll-reveal"></p>
-
-                    
 
                     <div class="hero-cta-stack">
                         <a href="#" class="modern-start-btn" onclick="if(window.app){window.app.handleStartButtonClick(); return false;}">
@@ -157,7 +155,7 @@
                         O Custo Invisível
                     </button>
                 </div>
-                
+
                 <div class="calculator-info-container">
                     <div id="home-calculator" class="mobile-tab-content glass-card" role="tabpanel" aria-labelledby="calc-title">
                         <div class="widget-header">
@@ -304,36 +302,36 @@
         </div>
     </div>
 
-    <div id="auth-modal" class="modal-overlay"> 
-         <div class="modal-box auth-modal-content" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title"> 
+    <div id="auth-modal" class="modal-overlay">
+         <div class="modal-box auth-modal-content" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
              <div class="modal-header">
-                 <button class="icon-button close-btn" data-modal-close="auth-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
-                 <h3 id="auth-modal-title">Acessar Painel</h3> 
+                 <button class="icon-button close-btn" data-modal-close="auth-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+                 <h3 id="auth-modal-title">Acessar Painel</h3>
              </div>
-             
+
              <div class="modal-body">
-                 <div id="login-view" class="auth-form-container active"> 
-                     <form id="login-form"> 
-                         <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required></div> 
-                         <div class="form-group"><label for="login-password">Senha</label><input type="password" id="login-password" required></div> 
-                         <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Entrar</button> 
-                     </form> 
-                     <p class="form-footer-text" style="display:flex; flex-direction:column; gap:.45rem; align-items:flex-start;">Não tem uma conta? <span class="auth-toggle-link" data-view="signup-view" role="button" tabindex="0">Cadastre-se</span><span class="auth-toggle-link" data-view="forgot-view" role="button" tabindex="0">Esqueci minha senha</span></p> 
-                 </div> 
-                 <div id="signup-view" class="auth-form-container"> 
-                     <h3>Criar Conta</h3> 
-                     <form id="signup-form"> 
-                         <div class="form-group"><label for="signup-name">Nome</label><input type="text" id="signup-name" required></div> 
-                         <div class="form-group"><label for="signup-email">Email</label><input type="email" id="signup-email" required></div> 
-                         <div class="form-group"><label for="signup-password">Senha</label><input type="password" id="signup-password" required></div> 
+                 <div id="login-view" class="auth-form-container active">
+                     <form id="login-form">
+                         <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required></div>
+                         <div class="form-group"><label for="login-password">Senha</label><input type="password" id="login-password" required></div>
+                         <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Entrar</button>
+                     </form>
+                     <p class="form-footer-text" style="display:flex; flex-direction:column; gap:.45rem; align-items:flex-start;">Não tem uma conta? <span class="auth-toggle-link" data-view="signup-view" role="button" tabindex="0">Cadastre-se</span><span class="auth-toggle-link" data-view="forgot-view" role="button" tabindex="0">Esqueci minha senha</span></p>
+                 </div>
+                 <div id="signup-view" class="auth-form-container">
+                     <h3>Criar Conta</h3>
+                     <form id="signup-form">
+                         <div class="form-group"><label for="signup-name">Nome</label><input type="text" id="signup-name" required></div>
+                         <div class="form-group"><label for="signup-email">Email</label><input type="email" id="signup-email" required></div>
+                         <div class="form-group"><label for="signup-password">Senha</label><input type="password" id="signup-password" required></div>
                          <label class="terms-check" for="signup-terms" style="display:flex; gap:.6rem; align-items:flex-start; margin-top:.75rem; font-size:.92rem; line-height:1.45; color:var(--glass-text-secondary);">
                             <input type="checkbox" id="signup-terms" required style="margin-top:.2rem;">
                             <span>Ao criar a conta, eu concordo com os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> e com a <a href="/politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
                          </label>
-                         <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Criar Conta</button> 
-                     </form> 
-                     <p class="form-footer-text">Já tem uma conta? <span class="auth-toggle-link" data-view="login-view" role="button" tabindex="0">Faça o login</span></p> 
-                 </div> 
+                         <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 1rem;">Criar Conta</button>
+                     </form>
+                     <p class="form-footer-text">Já tem uma conta? <span class="auth-toggle-link" data-view="login-view" role="button" tabindex="0">Faça o login</span></p>
+                 </div>
                  <div id="forgot-view" class="auth-form-container">
                      <h3>Recuperar Senha</h3>
                      <form id="forgot-password-form">
@@ -341,9 +339,9 @@
                          <button type="submit" class="btn btn-primary" style="width:100%; margin-top:1rem;">Enviar link de redefinição</button>
                      </form>
                      <p class="form-footer-text">Lembrou sua senha? <span class="auth-toggle-link" data-view="login-view" role="button" tabindex="0">Voltar para o login</span></p>
-                 </div> 
+                 </div>
              </div>
-         </div> 
+         </div>
      </div>
 
     <div id="plans-modal" class="modal-overlay">
@@ -402,7 +400,7 @@
                 <div class="header-left">
                     <button class="icon-button" id="menu-toggle-btn" title="Menu" aria-label="Alternar menu lateral"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
                 </div>
-                
+
                 <div class="header-actions">
                     <button class="header-budget" data-modal-open="budget-modal" title="G: Gastos da Lista Atual / T: Teto do Orçamento Definido">
                         <i class="fa-solid fa-wallet" aria-hidden="true"></i>
@@ -474,22 +472,21 @@
             </div>
         </main>
     </div>
-    
-    <div id="custom-confirm-modal" class="modal-overlay"> 
-        <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message"> 
+
+    <div id="custom-confirm-modal" class="modal-overlay">
+        <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
             <div class="modal-header">
                 <button class="icon-button close-btn" data-modal-close="custom-confirm-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
                 <h3 id="confirm-title">Confirmar</h3>
-            </div> 
-            <div class="modal-body"><p id="confirm-message">Tem certeza?</p></div> 
-            <div class="modal-footer"> 
-                <button id="confirm-cancel-btn" class="btn btn-secondary">Cancelar</button> 
-                <button id="confirm-ok-btn" class="btn btn-danger">Confirmar</button> 
-            </div> 
-        </div> 
+            </div>
+            <div class="modal-body"><p id="confirm-message">Tem certeza?</p></div>
+            <div class="modal-footer">
+                <button id="confirm-cancel-btn" class="btn btn-secondary">Cancelar</button>
+                <button id="confirm-ok-btn" class="btn btn-danger">Confirmar</button>
+            </div>
+        </div>
     </div>
 
-    
     <div id="item-details-modal" class="modal-overlay">
         <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="item-detail-title">
             <div class="modal-header">
@@ -523,12 +520,12 @@
             <input type="hidden" id="modal-list-id-input" value="">
 
             <div class="modal-body" id="list-view-modal-body"></div>
-            
+
             <div class="modal-footer" id="list-view-modal-footer">
                 </div>
         </div>
     </div>
-    
+
 <div id="pantry-view-modal" class="modal-overlay">
         <div class="modal-box list-fullscreen-box" role="dialog" aria-modal="true" aria-labelledby="pantry-view-title">
             <div class="modal-header">
@@ -542,7 +539,7 @@
                         <label for="pantry-edit-name">Nome do Item</label>
                         <input type="text" id="pantry-edit-name" class="input-large" placeholder="Ex: Arroz">
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label>Quantidade</label>
@@ -583,7 +580,7 @@
             <div class="modal-footer" id="pantry-view-footer"></div>
         </div>
     </div>
-    
+
     <div id="recipe-detail-modal" class="modal-overlay">
         <div class="modal-box list-fullscreen-box" role="dialog" aria-modal="true" aria-labelledby="recipe-detail-modal-title">
             <div class="modal-header">
@@ -607,70 +604,70 @@
             <div class="modal-footer detail-modal-footer" id="detail-modal-footer"></div>
         </div>
     </div>
-    
-    <div id="recipe-picker-modal" class="modal-overlay"> 
-        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="recipe-picker-title"> 
-            <div class="modal-header"> 
-                <button class="icon-button close-btn" data-modal-close="recipe-picker-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
-                <h3 id="recipe-picker-title"><i class="fa-solid fa-utensils" aria-hidden="true"></i> Escolher Receita</h3> 
-            </div> 
-            <div class="modal-body"> 
-                <p>Selecione uma receita da sua lista.</p> 
-                <div class="recipe-picker-list" id="recipe-picker-list-container"></div> 
-            </div> 
-        </div> 
+
+    <div id="recipe-picker-modal" class="modal-overlay">
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="recipe-picker-title">
+            <div class="modal-header">
+                <button class="icon-button close-btn" data-modal-close="recipe-picker-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+                <h3 id="recipe-picker-title"><i class="fa-solid fa-utensils" aria-hidden="true"></i> Escolher Receita</h3>
+            </div>
+            <div class="modal-body">
+                <p>Selecione uma receita da sua lista.</p>
+                <div class="recipe-picker-list" id="recipe-picker-list-container"></div>
+            </div>
+        </div>
     </div>
 
-    <div id="budget-modal" class="modal-overlay"> 
-        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="budget-title"> 
-            <div class="modal-header"> 
-                <button class="icon-button close-btn" data-modal-close="budget-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
-                <h3 id="budget-title"><i class="fa-solid fa-wallet" aria-hidden="true"></i> Gerenciar Orçamento</h3> 
-            </div> 
-            <div class="modal-body"> 
-                <p>Defina seu orçamento mensal total.</p> 
-                <div class="form-group"> 
-                    <label for="budget-total-input">Orçamento Total (R$)</label> 
-                    <input type="number" id="budget-total-input" value="500.00" step="50"> 
-                </div> 
-            </div> 
-            <div class="modal-footer"> 
-                <button class="btn btn-secondary" data-modal-close="budget-modal">Cancelar</button> 
-                <button class="btn btn-primary" id="budget-save-btn">Salvar</button> 
-            </div> 
-        </div> 
+    <div id="budget-modal" class="modal-overlay">
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="budget-title">
+            <div class="modal-header">
+                <button class="icon-button close-btn" data-modal-close="budget-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+                <h3 id="budget-title"><i class="fa-solid fa-wallet" aria-hidden="true"></i> Gerenciar Orçamento</h3>
+            </div>
+            <div class="modal-body">
+                <p>Defina seu orçamento mensal total.</p>
+                <div class="form-group">
+                    <label for="budget-total-input">Orçamento Total (R$)</label>
+                    <input type="number" id="budget-total-input" value="500.00" step="50">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal-close="budget-modal">Cancelar</button>
+                <button class="btn btn-primary" id="budget-save-btn">Salvar</button>
+            </div>
+        </div>
     </div>
-    
-    <div id="essentials-modal" class="modal-overlay"> 
-        <div class="modal-box" style="max-width: 600px;" role="dialog" aria-modal="true" aria-labelledby="essentials-title"> 
-            <div class="modal-header"> 
-                <button class="icon-button close-btn" data-modal-close="essentials-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button> 
-                <h3 id="essentials-title"><i class="fa-solid fa-star" aria-hidden="true"></i> Meus Itens Essenciais</h3> 
-            </div> 
-            <div class="modal-body"> 
-                <p>Gerencie seus itens comprados com frequência.</p> 
-                <div class="form-row-trio"> 
-                    <div class="form-group" style="grid-column: 1 / 2;"> 
-                        <label for="essential-name">Nome</label> 
-                        <input type="text" id="essential-name" placeholder="Ex: Arroz"> 
-                    </div> 
-                    <div class="form-group"> 
-                        <label for="essential-price">Preço</label> 
-                        <input type="number" id="essential-price" placeholder="8.50"> 
-                    </div> 
-                    <div class="form-group"> 
-                        <label for="essential-unit">Unid.</label> 
-                        <input type="text" id="essential-unit" placeholder="kg"> 
-                    </div> 
-                </div> 
-                <button class="btn btn-primary" id="essentials-add-btn" style="width: 100%;"><i class="fa-solid fa-plus" aria-hidden="true"></i> Adicionar</button> 
-                <hr class="divider"> 
-                <div id="essentials-list-container"> </div> 
-            </div> 
+
+    <div id="essentials-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 600px;" role="dialog" aria-modal="true" aria-labelledby="essentials-title">
+            <div class="modal-header">
+                <button class="icon-button close-btn" data-modal-close="essentials-modal" aria-label="Fechar modal"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+                <h3 id="essentials-title"><i class="fa-solid fa-star" aria-hidden="true"></i> Meus Itens Essenciais</h3>
+            </div>
+            <div class="modal-body">
+                <p>Gerencie seus itens comprados com frequência.</p>
+                <div class="form-row-trio">
+                    <div class="form-group" style="grid-column: 1 / 2;">
+                        <label for="essential-name">Nome</label>
+                        <input type="text" id="essential-name" placeholder="Ex: Arroz">
+                    </div>
+                    <div class="form-group">
+                        <label for="essential-price">Preço</label>
+                        <input type="number" id="essential-price" placeholder="8.50">
+                    </div>
+                    <div class="form-group">
+                        <label for="essential-unit">Unid.</label>
+                        <input type="text" id="essential-unit" placeholder="kg">
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="essentials-add-btn" style="width: 100%;"><i class="fa-solid fa-plus" aria-hidden="true"></i> Adicionar</button>
+                <hr class="divider">
+                <div id="essentials-list-container"> </div>
+            </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-modal-close="essentials-modal">Fechar</button>
             </div>
-        </div> 
+        </div>
     </div>
 
         <div class="glass-dock-container" aria-label="Alternar visualização">
@@ -707,12 +704,11 @@
             <span class="af-footer-hint">Selecione uma opção acima</span>
         </div>
     </div>
-    
+
     <button id="af-chatbot-toggle" class="af-chatbot-toggle" aria-label="Ajuda">
         <i class="fa-solid fa-comment-dots"></i>
         <span class="af-notification-dot"></span>
     </button>
-    
 
     <div id="pwa-floating-banner" class="pwa-banner" style="display:none;">
         <div class="pwa-banner-content">
@@ -727,8 +723,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script> 
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+
     <script src="script.js"></script>
     <script src="auth-premium-gate-fix.js"></script>
     <script>

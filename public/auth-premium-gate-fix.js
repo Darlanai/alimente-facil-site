@@ -22,7 +22,7 @@
   const PREMIUM_PLAN = 'premium';
   const BASIC_PLAN = 'basic';
   const PANEL_ROOT_SELECTOR = '.app-panel-container-standalone';
-  const ALLOWED_PANEL_SELECTOR = '#logout-btn, #payment-gate-modal, #payment-gate-modal *, [data-action="close-payment-gate"], [data-action="go-checkout"]';
+  const ALLOWED_PANEL_SELECTOR = '#logout-btn, #payment-gate-modal, #payment-gate-modal *, [data-action="close-payment-gate"], [data-action="go-checkout"], .nav-item[data-module="configuracoes"], .nav-item[data-module="configuracoes"] *, [data-module-target="configuracoes"], [data-module-target="configuracoes"] *, #module-configuracoes, #module-configuracoes *, #config-detail-desktop, #config-detail-desktop *, #config-save-profile-btn, #config-save-profile-btn *, #config-open-forgot-password-btn, #config-open-forgot-password-btn *, #config-open-forgot-password-btn-modal, #config-open-forgot-password-btn-modal *, #config-delete-account-btn, #config-delete-account-btn *, #config-delete-account-btn-modal, #config-delete-account-btn-modal *, #detail-modal-body #config-name-modal, #detail-modal-body #config-email-modal, #detail-modal-body #config-password-modal, #detail-modal-body #config-name-modal *, #detail-modal-body #config-email-modal *, #detail-modal-body #config-password-modal *';
 
   const originalShowNotification = typeof app.showNotification === 'function' ? app.showNotification.bind(app) : function () {};
   const originalCloseAllModals = typeof app.closeAllModals === 'function' ? app.closeAllModals.bind(app) : function () {};
@@ -120,7 +120,7 @@
       '  <div class="modal-header"><h3 style="margin:0;">' + ((payload && payload.title) || 'Ative seu Premium') + '</h3></div>',
       '  <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">',
       '    <p style="margin:0; color:var(--glass-text-primary); line-height:1.55;">',
-      (payload && payload.message) || 'Seu cadastro básico pode visualizar apenas a tela inicial do painel. Para liberar listas, despensa, receitas, planejador, análises e configurações, ative agora 7 dias grátis e depois pague R$ 9,90 por mês. Cancele quando quiser.',
+      (payload && payload.message) || 'Seu cadastro básico pode visualizar a tela inicial e as configurações da conta. Para liberar listas, despensa, receitas, planejador e análises, ative agora 7 dias grátis e depois pague R$ 9,90 por mês. Cancele quando quiser.',
       '    </p>',
       '    <div style="display:grid; gap:8px; padding:12px; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:rgba(255,255,255,.04);">',
       '      <div style="font-weight:700; color:#fff;">7 dias grátis</div>',
@@ -426,7 +426,7 @@
   };
 
   app.activateModuleAndRender = function activateModuleAndRender(moduleKey) {
-    if (app.userPlan === PREMIUM_PLAN) {
+    if (app.userPlan === PREMIUM_PLAN || moduleKey === 'configuracoes') {
       app.activeModule = moduleKey || 'inicio';
 
       if (typeof app.activateModuleUI === 'function') {
@@ -454,7 +454,7 @@
     app.activeModule = 'inicio';
     rawEnterPanelHome();
 
-    if (moduleKey && moduleKey !== 'inicio') {
+    if (moduleKey && moduleKey !== 'inicio' && moduleKey !== 'configuracoes') {
       windowRef.setTimeout(function () { showPaymentGateModal({}); }, 20);
     }
   };
@@ -554,6 +554,7 @@
     if (!isBasicLoggedIn()) return;
     const target = event.target;
     if (!isInsidePanel(target)) return;
+    if (target && target.closest && target.closest('#module-configuracoes, #config-detail-desktop, #detail-modal, #config-save-profile-btn, #config-open-forgot-password-btn, #config-open-forgot-password-btn-modal, #config-delete-account-btn, #config-delete-account-btn-modal')) return;
     event.preventDefault();
     event.stopPropagation();
     if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();

@@ -1,5 +1,5 @@
 :root {
-    /* --- CORES SEMÂNTICAS (NOVO PADRÃO) --- */
+
     --color-primary: #00f2ea;
     --color-primary-dark: #00c4bd;
     --color-primary-light: #00fff4;
@@ -9,36 +9,30 @@
     --color-warning: #ffcc00;
     --color-danger: #ff3b30;
     --color-danger-dark: #ff0055;
-    
-    /* --- FUNDOS (NOVO PADRÃO) --- */
+
     --bg-primary: #000000;
     --bg-secondary: #121212;
     --bg-card: #1e1f22;
     --bg-card-hover: #2b2d31;
     --bg-input: #000000;
-    
-    /* --- BORDAS (NOVO PADRÃO) --- */
+
     --border-color: rgba(255, 255, 255, 0.12);
     --border-color-hover: var(--color-primary);
     --border-color-input: rgba(255, 255, 255, 0.3);
-    
-    /* --- TEXTOS (NOVO PADRÃO) --- */
+
     --text-primary: #ffffff;
     --text-secondary: #a1a1a1;
     --text-tertiary: #69f0ae;
 
-    /* --- SOMBRAS (NOVO PADRÃO) --- */
     --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.3);
     --shadow-card-hover: 0 8px 16px rgba(0, 242, 234, 0.15);
 
-    /* --- ESPAÇAMENTOS (NOVO PADRÃO) --- */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
     --spacing-lg: 24px;
     --spacing-xl: 32px;
 
-    /* --- TIPOGRAFIA (NOVO PADRÃO) --- */
     --font-family: 'Exo 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'Roboto Mono', monospace;
     --font-body: 'Roboto', -apple-system, sans-serif;
@@ -49,20 +43,16 @@
     --font-size-xl: 1.25rem;
     --font-size-2xl: 1.5rem;
 
-    /* --- BORDAS ARREDONDADAS (NOVO PADRÃO) --- */
     --radius-sm: 4px;
     --radius-md: 6px;
     --radius-lg: 8px;
     --radius-xl: 12px;
     --radius-full: 9999px;
 
-    /* --- TRANSIÇÕES (NOVO PADRÃO) --- */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* ========================================================= */
-    /* --- LEGADO (MANTIDO TEMPORARIAMENTE PARA NÃO QUEBRAR O APP) --- */
     --primary-color: var(--color-primary);
     --primary-color-light: var(--color-primary-light);
     --primary-color-dark: var(--color-primary-dark);
@@ -98,9 +88,6 @@
     --highlight-glow: var(--glass-on-glow);
 }
 
-/* ========================================================= */
-/* --- COMPONENTE UNIVERSAL DE CARD (NOVO DESIGN SYSTEM) --- */
-/* ========================================================= */
 .card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -117,7 +104,6 @@
   cursor: pointer;
 }
 
-/* Efeito de Hover protegido: só ativa se o dispositivo tiver mouse, evitando que o card fique preso após o toque */
 @media (hover: hover) {
   .card--clickable:hover {
     background-color: var(--bg-card-hover);
@@ -128,14 +114,9 @@
   }
 }
 
-/* Feedback tátil rápido para o momento do clique (funciona perfeito no celular e desktop) */
 .card--clickable:active {
   transform: translateY(0) scale(0.98);
   border-color: var(--border-color-hover);
-}
-
-.card--clickable:active {
-  transform: translateY(0) scale(0.98);
 }
 
 .card__header {
@@ -242,7 +223,6 @@
   transform: scale(0.95);
 }
 
-/* Checkbox (Listas) */
 .card__checkbox input[type="checkbox"] {
   -webkit-appearance: none; appearance: none;
   width: 22px; height: 22px;
@@ -271,7 +251,6 @@
   opacity: 0.4; text-decoration: line-through;
 }
 
-/* Elementos do Card - Extras */
 .card__validade { font-family: var(--font-mono); font-size: var(--font-size-xs); color: #666; margin-left: auto; }
 .card__validade--expired { color: var(--color-danger); font-weight: bold; background: rgba(255, 59, 48, 0.1); padding: 2px 6px; border-radius: 4px; }
 
@@ -327,7 +306,6 @@ body {
     transition: background-color 0.5s ease, backdrop-filter 0.5s ease;
 }
 
-/* Scrollbar Bonita */
 *::-webkit-scrollbar { width: 6px; height: 6px; }
 *::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 4px; }
 *::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.15); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
@@ -336,7 +314,6 @@ body {
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
 
-/* Scrollbars internas */
 .app-panel-container-standalone .modules-area::-webkit-scrollbar-track,
 .app-panel-container-standalone .modal-body::-webkit-scrollbar-track,
 .app-panel-container-standalone .card-content::-webkit-scrollbar-track,
@@ -353,11 +330,9 @@ body {
 .app-panel-container-standalone .modal-body::-webkit-scrollbar-thumb:hover,
 .app-panel-container-standalone .card-content::-webkit-scrollbar-thumb:hover { background-color: var(--glass-text-primary); }
 
-/* Focus States */
 .btn:focus-visible, .icon-button:focus-visible, .portal-btn.landing:focus-visible, .ai-cta-button:focus-visible, .nav-item:focus-visible, .node-wrapper:focus-visible, .footer-links a:focus-visible, .hamburger-menu-wrapper:focus-visible, .header-budget:focus-visible, .power-btn:focus-visible, .af-chatbot-toggle:focus-visible, .af-close:focus-visible, .close-modal-btn:focus-visible, .toggle-switch input:focus-visible + .toggle-slider, .placeholder-item.is-clickable:focus-visible, .saved-list-item:focus-visible, .recipe-list-item:focus-visible, .home-calc-item:focus-visible, .mobile-tab-btn:focus-visible, .clear-link:focus-visible, .auth-toggle-link:focus-visible, .stepper-btn:focus-visible { outline: 3px solid var(--glass-on-color); outline-offset: 2px; box-shadow: 0 0 10px var(--glass-on-glow); }
 .btn:focus:not(:focus-visible), .icon-button:focus:not(:focus-visible), .portal-btn.landing:focus:not(:focus-visible), .ai-cta-button:focus:not(:focus-visible), .nav-item:focus:not(:focus-visible), .node-wrapper:focus:not(:focus-visible), .hamburger-menu-wrapper:focus:not(:focus-visible), .header-budget:focus:not(:focus-visible), .power-btn:focus:not(:focus-visible), .af-chatbot-toggle:focus:not(:focus-visible), .af-close:focus:not(:focus-visible), .close-modal-btn:focus:not(:focus-visible), .placeholder-item.is-clickable:focus:not(:focus-visible), .saved-list-item:focus:not(:focus-visible), .recipe-list-item:focus:not(:focus-visible), .home-calc-item:focus:not(:focus-visible), .clear-link:focus:not(:focus-visible), .auth-toggle-link:focus:not(:focus-visible), .stepper-btn:focus:not(:focus-visible) { outline: none; }
 
-/* Animações */
 @keyframes blink { 50% { opacity: 0; } }
 @keyframes cta-fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes cta-fade-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
@@ -394,14 +369,14 @@ body {
 .dynamic-info strong { color: var(--accent-yellow); }
 
 .identity-container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding-left: 10vw; text-align: left; }
-/* === HERO REBRANDING (MARCA) === */
+
 .hero-brand {
     font-size: clamp(3.5rem, 9vw, 6.5rem);
     font-weight: 800;
     line-height: 1.1;
     color: #fff;
     margin-bottom: 0.5rem;
-    letter-spacing: -2px; /* Visual moderno "tight" */
+    letter-spacing: -2px;
     text-shadow: 0 4px 30px rgba(0,0,0,0.5);
 }
 
@@ -414,38 +389,34 @@ body {
     font-size: clamp(0.9rem, 2.5vw, 1.2rem);
     font-weight: 400;
     color: var(--primary-color);
-    letter-spacing: 6px; /* Espaçado para contraste */
+    letter-spacing: 6px;
     text-transform: uppercase;
     margin-bottom: 1.5rem;
     text-shadow: 0 0 10px rgba(0, 242, 234, 0.4);
 }
 
-.simple-subtitle { 
-    font-family: var(--font-body); 
-    font-weight: 400; 
-    font-size: clamp(1rem, 2.5vw, 1.2rem); 
-    color: #ccc; 
-    line-height: 1.6; 
-    max-width: 550px; 
-    margin-top: 1.5rem; 
-    opacity: 0.9; 
+.simple-subtitle {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    color: #ccc;
+    line-height: 1.6;
+    max-width: 550px;
+    margin-top: 1.5rem;
+    opacity: 0.9;
 }
 
 .scroll-down-indicator { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); color: var(--glass-text-secondary); font-family: var(--font-mono); font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; opacity: 0.7; animation: scroll-indicator-bob 2s ease-in-out infinite; z-index: 3; }
 .scroll-down-indicator i { font-size: 1.2rem; }
 
-/* ================= MENU HAMBURGUER PREMIUM (DROPDOWN) ================= */
-
-/* Esconde elementos antigos se ainda existirem */
 .hamburger-menu-wrapper, .node-cluster { display: none !important; }
 
-/* 1. O Botão Hambúrguer (Quadrado Moderno) */
 .hamburger-container {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 10001; /* Acima de tudo */
-    display: none; /* Desktop esconde */
+    z-index: 10001;
+    display: none;
 }
 
 @media (max-width: 991px) {
@@ -478,7 +449,6 @@ body {
     transition: all 0.3s ease;
 }
 
-/* Animação do ícone ao abrir */
 .hamburger-minimal.active {
     background: rgba(255, 255, 255, 0.1);
     border-color: var(--primary-color);
@@ -488,16 +458,13 @@ body {
 .hamburger-minimal.active .hamburger-line:nth-child(2) { opacity: 0; }
 .hamburger-minimal.active .hamburger-line:nth-child(3) { transform: translateY(-7px) rotate(-45deg); width: 22px; }
 
-
-/* 2. O Container do Menu (Dropdown Vertical) */
 .menu-dropdown {
     position: fixed;
-    top: 80px; /* Logo abaixo do header */
+    top: 80px;
     left: 20px;
     right: 20px;
     z-index: 10000;
-    
-    /* Estado Fechado */
+
     opacity: 0;
     visibility: hidden;
     transform: translateY(-20px) scale(0.95);
@@ -505,7 +472,6 @@ body {
     pointer-events: none;
 }
 
-/* Estado Aberto */
 .menu-dropdown.active {
     opacity: 1;
     visibility: visible;
@@ -513,11 +479,10 @@ body {
     pointer-events: all;
 }
 
-/* Fundo de Vidro do Menu */
 .menu-dropdown .menu-blur-bg {
     position: absolute;
     inset: 0;
-    background: rgba(10, 10, 10, 0.95); /* Quase preto sólido para leitura */
+    background: rgba(10, 10, 10, 0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 24px;
@@ -526,7 +491,6 @@ body {
     z-index: -1;
 }
 
-/* Conteúdo do Menu */
 .menu-content {
     padding: 1.5rem;
     display: flex;
@@ -534,7 +498,6 @@ body {
     gap: 0.5rem;
 }
 
-/* Links do Menu */
 .menu-link {
     display: flex;
     align-items: center;
@@ -565,14 +528,12 @@ body {
     letter-spacing: 1px;
 }
 
-/* Separador */
 .menu-separator {
     height: 1px;
     background: rgba(255, 255, 255, 0.1);
     margin: 0.5rem 0;
 }
 
-/* CTA Destaque (Botão Final) */
 .menu-cta-highlight {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-color-dark));
     padding: 1rem;
@@ -644,16 +605,15 @@ body {
 .contact-form input:focus, .contact-form textarea:focus { outline: none; border-color: var(--glass-on-color) !important; background-color: rgba(20, 20, 20, 0.9) !important; box-shadow: 0 0 0 4px rgba(0, 242, 234, 0.15) !important; }
 .contact-form textarea { resize: vertical; }
 
-/* === BOTÃO MODERNO UI/UX === */
 .modern-start-btn {
     position: relative;
     display: inline-flex;
     align-items: center;
     gap: 20px;
     padding: 14px 35px;
-    background: rgba(255, 255, 255, 0.05); /* Vidro */
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 100px; /* Pílula */
+    border-radius: 100px;
     text-decoration: none;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -683,25 +643,23 @@ body {
     transition: all 0.4s ease;
 }
 
-/* --- ESTADO HOVER (AO PASSAR O MOUSE - LARANJA) --- */
 .modern-start-btn:hover {
-    background: #FF7B00; /* Laranja Sunset Vibrante */
+    background: #FF7B00;
     border-color: #FF7B00;
-    
-    /* Glow Laranja Intenso */
-    box-shadow: 0 0 40px rgba(255, 123, 0, 0.6); 
-    
+
+    box-shadow: 0 0 40px rgba(255, 123, 0, 0.6);
+
     transform: translateY(-5px) scale(1.02);
     padding-right: 35px;
 }
 
 .modern-start-btn:hover .btn-text {
-    color: #000; /* Texto preto para leitura perfeita no laranja */
+    color: #000;
 }
 
 .modern-start-btn:hover .btn-icon-wrapper {
-    background: #000; /* Bolinha preta */
-    color: #FF7B00; /* Seta Laranja combinando */
+    background: #000;
+    color: #FF7B00;
     transform: translateX(5px) rotate(-45deg);
 }
 
@@ -819,16 +777,15 @@ body {
 .dashboard-module { display: flex; flex-direction: column; min-height: 400px; width: 100%; }
 
 .dashboard-card { background: var(--glass-color); border: 1px solid var(--glass-border); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur)); box-shadow: none; border-radius: var(--card-border-radius); display: flex; flex-direction: column; overflow: hidden; width: 100%; flex-grow: 1; color: var(--glass-text-primary); }
-.card-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.2rem; /* Mais espaçamento */ border-bottom: 1px solid var(--glass-border); flex-shrink: 0; background-color: rgba(0,0,0,0.1); cursor: move; }
+.card-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.2rem;  border-bottom: 1px solid var(--glass-border); flex-shrink: 0; background-color: rgba(0,0,0,0.1); cursor: move; }
 .card-header h3 { margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 0.7rem; font-weight: 600; flex: 1; min-width: 0; }
 .card-header h3 i { font-size: 1.1em; color: var(--glass-on-color); text-shadow: 0 0 5px var(--glass-on-glow); }
-.card-header .card-actions { display: flex; gap: 0.6rem; flex-shrink: 0; margin-top: 2px; } /* Ajuste fino */
+.card-header .card-actions { display: flex; gap: 0.6rem; flex-shrink: 0; margin-top: 2px; }
 .card-header .card-actions .icon-button { font-size: 1rem; width: 32px; height: 32px; }
 .card-content { flex-grow: 1; overflow-y: auto; padding: 1.2rem; padding-right: 2px; }
 .card-content.no-padding-top { padding-top: 0; }
 .mobile-back-btn { display: none; }
 
-/* Tela cheia de edição de lista (desktop e mobile) */
 .list-management-layout.view-active-list .saved-lists-column { display: none; }
 .list-management-layout.view-active-list .active-list-column { display: flex; flex: 1; }
 .list-management-layout.view-active-list .mobile-back-btn { display: block; }
@@ -841,7 +798,6 @@ body {
 .add-item-form .form-group { margin-bottom: 0; }
 .add-item-form label { display: block; margin-bottom: 0.3rem; font-size: 0.7rem; color: var(--glass-text-secondary); font-weight: bold; }
 
-/* ================= SYSTEMA DE INPUTS & FORMULÁRIOS (PREMIUM) ================= */
 input, select, textarea, .modal-box input {
     height: var(--input-height);
     background: rgba(10, 10, 10, 0.6) !important;
@@ -860,7 +816,6 @@ input:focus, select:focus, textarea:focus {
 input:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px #1A1C1E inset !important; -webkit-text-fill-color: #fff !important; }
 textarea { height: auto; padding-top: 12px !important; resize: vertical; }
 
-/* Input Grande (Para Edição de Títulos) */
 .input-large {
     font-size: 1.3rem !important;
     font-weight: 600;
@@ -869,7 +824,6 @@ textarea { height: auto; padding-top: 12px !important; resize: vertical; }
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Customização do Select */
 select {
     appearance: none; -webkit-appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
@@ -878,7 +832,6 @@ select {
 }
 option { background-color: #222 !important; color: #fff !important; }
 
-/* Stepper Control (+ / -) */
 .stepper-control {
     display: flex; align-items: center; gap: 5px;
     background: rgba(255, 255, 255, 0.03);
@@ -899,7 +852,6 @@ option { background-color: #222 !important; color: #fff !important; }
     box-shadow: none !important;
 }
 
-/* Range Slider (Visual de Estoque) */
 input[type=range].stock-range {
     height: 6px; -webkit-appearance: none; width: 100%;
     background: rgba(255, 255, 255, 0.1); border-radius: 5px; border: none !important;
@@ -918,15 +870,13 @@ input[type=range].stock-range::-webkit-slider-runnable-track {
 }
 .stock-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; margin-top: -5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
-
-/* SELECT VISÍVEL (CORREÇÃO PEDIDA) */
 select {
-    background-color: rgba(30, 30, 30, 0.95) !important; /* Fundo escuro sólido */
+    background-color: rgba(30, 30, 30, 0.95) !important;
     color: #fff !important;
     border: 1px solid rgba(255,255,255,0.3) !important;
     appearance: none;
     -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important; /* Seta Branca */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
     background-repeat: no-repeat !important;
     background-position: right 10px center !important;
     background-size: 1em !important;
@@ -947,13 +897,12 @@ option {
 .btn-add-item:hover { color: var(--glass-on-color); border-color: var(--glass-on-color); background: rgba(255,255,255,0.2); }
 .btn-add-item:active { box-shadow: none; background: rgba(0,0,0,0.2); transform: scale(0.95); }
 
-/* ================= ITENS DE LISTA & DESPENSA (CLEAN & PREMIUM) ================= */
 .placeholder-item {
     background: #181818 !important;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 14px 16px; /* Mais espaçamento interno */
-    margin-bottom: 10px; /* Mais espaçamento entre itens */
+    padding: 14px 16px;
+    margin-bottom: 10px;
     display: flex; flex-direction: column; gap: 8px;
     transition: transform 0.2s ease, border-color 0.2s ease;
     position: relative;
@@ -981,14 +930,13 @@ option {
 
 .item-details-grid {
     display: flex; gap: 15px; font-size: 0.85rem; color: #888;
-    padding-left: 36px; /* Alinhado com o texto */
+    padding-left: 36px;
 }
 .item-details-grid span { color: #ccc; font-weight: 600; margin-left: 4px; }
 
 .item-validade { font-family: var(--font-mono); font-size: 0.8rem; color: #666; margin-left: auto; display: inline-block; }
 .item-validade.expiring { color: var(--red); font-weight: bold; background: rgba(255, 59, 48, 0.1); padding: 2px 6px; border-radius: 4px; }
 
-/* Botões de Ação do Item (Discretos) */
 .item-actions { display: flex; gap: 5px; }
 .item-actions .icon-button {
     background: transparent; border: none; color: #555; width: 32px; height: 32px;
@@ -996,23 +944,19 @@ option {
 .item-actions .icon-button:hover { background: rgba(255,255,255,0.1); color: #fff; }
 .item-actions .delete-btn:hover { background: rgba(255, 59, 48, 0.1); color: var(--red); }
 
-/* Item Checado (Comprado) */
 .placeholder-item.is-checked .item-name { color: #555; text-decoration: line-through; }
 .placeholder-item.is-checked .item-details-grid { opacity: 0.4; text-decoration: line-through; }
 .placeholder-item.is-checked .item-actions { display: none; }
 
-/* Ações ao Marcar (Enviar p/ Despensa) */
 .item-checked-actions { display: none; margin-top: 10px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; align-items: center; justify-content: space-between; gap: 10px; }
 .placeholder-item.is-checked .item-checked-actions { display: flex; }
 .confirm-buttons { display: flex; gap: 10px; }
 .confirm-buttons .icon-button { font-size: 1.4rem; width: 40px; height: 40px; }
 
-/* Estoque Visual */
 .item-stock-level { display: flex; gap: 3px; cursor: pointer; }
 .stock-bar { width: 8px; height: 16px; background: #333; border-radius: 2px; }
 .stock-bar.active { background: var(--green); }
 .stock-level-label { display: none; }
-
 
 .sortable-ghost { background: rgba(0, 242, 234, 0.1); border: 1px dashed var(--glass-on-color); opacity: 0.7; }
 .sortable-chosen { cursor: grabbing !important; background: rgba(0, 242, 234, 0.05); }
@@ -1045,7 +989,6 @@ option {
 .saved-list-item .saved-list-actions .icon-button { font-size: 1rem; width: 30px; height: 30px; }
 .saved-list-item i.fa-chevron-right { display: none; }
 
-/* Quando Lista/Receita reutiliza o card padrão (.placeholder-item), zeramos os estilos antigos */
 .saved-list-item.placeholder-item,
 .recipe-list-item.placeholder-item {
     display: block;
@@ -1092,12 +1035,11 @@ option {
 #recipe-detail-modal .modal-footer .icon-button:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.15); border-color: var(--primary-color); color: var(--primary-color); box-shadow: 0 8px 15px rgba(0, 242, 234, 0.15); }
 #recipe-detail-modal .modal-footer .delete-recipe-btn:hover { border-color: var(--red); color: var(--red); box-shadow: 0 8px 15px rgba(255, 59, 48, 0.15); }
 
-/* ================= PLANEJADOR PREMIUM (VISIBILIDADE TOTAL) ================= */
 .planner-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;
 }
 .planner-day-card {
-    background: #181818 !important; /* Fundo sólido escuro */
+    background: #181818 !important;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
 }
@@ -1119,10 +1061,9 @@ option {
     text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;
 }
 
-/* O ITEM DA REFEIÇÃO (Correção Crítica de Legibilidade) */
 .planner-meal-item {
-    background: rgba(255, 255, 255, 0.08); /* Fundo claro sobre escuro */
-    border-left: 4px solid var(--primary-color); /* Indicador visual */
+    background: rgba(255, 255, 255, 0.08);
+    border-left: 4px solid var(--primary-color);
     padding: 10px 12px; border-radius: 6px;
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 6px; transition: all 0.2s ease;
@@ -1132,13 +1073,12 @@ option {
     transform: translateX(2px);
 }
 .meal-item-name {
-    font-size: 0.95rem; font-weight: 600; color: #fff; /* Branco Puro */
+    font-size: 0.95rem; font-weight: 600; color: #fff;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
 }
 .planner-meal-item.completed { opacity: 0.6; }
 .planner-meal-item.completed .meal-item-name { text-decoration: line-through; color: #888; }
 
-/* Ações do Planejador (Só aparecem no hover) */
 .meal-item-actions {
     display: flex; gap: 5px; opacity: 0.3; transition: opacity 0.2s;
 }
@@ -1180,7 +1120,6 @@ option {
 input:checked + .toggle-slider { background-color: var(--glass-on-color); box-shadow: 0 0 5px var(--glass-on-glow); border-color: var(--glass-on-color); }
 input:checked + .toggle-slider:before { background-color: #fff; transform: translateX(20px); }
 
-/* ================= SYSTEMA DE MODAIS FIXOS ================= */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
@@ -1189,19 +1128,17 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
 }
 .modal-overlay.active, .modal-overlay.is-visible { display: flex; opacity: 1; visibility: visible; }
 
-/* A CAIXA (Estrutura Flex Vertical) */
 .modal-box {
     width: 100%; max-width: 500px; max-height: 90vh;
     background: #1e1e1e; border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-    display: flex; flex-direction: column; /* Isso segura o footer embaixo */
+    display: flex; flex-direction: column;
     overflow: hidden; transform: translateY(20px);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .modal-overlay.active .modal-box, .modal-overlay.is-visible .modal-box { transform: translateY(0); }
 
-/* HEADER (Fixo no Topo) */
 .modal-header, .card-header {
     height: var(--header-height); min-height: var(--header-height);
     display: flex; align-items: center; justify-content: space-between;
@@ -1213,12 +1150,10 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
     display: flex; align-items: center; gap: 10px; flex-grow: 1;
 }
 
-/* BODY (Conteúdo com Scroll) */
 .modal-body, .card-content {
     flex: 1; overflow-y: auto; padding: 20px; background: transparent;
 }
 
-/* FOOTER (Ações Fixas Embaixo) */
 .modal-footer, .card-footer {
     height: var(--footer-height); min-height: var(--footer-height);
     padding: 0 20px; background: rgba(0, 0, 0, 0.3);
@@ -1227,7 +1162,6 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
     gap: 12px; flex-shrink: 0;
 }
 
-/* Footer padronizado (ícones: compartilhar / imprimir / pdf) */
 .card-footer.module-actions-footer{
     justify-content: flex-end;
 }
@@ -1245,7 +1179,6 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
     .card-footer.module-actions-footer .icon-button{ width: 44px; height: 44px; }
 }
 
-/* Listas Fullscreen no Mobile */
 .list-fullscreen-box {
     max-width: 100% !important; width: 100vw !important;
     height: 100vh !important; max-height: 100vh !important;
@@ -1253,7 +1186,6 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
     background: #000 !important;
 }
 
-/* ================= SYSTEMA GLOBAL DE BOTÕES ================= */
 .btn {
     height: var(--input-height); padding: 0 24px;
     border-radius: var(--radius-md); border: none;
@@ -1266,7 +1198,6 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
 .btn:active { transform: scale(0.96); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); background: rgba(255,255,255,0.05); }
 
-/* PRIMÁRIO (Salvar) */
 .btn-primary, .btn.primary {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
     color: #000; box-shadow: 0 4px 15px var(--primary-glow);
@@ -1275,7 +1206,6 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
     box-shadow: 0 6px 20px var(--primary-glow); filter: brightness(1.1); transform: translateY(-1px);
 }
 
-/* SECUNDÁRIO (Cancelar) */
 .btn-secondary, .btn.secondary {
     background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: var(--glass-text-primary);
 }
@@ -1283,7 +1213,6 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
     background: rgba(255, 255, 255, 0.1); border-color: #fff; color: #fff;
 }
 
-/* PERIGO (Excluir) */
 .btn-danger, .btn.danger {
     background: rgba(255, 0, 85, 0.1); border: 1px solid rgba(255, 0, 85, 0.3); color: #ff4d7d;
 }
@@ -1291,11 +1220,9 @@ input:checked + .toggle-slider:before { background-color: #fff; transform: trans
     background: rgba(255, 0, 85, 0.2); box-shadow: 0 0 15px rgba(255, 0, 85, 0.2); color: #fff;
 }
 
-/* TERCIÁRIO (Links) */
 .btn-tertiary { background: transparent; color: var(--primary-color); padding: 0 16px; height: auto; }
 .btn-tertiary:hover { text-decoration: underline; }
 
-/* ICON BUTTON (Redondos) */
 .icon-button {
     width: 40px; height: 40px; border-radius: 50%;
     border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.05);
@@ -1320,20 +1247,19 @@ hr.divider { border: 0; border-top: 1px solid var(--glass-border); margin: 1.5re
 .auth-form-container.active { display: block; }
 .auth-modal-content { padding: 2rem; }
 
-/* === BOTÃO FECHAR CORRIGIDO PARA CADASTRO === */
-.auth-modal-content .close-btn { 
-    position: absolute; 
-    top: 15px; 
-    right: 15px; 
-    width: 35px; 
-    height: 35px; 
-    background: rgba(255,255,255,0.1); /* Fundo visível */
-    border-radius: 50%; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    border: 1px solid rgba(255,255,255,0.1); 
-    color: #ddd; 
+.auth-modal-content .close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 35px;
+    height: 35px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #ddd;
     cursor: pointer;
 }
 .auth-modal-content .close-btn:hover { background: rgba(255,255,255,0.2); color: var(--red); }
@@ -1429,8 +1355,7 @@ body.app-mode .power-container .power-btn { background: radial-gradient(circle a
 body.app-mode .power-container .power-btn .dot { background: var(--glass-on-color); animation: none; }
 body.app-mode .power-container .power-btn:active { background: linear-gradient(145deg, #1a1a1a, #0c0c0c); box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), 0 0 15px var(--glass-on-glow); }
 
-/* === AUTOCOMPLETE CORRIGIDO (Z-INDEX) === */
-#autocomplete-suggestions { position: absolute; background: var(--glass-color); border: 1px solid var(--glass-border); backdrop-filter: blur(5px); border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 99999 !important; /* Brutal z-index para aparecer acima do modal */ max-height: 200px; overflow-y: auto; display: none; }
+#autocomplete-suggestions { position: absolute; background: var(--glass-color); border: 1px solid var(--glass-border); backdrop-filter: blur(5px); border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 99999 !important;  max-height: 200px; overflow-y: auto; display: none; }
 .autocomplete-item { padding: 0.7rem 1rem; font-size: 0.9rem; color: var(--glass-text-primary); cursor: pointer; border-bottom: 1px solid var(--glass-border); }
 .autocomplete-item:last-child { border-bottom: none; }
 .autocomplete-item:hover { background: rgba(255,255,255,0.1); }
@@ -1640,13 +1565,13 @@ body.app-mode .power-container .power-btn:active { background: linear-gradient(1
     .item-row { gap: 4px 8px; }
     .item-actions .icon-button, .recipe-list-actions .icon-button { width: 34px !important; height: 34px !important; font-size: 0.9rem !important; background: rgba(255, 255, 255, 0.05) !important; border: 1px solid rgba(255, 255, 255, 0.05) !important; }
 .modal-header { padding: 0.8rem 1rem; }
-    /* Ajuste crítico para o footer não cortar botões no mobile */
-    .modal-footer { 
-        padding: 0.8rem 0.5rem !important; 
+
+    .modal-footer {
+        padding: 0.8rem 0.5rem !important;
         gap: 5px !important;
         flex-wrap: nowrap !important;
     }
-    /* Reduz botões no mobile para caberem lado a lado */
+
     .modal-footer .btn {
         padding: 0 10px !important;
         font-size: 0.8rem !important;
@@ -1660,55 +1585,50 @@ body.app-mode .power-container .power-btn:active { background: linear-gradient(1
     #home-calculator-grid { gap: 1rem 0.5rem; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); }
     .calc-item-name { bottom: -1.4em; font-size: 0.55em;}
 }
-/* Correção do Vermelho "Vencido" para ficar legível no fundo escuro */
+
 .item-validade.expiring {
-    color: #ff6b6b !important; /* Um vermelho salmão muito mais legível */
+    color: #ff6b6b !important;
     font-weight: 700;
-    text-shadow: 0 0 5px rgba(255, 59, 48, 0.3); /* Leve brilho para destacar */
+    text-shadow: 0 0 5px rgba(255, 59, 48, 0.3);
 }
 
-/* Garante que o grid do planejador não corte os dias */
-.planner-grid { 
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Reduzi de 200px para 160px para caber melhor */
-    gap: 0.8rem; 
+.planner-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.8rem;
 }
-/* Estilo para o Modo Lua da Landing Page */
+
 body.landing-lua-mode #landing-video-container::after {
-    background: rgba(0, 0, 0, 0.6) !important; /* Escurece consideravelmente o vídeo */
+    background: rgba(0, 0, 0, 0.6) !important;
     transition: background 0.5s ease;
 }
 
-/* Garante que o texto continue legível e brilhante */
 body.landing-lua-mode .page-section {
-    background: rgba(0, 0, 0, 0.4); /* Fundo das seções um pouco mais escuro */
+    background: rgba(0, 0, 0, 0.4);
 }
 .app-panel-container-standalone {
-    background-color: #050505 !important; /* Muito escuro */
-    background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #050505 60%); /* Um leve brilho azulado no topo */
+    background-color: #050505 !important;
+    background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #050505 60%);
 }
 
-/* 2. Cartões com cor mais sólida e borda definida */
-.dashboard-card, 
+.dashboard-card,
 .saved-list-item,
 .planner-day-card,
 .recipe-list-item {
-    background-color: #1e1f22 !important; /* Cinza chumbo, distinto do fundo preto */
+    background-color: #1e1f22 !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important; /* Sombra para "flutuar" */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* 3. Cabeçalho dos cartões mais escuro/distinto para separar do conteúdo */
-.card-header, 
+.card-header,
 .planner-day-header,
 .modal-header {
-    background-color: rgba(255, 255, 255, 0.03) !important; /* Levemente mais claro que o cartão ou mais escuro */
+    background-color: rgba(255, 255, 255, 0.03) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-/* 4. Itens de lista (Placeholders) com mais contraste */
-.placeholder-item, 
+.placeholder-item,
 .recipe-list-item {
-    background-color: #2b2d31 !important; /* Mais claro que o cartão */
+    background-color: #2b2d31 !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
@@ -1718,57 +1638,50 @@ body.landing-lua-mode .page-section {
     border-color: var(--primary-color) !important;
 }
 
-/* 5. Menu Lateral (Sidebar) com contraste */
 .app-sidebar {
     background-color: #111214 !important;
     border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .nav-item.active {
-    background-color: rgba(0, 242, 234, 0.15) !important; /* Destaque maior no item ativo */
+    background-color: rgba(0, 242, 234, 0.15) !important;
     border: 1px solid var(--primary-color) !important;
     color: #fff !important;
 }
 #landing-video-container {
     transition: filter 0.5s ease;
-    filter: brightness(1); /* Brilho normal (Sol) */
+    filter: brightness(1);
 }
 
-/* Quando a classe 'landing-lua-mode' estiver no corpo, escurece o vídeo */
 body.landing-lua-mode #landing-video-container {
-    filter: brightness(0.5) !important; /* 50% mais escuro (Lua) */
+    filter: brightness(0.5) !important;
 }
 
-/* Garante que o ícone do botão mude de cor se precisar */
 body.landing-lua-mode #landing-theme-toggle {
     color: #fff;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
 }
-/* --- AJUSTE FINAL DE CONTRASTE (V4 - Ícones Brancos e Bordas Definidas) --- */
 
-/* 1. Fundo Geral: PRETO ABSOLUTO */
 .app-panel-container-standalone {
     background-color: #000000 !important;
     background-image: none !important;
 }
 
-/* 2. Menu Lateral */
 .app-sidebar {
-    background-color: #121212 !important; 
+    background-color: #121212 !important;
     border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
-/* --- PADRONIZAÇÃO ABSOLUTA DE CARDS E ITENS --- */
 .dashboard-card,
 .saved-list-item,
 .planner-day-card,
-.recipe-list-item, 
+.recipe-list-item,
 .chart-widget,
-.placeholder-item, 
+.placeholder-item,
 .planner-meal-slot,
 .action-card {
     background-color: #1e1f22 !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important; 
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: var(--radius-md) !important;
     box-shadow: var(--card-shadow) !important;
     transition: var(--standard-transition) !important;
@@ -1776,11 +1689,9 @@ body.landing-lua-mode #landing-theme-toggle {
     box-sizing: border-box;
 }
 
-/* Removendo padding duplo para respeitar o grid interno */
 .dashboard-card, .modal-box { padding: 0 !important; margin-bottom: 0 !important; display: flex; flex-direction: column; overflow: hidden; }
 .dashboard-card .card-content, .modal-box .modal-body { padding: var(--spacing-lg) !important; flex: 1; overflow-y: auto; }
 
-/* Cabeçalhos padronizados */
 .card-header, .planner-day-header, .modal-header {
     background-color: rgba(255, 255, 255, 0.03) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -1792,7 +1703,6 @@ body.landing-lua-mode #landing-theme-toggle {
     flex-shrink: 0;
 }
 
-/* Footer padronizado */
 .card-footer, .modal-footer {
     background-color: rgba(0, 0, 0, 0.2) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -1804,18 +1714,16 @@ body.landing-lua-mode #landing-theme-toggle {
     flex-shrink: 0;
 }
 
-/* Efeito Hover Consistente */
-.placeholder-item:hover, 
-.recipe-list-item:hover, 
+.placeholder-item:hover,
+.recipe-list-item:hover,
 .saved-list-item:hover,
 .action-card:hover {
     background-color: #2b2d31 !important;
-    border-color: var(--primary-color) !important; 
+    border-color: var(--primary-color) !important;
     transform: translateY(-2px) !important;
     box-shadow: var(--card-hover-shadow) !important;
 }
 
-/* --- FEEDBACK VISUAL: BOTÕES E FOCUS --- */
 .btn, .icon-button {
     transition: var(--standard-transition) !important;
 }
@@ -1830,7 +1738,6 @@ body.landing-lua-mode #landing-theme-toggle {
     box-shadow: 0 0 0 4px rgba(0, 242, 234, 0.2) !important;
 }
 
-/* Loader IA Elegante */
 .typing-indicator {
     display: flex;
     align-items: center;
@@ -1854,125 +1761,108 @@ body.landing-lua-mode #landing-theme-toggle {
     40% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px var(--primary-color); }
 }
 
-/* 5. Cabeçalhos */
 .card-header, .planner-day-header, .modal-header, .widget-header {
     background-color: rgba(255, 255, 255, 0.03) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
-/* 6. Títulos em Branco Puro */
 .card-header h3, .planner-day-header, .modal-header h3, .item-name, strong {
     color: #ffffff !important;
     font-weight: 700 !important;
 }
 
-/* 7. BOTÕES E ÍCONES: BRANCOS */
 .icon-button {
-    color: #ffffff !important; /* Ícone Branco Puro */
-    background-color: rgba(255, 255, 255, 0.08) !important; /* Fundo levemente mais claro para destacar do card */
-    border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Borda fininha no botão também */
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Hover nos botões */
 .icon-button:hover {
-    color: #000 !important; /* Ícone fica preto */
-    background-color: #ffffff !important; /* Fundo fica branco */
+    color: #000 !important;
+    background-color: #ffffff !important;
     border-color: #ffffff !important;
 }
 
-/* 8. Inputs */
 .app-panel-container-standalone input,
-.app-panel-container-standalone select, 
+.app-panel-container-standalone select,
 .app-panel-container-standalone textarea,
 .add-item-form-container input {
     background-color: #000000 !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important; /* Borda do input um pouco mais forte */
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
     color: #fff !important;
 }
 
-/* 9. Textos Secundários em VERDE */
-.glass-text-secondary, 
-.item-details-grid, 
-.item-details-grid span, 
+.glass-text-secondary,
+.item-details-grid,
+.item-details-grid span,
 .recipe-list-info p,
 .planner-meals span,
 .add-item-form label {
     color: #69f0ae !important;
     font-weight: 500 !important;
 }
-/* --- CORREÇÃO DE LUXO PARA O BOTÃO SOL/LUA --- */
 
 #landing-theme-toggle {
-    /* Remove aquele fundo branco feio e coloca vidro */
-    background: rgba(255, 255, 255, 0.05) !important; 
+
+    background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    
-    /* Tamanho e forma perfeitos */
+
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    
-    /* Centraliza o ícone */
+
     display: flex;
     justify-content: center;
     align-items: center;
-    
-    /* Cores e Texto */
+
     color: #ffffff !important;
     font-size: 1.2rem !important;
-    
-    /* Efeitos de profundidade */
+
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
-    
-    /* Garante que fique acima de tudo */
+
     z-index: 100;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* Efeito ao passar o mouse (Hover) */
 #landing-theme-toggle:hover {
     background: rgba(255, 255, 255, 0.15) !important;
-    border-color: var(--primary-color) !important; /* Brilha com a cor do seu tema */
+    border-color: var(--primary-color) !important;
     color: var(--primary-color) !important;
-    transform: scale(1.1) rotate(15deg); /* Leve crescimento e giro */
-    box-shadow: 0 0 20px rgba(0, 242, 234, 0.4) !important; /* Glow neon */
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 0 20px rgba(0, 242, 234, 0.4) !important;
 }
 
-/* Efeito ao clicar */
 #landing-theme-toggle:active {
     transform: scale(0.95);
 }
 
-/* Sombra no ícone para leitura perfeita sobre qualquer vídeo */
 #landing-theme-toggle i {
     filter: drop-shadow(0 2px 3px rgba(0,0,0,0.8));
 }
-/* --- ESTILIZAÇÃO REFINADA DOS BOTÕES DO CABEÇALHO (V2) --- */
 
 .header-utility-cluster {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
-    gap: 6px !important; /* Bem mais juntinhos */
+    gap: 6px !important;
     display: flex;
     align-items: center;
 }
 
 .header-utility-cluster .icon-button {
-    /* Tamanho Menor e mais delicado */
+
     width: 34px !important;
     height: 34px !important;
     border-radius: 50% !important;
-    font-size: 0.9rem !important; /* Ícone levemente menor */
-    
-    /* Cores Sutis (Sem chamar muita atenção quando parado) */
-    background-color: rgba(255, 255, 255, 0.03) !important; 
-    border: 1px solid rgba(255, 255, 255, 0.08) !important; /* Borda quase invisível */
-    color: #a1a1aa !important; /* Cinza claro elegante (não branco estourado) */
-    
+    font-size: 0.9rem !important;
+
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #a1a1aa !important;
+
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1980,25 +1870,21 @@ body.landing-lua-mode #landing-theme-toggle {
     box-shadow: none !important;
 }
 
-/* Hover: Acende com classe */
 .header-utility-cluster .icon-button:hover {
     background-color: rgba(0, 242, 234, 0.1) !important;
     border-color: var(--primary-color) !important;
-    color: #fff !important; /* Fica branco brilhante ao passar o mouse */
+    color: #fff !important;
     box-shadow: 0 0 12px rgba(0, 242, 234, 0.2) !important;
     transform: translateY(-1px);
 }
 
-/* Botão de Sair (se estiver ali) */
 #home-btn-panel:hover {
     background-color: rgba(255, 59, 48, 0.1) !important;
     border-color: #ff3b30 !important;
     color: #ff3b30 !important;
     box-shadow: 0 0 12px rgba(255, 59, 48, 0.2) !important;
 }
-/* --- ESTILO DA NOVA HOME (HUB DE AÇÕES) --- */
 
-/* Área de Boas Vindas */
 .welcome-section {
     margin-bottom: 2rem;
 }
@@ -2012,7 +1898,7 @@ body.landing-lua-mode #landing-theme-toggle {
 
 .welcome-header h2 strong {
     font-weight: 700;
-    color: var(--primary-color); /* Verde Água */
+    color: var(--primary-color);
 }
 
 .welcome-subtitle {
@@ -2020,7 +1906,6 @@ body.landing-lua-mode #landing-theme-toggle {
     font-size: 0.95rem;
 }
 
-/* Grid de Ações Rápidas */
 .quick-actions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -2042,26 +1927,23 @@ body.landing-lua-mode #landing-theme-toggle {
     position: relative;
     overflow: hidden;
 }
-/* --- BOTÃO POWER (LIGA/DESLIGA) --- */
+
 #landing-auth-btn {
-    /* Estrutura */
+
     width: 45px;
     height: 45px;
     border-radius: 50%;
     padding: 0;
-    
-    /* Vidro e Cores Padrão (Estado "Desligado" -> Pronto para Ligar) */
+
     background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(0, 242, 234, 0.3) !important; /* Borda levemente Ciano */
-    color: var(--primary-color) !important; /* Ícone Ciano Neon */
-    
-    /* Centralizar Ícone */
+    border: 1px solid rgba(0, 242, 234, 0.3) !important;
+    color: var(--primary-color) !important;
+
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 1.2rem !important;
-    
-    /* Efeitos */
+
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 0 10px rgba(0, 242, 234, 0.1) !important;
@@ -2070,30 +1952,25 @@ body.landing-lua-mode #landing-theme-toggle {
     z-index: 100;
 }
 
-/* --- BOTÃO POWER (Login/Logout) - CORRIGIDO --- */
-
-/* 1. Estado Normal (Hover) - Quando vai fazer login */
 #landing-auth-btn:hover {
-    background: rgba(0, 242, 234, 0.15) !important; /* Fundo Ciano Transparente */
-    border-color: #00f2ea !important;               /* Borda Ciano */
-    color: #00f2ea !important;                      /* Ícone Ciano (Remove o preto) */
+    background: rgba(0, 242, 234, 0.15) !important;
+    border-color: #00f2ea !important;
+    color: #00f2ea !important;
     box-shadow: 0 0 20px rgba(0, 242, 234, 0.6) !important;
     transform: scale(1.1);
 }
 
-/* 2. Estado Logado (Fixo) - Indica que está conectado */
 #landing-auth-btn.power-on {
-    color: #00f2ea !important;                      /* Ícone Ciano em vez de Vermelho */
+    color: #00f2ea !important;
     border-color: rgba(0, 242, 234, 0.5) !important;
     box-shadow: 0 0 10px rgba(0, 242, 234, 0.2) !important;
     background: transparent !important;
 }
 
-/* 3. Estado Logado (Hover) - Quando vai sair */
 #landing-auth-btn.power-on:hover {
-    background: rgba(0, 242, 234, 0.25) !important; /* Fundo Ciano mais forte */
+    background: rgba(0, 242, 234, 0.25) !important;
     border-color: #00f2ea !important;
-    color: #00f2ea !important;                      /* Garante que não fique preto */
+    color: #00f2ea !important;
     box-shadow: 0 0 25px rgba(0, 242, 234, 0.8) !important;
     transform: scale(1.1);
 }
@@ -2102,7 +1979,6 @@ body.landing-lua-mode #landing-theme-toggle {
     transform: scale(0.95);
 }
 
-/* Gradientes sutis para cada botão */
 .action-card.ai { background: linear-gradient(135deg, rgba(0, 242, 234, 0.1), rgba(0,0,0,0)); border-color: rgba(0, 242, 234, 0.3); }
 .action-card.list { background: linear-gradient(135deg, rgba(252, 235, 154, 0.05), rgba(0,0,0,0)); }
 .action-card.recipe { background: linear-gradient(135deg, rgba(175, 82, 222, 0.05), rgba(0,0,0,0)); }
@@ -2136,7 +2012,6 @@ body.landing-lua-mode #landing-theme-toggle {
     line-height: 1.3;
 }
 
-/* Área de "Arraste seus atalhos" (Visual por enquanto) */
 .shortcuts-hint {
     border: 2px dashed rgba(255, 255, 255, 0.1);
     border-radius: 12px;
@@ -2154,7 +2029,6 @@ body.landing-lua-mode #landing-theme-toggle {
     color: #fff;
 }
 
-/* Ajuste no Grid dos Widgets antigos para caberem embaixo */
 .dashboard-grid-desktop.compact {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -2163,92 +2037,82 @@ body.landing-lua-mode #landing-theme-toggle {
 
 @media (max-width: 600px) {
     .quick-actions-grid {
-        grid-template-columns: 1fr 1fr; /* 2 colunas no celular */
+        grid-template-columns: 1fr 1fr;
     }
 }
-/* --- LAYOUT COMPACTO MOBILE (V2) --- */
 
-/* Ajuste do Título para ocupar menos espaço */
 .welcome-section {
-    margin-bottom: 1rem !important; /* Menos margem */
+    margin-bottom: 1rem !important;
     padding: 0 0.5rem;
 }
 .welcome-header h2 {
-    font-size: 1.4rem !important; /* Fonte menor */
+    font-size: 1.4rem !important;
 }
 .welcome-subtitle {
     font-size: 0.85rem !important;
     opacity: 0.8;
 }
 
-/* Grid Super Compacto */
 .quick-actions-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr !important; /* Sempre 2 colunas */
-    gap: 0.6rem !important; /* Espaço entre cards bem pequeno */
-    padding-bottom: 80px; /* Espaço para o menu flutuante não tapar o último */
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.6rem !important;
+    padding-bottom: 80px;
 }
 
-/* Cards Compactos */
 .action-card {
-    padding: 0.8rem !important; /* "Emagrece" o card */
-    min-height: 90px; /* Altura fixa menor */
+    padding: 0.8rem !important;
+    min-height: 90px;
     gap: 5px !important;
     border-radius: 12px !important;
 }
 
 .action-card i {
-    font-size: 1.4rem !important; /* Ícone menor */
+    font-size: 1.4rem !important;
     margin-bottom: 0 !important;
 }
 
 .action-card span {
-    font-size: 0.9rem !important; /* Título menor */
+    font-size: 0.9rem !important;
     line-height: 1.1;
 }
 
 .action-card small {
-    font-size: 0.7rem !important; /* Descrição bem pequena */
+    font-size: 0.7rem !important;
     line-height: 1.1;
     display: -webkit-box;
-    -webkit-line-clamp: 2; /* Limita a 2 linhas de texto */
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     opacity: 0.7;
 }
 
-/* Cor do novo 8º Card (Dicas & Eco) - Gradiente Natureza */
-.action-card.tips { 
-    background: linear-gradient(135deg, rgba(52, 199, 89, 0.1), rgba(0,0,0,0)); 
+.action-card.tips {
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.1), rgba(0,0,0,0));
     border-color: rgba(52, 199, 89, 0.3);
 }
 .action-card.tips i { color: #32d74b; }
 
-/* --- MODAL DE LISTA EM TELA CHEIA (CORRIGIDO V2) --- */
-
-/* Garante que o container ocupe tudo */
 #list-view-modal.modal-overlay {
-    padding: 0 !important; /* Remove preenchimento do overlay */
-    align-items: flex-start !important; /* Alinha no topo */
+    padding: 0 !important;
+    align-items: flex-start !important;
 }
 
-/* Força a caixa a ocupar 100% da tela */
 #list-view-modal .modal-box.list-fullscreen-box {
     width: 100vw !important;
     height: 100vh !important;
-    max-width: none !important; /* Remove limite de largura */
-    max-height: none !important; /* Remove limite de altura */
-    border-radius: 0 !important; /* Tira bordas arredondadas */
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0 !important;
     margin: 0 !important;
     top: 0 !important;
     left: 0 !important;
-    transform: none !important; /* Remove centralização automática */
+    transform: none !important;
     background-color: #000000 !important;
     display: flex;
     flex-direction: column;
 }
 
-/* Header do Modal com espaço para botões */
 #list-view-modal .modal-header {
     padding: 0.8rem 1rem !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.15);
@@ -2258,35 +2122,31 @@ body.landing-lua-mode #landing-theme-toggle {
     align-items: center;
 }
 
-/* Título e Botões */
 #list-view-modal-title {
     font-size: 1.1rem !important;
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-grow: 1; /* Empurra os botões para a direita */
+    flex-grow: 1;
 }
 
-/* Área de botões no topo */
 #list-view-modal .header-actions {
     display: flex;
     gap: 8px;
 }
-/* --- VISUAL DE CARTÃO PARA AS LISTAS SALVAS (IGUAL RECEITAS) --- */
 
 .saved-list-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.2rem !important; /* Mais gordinho igual receita */
-    margin-bottom: 1rem !important; /* Espaço entre eles */
-    
-    /* Estilo do Cartão (Cópia da Receita) */
+    padding: 1.2rem !important;
+    margin-bottom: 1rem !important;
+
     background-color: #222327 !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
     border-radius: 12px !important;
-    
+
     transition: transform 0.2s ease, border-color 0.2s ease;
     cursor: pointer;
 }
@@ -2296,7 +2156,6 @@ body.landing-lua-mode #landing-theme-toggle {
     border-color: var(--primary-color) !important;
 }
 
-/* Texto do Nome da Lista */
 .saved-list-info {
     display: flex;
     flex-direction: column;
@@ -2311,62 +2170,55 @@ body.landing-lua-mode #landing-theme-toggle {
 
 .saved-list-meta {
     font-size: 0.85rem !important;
-    color: #69f0ae !important; /* Verde igual seus detalhes */
+    color: #69f0ae !important;
     font-family: 'Roboto Mono', monospace;
 }
 
-/* Ações (Botões) */
 .saved-list-actions {
     display: flex;
     gap: 8px;
 }
 
-/* --- FIX DE Z-INDEX PARA MODAL DE EDIÇÃO --- */
-/* Isso resolve o problema de o modal de edição abrir atrás da lista */
 #item-edit-modal {
-    z-index: 3001 !important; /* Superior ao modal de lista que é 2000 */
+    z-index: 3001 !important;
 }
 
-/* --- NOVO: ESTILOS PARA STEPPER (+/-) E CABEÇALHOS DE MODAL (PEDIDO DO USUÁRIO) --- */
-
-/* 1. Botões de Quantidade (Stepper) */
-.stepper-control { 
-    display: flex; 
-    align-items: center; 
-    gap: 10px; 
-    width: 100%; 
+.stepper-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
 }
 
-.stepper-btn { 
-    width: 45px; 
-    height: 45px; 
-    border-radius: 12px; /* Mais arredondado */
-    border: 1px solid var(--glass-border); 
-    background: rgba(255,255,255,0.08); 
-    color: #fff; 
-    font-size: 1.2rem; 
-    cursor: pointer; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); 
+.stepper-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.stepper-btn:hover { 
-    background: rgba(255,255,255,0.2); 
-    border-color: var(--primary-color); 
-    color: var(--primary-color); 
-    transform: scale(1.05); /* Efeito de clique */
+.stepper-btn:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: scale(1.05);
 }
 
 .stepper-btn:active {
     transform: scale(0.95);
 }
 
-/* Estiliza o input no meio */
-#pantry-edit-qtd { 
-    width: 70px !important; 
-    text-align: center; 
+#pantry-edit-qtd {
+    width: 70px !important;
+    text-align: center;
     font-size: 1.3rem !important;
     font-weight: bold;
     background: transparent !important;
@@ -2374,87 +2226,75 @@ body.landing-lua-mode #landing-theme-toggle {
     box-shadow: none !important;
 }
 
-/* 2. Ícones do Cabeçalho dos Modais (Back, Trash, Share) */
 .modal-header .icon-button {
-    width: 40px; 
-    height: 40px; 
-    border-radius: 10px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: background 0.3s, transform 0.2s;
-    background: rgba(255, 255, 255, 0.05); /* Fundo sutil */
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.modal-header .icon-button:hover { 
-    background: rgba(255,255,255,0.15); 
+.modal-header .icon-button:hover {
+    background: rgba(255,255,255,0.15);
     transform: translateY(-2px);
     border-color: #fff;
 }
 
-/* Espaçamento melhor para o grupo de ações */
 .header-actions {
     display: flex;
-    gap: 12px !important; /* Mais espaço entre os ícones */
+    gap: 12px !important;
 }
 
-/* 3. Planejador: Efeito Zebra (Tons Diferentes) */
-/* Dias Pares */
-.planner-day-card:nth-child(even) { 
-    background-color: rgba(255, 255, 255, 0.03) !important; 
+.planner-day-card:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.03) !important;
     border-color: rgba(255, 255, 255, 0.15) !important;
 }
-/* Dias Ímpares (Mais escurinho) */
-.planner-day-card:nth-child(odd) { 
-    background-color: rgba(0, 0, 0, 0.3) !important; 
+
+.planner-day-card:nth-child(odd) {
+    background-color: rgba(0, 0, 0, 0.3) !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-/* --- BOTÃO POWER (CORRIGIDO FINAL) --- */
-
 #landing-auth-btn {
-    /* Estrutura Base */
+
     width: 45px;
     height: 45px;
     border-radius: 50%;
     padding: 0;
-    
-    /* Vidro e Cores (Estado Inicial) */
+
     background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(0, 242, 234, 0.3) !important; /* Borda Ciano Suave */
-    color: #00f2ea !important; /* Ícone Ciano/Verde Neon */
-    
-    /* Centralizar Ícone */
+    border: 1px solid rgba(0, 242, 234, 0.3) !important;
+    color: #00f2ea !important;
+
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 1.2rem !important;
-    
-    /* Efeitos */
+
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 0 15px rgba(0, 242, 234, 0.2) !important; /* Glow Ciano */
+    box-shadow: 0 0 15px rgba(0, 242, 234, 0.2) !important;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
     z-index: 100;
 }
 
-/* 1. HOVER (Passar o mouse) - Efeito Verde/Ciano Intenso */
 #landing-auth-btn:hover {
-    background: rgba(0, 242, 234, 0.15) !important; /* Fundo esverdeado transparente */
-    border-color: #00f2ea !important;               /* Borda Verde Neon */
-    color: #00f2ea !important;                      /* Ícone Verde Neon */
+    background: rgba(0, 242, 234, 0.15) !important;
+    border-color: #00f2ea !important;
+    color: #00f2ea !important;
     transform: scale(1.1);
-    box-shadow: 0 0 25px rgba(0, 242, 234, 0.6) !important; /* Brilho forte */
+    box-shadow: 0 0 25px rgba(0, 242, 234, 0.6) !important;
 }
 
-/* Garante que o ícone dentro dele também fique verde e não preto */
 #landing-auth-btn:hover i {
     color: #00f2ea !important;
 }
 
-/* 2. ESTADO LOGADO (Se estiver ativo) */
 #landing-auth-btn.power-on {
     color: #00f2ea !important;
     border-color: rgba(0, 242, 234, 0.5) !important;
@@ -2465,22 +2305,19 @@ body.landing-lua-mode #landing-theme-toggle {
     transform: scale(0.95);
 }
 
-/* Animação com Pausas para Desktop */
 @keyframes scroll-with-pause-desktop {
-    0%, 15% { transform: translateX(0); } /* Parado no primeiro */
-    20%, 35% { transform: translateX(calc(-1 * (var(--card-width-desktop) + (var(--card-margin-desktop) * 2)))); } /* Parado no segundo */
-    40%, 55% { transform: translateX(calc(-2 * (var(--card-width-desktop) + (var(--card-margin-desktop) * 2)))); } /* Parado no terceiro */
-    60%, 75% { transform: translateX(calc(-3 * (var(--card-width-desktop) + (var(--card-margin-desktop) * 2)))); } /* ...e assim por diante */
+    0%, 15% { transform: translateX(0); }
+    20%, 35% { transform: translateX(calc(-1 * (var(--card-width-desktop) + (var(--card-margin-desktop) * 2)))); }
+    40%, 55% { transform: translateX(calc(-2 * (var(--card-width-desktop) + (var(--card-margin-desktop) * 2)))); }
+    60%, 75% { transform: translateX(calc(-3 * (var(--card-width-desktop) + (var(--card-margin-desktop) * 2)))); }
     80%, 95% { transform: translateX(calc(-4 * (var(--card-width-desktop) + (var(--card-margin-desktop) * 2)))); }
     100% { transform: translateX(calc(-5 * (var(--card-width-desktop) + (var(--card-margin-desktop) * 2)))); }
 }
 
-/* Aplicando a nova animação nos carrosséis */
 .carousel-track {
     animation: scroll-with-pause-desktop 25s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite !important;
 }
 
-/* Para o mobile, fazemos o mesmo ajuste */
 @keyframes scroll-with-pause-mobile {
     0%, 15% { transform: translateX(0); }
     20%, 35% { transform: translateX(calc(-1 * (var(--card-width-mobile) + (var(--card-margin-mobile) * 2)))); }
@@ -2495,13 +2332,13 @@ body.landing-lua-mode #landing-theme-toggle {
         animation: scroll-with-pause-mobile 20s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite !important;
     }
 }
-/* ================= HEADER ULTRA-MINIMAL (V4 - TOQUE DE SOMBRA) ================= */
+
 .header {
   position: fixed;
   top: 0; left: 0; width: 100%;
   z-index: 10000;
-  /* Escurecido de leve (15% de preto) para dar contraste sobre o vídeo */
-  background: rgba(0, 0, 0, 0.15); 
+
+  background: rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: all 0.3s ease;
@@ -2513,13 +2350,13 @@ body.app-mode .header { display: none !important; }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 30px; 
+  padding: 12px 30px;
 }
 
 .brand {
   font-size: 11px;
   font-weight: 700;
-  color: #fff; /* Aumentado o brilho para destacar sobre o leve fundo */
+  color: #fff;
   letter-spacing: 3px;
   font-family: var(--font-display);
   text-transform: uppercase;
@@ -2533,7 +2370,7 @@ body.app-mode .header { display: none !important; }
 }
 
 .icon-btn, .menu-btn {
-  width: 40px !important; 
+  width: 40px !important;
   height: 40px !important;
   display: flex !important;
   flex-direction: column;
@@ -2564,20 +2401,19 @@ body.app-mode .header { display: none !important; }
 .menu-btn.active span:nth-child(1) { transform: translateY(2.5px) rotate(45deg); width: 18px; }
 .menu-btn.active span:nth-child(2) { transform: translateY(-2.5px) rotate(-45deg); width: 18px; }
 
-/* LINHA DIVISORA - Ajustada para destacar mais no fundo levemente escuro */
 .divider {
   height: 1px;
   width: 100%;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(255,255,255,0.15) 50%, 
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.15) 50%,
     transparent 100%);
 }
 
 .header:hover .divider {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    var(--primary-color) 50%, 
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--primary-color) 50%,
     transparent 100%);
 }
 
@@ -2608,26 +2444,23 @@ body.app-mode .header { display: none !important; }
   .header-inner { padding: 10px 15px; }
   .menu-panel { right: 15px; width: calc(100% - 30px); }
 }
-/* === Ajuste de margens: Listas/Receitas igual Despensa === */
+
 #module-lista.module-container,
 #module-receitas.module-container {
-  padding: 1rem !important; /* mesmo padding padrão da .module-container (Despensa) */
+  padding: 1rem !important;
 }
-/* ==========================================================================
-   LAYOUT MASTER-DETAIL (DESKTOP ONLY ≥ 992px)
-   ========================================================================== */
+
 @media (min-width: 992px) {
-    /* Ativa o Grid de 2 Colunas */
+
     .master-detail-layout {
         display: grid;
-        grid-template-columns: 350px 1fr; /* Coluna Esquerda fixa, Direita flexível */
+        grid-template-columns: 350px 1fr;
         gap: 1.5rem;
         height: 100%;
         width: 100%;
         overflow: hidden;
     }
 
-    /* Coluna Esquerda (Listas) - Scrollável */
     .md-list-column {
         height: 100%;
         display: flex;
@@ -2638,28 +2471,24 @@ body.app-mode .header { display: none !important; }
         overflow-y: auto;
     }
 
-    /* Coluna Direita (Detalhes) - Scrollável */
     .md-detail-column {
         height: 100%;
         display: flex;
         flex-direction: column;
         overflow: hidden;
         border: 1px solid var(--glass-border);
-        background: rgba(255, 255, 255, 0.02) !important; /* Levemente diferente para contraste */
+        background: rgba(255, 255, 255, 0.02) !important;
     }
 
-    /* Esconde elementos mobile na versão desktop */
     .mobile-only {
         display: none !important;
     }
 
-    /* Ajuste para o formulário da Despensa na direita */
     #pantry-desktop-form {
         max-width: 600px;
         margin: 0 auto;
     }
 
-    /* Placeholder quando nada está selecionado */
     .empty-state-placeholder {
         display: flex;
         flex-direction: column;
@@ -2670,8 +2499,7 @@ body.app-mode .header { display: none !important; }
         text-align: center;
         opacity: 0.7;
     }
-    
-    /* Garante que o card da direita tenha header/content/footer fixos */
+
     .md-detail-column .card-content {
         flex: 1;
         overflow-y: auto;
@@ -2679,18 +2507,18 @@ body.app-mode .header { display: none !important; }
 }
 
 @media (max-width: 991px) {
-    /* No Mobile, removemos o grid e mostramos apenas a coluna da esquerda */
+
     .master-detail-layout {
         display: block;
     }
     .md-detail-column {
-        display: none !important; /* Esconde a coluna de detalhe no mobile */
+        display: none !important;
     }
     .md-list-column {
         height: auto;
         min-height: 100%;
     }
-    /* === MODO EDIÇÃO (MOBILE): quando abre uma lista, mostra a coluna da direita === */
+
     #list-manager.view-active-list .md-detail-column {
         display: flex !important;
     }
@@ -2700,29 +2528,20 @@ body.app-mode .header { display: none !important; }
 
 }
 
-/* === Mobile safety: mesmo em "modo desktop", força layout de 1 coluna em telas touch === */
 @media (hover: none) and (pointer: coarse) {
   .master-detail-layout { display: block !important; }
   .md-detail-column { display: none !important; }
 }
 
-
-
-/* === UI/UX BUGFIX PATCH (SAFE) === */
-
-/* Evita scroll horizontal e cortes (muito comum com 100vw + scrollbar) */
 html, body { width: 100%; max-width: 100%; }
 body { overflow-x: hidden; }
 
-/* Dock não pode bloquear cliques fora dele */
 .glass-dock-container { pointer-events: none; }
 .glass-dock-container .glass-dock,
 .glass-dock-container .dock-item { pointer-events: auto; }
 
-/* Camadas previsíveis: dock abaixo de modais/sidebars */
 .glass-dock-container { z-index: 900; }
 
-/* Dá espaço real no conteúdo para o dock não cobrir inputs/botões */
 :root{
   --dock-height: 74px;
   --dock-safe-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
@@ -2731,27 +2550,20 @@ body.app-mode .modules-area{
   padding-bottom: calc(var(--dock-height) + var(--dock-safe-bottom) + 18px) !important;
 }
 
-/* Respeita quem prefere menos animação */
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
   .background-video{ display:none !important; }
   .video-container{ background: #000 !important; }
 }
 
-/* Receitas: segunda linha para igualar altura com Despensa */
 .recipe-list-item .item-details-grid{
-    padding-left: 56px; /* alinha com ícone da receita */
+    padding-left: 56px;
     opacity: 0.85;
 }
 .recipe-list-item.placeholder-item{
     min-height: 96px;
 }
 
-
-
-/* =========================
-   Chef IA Hub (Landing)
-   ========================= */
 .chef-hub-section { padding: 5rem 2rem; }
 .chef-hub-section .section-container { max-width: 1100px; margin: 0 auto; }
 .chef-hub { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem; align-items: stretch; }
@@ -2834,7 +2646,6 @@ body.app-mode .modules-area{
   opacity: .9;
 }
 
-/* Hero secondary actions */
 .hero-secondary-actions { display: flex; gap: 1.25rem; justify-content: center; margin-top: 1.1rem; flex-wrap: wrap; }
 .hero-link { text-decoration: none; opacity: .85; display: inline-flex; align-items: center; gap: .5rem; }
 .hero-link:hover { opacity: 1; text-decoration: underline; }
@@ -2844,15 +2655,6 @@ body.app-mode .modules-area{
   .chef-hub-right { order: -1; }
 }
 
-/* =====================================================================
-   UX HOTFIX V5 (Mobile-first)
-   - Modais acima do header (z-index)
-   - Hero pills premium
-   - Dock mais baixo + alça de arrasto
-   - Scroll sempre dentro do "retângulo" (cards)
-   ===================================================================== */
-
-/* --- Modais: sempre acima do header fixo (header usa z-index 10000) --- */
 .modal-overlay{ z-index: 20000 !important; padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px calc(env(safe-area-inset-bottom, 0px) + 12px) !important; }
 .modal-box{
   max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px) !important;
@@ -2860,7 +2662,6 @@ body.app-mode .modules-area{
 }
 .modal-body{ overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
 
-/* --- Hero: pills premium (substitui links feios) --- */
 .hero-secondary-actions{ gap: .75rem !important; margin-top: 1.15rem !important; }
 .hero-pill{
   appearance: none;
@@ -2884,17 +2685,14 @@ body.app-mode .modules-area{
 .hero-pill-ghost{ background: rgba(255,255,255,0.04); }
 .hero-pill-ghost:hover{ background: rgba(0,242,234,0.08); }
 
-/* --- Utilitários de footer (Listas etc.) --- */
 .module-actions-spacer{ flex: 1 1 auto; }
 .icon-button.danger{ border-color: rgba(255, 59, 48, 0.35) !important; color: rgba(255, 59, 48, 0.95) !important; }
 .icon-button.danger:hover{ background: rgba(255, 59, 48, 0.12) !important; }
 
-/* --- Chef demo card clicável --- */
 .chef-demo-card.is-clickable{ cursor: pointer; }
 .chef-demo-card.is-clickable:hover{ transform: translateY(-2px); }
 .chef-demo-card.is-clickable:focus{ outline: 2px solid rgba(var(--primary-color-rgb), .65); outline-offset: 4px; }
 
-/* --- Dock: mais curto + alça/"grip" para arrastar --- */
 :root{ --dock-height: 62px; }
 .glass-dock{ padding: 4px 6px !important; border-radius: 999px !important; gap: 6px !important; }
 .dock-indicator{ top: 4px !important; left: 4px !important; height: calc(100% - 8px) !important; border-radius: 999px !important; }
@@ -2918,14 +2716,11 @@ body.app-mode .modules-area{
 .dock-grip-dots{ display: grid; grid-template-columns: repeat(3, 4px); gap: 3px; }
 .dock-grip-dots span{ width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.38); }
 
-/* Dock action (Chef IA) não desloca indicador */
 .dock-action{ border: 1px solid rgba(var(--primary-color-rgb), .25) !important; }
 .dock-action:hover{ border-color: rgba(var(--primary-color-rgb), .55) !important; }
 
-/* Não mostrar o FAB antigo do Chef no app-mode (agora está no dock) */
 body.app-mode #chef-ia-fab-placeholder{ display: none !important; }
 
-/* --- Scroll sempre dentro do card: remove scroll extra fora do retângulo --- */
 body.app-mode .modules-area{ overflow: hidden !important; }
 body.app-mode .app-panel-container-standalone{ height: 100dvh !important; }
 body.app-mode .module-container{ overflow: hidden !important; }
@@ -2941,30 +2736,18 @@ body.app-mode .module-container{ overflow: hidden !important; }
   }
 }
 
-
-
-/* =========================================================
-   DOCK V2 (MOBILE-FIRST) - fixo, compacto e elegante
-   - Remove "grip" de pontinhos
-   - Remove preenchimento azul claro (indicator)
-   - Mostra "Início" e "Painel" completos
-   - Borda azul brilhante apenas no botão "oposto" (classe .hint)
-   ========================================================= */
-
 :root{
-  --dock-height: 58px; /* altura real do dock no mobile */
+  --dock-height: 58px;
   --dock-safe-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   --dock-max-width: 440px;
   --dock-border-blue: rgba(0, 140, 255, 0.95);
   --dock-border-blue-soft: rgba(0, 140, 255, 0.35);
 }
 
-/* Espaço no conteúdo para não cortar cards no final */
 .modules-area{
   padding-bottom: calc(var(--dock-height) + var(--dock-safe-bottom) + 18px) !important;
 }
 
-/* Container do dock: fixo no rodapé e centralizado, sem ocupar a tela inteira */
 .glass-dock-container{
   position: fixed !important;
   left: 0 !important;
@@ -2975,11 +2758,10 @@ body.app-mode .module-container{ overflow: hidden !important; }
   display: flex !important;
   justify-content: center !important;
   padding: 0 12px !important;
-  pointer-events: none; /* não bloqueia o conteúdo */
+  pointer-events: none;
   z-index: 900 !important;
 }
 
-/* Dock */
 .glass-dock{
   width: min(var(--dock-max-width), 100%) !important;
   height: var(--dock-height) !important;
@@ -2995,16 +2777,13 @@ body.app-mode .module-container{ overflow: hidden !important; }
   pointer-events: auto;
 }
 
-/* Remove a alça com pontinhos */
 .dock-grip{ display:none !important; }
 .dock-grip-dots{ display:none !important; }
 
-/* Remove o indicador preenchido azul claro */
 .dock-indicator{
   display: none !important;
 }
 
-/* Botões */
 .dock-item{
   flex: 1 1 0 !important;
   min-width: 0 !important;
@@ -3020,12 +2799,10 @@ body.app-mode .module-container{ overflow: hidden !important; }
   color: rgba(255,255,255,0.85) !important;
 }
 
-/* Ícone */
 .dock-item i{
   font-size: 1.05rem !important;
 }
 
-/* Texto: sem cortar, sem "..." */
 .dock-item span{
   display: inline !important;
   font-size: 0.88rem !important;
@@ -3036,7 +2813,6 @@ body.app-mode .module-container{ overflow: hidden !important; }
   max-width: none !important;
 }
 
-/* Ativo: levemente destacado, SEM preenchimento colorido */
 .dock-item.active{
   background: rgba(255,255,255,0.09) !important;
   border-color: rgba(255,255,255,0.20) !important;
@@ -3044,7 +2820,6 @@ body.app-mode .module-container{ overflow: hidden !important; }
   font-weight: 700 !important;
 }
 
-/* Dica: borda azul escuro brilhante (apenas nas bordas) */
 .dock-item.hint{
   background: rgba(0,0,0,0.12) !important;
   border-color: var(--dock-border-blue) !important;
@@ -3054,22 +2829,19 @@ body.app-mode .module-container{ overflow: hidden !important; }
   color: rgba(255,255,255,0.98) !important;
 }
 
-/* Chef IA: mantém estilo coerente e compacto */
 .dock-item.dock-action{
   flex: 1 1 0 !important;
 }
 
-/* Pequenos ajustes para telas bem estreitas */
 @media (max-width: 360px){
   :root{ --dock-height: 56px; }
   .dock-item span{ font-size: 0.82rem !important; }
   .dock-item{ gap: 6px !important; padding: 0 8px !important; }
 }
 
-/* --- PADRONIZAÇÃO VISUAL: CANTOS ARREDONDADOS (6px) --- */
 .dashboard-card, .modal-box, .saved-list-item, .recipe-list-item, .planner-day-card {
     border-radius: 6px !important;
-    overflow: hidden !important; /* O SEGREDO: Corta qualquer recheio ou rodapé que tente ficar reto! */
+    overflow: hidden !important;
 }
 
 .card-header, .modal-header, .planner-day-header {
@@ -3084,21 +2856,19 @@ body.app-mode .module-container{ overflow: hidden !important; }
     border-radius: 0 0 6px 6px !important;
 }
 
-/* Correção Definitiva de Z-Index para Modais */
 .modal-overlay {
-    z-index: 20000 !important; 
+    z-index: 20000 !important;
 }
-#autocomplete-suggestions { 
-    z-index: 20001 !important; 
+#autocomplete-suggestions {
+    z-index: 20001 !important;
 }
 
-/* Oculta de vez TODOS os rodapés soltos com botões de Compartilhar/Imprimir que sobraram no seu JS */
 .md-list-column .card-footer,
 #module-planejador .card-footer,
 #module-analises .card-footer {
     display: none !important;
 }
-/* --- BANNER DE INSTALAÇÃO PWA (APP NATIVO) --- */
+
 .pwa-banner {
     position: fixed;
     bottom: 20px;
@@ -3151,21 +2921,15 @@ body.app-mode .module-container{ overflow: hidden !important; }
     from { bottom: -100px; opacity: 0; }
     to { bottom: 20px; opacity: 1; }
 }
-/* --- AJUSTE DE POSIÇÃO DO ÍCONE DO ASSISTENTE (CHEF IA) --- */
+
 #af-chatbot-toggle {
-    bottom: 90px !important; /* Distância do fundo da tela. Aumente se quiser subir mais! */
-    z-index: 9999 !important; /* Garante que ele fique sempre por cima de tudo */
+    bottom: 90px !important;
+    z-index: 9999 !important;
 }
 
-/* Garante que a janela do chat também abra numa altura confortável quando clicada */
 #af-chatbot.af-open {
-    bottom: 150px !important; 
+    bottom: 150px !important;
 }
-
-
-/* =========================================================
-   HOTFIX V6 — acabamento premium mobile + landing + listas
-   ========================================================= */
 
 :root{
   --panel-radius-premium: 24px;
@@ -3235,7 +2999,6 @@ body.app-mode .module-container{ overflow: hidden !important; }
   padding-bottom: 28px !important;
 }
 
-/* cards de item mais premium */
 .placeholder-item,
 .saved-list-item,
 .recipe-list-item{
@@ -3247,7 +3010,6 @@ body.app-mode .module-container{ overflow: hidden !important; }
   box-shadow: 0 14px 34px rgba(0,0,0,.25) !important;
 }
 
-/* Landing mais premium sem mexer na estrutura */
 .chef-hub-section,
 #calculadora.page-section,
 .page-section:not(#inicio){
@@ -3366,9 +3128,6 @@ body.app-mode .module-container{ overflow: hidden !important; }
   .add-item-form label{ font-size: .6rem !important; }
 }
 
-/* =========================================================
-   PATCH 360° — unificação visual, landing e detalhe universal
-   ========================================================= */
 :root{
   --radius-standard: 6px;
   --radius-card: 6px;
@@ -3532,8 +3291,6 @@ textarea,
   .detail-modal-header,.detail-modal-footer{ padding-left:1rem !important; padding-right:1rem !important; }
 }
 
-
-/* ===== PATCH FINAL — planejador, detalhes e editor de receitas ===== */
 #custom-confirm-modal.recipe-editor-modal .modal-box{
   width:min(100%, 860px) !important;
   max-height:calc(100dvh - 20px) !important;
@@ -3653,7 +3410,6 @@ textarea,
   .unified-detail-actions .icon-button span{font-size:.84rem;}
 }
 
-/* === PATCH OBRIGATÓRIO 2026-03-20 === */
 #custom-confirm-modal{ z-index: 40000 !important; }
 #list-view-modal, #pantry-view-modal, #recipe-detail-modal, #detail-modal, #item-edit-modal, #list-name-modal { z-index: 22000 !important; }
 
@@ -3781,8 +3537,6 @@ textarea,
   .inline-field select{ height:38px; }
 }
 
-
-/* === PATCH VISUAL PREMIUM 2026-03-20 — botões, ordenar, planejador e landing === */
 .hero-signature{
   display:inline-flex;
   align-items:center;
@@ -3863,7 +3617,6 @@ textarea,
 }
 .sort-chip strong{ color:#fff; font-weight:700; }
 
-/* Export buttons: glass, icon-only, compact */
 #list-view-modal-footer,
 #pantry-view-footer,
 #recipe-detail-modal-footer,
@@ -4063,9 +3816,6 @@ textarea,
   .luxury-sort-btn{ width:42px !important; height:42px !important; }
 }
 
-
-
-/* === PATCH FINAL UX/LUXO 2026-03-21 === */
 .module-toolbar.module-toolbar--ultra{
   display:flex !important;
   align-items:center !important;
@@ -4490,9 +4240,6 @@ textarea,
   }
 }
 
-
-
-/* === PATCH MAGNIFICO FINAL 2026-03-21 === */
 .modern-start-btn{
   gap:18px !important;
   padding:16px 22px 16px 28px !important;
@@ -4974,8 +4721,6 @@ textarea,
   }
 }
 
-
-/* === PATCH UX V5 FINAL 2026-03-21 === */
 body.modal-open{ overflow:hidden; }
 #ai-chat-modal{ z-index: 21150 !important; }
 #ai-chat-modal .modal-box{ z-index: 21151 !important; }
@@ -5310,8 +5055,6 @@ body.modal-open{ overflow:hidden; }
   #active-list-title #active-list-name-input{ font-size:1rem !important; }
 }
 
-
-/* === PATCH FINAL V6.1 — alinhamento, mobile, análises, CTA e planner === */
 .module-toolbar.module-toolbar--ultra{
   display:grid !important;
   grid-template-columns:minmax(0,1fr) auto !important;
@@ -5703,8 +5446,6 @@ body.modal-open{ overflow:hidden; }
   .hero-secondary-actions{width:min(340px, calc(100% - 1.25rem));}
 }
 
-
-/* === FIX 2100 | Chef IA + Análises premium === */
 #ai-chat-modal{
   z-index: 26000 !important;
   align-items: center;
@@ -5888,8 +5629,6 @@ body.modal-open{ overflow:hidden; }
   }
 }
 
-
-/* === PATCH EXECUTÁVEL 4560 | Landing + Chef IA + Análises === */
 #inicio .identity-container{
   width:min(980px, calc(100vw - 2rem));
   margin:0 auto;
@@ -6050,8 +5789,6 @@ body.modal-open{ overflow:hidden; }
   .analysis-stage-card{min-height:430px;}
 }
 
-
-/* === ANALISES REBUILD FINAL | 2026-04-10 === */
 #module-analises {
   padding: 0 !important;
 }
@@ -6463,8 +6200,6 @@ body.modal-open{ overflow:hidden; }
   }
 }
 
-
-/* === ANALISES NEO DASHBOARD REBUILD | 2026-04-10 FINAL === */
 #module-analises{
   padding: 0 !important;
 }
@@ -6644,8 +6379,6 @@ body.modal-open{ overflow:hidden; }
   #module-analises .neo-summary-row{flex-direction:column;align-items:flex-start;}
 }
 
-
-/* === REBUILD REAL: Análises v3 mobile-first, suave e integrada === */
 #module-analises{overflow-x:hidden;}
 #module-analises .analysis-v3-wrap{width:100%;}
 #module-analises .analysis-v3-shell{
@@ -6806,9 +6539,6 @@ body.modal-open{ overflow:hidden; }
   #module-analises .analysis-v3-kpi{min-height:82px;padding:12px;}
 }
 
-/* === PATCH UI CIRÚRGICO | ajustes solicitados do painel === */
-
-/* 1) Configurações: separar título + descrição, dar respiro e indicar clique */
 #module-configuracoes .module-nav-list{
   gap: .85rem !important;
 }
@@ -6920,12 +6650,10 @@ body.modal-open{ overflow:hidden; }
   }
 }
 
-/* 2) Dock de alternância: manter visível também no painel */
 body.app-mode .glass-dock-container{
   display: flex !important;
 }
 
-/* 3) Listas salvas: evitar título cortado e deixar mais informativo */
 .card--saved-list .card__title,
 .saved-list-item .saved-list-name{
   white-space: normal !important;
@@ -6967,7 +6695,6 @@ body.app-mode .glass-dock-container{
   border: 1px solid rgba(255,59,48,.16);
 }
 
-/* 4) Hierarquia dos botões: destacar principal, suavizar secundários e deixar destrutivo claro */
 .recipe-detail-main-actions,
 .planner-slot-actions.meal-item-actions{
   display: flex;
@@ -7017,7 +6744,6 @@ body.app-mode .glass-dock-container{
   color: #daf9e3 !important;
 }
 
-/* 5) Análises: melhorar clareza visual, legenda e rótulos */
 #module-analises .analysis-v3-typebtn span{
   text-transform: none !important;
   font-weight: 700;
@@ -7050,7 +6776,6 @@ body.app-mode .glass-dock-container{
   min-width: 84px;
 }
 
-/* 6) Suavizar excesso de brilho/contorno sem mudar identidade */
 .card--saved-list,
 .saved-list-item,
 .module-nav-item,
@@ -7074,7 +6799,6 @@ body.app-mode .glass-dock-container{
     linear-gradient(180deg, rgba(36,39,49,.96), rgba(24,26,33,.96)) !important;
 }
 
-/* 7) Scrollbar menos "crua" */
 body.app-mode *::-webkit-scrollbar{
   width: 5px;
   height: 5px;
@@ -7087,15 +6811,11 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   background-color: rgba(255,255,255,.22);
 }
 
-
-/* Remover sobreposição dos gráficos nas análises */
 #module-analises .analysis-v3-overlaycard,
 #module-analises .neo-chart-center-copy{
   display:none !important;
 }
 
-
-/* === PATCH SEM CHEF IA | landing limpa + preço único === */
 .hero-pricing-note{
   margin-top: 1rem;
   display: inline-flex;
@@ -7137,8 +6857,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   display: none !important;
 }
 
-
-/* === AJUSTES FINAIS | landing limpa + dock home/painel + painel enxuto === */
 #inicio{
   padding-inline: 1.25rem !important;
 }
@@ -7339,8 +7057,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
 }
 
-
-/* === AJUSTE FINAL | landing limpa à esquerda + desktop corrigido === */
 #inicio{
   padding-inline: clamp(1rem, 2.4vw, 2rem) !important;
 }
@@ -7554,8 +7270,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
 }
 
-
-/* === AJUSTE FINAL V3 | hero mais compacta e com menos frases === */
 .hero-clean-layout .hero-brand{
   font-size: clamp(3.15rem, 10.4vw, 5.6rem) !important;
   line-height: .94 !important;
@@ -7630,7 +7344,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
 }
 
-/* === PATCH V3.1 — planejador mobile quebrado === */
 .detail-modal-body .detail-listing-item.planner-meal-item,
 .detail-modal-body .detail-listing-item.planner-meal-item > div,
 .detail-modal-body .planner-meal-copy{
@@ -7671,7 +7384,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
 }
 
-/* === PATCH V3.2 — planejador mobile e receita acima do modal === */
 #detail-modal{ z-index: 43000 !important; }
 #recipe-detail-modal{ z-index: 46000 !important; }
 #recipe-detail-modal.is-visible{ z-index: 46010 !important; }
@@ -7800,8 +7512,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
 }
 
-
-/* === PATCH V3.4 | landing mais limpa, com uma única frase rotativa e tom verde moderno === */
 .hero-clean-layout .hero-tagline{
   margin-bottom: .45rem !important;
   color: rgba(235, 255, 246, .92) !important;
@@ -7918,8 +7628,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
 }
 
-
-/* === PATCH V3.5 | landing ainda mais limpa, sem frase fixa e rotator transparente === */
 .hero-clean-layout .simple-subtitle{
   display:none !important;
 }
@@ -7956,7 +7664,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
 }
 
-/* === PATCH V3.6 | hero mais alta, CTA menor e fundos transparentes === */
 #inicio{
   align-items: flex-start !important;
 }
@@ -8078,8 +7785,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
 }
 
-
-/* === PATCH V3.7 | hero limpa e sem elementos acavalados === */
 #inicio {
   align-items: flex-start !important;
 }
@@ -8265,7 +7970,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
 }
 
-/* === PATCH V3.8 | hero mais centralizada, mais alta e sem fundos desfocados === */
 #inicio {
   align-items: flex-start !important;
   justify-content: center !important;
@@ -8407,8 +8111,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
 }
 
-
-/* === PATCH v4.0 | autocomplete no modal de receita === */
 #autocomplete-suggestions{
   position: fixed !important;
   z-index: 2147483647 !important;
@@ -8417,8 +8119,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   cursor:pointer;
 }
 
-
-/* === PATCH V4.1 | confirmações acima, ações de lista e autocomplete confiável === */
 #custom-confirm-modal{
   z-index: 61000 !important;
 }
@@ -8472,8 +8172,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
 }
 
-
-/* === PATCH v4.2 | autocomplete robusto no criar/editar receita === */
 #autocomplete-suggestions{
   position: fixed !important;
   inset: auto auto auto auto;
@@ -8531,18 +8229,14 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   overflow: visible !important;
 }
 
-
 .terms-check a { color: var(--primary-color); text-decoration: underline; }
 .terms-check input[type='checkbox'] { transform: translateY(2px); }
 
-
-/* Patch auth/premium clean */
 .hero-signature{display:none !important;}
 #payment-gate-modal{z-index:7000 !important;}
 .auth-feedback-message{margin:.75rem 0 0;padding:.85rem 1rem;border-radius:12px;background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.35);color:#fff;font-size:.95rem;line-height:1.4;}
 .chartjs-render-monitor, canvas{color:#fff;}
 
-/* === AUTH FIX FINAL | 2026-04-14 === */
 .auth-feedback-slot {
     min-height: 0;
     margin-bottom: 0.9rem;
@@ -8592,8 +8286,6 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
     filter: saturate(0.85);
 }
 
-
-/* === PATCH V5.0 | autocomplete multisseleção + voz === */
 .af-autocomplete-input-wrap {
   position: relative;
   display: flex;

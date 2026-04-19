@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 const API_BASE_URL = (
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-) ? 'http://localhost:3000' : window.location.origin;  // localhost no dev, mesmo domínio em produção
+) ? 'http://localhost:3000' : window.location.origin;
 
     const app = {
         isAppMode: false,
@@ -10,9 +10,8 @@ const API_BASE_URL = (
         activeModule: 'inicio',
         activeListId: 'listaDaSemana',
         intervals: [],
-        
-        // --- SEUS LINKS REAIS DO MERCADO PAGO ---
-        checkoutLinks: { 
+
+        checkoutLinks: {
             'premium': 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=ae9349b69ef94a27ad19786352488fa5'
         },
 
@@ -63,7 +62,7 @@ orcamento: {
         speechRecognition: null,
         currentPlannerDayTarget: null,
         tempRecipeIngredients: [],
-        
+
         init() {
             this.loadState();
             this.cacheDOMElements();
@@ -74,7 +73,7 @@ orcamento: {
             this.updateBodyClasses();
             this.updateStartButton();
             this.setupSpeechRecognition();
-            this.initDockMenu(); 
+            this.initDockMenu();
             this.initDraggableDock();
             this.initPWA();
             this.initRoboAssistant();
@@ -86,8 +85,6 @@ orcamento: {
                 this.initLandingPage();
             }
         },
-
-        // --- FUNÇÕES REAIS ---
 
         handleRealPDF() {
             window.print();
@@ -110,7 +107,7 @@ orcamento: {
         handleGenerateListFromPlanner() {
             let totalIngredients = 0;
             const targetListId = this.activeListId;
-            
+
             if (!this.state.listas[targetListId]) {
                 this.showNotification("Crie ou selecione uma lista de compras primeiro.", "error");
                 return;
@@ -149,25 +146,24 @@ orcamento: {
         },
 
         handleRealSubscription(planId) {
-            if (!this.isLoggedIn) { 
-                this.showAuthModal(); 
-                return; 
+            if (!this.isLoggedIn) {
+                this.showAuthModal();
+                return;
             }
-            
+
             const link = this.checkoutLinks[planId];
-            
+
             if (link) {
                 this.showNotification("Redirecionando para o Mercado Pago...", "success");
-                // Abre o checkout em nova aba
+
                 setTimeout(() => {
                     window.open(link, '_blank');
                 }, 1000);
-                
-                // Simula liberação local para UX imediata (opcional, já que o usuário vai pagar lá)
+
                 this.userPlan = planId;
                 this.saveState();
                 this.updatePlanButtonsState();
-                
+
             } else {
                 this.showNotification("Erro: Plano não configurado.", "error");
             }
@@ -184,7 +180,7 @@ initDockMenu() {
             const updateStates = (targetBtn) => {
                 viewDockItems().forEach(btn => btn.classList.remove('active'));
                 if (targetBtn) targetBtn.classList.add('active');
-                
+
                 const h = homeBtn();
                 const a = appBtn();
                 if (h && a) {
@@ -223,117 +219,14 @@ initDockMenu() {
         },
 
         initDraggableDock() {
-            // Dock fixo no rodapé (mobile-first). Arrastar desativado.
             return;
-
-            const dockContainer = document.querySelector('.glass-dock-container');
-            const grip = document.querySelector('.dock-grip');
-            if (!dockContainer || !grip) return;
-
-            const POS_KEY = 'alimenteFacilDockPos_v5';
-            const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-            const margin = 8;
-
-            // Restaura posição salva (se houver)
-            try {
-                const saved = localStorage.getItem(POS_KEY);
-                if (saved) {
-                    const { left, top } = JSON.parse(saved) || {};
-                    if (Number.isFinite(left) && Number.isFinite(top)) {
-                        dockContainer.style.left = `${left}px`;
-                        dockContainer.style.top = `${top}px`;
-                        dockContainer.style.bottom = 'auto';
-                        dockContainer.style.transform = 'none';
-                    }
-                }
-            } catch (e) { /* ignore */ }
-
-            const resetDockPosition = () => {
-                dockContainer.style.left = '50%';
-                dockContainer.style.top = 'auto';
-                dockContainer.style.bottom = 'calc(1.25rem + var(--dock-safe-bottom))';
-                dockContainer.style.transform = 'translateX(-50%)';
-                try { localStorage.removeItem(POS_KEY); } catch(e) {}
-                this.showNotification('Dock reposicionado ✅', 'success');
-            };
-
-            // Duplo clique / duplo toque para resetar
-            grip.addEventListener('dblclick', (e) => { e.preventDefault(); e.stopPropagation(); resetDockPosition(); });
-            let lastTap = 0;
-            grip.addEventListener('touchend', (e) => {
-                const now = Date.now();
-                if (now - lastTap < 280) { e.preventDefault(); e.stopPropagation(); resetDockPosition(); }
-                lastTap = now;
-            }, { passive: false });
-
-            let isDraggingDock = false;
-            let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
-
-            const startDrag = (e) => {
-                // Arrasta somente pela alça
-                if (!e.target.closest('.dock-grip')) return;
-                isDraggingDock = true;
-                const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-                const rect = dockContainer.getBoundingClientRect();
-                startX = clientX;
-                startY = clientY;
-                initialLeft = rect.left;
-                initialTop = rect.top;
-                dockContainer.style.bottom = 'auto';
-                dockContainer.style.transform = 'none';
-                grip.style.cursor = 'grabbing';
-                document.addEventListener('mousemove', moveDrag);
-                document.addEventListener('touchmove', moveDrag, { passive: false });
-                document.addEventListener('mouseup', stopDrag);
-                document.addEventListener('touchend', stopDrag);
-                e.preventDefault();
-                e.stopPropagation();
-            };
-
-            const moveDrag = (e) => {
-                if (!isDraggingDock) return;
-                e.preventDefault();
-                const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-                const deltaX = clientX - startX;
-                const deltaY = clientY - startY;
-                const newLeftRaw = initialLeft + deltaX;
-                const newTopRaw = initialTop + deltaY;
-
-                const maxLeft = window.innerWidth - dockContainer.offsetWidth - margin;
-                const maxTop = window.innerHeight - dockContainer.offsetHeight - margin;
-
-                const newLeft = clamp(newLeftRaw, margin, Math.max(margin, maxLeft));
-                const newTop = clamp(newTopRaw, margin, Math.max(margin, maxTop));
-
-                dockContainer.style.left = `${newLeft}px`;
-                dockContainer.style.top = `${newTop}px`;
-            };
-
-            const stopDrag = () => {
-                if (!isDraggingDock) return;
-                isDraggingDock = false;
-                grip.style.cursor = 'grab';
-                document.removeEventListener('mousemove', moveDrag);
-                document.removeEventListener('touchmove', moveDrag);
-                document.removeEventListener('mouseup', stopDrag);
-                document.removeEventListener('touchend', stopDrag);
-
-                // Salva a posição final
-                const rect = dockContainer.getBoundingClientRect();
-                try { localStorage.setItem(POS_KEY, JSON.stringify({ left: Math.round(rect.left), top: Math.round(rect.top) })); } catch (e) { /* ignore */ }
-            };
-
-            grip.addEventListener('mousedown', startDrag);
-            grip.addEventListener('touchstart', startDrag, { passive: false });
         },
 
 initPWA() {
-            // Service Worker
+
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('./service-worker.js').catch(() => { /* ignore */ });
+                    navigator.serviceWorker.register('./service-worker.js').catch(() => {  });
                 });
             }
 
@@ -342,16 +235,14 @@ initPWA() {
             const floatingBanner = document.getElementById('pwa-floating-banner');
             const closeBannerBtn = document.getElementById('pwa-banner-close-btn');
 
-            // O navegador avisa que o app pode ser instalado
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
                 if (installMenu) installMenu.style.display = 'flex';
-                // Mostra o nosso novo banner flutuante
+
                 if (floatingBanner) floatingBanner.style.display = 'flex';
             });
 
-            // O usuário concluiu a instalação
             window.addEventListener('appinstalled', () => {
                 deferredPrompt = null;
                 if (installMenu) installMenu.style.display = 'none';
@@ -359,35 +250,32 @@ initPWA() {
                 this.showNotification('Alimente Fácil instalado com sucesso! ✅', 'success');
             });
 
-            // O usuário clicou no "X" para fechar o banner
             if (closeBannerBtn) {
                 closeBannerBtn.addEventListener('click', () => {
                     floatingBanner.style.display = 'none';
                 });
             }
 
-            // O usuário clicou em "Instalar"
             document.querySelectorAll('.btn-install-pwa, #pwa-install-menu').forEach(btn => {
                 btn.addEventListener('click', async (ev) => {
                     ev.preventDefault(); ev.stopPropagation();
                     document.getElementById('menuItems')?.classList.remove('open');
                     document.getElementById('hamburger')?.classList.remove('open');
-                    
+
                     if (!deferredPrompt) {
                         this.showNotification('Para instalar: Vá no menu do navegador ⋮ e clique em "Adicionar à tela inicial".', 'info');
                         return;
                     }
-                    
+
                     deferredPrompt.prompt();
-                    try { await deferredPrompt.userChoice; } catch (e) { /* ignore */ }
-                    
+                    try { await deferredPrompt.userChoice; } catch (e) {  }
+
                     deferredPrompt = null;
                     if (installMenu) installMenu.style.display = 'none';
                     if (floatingBanner) floatingBanner.style.display = 'none';
                 });
             });
 
-            // Abrir planos pelo menu
             document.querySelectorAll('[data-action="open-plans"]').forEach((el) => {
                 el.addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation();
@@ -419,7 +307,7 @@ initPWA() {
                     this.activeModule = parsedState.activeModule || 'inicio';
                     this.activeListId = parsedState.activeListId || 'listaDaSemana';
                     this.state = parsedState.data || JSON.parse(JSON.stringify(this.defaultState));
-                    this.state.user = this.state.user || { nome: null }; 
+                    this.state.user = this.state.user || { nome: null };
                     this.state.listas = this.state.listas || {};
                     this.state.despensa = this.state.despensa || [];
                     this.state.essenciais = this.state.essenciais || [];
@@ -435,32 +323,28 @@ initPWA() {
                     this.isAppMode = false;
               this.setVideoPlayback('panel-video-container', false);
               this.setVideoPlayback('landing-video-container', true); this.isLoggedIn = false; this.userPlan = 'free';
-                    this.activeModule = 'inicio'; this.activeListId = 'listaDaSemana'; this.state.user = { nome: null }; 
+                    this.activeModule = 'inicio'; this.activeListId = 'listaDaSemana'; this.state.user = { nome: null };
                 }
             } catch (e) {
                 this.state = JSON.parse(JSON.stringify(this.defaultState));
                 this.isAppMode = false; this.isLoggedIn = false; this.userPlan = 'free';
-                this.activeModule = 'inicio'; this.activeListId = 'listaDaSemana'; this.state.user = { nome: null }; 
+                this.activeModule = 'inicio'; this.activeListId = 'listaDaSemana'; this.state.user = { nome: null };
             }
         },
 
 generateId: () => Date.now().toString(36) + Math.random().toString(36).substring(2),
 
-        // ==============================================================================
-        // COMPONENTE UNIVERSAL DE CARD (NOVO PADRÃO DE CLASSE MUNDIAL)
-        // ==============================================================================
         renderUniversalCard({ type, data, actions = [], isClickable = false, status = '' }) {
             const content = this.renderCardContent(type, data);
-            const actionButtons = actions.map(action => 
+            const actionButtons = actions.map(action =>
                 `<button type="button" class="card__action card__action--${action.type} ${action.class || ''}" data-action="${action.type}" data-id="${data.id}" aria-label="${action.label}"><i class="${action.icon}"></i></button>`
             ).join('');
-            
+
             const isChecked = data.checked ? 'card--checked is-checked' : '';
             const statusClass = status ? `card--${status}` : isChecked;
             const clickableClass = isClickable ? 'card--clickable' : '';
             const badgeHTML = data.badge ? `<span class="card__badge">${data.badge}</span>` : '';
 
-            // Incluímos 'placeholder-item' temporariamente para compatibilidade com os eventos de clique antigos
             return `
                 <div class="card card--${type} ${statusClass} ${clickableClass} placeholder-item" data-id="${data.id}" data-name="${this.escapeHtml(data.name)}">
                     <div class="card__header">
@@ -517,7 +401,7 @@ generateId: () => Date.now().toString(36) + Math.random().toString(36).substring
         renderPantryContent(data) {
             const stock = data.stock || 100;
             const stockBars = Array(4).fill().map((_, i) => `<div class="card__stock-bar ${i < Math.round(stock / 25) ? 'active' : ''}"></div>`).join('');
-            
+
             let validadeDisplay = "Não informada";
             let validadeClass = "";
             if (data.validade) {
@@ -572,7 +456,6 @@ generateId: () => Date.now().toString(36) + Math.random().toString(36).substring
                 </div>
             `;
         },
-        // ==============================================================================
 
         cacheDOMElements() {
 
@@ -604,7 +487,7 @@ generateId: () => Date.now().toString(36) + Math.random().toString(36).substring
         },
 
 attachEventListeners() {
-            // Evento para o botão de Login/Logout da Home
+
             document.getElementById('landing-auth-btn')?.addEventListener('click', (e) => {
                 e.preventDefault();
                 if (this.isLoggedIn) {
@@ -618,10 +501,10 @@ attachEventListeners() {
                 e.preventDefault(); this.handleStartButtonClick();
                 this.elements.nodeCluster?.classList.remove('is-open'); this.elements.hamburgerMenuWrapper?.classList.remove('is-open');
             });
-            
-            document.querySelector('[data-action="open-calculator"]')?.addEventListener('click', (e) => { 
-                e.preventDefault(); this.showCalculatorSection(); 
-                this.elements.nodeCluster?.classList.remove('is-open'); this.elements.hamburgerMenuWrapper?.classList.remove('is-open'); 
+
+            document.querySelector('[data-action="open-calculator"]')?.addEventListener('click', (e) => {
+                e.preventDefault(); this.showCalculatorSection();
+                this.elements.nodeCluster?.classList.remove('is-open'); this.elements.hamburgerMenuWrapper?.classList.remove('is-open');
             });
 
             const toggleHamburgerMenu = (e) => {
@@ -632,15 +515,14 @@ attachEventListeners() {
             this.elements.hamburgerMenuWrapper?.addEventListener('click', toggleHamburgerMenu);
             this.elements.hamburgerMenuWrapper?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleHamburgerMenu(e); } });
 
-document.addEventListener('click', (e) => { 
-                // Fecha o node cluster superior (legado)
-                if (this.elements.nodeCluster?.classList.contains('is-open') && !e.target.closest('.node-cluster') && !e.target.closest('.hamburger-menu-wrapper')) { 
-                    this.elements.nodeCluster?.classList.remove('is-open'); 
+document.addEventListener('click', (e) => {
+
+                if (this.elements.nodeCluster?.classList.contains('is-open') && !e.target.closest('.node-cluster') && !e.target.closest('.hamburger-menu-wrapper')) {
+                    this.elements.nodeCluster?.classList.remove('is-open');
                     this.elements.hamburgerMenuWrapper?.classList.remove('is-open');
                     this.elements.hamburgerMenuWrapper?.setAttribute('aria-expanded', 'false');
-                } 
+                }
 
-                // NOVO: Força o Menu Lateral (Sidebar) a encolher/fechar se clicar fora dele
                 if (this.elements.appSidebar && this.elements.appSidebar.classList.contains('is-open')) {
                     if (!e.target.closest('.app-sidebar') && !e.target.closest('#menu-toggle-btn')) {
                         this.closeSidebar();
@@ -648,17 +530,16 @@ document.addEventListener('click', (e) => {
                 }
             });
 
-            // NOVO: Previne o efeito "Hover Travado" do menu lateral e dos cards em telas Touch
             document.addEventListener('touchstart', (e) => {
                 if (!e.target.closest('.app-sidebar') && !e.target.closest('.card')) {
-                    // Se tocou fora do menu, retira o foco fantasma que mantém as coisas abertas
+
                     if (document.activeElement && document.activeElement !== document.body) {
                         document.activeElement.blur();
                     }
                 }
             }, { passive: true });
-            
-            this.elements.nodeCluster?.addEventListener('click', (e) => { 
+
+            this.elements.nodeCluster?.addEventListener('click', (e) => {
                 const link = e.target.closest('a');
                 if(!link || link.dataset.action === 'open-calculator' || link.id === 'panel-access-link') return;
                 if (link.hash) {
@@ -669,7 +550,7 @@ document.addEventListener('click', (e) => {
                 }
             });
 
-            this.elements.contactForm?.addEventListener('submit', async (e) => { 
+            this.elements.contactForm?.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const form = this.elements.contactForm;
                 const name = String(form?.querySelector('#contact-name')?.value || '').trim();
@@ -694,7 +575,6 @@ document.addEventListener('click', (e) => {
             this.elements.themeToggleBtnPanel?.addEventListener('click', () => this.toggleTheme());
             this.elements.chefIaFab?.addEventListener('click', () => this.showChatbot());
 
-            // Acessibilidade: abre Chef IA pela tecla Enter/Espaço no card clicável da landing
             document.addEventListener('keydown', (e) => {
                 const card = e.target.closest?.('.chef-demo-card.is-clickable');
                 if (!card) return;
@@ -709,20 +589,16 @@ document.addEventListener('click', (e) => {
                 if (savedListEl && e.key === 'Enter') {
                     e.preventDefault();
                     const listId = savedListEl.closest('.saved-list-item').dataset.listId;
-                    this.activeListId = listId; this.saveState(); this.renderListasSalvas(); this.renderListaAtiva(listId); this.renderOrcamento(); 
+                    this.activeListId = listId; this.saveState(); this.renderListasSalvas(); this.renderListaAtiva(listId); this.renderOrcamento();
                     if (window.innerWidth <= 991) { document.getElementById('list-manager')?.classList.add('view-active-list'); }
                 }
             });
 
-            // === EVENTOS GERAIS (ATUALIZADO COM OS NOVOS BOTÕES) ===
 this.elements.body.addEventListener('click', e => {
                  const target = (e.target instanceof Element) ? e.target : e.target?.parentElement;
                  if (!target) return;
                  const closest = (selector) => target.closest(selector);
 
-
-
-                 // --- 1. Lógica do Stepper (+ / -) ---
                  const stepperBtn = closest('.stepper-btn');
                  if (stepperBtn) {
                      e.preventDefault();
@@ -736,7 +612,6 @@ this.elements.body.addEventListener('click', e => {
                      return;
                  }
 
-                 // --- 2. Botão Salvar Despensa (Footer Fixo) ---
                  if (closest('#pantry-save-btn')) {
                      this.handleSavePantryEdit();
                      return;
@@ -746,12 +621,12 @@ this.elements.body.addEventListener('click', e => {
                  if (moduleTargetBtn && this.isAppMode) { this.activateModuleAndRender(moduleTargetBtn.dataset.moduleTarget); }
                  const expandBtnSimple = closest('[data-module]:not(.nav-item)');
                  if (expandBtnSimple && this.isAppMode && closest('.card-actions')) { this.activateModuleAndRender(expandBtnSimple.dataset.module); }
-                 
+
                  const tabBtn = closest('.mobile-tab-btn');
                  if (tabBtn) {
                     const targetId = tabBtn.dataset.tabTarget;
                     const tabContainer = closest('.mobile-tab-nav');
-                    const contentContainer = closest('.calculator-info-container') || closest('.section-content').querySelector('.calculator-info-container'); 
+                    const contentContainer = closest('.calculator-info-container') || closest('.section-content').querySelector('.calculator-info-container');
                     if (tabContainer && contentContainer && targetId) {
                         tabContainer.querySelectorAll('.mobile-tab-btn').forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected', 'false'); });
                         contentContainer.querySelectorAll('.mobile-tab-content').forEach(content => { content.classList.remove('active'); });
@@ -781,34 +656,32 @@ this.elements.body.addEventListener('click', e => {
                     if(itemEl) { this.closeModal('item-details-modal'); this.handleOpenEditModal(itemEl); }
                  }
 
-// --- 1. RECEITAS (PRIORIDADE TOTAL) ---
                  const recipeItemEl = closest('.recipe-list-item') || closest('.card--recipe');
                  if(recipeItemEl) {
                       const recipeId = recipeItemEl.dataset.recipeId || recipeItemEl.dataset.id;
-                      if (closest('.delete-recipe-btn')) { this.handleDeleteRecipe(recipeId); } 
-                      else if (closest('.edit-recipe-btn')) { this.handleOpenRecipeEditModal(recipeId); } 
-                      else if (!closest('.icon-button')) { 
-                        if (window.innerWidth < 992) { 
-                            // Mobile: Modal
-                            this.showRecipeDetailModal(recipeId); 
-                        } else { 
-                            // Desktop: Coluna Direita
-                            this.renderRecipeDetail(recipeId); 
+                      if (closest('.delete-recipe-btn')) { this.handleDeleteRecipe(recipeId); }
+                      else if (closest('.edit-recipe-btn')) { this.handleOpenRecipeEditModal(recipeId); }
+                      else if (!closest('.icon-button')) {
+                        if (window.innerWidth < 992) {
+
+                            this.showRecipeDetailModal(recipeId);
+                        } else {
+
+                            this.renderRecipeDetail(recipeId);
                             document.querySelectorAll('.recipe-list-item').forEach(el => {
                                 el.classList.remove('active');
                                 el.style.borderColor = 'rgba(255,255,255,0.1)';
                             });
                             recipeItemEl.classList.add('active');
                             recipeItemEl.style.borderColor = 'var(--primary-color)';
-                            
+
                             const titleEl = document.getElementById('recipe-detail-title-desktop');
                             if(titleEl) titleEl.innerHTML = `<i class="fa-solid fa-book-open"></i> ${this.escapeHtml(this.state.receitas[recipeId]?.name)}`;
-                        } 
+                        }
                     }
-                    return; // IMPEDE que o código continue e tente abrir como item comum
+                    return;
                  }
 
-                 // --- 2. ITENS COMUNS (LISTA OU DESPENSA) ---
                  const itemEl = closest('.placeholder-item');
                  if (itemEl) {
                     const id = itemEl.dataset.id;
@@ -817,7 +690,6 @@ this.elements.body.addEventListener('click', e => {
                     const isLista = closest('[id*="lista-items"]') || closest('#list-view-modal-body') ? true : false;
                     const isEssential = closest('#essentials-list-container') ? true : false;
 
-                    // Clique na Despensa (Abre detalhe)
                     if (isDespensa && !closest('.icon-button') && !closest('.item-stock-level') && !closest('.drag-handle')) {
                         const item = this.state.despensa.find(i => i.id.toString() === id);
                         if (window.innerWidth >= 992 && item) {
@@ -825,17 +697,16 @@ this.elements.body.addEventListener('click', e => {
                             document.querySelectorAll('#despensa-list-container .placeholder-item').forEach(el => el.style.borderColor = 'rgba(255,255,255,0.1)');
                             itemEl.style.borderColor = 'var(--primary-color)';
                         } else {
-                            this.handleOpenPantryView(itemEl); 
+                            this.handleOpenPantryView(itemEl);
                         }
                         return;
                     }
 
-                    // Ações de Botões no Item
-                    if (closest('.delete-btn')) { 
-                        let message = `Tem certeza que deseja excluir "${itemName}"?`; 
-                        let typeToDelete = isDespensa ? 'despensa' : (isLista ? 'lista' : (isEssential ? 'essencial' : null)); 
-                        if (isDespensa && this.isItemInRecipe && this.isItemInRecipe(itemName)) { message += '<br><small style="color: var(--accent-yellow);">Atenção: Este item é usado em uma ou mais receitas.</small>'; } 
-                        if(typeToDelete) this.openConfirmModal("Excluir Item", message, () => this.handleDeleteItem(typeToDelete, id)); 
+                    if (closest('.delete-btn')) {
+                        let message = `Tem certeza que deseja excluir "${itemName}"?`;
+                        let typeToDelete = isDespensa ? 'despensa' : (isLista ? 'lista' : (isEssential ? 'essencial' : null));
+                        if (isDespensa && this.isItemInRecipe && this.isItemInRecipe(itemName)) { message += '<br><small style="color: var(--accent-yellow);">Atenção: Este item é usado em uma ou mais receitas.</small>'; }
+                        if(typeToDelete) this.openConfirmModal("Excluir Item", message, () => this.handleDeleteItem(typeToDelete, id));
                     }
                     else if (closest('.edit-btn')) { this.handleOpenEditModal(itemEl); }
                     else if (isEssential && closest('.edit-essential-btn')) { this.handleOpenEssentialEdit(itemEl); }
@@ -845,18 +716,15 @@ this.elements.body.addEventListener('click', e => {
                     else if (isDespensa && closest('.item-stock-level')) { this.handleStockClick(closest('.item-stock-level'), e); }
                  }
 
-// --- 3. GESTÃO DE LISTAS SALVAS ---
 const savedListEl = closest('.saved-list-item') || closest('.card--saved-list');
                  if (savedListEl) {
                     const listId = savedListEl.dataset.listId || savedListEl.dataset.id;
 
-                    // Se clicou no ícone de lixeira
                     if (closest('.delete-list-btn')) {
                         this.handleDeleteListaAtiva(listId);
                         return;
                     }
 
-                    // Se clicou no ícone de lápis (EDITAR)
                     if (closest('.select-list-btn')) {
                         this.activeListId = listId;
                         const listManager = document.getElementById('list-manager');
@@ -865,13 +733,10 @@ const savedListEl = closest('.saved-list-item') || closest('.card--saved-list');
                         return;
                     }
 
-                    // Se clicou no corpo da lista (VISUALIZAR APENAS)
                     this.handleOpenListViewModal(listId);
                     return;
                  }
 
-                 // --- 4. BOTÕES GERAIS E OUTRAS AÇÕES ---
-// Fluxo de Criar Nova Lista e entrar direto na Edição
 if (closest('#module-lista') && closest('.btn-create-list')) {
                     this.openListNameModal({
                         title: 'Nova lista',
@@ -880,32 +745,27 @@ if (closest('#module-lista') && closest('.btn-create-list')) {
                         confirmText: 'Criar e Adicionar Itens',
                         onConfirm: (listName) => {
                             const listNameFinal = String(listName).trim() || "Nova Lista";
-                            
-                            // Verificação de plano
+
                             if (this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2) {
                                 this.showPlansModal('Limite de 2 listas atingido no plano Gratuito.');
                                 return;
                             }
 
                             const newListId = this.generateId();
-                            
-                            // 1. Cria a lista no estado
+
                             this.state.listas[newListId] = { nome: listNameFinal, items: [] };
                             this.activeListId = newListId;
                             this.saveState();
-                            
-                            // 2. Atualiza a barra lateral
+
                             this.renderListasSalvas();
-                            
-                            // 3. FORÇA a abertura da interface de edição
+
                             const listManager = document.getElementById('list-manager');
                             if (listManager) {
-                                listManager.classList.add('view-active-list'); // Ativa a tela de edição
+                                listManager.classList.add('view-active-list');
                             }
-                            
-                            // 4. Renderiza os campos de inserção e foca no input
+
                             this.renderListaAtiva(newListId);
-                            
+
                             setTimeout(() => {
                                 const inputNome = document.getElementById('lista-form-nome-full');
                                 if (inputNome) inputNome.focus();
@@ -915,16 +775,16 @@ if (closest('#module-lista') && closest('.btn-create-list')) {
                         }
                     });
                  }
-                 // Botão de voltar da edição de lista
-                 else if (closest('#list-back-btn')) { 
-                    document.getElementById('list-manager')?.classList.remove('view-active-list'); 
+
+                 else if (closest('#list-back-btn')) {
+                    document.getElementById('list-manager')?.classList.remove('view-active-list');
                     this.renderListasSalvas();
                  }
 
                  else if (closest('#lista-save-changes-btn')) { this.handleSaveListaAtiva(); }
                  else if (closest('#lista-delete-btn')) { const listIdToDelete = document.getElementById('active-list-id-input')?.value; if(listIdToDelete) this.handleDeleteListaAtiva(listIdToDelete); }
                  else if (closest('.add-recipe-btn')) { this.handleOpenRecipeEditModal(null); }
-                 
+
                  const recipeActionBtn = closest('.edit-recipe-btn, .delete-recipe-btn, .pdf-btn, .share-btn, .print-btn');
                  if (recipeActionBtn) {
                     const rId = recipeActionBtn.dataset.recipeId;
@@ -933,16 +793,16 @@ if (closest('#module-lista') && closest('.btn-create-list')) {
                         if (recipeActionBtn.classList.contains('edit-recipe-btn')) { this.handleOpenRecipeEditModal(rId); return; }
                         if (recipeActionBtn.classList.contains('print-btn')) { this.handleRealPDF(); return; }
                          if (recipeActionBtn.classList.contains('pdf-btn')) { this.handleRealPDF(); return; }
-                        if (recipeActionBtn.classList.contains('share-btn')) { 
+                        if (recipeActionBtn.classList.contains('share-btn')) {
                             const recipeName = this.state.receitas[rId]?.name || "Receita";
                             this.handleRealShare("Alimente Fácil", `Veja esta receita: ${recipeName}`);
-                            return; 
+                            return;
                         }
                     }
                  }
 
                  else if (closest('#recipe-detail-close-btn')) { document.getElementById('module-receitas')?.classList.remove('detail-is-visible'); document.querySelectorAll('.recipe-list-item.active').forEach(el => el.classList.remove('active')); }
-                 
+
                  else if (closest('.add-meal-btn')) { const button = closest('.add-meal-btn'); this.currentPlannerDayTarget = button.dataset.dayTarget; this.populateRecipePicker(); this.openModal('recipe-picker-modal'); }
                  else if (closest('.add-meal-slot-btn')) { const button = closest('.add-meal-slot-btn'); this.currentPlannerDayTarget = button.dataset.dayTarget; this.populateRecipePicker(); this.openModal('recipe-picker-modal'); }
                  else if (closest('.clear-plan-btn')) { this.openConfirmModal("Limpar Semana", "Deseja remover todas as refeições planejadas para esta semana?", this.executeClearPlannerWeek.bind(this)); }
@@ -951,14 +811,14 @@ if (closest('#module-lista') && closest('.btn-create-list')) {
                  else if (closest('.analysis-nav-item')) { const btn = closest('.analysis-nav-item'); if (window.innerWidth >= 992) { this.renderAnalysisDetailDesktop(btn.dataset.analysisKey); this.setActiveModuleNav('.analysis-nav-item', btn); } else { this.openAnalysisDetailModal(btn.dataset.analysisKey); } return; }
                  else if (closest('.analysis-mobile-open-btn')) { const btn = closest('.analysis-mobile-open-btn'); this.openAnalysisDetailModal(btn.dataset.analysisKey || document.getElementById('analysis-data-select')?.value || 'gastos_categoria'); return; }
                  else if (closest('.config-nav-item')) { const btn = closest('.config-nav-item'); if (window.innerWidth >= 992) { this.renderConfigDetailDesktop(btn.dataset.configSection); this.setActiveModuleNav('.config-nav-item', btn); } else { this.openConfigSectionModal(btn.dataset.configSection); } return; }
-                 
+
                  const mealItem = closest('.planner-meal-item');
                  if (mealItem) {
                       const recipeId = mealItem.dataset.recipeId;
                       const day = mealItem.dataset.day;
                       const meal = mealItem.dataset.meal;
-                      if (closest('.meal-view-btn') || closest('.meal-item-name')) { if (window.innerWidth < 992) { this.showRecipeDetailModal(recipeId); } else { this.showRecipeDetailModal(recipeId); } } 
-                      else if (closest('.meal-complete-btn')) { this.handleToggleCompleteMeal(day, meal); } 
+                      if (closest('.meal-view-btn') || closest('.meal-item-name')) { if (window.innerWidth < 992) { this.showRecipeDetailModal(recipeId); } else { this.showRecipeDetailModal(recipeId); } }
+                      else if (closest('.meal-complete-btn')) { this.handleToggleCompleteMeal(day, meal); }
                       else if (closest('.meal-delete-btn')) { this.handleDeleteMeal(day, meal); }
                  }
 
@@ -967,12 +827,12 @@ if (closest('#module-lista') && closest('.btn-create-list')) {
                   else if(closest('.pdf-btn')) { this.handleRealPDF(); }
                  else if(closest('.share-btn')) { this.handleRealShare("Alimente Fácil", "Minha organização!"); }
                  else if(closest('.generate-list-btn')) { this.handleGenerateListFromPlanner(); }
-                 else if(closest('.import-recipe-btn')) { 
+                 else if(closest('.import-recipe-btn')) {
                       const input = document.createElement('input'); input.type = 'file'; input.accept = '.json, .txt';
                       input.onchange = () => this.showNotification("Arquivo carregado! Processando receita...", "success");
                       input.click();
                  }
-                 else if(closest('.change-chart-btn')) { 
+                 else if(closest('.change-chart-btn')) {
                       const select = document.getElementById('analysis-type-select');
                       if(select) { const options = ['pie', 'doughnut', 'bar', 'line']; let nextIndex = options.indexOf(select.value) + 1; if(nextIndex >= options.length) nextIndex = 0; select.value = options[nextIndex]; this.updateDynamicChart(); }
                  }
@@ -980,7 +840,7 @@ if (closest('#module-lista') && closest('.btn-create-list')) {
 
                  const authToggleLink = closest('.auth-toggle-link');
                  if (authToggleLink) { const targetViewId = authToggleLink.dataset.view; const authModal = document.getElementById('auth-modal'); authModal?.querySelectorAll('.auth-form-container').forEach(view => view.classList.remove('active')); document.getElementById(targetViewId)?.classList.add('active'); }
-                 
+
                  const subscribeBtn = closest('.btn[data-action="subscribe"]');
                  if (subscribeBtn) { this.handleRealSubscription(subscribeBtn.dataset.plan); }
 
@@ -1014,8 +874,8 @@ this.elements.body.addEventListener('submit', e => {
             });
             this.elements.body.addEventListener('focusout', e => {
                  const targetId = e.target.id;
-                 if (targetId === 'lista-form-nome-dash' || targetId === 'lista-form-nome-full' || targetId === 'edit-item-name' || targetId === 'essential-name' || targetId === 'recipe-ing-name' || targetId === 'pantry-edit-name') { 
-                    setTimeout(() => { if (document.activeElement !== this.elements.autocompleteSuggestions) { this.hideAutocomplete(); } }, 150); 
+                 if (targetId === 'lista-form-nome-dash' || targetId === 'lista-form-nome-full' || targetId === 'edit-item-name' || targetId === 'essential-name' || targetId === 'recipe-ing-name' || targetId === 'pantry-edit-name') {
+                    setTimeout(() => { if (document.activeElement !== this.elements.autocompleteSuggestions) { this.hideAutocomplete(); } }, 150);
                  }
             });
             this.elements.autocompleteSuggestions?.addEventListener('mousedown', e => {
@@ -1040,46 +900,45 @@ this.elements.body.addEventListener('submit', e => {
         },
 
         updateBodyClasses() { this.elements.body.classList.toggle('app-mode', this.isAppMode); },
-        
+
 updateStartButton() {
             const accessLink = this.elements.panelAccessLink;
             if (accessLink) {
                 const iconEl = accessLink.querySelector('.node-icon i');
                 const labelEl = accessLink.querySelector('.node-label');
-                if (this.isLoggedIn) { 
-                    iconEl.className = 'fa-solid fa-rocket'; 
-                    labelEl.textContent = 'Meu Painel'; 
-                    accessLink.title = 'Acessar Painel'; 
-                } else { 
-                    iconEl.className = 'fa-solid fa-power-off'; 
-                    labelEl.textContent = 'Acessar Painel'; 
-                    accessLink.title = 'Login / Cadastro'; 
+                if (this.isLoggedIn) {
+                    iconEl.className = 'fa-solid fa-rocket';
+                    labelEl.textContent = 'Meu Painel';
+                    accessLink.title = 'Acessar Painel';
+                } else {
+                    iconEl.className = 'fa-solid fa-power-off';
+                    labelEl.textContent = 'Acessar Painel';
+                    accessLink.title = 'Login / Cadastro';
                 }
             }
 
-            // ATUALIZAÇÃO DO BOTÃO DA HOME (CORRIGIDO PARA POWER)
             const landingAuthBtn = document.getElementById('landing-auth-btn');
             if (landingAuthBtn) {
-                // Força sempre o ícone de Power
+
                 landingAuthBtn.innerHTML = '<i class="fa-solid fa-power-off"></i>';
-                
+
                 if (this.isLoggedIn) {
-                    // Estado: LOGADO (Botão fica vermelho para indicar "Desligar/Sair")
+
                     landingAuthBtn.classList.add('power-on');
                     landingAuthBtn.title = "Desconectar / Sair";
                 } else {
-                    // Estado: DESLOGADO (Botão fica padrão/neon para indicar "Ligar/Entrar")
+
                     landingAuthBtn.classList.remove('power-on');
                     landingAuthBtn.title = "Iniciar Sessão";
                 }
             }
         },
-        
-        handleStartButtonClick(){ 
-            if(!this.isLoggedIn){ this.showAuthModal(); return; } 
-            this.enterAppMode(); 
+
+        handleStartButtonClick(){
+            if(!this.isLoggedIn){ this.showAuthModal(); return; }
+            this.enterAppMode();
         },
-        
+
         enterAppMode() {
              if (this.isAppMode) return;
              this.clearIntervals();
@@ -1092,7 +951,7 @@ updateStartButton() {
              this.saveState();
              window.scrollTo(0, 0);
         },
-        
+
         exitAppMode() {
              if (!this.isAppMode) return;
              this.clearIntervals();
@@ -1103,7 +962,7 @@ updateStartButton() {
              window.scrollTo(0, 0);
              this.initLandingPage();
         },
-        
+
         handleLogout() {
             this.isLoggedIn = false;
             this.userPlan = 'free';
@@ -1111,21 +970,21 @@ updateStartButton() {
             this.state.user = { nome: null };
             this.activeListId = 'listaDaSemana';
             this.activeModule = 'inicio';
-            this.exitAppMode(); 
-            this.updateStartButton(); 
+            this.exitAppMode();
+            this.updateStartButton();
             this.saveState();
             this.showNotification("Você saiu da sua conta.", "info");
         },
-        // ========== MÉTODOS CORRIGIDOS DE AUTENTICAÇÃO ==========
+
         handleLogin() {
-            // Redireciona para a implementação real definida nos patches
+
             if (typeof this._realHandleLogin === 'function') {
                 this._realHandleLogin();
             } else {
                 this.showAuthModal();
             }
         },
-        
+
         handleSignup() {
             if (typeof this._realHandleSignup === 'function') {
                 this._realHandleSignup();
@@ -1133,7 +992,7 @@ updateStartButton() {
                 this.showAuthModal();
             }
         },
-        
+
         forceCleanFakeAuthState() {
             try {
                 const raw = localStorage.getItem('alimenteFacilState_vFinal');
@@ -1150,7 +1009,6 @@ updateStartButton() {
                 }
             } catch (e) {}
         },
-        // ========================================================
 
         toggleTheme() {
             document.body.classList.toggle('lua-mode');
@@ -1166,14 +1024,12 @@ updateStartButton() {
         },
 updateThemeIcons() {
             const isLuaMode = document.body.classList.contains('lua-mode');
-            
-            // Ícone do Painel Interno (mantém sólido se preferir, ou muda para regular)
+
             const panelIcon = this.elements.themeToggleBtnPanel?.querySelector('i');
             if (panelIcon) {
                 panelIcon.className = isLuaMode ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
             }
 
-            // Ícone da Landing Page (Botão Dourado - usa Regular/Fino)
             const landingIcon = document.querySelector('#landing-theme-toggle i');
             if (landingIcon) {
                 landingIcon.className = isLuaMode ? 'fa-regular fa-moon' : 'fa-regular fa-sun';
@@ -1201,32 +1057,27 @@ updateThemeIcons() {
             });
         },
 
-
-
 initLandingPage() {
             this.clearIntervals();
             this.initVideoRotator();
-            
-            // Chama a nova função da tarja
+
             this.initNewHeaderLogic();
-            
-            // Mantém as outras inicializações
+
             this.setupDynamicInfo();
             this.initDicas();
-            this.initHomePageCalculator(); 
+            this.initHomePageCalculator();
             this.initLandingRecipes();
-            this.updateStartButton(); 
+            this.updateStartButton();
 
-            // Listener dos botões da IA (Dicas e Receitas)
             const handleAiCtaClick = () => {
-                if (this.isLoggedIn && this.userPlan === 'premium') { this.showChatbot(); } 
-                else if (this.isLoggedIn) { this.showPlansModal("Este recurso não está disponível nesta versão."); } 
+                if (this.isLoggedIn && this.userPlan === 'premium') { this.showChatbot(); }
+                else if (this.isLoggedIn) { this.showPlansModal("Este recurso não está disponível nesta versão."); }
                 else { this.showAuthModal(); }
             };
-            
+
             const btnDicas = document.getElementById('ai-cta-dicas');
             const btnReceitas = document.getElementById('ai-cta-receitas');
-            
+
             if(btnDicas) {
                 btnDicas.removeEventListener('click', handleAiCtaClick);
                 btnDicas.addEventListener('click', handleAiCtaClick);
@@ -1261,7 +1112,7 @@ initLandingPage() {
         },
 
 initNewHeaderLogic() {
-            // 1. Data, Hora e Saudação
+
             const updateHeaderData = () => {
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }).replace('.', '');
@@ -1277,7 +1128,6 @@ initNewHeaderLogic() {
             updateHeaderData();
             this.intervals.push(setInterval(updateHeaderData, 1000));
 
-            // 2. Rotação de Versículos
             const verses = [
                 {text: '"O Senhor é o meu pastor; de nada terei falta." (Sl 23:1)'},
                 {text: '"Tudo posso naquele que me fortalece." (Fp 4:13)'},
@@ -1297,14 +1147,13 @@ initNewHeaderLogic() {
             };
             this.intervals.push(setInterval(rotateVerse, 15000));
 
-            // 3. Botão Contraste
             const contrastBtn = document.getElementById('landing-theme-toggle');
             if(contrastBtn) {
                  const newContrast = contrastBtn.cloneNode(true);
                  if(contrastBtn.parentNode) contrastBtn.parentNode.replaceChild(newContrast, contrastBtn);
                  newContrast.addEventListener('click', (e) => {
                      e.preventDefault(); e.stopPropagation();
-                     document.body.classList.toggle('landing-lua-mode'); 
+                     document.body.classList.toggle('landing-lua-mode');
                      const icon = newContrast.querySelector('i');
                      if(document.body.classList.contains('landing-lua-mode')){
                          if(icon) icon.className = 'fa-regular fa-moon';
@@ -1314,7 +1163,6 @@ initNewHeaderLogic() {
                  });
             }
 
-            // 4. Botão Power
             const powerBtn = document.getElementById('landing-auth-btn');
             if(powerBtn) {
                 const newPower = powerBtn.cloneNode(true);
@@ -1335,15 +1183,14 @@ initNewHeaderLogic() {
                     newPower.title = "Fazer Login";
                 }
             }
-            
-            // 5. Menu Hambúrguer Premium (Dropdown Vertical - Lógica Segura)
+
             const hamburger = document.getElementById('hamburger');
             const menu = document.getElementById('menuItems');
-            
+
             if(hamburger && menu) {
                 const newHamburger = hamburger.cloneNode(true);
                 if(hamburger.parentNode) hamburger.parentNode.replaceChild(newHamburger, hamburger);
-                
+
                 newHamburger.addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation();
                     const isOpen = newHamburger.classList.contains('active');
@@ -1355,8 +1202,6 @@ initNewHeaderLogic() {
                         menu.classList.add('active');
                     }
                 });
-
-            
 
     const originalRenderAnalysisDetailDesktop = app.renderAnalysisDetailDesktop.bind(app);
     app.renderAnalysisDetailDesktop = function(analysisKey = 'gastos_categoria') {
@@ -1388,7 +1233,7 @@ initNewHeaderLogic() {
                         newHamburger.classList.remove('active');
                     }
                 });
-                
+
                 menu.querySelectorAll('a, .menu-link, .menu-cta-highlight').forEach(link => {
                     link.addEventListener('click', () => {
                         menu.classList.remove('active');
@@ -1397,7 +1242,7 @@ initNewHeaderLogic() {
                 });
             }
         },
-        
+
         initVideoRotator() {
              const container = document.getElementById('landing-video-container');
              if (!container) return;
@@ -1417,7 +1262,7 @@ initNewHeaderLogic() {
              if (hour < 6 || hour > 18) { icon = 'fa-moon'; }
              return `<i class="fa-solid ${icon}" style="margin-left: 5px;"></i>`;
         },
-        
+
         async setupDynamicInfo() {
              const verses = ["O Senhor é o meu pastor; nada me faltará. (Sl 23:1)", "Tudo posso naquele que me fortalece. (Fp 4:13)"];
              const verseEl = document.querySelector('.verse-info');
@@ -1429,7 +1274,7 @@ initNewHeaderLogic() {
                   const now = new Date();
                   let greetingText = now.getHours() < 12 ? 'Bom dia' : now.getHours() < 18 ? 'Boa tarde' : 'Boa noite';
                   const userName = this.isLoggedIn ? this.state.user.nome : null;
-                  if (userName) { dynamicInfoEl.innerHTML = `${greetingText} <strong>${this.escapeHtml(userName)}</strong> | ${now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} | ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} ${weatherIcon}`; } 
+                  if (userName) { dynamicInfoEl.innerHTML = `${greetingText} <strong>${this.escapeHtml(userName)}</strong> | ${now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} | ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} ${weatherIcon}`; }
                   else { dynamicInfoEl.innerHTML = `${greetingText} | ${now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} | ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} ${weatherIcon}`; }
              };
              updateInfo();
@@ -1475,7 +1320,7 @@ initNewHeaderLogic() {
             const calculatorSection = document.getElementById('calculadora');
             if (calculatorSection) { calculatorSection.scrollIntoView({ behavior: 'smooth' }); }
         },
-    
+
         initHomePageCalculator() {
             const container = document.getElementById('home-calculator-grid');
             const resultEl = document.getElementById('home-calculator-result');
@@ -1513,8 +1358,8 @@ initNewHeaderLogic() {
                 const currentContainer = document.getElementById('home-calculator-grid');
                 if (!currentContainer) return;
                 currentContainer.innerHTML = allItems.map(item => {
-                    const iconName = item.icon || 'icone-default.png'; 
-                    const iconPath = `/icones/${iconName}`; 
+                    const iconName = item.icon || 'icone-default.png';
+                    const iconPath = `/icones/${iconName}`;
                     return `
                     <div class="home-calc-item" data-name="${item.name}" title="${item.name}" role="button" tabindex="0" aria-label="Adicionar ${item.name}">
                         <img src="${iconPath}" alt="${item.name}" class="calc-item-icon" loading="lazy" onerror="this.style.display='none';">
@@ -1556,7 +1401,7 @@ initNewHeaderLogic() {
 
         openModal(modalId) {
              const modal = document.getElementById(modalId);
-             if (modal) { modal.classList.add('is-visible'); } 
+             if (modal) { modal.classList.add('is-visible'); }
         },
         closeModal(modalId) {
              const modal = document.getElementById(modalId);
@@ -1608,7 +1453,6 @@ initNewHeaderLogic() {
             const text = String(prompt || '').trim();
             if (text) input.value = text;
 
-            // Open first, then focus (works on mobile too)
             setTimeout(() => {
                 try { input.focus(); input.setSelectionRange(input.value.length, input.value.length); } catch(e) {}
                 if (options.autoSend) {
@@ -1700,12 +1544,12 @@ initNewHeaderLogic() {
         },
         showNotification(message, type = 'info') {
             document.querySelector('.notification')?.remove(); const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.innerHTML = message; document.body.appendChild(notification);
-            const styleId = 'notification-style'; if (!document.getElementById(styleId)) { const style = document.createElement('style'); style.id = styleId; 
-            style.innerHTML = `.notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 1rem 2rem; border-radius: 8px; color: #fff; z-index: 9999; opacity: 0; transition: opacity 0.5s, bottom 0.5s; font-family: 'Roboto', sans-serif; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 1px solid var(--glass-border); background: var(--glass-color); backdrop-filter: blur(10px); } 
-            .notification.info { background: var(--glass-on-color); color: var(--glass-on-text); text-shadow: 0 1px 1px rgba(255,255,255,0.2); border-color: var(--glass-on-color); } 
-            .notification.success { background: var(--green); } 
-            .notification.error { background: var(--red); } 
-            .notification.show { opacity: 1; bottom: 40px; }`; 
+            const styleId = 'notification-style'; if (!document.getElementById(styleId)) { const style = document.createElement('style'); style.id = styleId;
+            style.innerHTML = `.notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 1rem 2rem; border-radius: 8px; color: #fff; z-index: 9999; opacity: 0; transition: opacity 0.5s, bottom 0.5s; font-family: 'Roboto', sans-serif; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 1px solid var(--glass-border); background: var(--glass-color); backdrop-filter: blur(10px); }
+            .notification.info { background: var(--glass-on-color); color: var(--glass-on-text); text-shadow: 0 1px 1px rgba(255,255,255,0.2); border-color: var(--glass-on-color); }
+            .notification.success { background: var(--green); }
+            .notification.error { background: var(--red); }
+            .notification.show { opacity: 1; bottom: 40px; }`;
             document.head.appendChild(style); }
             setTimeout(() => notification.classList.add('show'), 10); setTimeout(() => { notification.classList.remove('show'); setTimeout(() => notification.remove(), 500); }, 3500);
         },
@@ -1716,15 +1560,15 @@ initNewHeaderLogic() {
         },
         activateModuleAndRender(moduleKey) {
             if (!moduleKey || (this.activeModule === moduleKey && this.isAppMode)) return;
-            if (['analises', 'planejador'].includes(moduleKey) && this.userPlan === 'free') { 
-                this.showPlansModal("Acesse este módulo com um plano Premium!"); 
-                return; 
+            if (['analises', 'planejador'].includes(moduleKey) && this.userPlan === 'free') {
+                this.showPlansModal("Acesse este módulo com um plano Premium!");
+                return;
             }
-            if (moduleKey === 'lista' && this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2 && !this.state.listas[this.activeListId]) { 
-                this.showPlansModal("Crie listas ilimitadas com o plano Premium!"); 
-                return; 
+            if (moduleKey === 'lista' && this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2 && !this.state.listas[this.activeListId]) {
+                this.showPlansModal("Crie listas ilimitadas com o plano Premium!");
+                return;
             }
-            
+
             this.activeModule = moduleKey;
             this.activateModuleUI(moduleKey);
             this.renderModuleContent(moduleKey);
@@ -1746,7 +1590,7 @@ initNewHeaderLogic() {
             const renderFunction = renderMap[moduleKey];
             Object.values(this.charts).forEach(chart => chart?.destroy());
             this.charts = {};
-            if (renderFunction) { renderFunction.call(this, moduleContainer); if (this.elements.modulesArea && moduleKey !== 'inicio') { this.elements.modulesArea.scrollTop = 0; } } 
+            if (renderFunction) { renderFunction.call(this, moduleContainer); if (this.elements.modulesArea && moduleKey !== 'inicio') { this.elements.modulesArea.scrollTop = 0; } }
             else { moduleContainer.innerHTML = `<div class="empty-state"><i class="fa-solid fa-person-digging"></i><p>Módulo "${moduleKey}" em construção.</p></div>`; }
         },
 
@@ -1761,8 +1605,7 @@ initNewHeaderLogic() {
 renderListas(container) {
     if (!container) container = document.getElementById('module-lista');
     if (!container) return;
-    
-    // Layout Master-Detail (Desktop) / Pilha (Mobile)
+
     container.innerHTML = `
         <div class="master-detail-layout" id="list-manager">
             <div class="md-list-column dashboard-card">
@@ -1803,7 +1646,7 @@ renderListas(container) {
         </div>
     `;
     this.renderListasSalvas();
-    // Se estiver no desktop, carrega a lista ativa na direita
+
     if(window.innerWidth >= 992 && this.activeListId) {
         this.renderListaAtiva(this.activeListId);
     }
@@ -1929,31 +1772,29 @@ handleOpenPantryView(itemEl) {
             const item = this.state.despensa.find(i => i.id.toString() === id);
             if (!item) return;
 
-            // Injetar botão de deletar no footer (lado esquerdo)
             const actionsContainer = document.getElementById('pantry-view-actions-container');
             if (actionsContainer) {
                 actionsContainer.innerHTML = `<button class="btn btn-danger delete-btn" data-item-id="${id}"><i class="fa-solid fa-trash"></i> Excluir</button>`;
             }
-            
+
             const nameInput = document.getElementById('pantry-edit-name');
             const qtdInput = document.getElementById('pantry-edit-qtd');
             const unidSelect = document.getElementById('pantry-edit-unid');
             const stockInput = document.getElementById('pantry-edit-stock');
             const validadeInput = document.getElementById('pantry-edit-validade');
             const idHidden = document.getElementById('pantry-edit-id');
-            
+
             if(nameInput) nameInput.value = item.name;
             if(qtdInput) qtdInput.value = item.qtd || 1;
             if(unidSelect) unidSelect.value = item.unid || 'un';
             if(validadeInput) validadeInput.value = item.validade || '';
             if(idHidden) idHidden.value = item.id;
 
-            // Lógica do Slider de Estoque (com cores)
             if(stockInput) {
                 stockInput.value = item.stock || 100;
                 const updateLabels = (val) => {
                     const labels = document.querySelectorAll('.stock-labels span');
-                    labels.forEach(l => l.style.color = '#666'); 
+                    labels.forEach(l => l.style.color = '#666');
                     if(val < 25) labels[0].style.color = 'var(--red)';
                     else if(val < 50) labels[1].style.color = 'var(--accent-yellow)';
                     else if(val < 75) labels[2].style.color = 'var(--primary-color)';
@@ -1962,7 +1803,7 @@ handleOpenPantryView(itemEl) {
                 updateLabels(stockInput.value);
                 stockInput.oninput = (e) => updateLabels(e.target.value);
             }
-            
+
             this.openModal('pantry-view-modal');
         },
 
@@ -1974,39 +1815,39 @@ handleSavePantryEdit() {
              setTimeout(() => {
                  const id = document.getElementById('pantry-edit-id').value;
                  if (!id) { if(btn){btn.innerHTML = originalText; btn.disabled = false;} return; }
-                 
+
                  const type = document.getElementById('pantry-edit-form-fullscreen')?.dataset.editType || 'despensa';
                  const listId = document.getElementById('pantry-edit-form-fullscreen')?.dataset.listId;
-                 
-                 const updatedData = { 
-                     name: document.getElementById('pantry-edit-name').value.trim() || "Item sem nome", 
-                     qtd: parseFloat(document.getElementById('pantry-edit-qtd').value) || 1, 
-                     unid: document.getElementById('pantry-edit-unid').value, 
+
+                 const updatedData = {
+                     name: document.getElementById('pantry-edit-name').value.trim() || "Item sem nome",
+                     qtd: parseFloat(document.getElementById('pantry-edit-qtd').value) || 1,
+                     unid: document.getElementById('pantry-edit-unid').value,
                  };
 
                  if (type === 'despensa') {
                      updatedData.stock = parseInt(document.getElementById('pantry-edit-stock').value) || 100;
                      updatedData.validade = document.getElementById('pantry-edit-validade').value || null;
                      const itemIndex = this.state.despensa.findIndex(i => i.id.toString() === id);
-                     if (itemIndex > -1) { 
-                         this.state.despensa[itemIndex] = { ...this.state.despensa[itemIndex], ...updatedData }; 
-                         this.renderDespensaWidget(); 
-                         if(this.activeModule === 'despensa') this.renderDespensa(); 
+                     if (itemIndex > -1) {
+                         this.state.despensa[itemIndex] = { ...this.state.despensa[itemIndex], ...updatedData };
+                         this.renderDespensaWidget();
+                         if(this.activeModule === 'despensa') this.renderDespensa();
                          this.showNotification("Item atualizado com sucesso!", "success");
                      }
                  } else if (type === 'lista' && listId && this.state.listas[listId]) {
                      const itemIndex = this.state.listas[listId].items.findIndex(i => i.id.toString() === id);
-                     if (itemIndex > -1) { 
-                         this.state.listas[listId].items[itemIndex] = { ...this.state.listas[listId].items[itemIndex], ...updatedData }; 
+                     if (itemIndex > -1) {
+                         this.state.listas[listId].items[itemIndex] = { ...this.state.listas[listId].items[itemIndex], ...updatedData };
                          const modalBody = document.querySelector(`#list-view-modal-body[data-list-id="${listId}"]`);
-                         if (modalBody && document.getElementById('list-view-modal').classList.contains('is-visible')) { const lista = this.state.listas[listId]; modalBody.innerHTML = lista.items.map(item => this.createListaItemHTML(item)).join(''); } 
+                         if (modalBody && document.getElementById('list-view-modal').classList.contains('is-visible')) { const lista = this.state.listas[listId]; modalBody.innerHTML = lista.items.map(item => this.createListaItemHTML(item)).join(''); }
                          else { this.renderListaAtiva(listId); }
                          this.renderListaWidget(); this.renderOrcamento();
                          this.showNotification("Item atualizado com sucesso!", "success");
                      }
                  }
-                 
-                 this.saveState(); 
+
+                 this.saveState();
                  this.closeModal('pantry-view-modal');
 
                  if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
@@ -2055,13 +1896,13 @@ handleSavePantryEdit() {
                     <button class="btn btn-primary" id="list-item-save-btn-dt" style="width:100%;"><i class="fa-solid fa-save"></i> Salvar Alterações</button>
                 </div>
             `;
-            
+
             document.getElementById('list-item-save-btn-dt').addEventListener('click', () => {
                 const name = document.getElementById('edit-item-name-dt').value.trim();
                 const qtd = parseFloat(document.getElementById('edit-item-qtd-dt').value) || 1;
                 const unid = document.getElementById('edit-item-unid-dt').value;
                 const valor = parseFloat(document.getElementById('edit-item-valor-dt').value) || 0;
-                
+
                 if(this.state.listas[listId]) {
                     const itemIndex = this.state.listas[listId].items.findIndex(i => i.id.toString() === item.id.toString());
                     if (itemIndex > -1) {
@@ -2077,11 +1918,11 @@ handleSavePantryEdit() {
         },
 
 renderListasSalvas() {
-            const container = document.getElementById('saved-lists-container'); 
+            const container = document.getElementById('saved-lists-container');
             if(!container) return;
             const listIds = Object.keys(this.state.listas);
-            container.innerHTML = listIds.map(listId => { 
-                const lista = this.state.listas[listId]; 
+            container.innerHTML = listIds.map(listId => {
+                const lista = this.state.listas[listId];
                 return this.renderUniversalCard({
                     type: 'saved-list',
                     data: {
@@ -2124,17 +1965,17 @@ renderDespensa(container) {
             </div>
         </div>
     `;
-    
+
     const listContainer = document.getElementById('despensa-list-container');
-    const sortedDespensa = [...this.state.despensa].sort((a, b) => { 
-        const dateA = a.validade ? new Date(a.validade + "T00:00:00-03:00").getTime() : Infinity; 
-        const dateB = b.validade ? new Date(b.validade + "T00:00:00-03:00").getTime() : Infinity; 
-        return (dateA - dateB) || a.name.localeCompare(b.name); 
+    const sortedDespensa = [...this.state.despensa].sort((a, b) => {
+        const dateA = a.validade ? new Date(a.validade + "T00:00:00-03:00").getTime() : Infinity;
+        const dateB = b.validade ? new Date(b.validade + "T00:00:00-03:00").getTime() : Infinity;
+        return (dateA - dateB) || a.name.localeCompare(b.name);
     });
-    
+
     listContainer.innerHTML = sortedDespensa.map(item => this.createDespensaItemHTML(item)).join('');
     if(sortedDespensa.length === 0){ listContainer.innerHTML += '<p class="empty-list-message">Sua despensa está vazia.</p>'; }
-    this.initSortableItems('despensa-items-full'); 
+    this.initSortableItems('despensa-items-full');
 },
 
         renderDespensaWidget() {
@@ -2149,7 +1990,6 @@ renderReceitas(container) {
              if (!container) container = document.getElementById('module-receitas');
              if (!container) return;
 
-             // Estrutura Master-Detail
              container.innerHTML = `
                 <div class="master-detail-layout">
                     <div class="md-list-column dashboard-card">
@@ -2182,7 +2022,7 @@ renderReceitas(container) {
 
 const listContainer = document.getElementById('main-recipe-grid');
              const recipes = Object.values(this.state.receitas);
-             
+
              listContainer.innerHTML = recipes.map(recipe => {
                  return this.renderUniversalCard({
                      type: 'recipe',
@@ -2198,7 +2038,7 @@ const listContainer = document.getElementById('main-recipe-grid');
                      isClickable: true
                  });
              }).join('');
-             
+
 if(recipes.length === 0){ listContainer.innerHTML = '<p class="empty-list-message">Nenhuma receita criada.</p>'; }
         },
 
@@ -2206,17 +2046,16 @@ if(recipes.length === 0){ listContainer.innerHTML = '<p class="empty-list-messag
 
     const container = document.getElementById('despensa-detail-desktop');
     if(!container) return;
-    
-    // Lógica visual da validade
+
     let validadeDisplay = "Não informada";
     let validadeClass = "";
     if (item.validade) {
         const hoje = new Date(); hoje.setHours(0,0,0,0);
         const [y, m, d] = item.validade.split('-').map(Number);
         const dataVal = new Date(y, m - 1, d); dataVal.setHours(0,0,0,0);
-        const diffTime = dataVal - hoje; 
+        const diffTime = dataVal - hoje;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays < 0) { validadeDisplay = `Vencido há ${Math.abs(diffDays)} dias`; validadeClass = "color: var(--red); font-weight: bold;"; }
         else if (diffDays === 0) { validadeDisplay = "Vence Hoje!"; validadeClass = "color: var(--red); font-weight: bold;"; }
         else if (diffDays <= 7) { validadeDisplay = `Vence em ${diffDays} dias`; validadeClass = "color: var(--accent-yellow);"; }
@@ -2233,7 +2072,7 @@ if(recipes.length === 0){ listContainer.innerHTML = '<p class="empty-list-messag
         <div class="card-content">
             <form id="pantry-desktop-form" onsubmit="return false;">
                 <input type="hidden" id="pantry-edit-id" value="${item.id}">
-                
+
                 <div class="form-group">
                     <label>Nome do Item</label>
                     <input type="text" id="pantry-edit-name" value="${this.escapeHtml(item.name)}" class="input-large">
@@ -2272,13 +2111,12 @@ if(recipes.length === 0){ listContainer.innerHTML = '<p class="empty-list-messag
             <button class="btn btn-primary" id="pantry-save-btn" style="width:100%;"><i class="fa-solid fa-save"></i> Salvar Alterações</button>
         </div>
     `;
-    
-    // Reativar os listeners do stepper que foram injetados dinamicamente
+
     const stockInput = document.getElementById('pantry-edit-stock');
     if(stockInput) {
         const updateLabels = (val) => {
             const labels = container.querySelectorAll('.stock-labels span');
-            labels.forEach(l => l.style.color = '#666'); 
+            labels.forEach(l => l.style.color = '#666');
             if(val < 25) labels[0].style.color = 'var(--red)';
             else if(val < 50) labels[1].style.color = 'var(--accent-yellow)';
             else if(val < 75) labels[2].style.color = 'var(--primary-color)';
@@ -2420,7 +2258,7 @@ renderPlanejador(container) {
                 </div>
                 <div class="card-footer">
                     <button class="btn btn-primary add-meal-btn" data-day-target="${dayKey}"><i class="fa-solid fa-plus"></i> Adicionar refeição</button>
-                    
+
                 </div>
              `;
         },
@@ -2514,8 +2352,7 @@ renderPlanejador(container) {
 
 renderOrcamento() {
             const totalOrcamento = this.state.orcamento.total || 0;
-            
-            // NOVA LÓGICA: Soma o valor financeiro de todos os itens atualmente na Despensa
+
             let valorTotalDespensa = this.state.despensa.reduce((acc, item) => {
                 const valor = parseFloat(item.valor) || 0;
                 const quantidade = parseFloat(item.qtd) || 0;
@@ -2527,18 +2364,18 @@ renderOrcamento() {
             const spentDisplay = document.getElementById('budget-spent-display');
             const barFill = document.getElementById('budget-bar-fill-display');
             const budgetInput = document.getElementById('budget-total-input');
-            
+
             if(totalDisplay) totalDisplay.textContent = parseFloat(totalOrcamento).toFixed(0);
             if(spentDisplay) spentDisplay.textContent = valorTotalDespensa.toFixed(2);
-            
+
             if(barFill) {
                 barFill.style.width = `${Math.min(percent, 100)}%`;
-                // Cores dinâmicas: Verde (OK), Amarelo (Atenção), Vermelho (Estoque caro/acima do teto)
+
                 if (percent > 100) barFill.style.backgroundColor = 'var(--red)';
                 else if (percent > 80) barFill.style.backgroundColor = 'var(--accent-yellow)';
                 else barFill.style.backgroundColor = 'var(--green)';
             }
-            
+
             if(budgetInput) budgetInput.value = parseFloat(totalOrcamento).toFixed(2);
         },
 
@@ -2743,7 +2580,6 @@ if (section === 'perfil') {
     });
 }
 
-  // Listener para apagar conta
   container.querySelector('#config-delete-account-btn')?.addEventListener('click', () => {
     this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
       this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
@@ -2895,13 +2731,13 @@ openConfigSectionModal(section = 'perfil') {
             let validadeDisplay = "N/A";
             let validadeClass = "";
             let title = "Validade não informada";
-            
+
             if (item.validade) {
                 const hoje = new Date(); hoje.setHours(0,0,0,0);
                 const [y, m, d] = item.validade.split('-').map(Number);
                 const dataVal = new Date(y, m - 1, d); dataVal.setHours(0,0,0,0);
                 const diffTime = dataVal - hoje; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
+
                 if (diffDays < 0) { validadeDisplay = "Vencido!"; validadeClass = "expiring"; title = `Vencido há ${Math.abs(diffDays)} dia(s)`; }
                 else if (diffDays === 0) { validadeDisplay = "Vence Hoje!"; validadeClass = "expiring"; title = "Vence Hoje!"; }
                 else if (diffDays <= 7) { validadeDisplay = `Vence em ${diffDays}d`; validadeClass = "expiring"; title = `Vence em ${diffDays} dia(s)`; }
@@ -3021,7 +2857,7 @@ openConfigSectionModal(section = 'perfil') {
                  }
                  const modalBody = itemEl.closest('#list-view-modal-body');
                  let targetListId;
-                 if (modalBody) { targetListId = modalBody.dataset.listId; } 
+                 if (modalBody) { targetListId = modalBody.dataset.listId; }
                  else { targetListId = document.getElementById('active-list-id-input')?.value || this.activeListId; }
                  if (!targetListId || !this.state.listas[targetListId]) { return; }
                  this.state.listas[targetListId].items = this.state.listas[targetListId].items.filter(i => i.id.toString() !== id);
@@ -3035,7 +2871,7 @@ openConfigSectionModal(section = 'perfil') {
                  this.state.despensa = this.state.despensa.filter(i => i.id.toString() !== id);
                  this.renderDespensaWidget();
                  if(this.activeModule === 'despensa') this.renderDespensa();
-                 // Se deletar de dentro do modal, fecha o modal também
+
                  this.closeModal('pantry-view-modal');
             } else if (type === 'essencial') {
                  this.state.essenciais = this.state.essenciais.filter(i => i.id.toString() !== id);
@@ -3061,7 +2897,7 @@ openConfigSectionModal(section = 'perfil') {
                        const lista = this.state.listas[targetListId];
                        modalBody.innerHTML = lista.items.map(i => this.createListaItemHTML(i)).join('');
                        this.initSortableItems('list-view-modal-body');
-                  } 
+                  }
                   if (this.activeModule === 'lista' && targetListId === this.activeListId) { this.renderListaAtiva(targetListId); }
                   if (this.activeModule === 'inicio' && targetListId === this.activeListId) { this.renderListaWidget(); }
                   this.renderOrcamento();
@@ -3071,19 +2907,17 @@ openConfigSectionModal(section = 'perfil') {
 handleSaveListaAtiva(forceCreate = false) {
              const btn = document.getElementById('lista-save-changes-btn');
              const originalText = btn ? btn.innerHTML : 'Salvar';
-             
-             // Só mostra animação se for clique manual (não automático)
-             if(btn && !forceCreate) { 
-                 btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...'; 
-                 btn.disabled = true; 
+
+             if(btn && !forceCreate) {
+                 btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...';
+                 btn.disabled = true;
              }
 
-             // Delay apenas se for manual
              setTimeout(() => {
                  const nameInput = document.getElementById('active-list-name-input') || document.getElementById('widget-list-name-input');
                  const idInput = document.getElementById('active-list-id-input');
                  const container = document.getElementById('lista-items-full') || document.getElementById('lista-items-inicio');
-                 
+
                  if (!nameInput || !container) {
                      if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
                      return;
@@ -3091,12 +2925,12 @@ handleSaveListaAtiva(forceCreate = false) {
 
                  const listId = idInput ? idInput.value : (this.activeListId ? this.activeListId : 'new');
                  const listName = nameInput.value.trim();
-                 
-                 if (!listName) { 
-                     this.showNotification("Por favor, dê um nome para a lista.", "error"); 
-                     nameInput.focus(); 
+
+                 if (!listName) {
+                     this.showNotification("Por favor, dê um nome para a lista.", "error");
+                     nameInput.focus();
                      if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
-                     return; 
+                     return;
                  }
 
                  const itemsContainerId = this.activeModule === 'inicio' ? 'lista-items-inicio' : 'lista-items-full';
@@ -3109,10 +2943,10 @@ handleSaveListaAtiva(forceCreate = false) {
                  });
 
                  if (listId === 'new' || !this.state.listas[listId]) {
-                     if (this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2) { 
-                         this.showPlansModal("Limite de 2 listas atingido no plano Gratuito. Faça upgrade para criar listas ilimitadas!"); 
+                     if (this.userPlan === 'free' && Object.keys(this.state.listas).length >= 2) {
+                         this.showPlansModal("Limite de 2 listas atingido no plano Gratuito. Faça upgrade para criar listas ilimitadas!");
                          if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
-                         return; 
+                         return;
                      }
                       const newListId = this.generateId();
                       this.state.listas[newListId] = { nome: listName, items: items };
@@ -3127,9 +2961,9 @@ handleSaveListaAtiva(forceCreate = false) {
                  }
                  this.saveState(); this.renderListasSalvas(); this.renderListaAtiva(this.activeListId); this.renderListaWidget(); this.renderOrcamento();
                  if (window.innerWidth <= 991 && !forceCreate) { document.getElementById('list-manager')?.classList.remove('view-active-list'); }
-                 
+
                  if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
-             }, forceCreate ? 0 : 600); // 0ms se for automático, 600ms se for manual
+             }, forceCreate ? 0 : 600);
         },
 
         handleDeleteListaAtiva(listIdToDelete) {
@@ -3155,14 +2989,13 @@ handleOpenEditModal(itemEl) {
             let item;
              const modalBody = itemEl.closest('#list-view-modal-body');
              let targetListId;
-             if (modalBody) { targetListId = modalBody.dataset.listId; } 
+             if (modalBody) { targetListId = modalBody.dataset.listId; }
              else { targetListId = document.getElementById('active-list-id-input')?.value || this.activeListId; }
             if (isDespensa) { item = this.state.despensa.find(i => i.id.toString() === id); }
             else if (isLista) { item = this.state.listas[targetListId]?.items.find(i => i.id.toString() === id); }
             else { return; }
             if (!item) { return; }
-            
-            // Fluxo Desktop Master-Detail (Como na Despensa)
+
             if (window.innerWidth >= 992) {
                 if (isDespensa) {
                     this.renderPantryDetailDesktop(item);
@@ -3176,21 +3009,20 @@ handleOpenEditModal(itemEl) {
                 return;
             }
 
-            // Fluxo Mobile: Reutiliza o pantry-view-modal para listas e despensa (sem duplicar modais)
             const nameInput = document.getElementById('pantry-edit-name');
             const qtdInput = document.getElementById('pantry-edit-qtd');
             const unidSelect = document.getElementById('pantry-edit-unid');
             const validadeInput = document.getElementById('pantry-edit-validade');
             const stockInput = document.getElementById('pantry-edit-stock');
             const idHidden = document.getElementById('pantry-edit-id');
-            
+
             document.getElementById('pantry-view-title').innerHTML = isDespensa ? "Editar Despensa" : "Editar Item";
-            
+
             if(nameInput) nameInput.value = item.name;
             if(qtdInput) qtdInput.value = item.qtd || 1;
             if(unidSelect) unidSelect.value = item.unid || 'un';
             if(idHidden) idHidden.value = item.id;
-            
+
             const form = document.getElementById('pantry-edit-form-fullscreen');
             if (form) {
                 form.dataset.editType = isDespensa ? 'despensa' : 'lista';
@@ -3214,19 +3046,19 @@ handleOpenEditModal(itemEl) {
             if (actionsContainer) {
                 actionsContainer.innerHTML = `<button class="btn btn-danger delete-btn" data-item-id="${id}"><i class="fa-solid fa-trash"></i> Excluir</button>`;
             }
-            
+
             this.openModal('pantry-view-modal');
         },
 
         handleSaveEditModal() {
-             // Opcional caso seja chamado de outro lugar antigo (Essentials)
+
         },
 
         handleMoveToDespensa(itemEl) {
              const id = itemEl?.dataset.id;
              const modalBody = itemEl.closest('#list-view-modal-body');
              let targetListId;
-             if (modalBody) { targetListId = modalBody.dataset.listId; } 
+             if (modalBody) { targetListId = modalBody.dataset.listId; }
              else { targetListId = document.getElementById('active-list-id-input')?.value || this.activeListId; }
              if (!id || !targetListId || !this.state.listas[targetListId]) return;
              const itemIndex = this.state.listas[targetListId].items.findIndex(i => i.id.toString() === id);
@@ -3298,7 +3130,7 @@ handleOpenEditModal(itemEl) {
              };
          },
          handleOpenDespensaAddItemModal() {
-             document.getElementById('edit-item-id').value = ''; 
+             document.getElementById('edit-item-id').value = '';
              document.getElementById('edit-item-type').value = 'despensa';
              document.getElementById('item-edit-title').innerHTML = `<i class="fa-solid fa-plus" aria-hidden="true"></i> Adicionar à Despensa`;
              document.getElementById('edit-item-name').value = '';
@@ -3312,7 +3144,7 @@ handleOpenEditModal(itemEl) {
          },
 
 handleOpenRecipeEditModal(recipeId) {
-              // CORREÇÃO: Fecha o modal de detalhes para evitar sobreposição no mobile
+
               this.closeModal('recipe-detail-modal');
 
               const isEditing = recipeId !== null && recipeId !== undefined;
@@ -3370,7 +3202,7 @@ handleOpenRecipeEditModal(recipeId) {
                   const index = parseInt(itemEl.dataset.index);
                   const ingredient = this.tempRecipeIngredients[index];
                   if (!ingredient) return;
-                  if (e.target.closest('.delete-ing-btn')) { this.tempRecipeIngredients.splice(index, 1); this.renderModalIngredientList(); } 
+                  if (e.target.closest('.delete-ing-btn')) { this.tempRecipeIngredients.splice(index, 1); this.renderModalIngredientList(); }
                   else if (e.target.closest('.edit-ing-btn')) {
                       addIngFormContainer.querySelector('#recipe-ing-name').value = ingredient.name;
                       addIngFormContainer.querySelector('#recipe-ing-qtd').value = ingredient.qty;
@@ -3383,27 +3215,27 @@ handleOpenRecipeEditModal(recipeId) {
          },
 
 handleSaveRecipe() {
-             // Pega o botão do modal de confirmação
+
              const btn = document.getElementById('confirm-ok-btn');
              const originalText = btn ? btn.innerHTML : 'Salvar';
-             if(btn) { 
-                 btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...'; 
-                 btn.disabled = true; 
+             if(btn) {
+                 btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...';
+                 btn.disabled = true;
              }
 
              setTimeout(() => {
-                 const form = document.getElementById('recipe-edit-form'); 
+                 const form = document.getElementById('recipe-edit-form');
                  if (!form) { if(btn) { btn.innerHTML = originalText; btn.disabled = false; } return; }
 
-                 const id = form.querySelector('#recipe-edit-id').value; 
-                 const name = form.querySelector('#recipe-edit-name').value.trim(); 
-                 const desc = form.querySelector('#recipe-edit-desc').value.trim(); 
+                 const id = form.querySelector('#recipe-edit-id').value;
+                 const name = form.querySelector('#recipe-edit-name').value.trim();
+                 const desc = form.querySelector('#recipe-edit-desc').value.trim();
                  const contentText = form.querySelector('#recipe-edit-content').value;
 
-                 if (!name) { 
-                     this.showNotification("O nome da receita é obrigatório.", "error"); 
+                 if (!name) {
+                     this.showNotification("O nome da receita é obrigatório.", "error");
                      if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
-                     return; 
+                     return;
                  }
 
                  const ingredients = this.tempRecipeIngredients;
@@ -3418,18 +3250,16 @@ handleSaveRecipe() {
                  }
 
                  this.saveState(); this.renderReceitas(); this.tempRecipeIngredients = [];
-                 
-                 // Atualiza detalhe se estiver aberto no desktop
-                 if (window.innerWidth >= 992 && document.getElementById('module-receitas')?.classList.contains('detail-is-visible')) { 
-                    const currentDetailId = document.querySelector('.recipe-list-item.active')?.dataset.recipeId; 
-                    if (currentDetailId === id || (!id && currentDetailId)) { 
-                        this.renderRecipeDetail(id || Object.keys(this.state.receitas).find(key => this.state.receitas[key].name === name)); 
-                    } 
+
+                 if (window.innerWidth >= 992 && document.getElementById('module-receitas')?.classList.contains('detail-is-visible')) {
+                    const currentDetailId = document.querySelector('.recipe-list-item.active')?.dataset.recipeId;
+                    if (currentDetailId === id || (!id && currentDetailId)) {
+                        this.renderRecipeDetail(id || Object.keys(this.state.receitas).find(key => this.state.receitas[key].name === name));
+                    }
                  }
-                 
-                 // Força o fechamento do modal
+
                  this.closeModal('custom-confirm-modal');
-                 
+
                  if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
              }, 600);
         },
@@ -3456,11 +3286,11 @@ handleSaveRecipe() {
                 });
             }
         },
-        
+
         handleToggleCompleteMeal(day, meal) {
             if (this.state.planejador[day] && this.state.planejador[day][meal]) {
                 const mealData = this.state.planejador[day][meal];
-                mealData.completed = !mealData.completed; 
+                mealData.completed = !mealData.completed;
                 this.saveState();
                 const mealElement = document.getElementById(`planner-full-${day}-${meal}`)?.querySelector('.planner-meal-item');
                 if (mealElement) {
@@ -3503,14 +3333,14 @@ handleSaveRecipe() {
                 try {
                     const [y, m, d] = item.validade.split('-').map(Number);
                     const dataVal = new Date(y, m - 1, d); dataVal.setHours(0,0,0,0);
-                    if (dataVal < hoje) { counts.vencidos++; } 
-                    else if (dataVal <= semanaQueVem) { counts.vencendo++; } 
+                    if (dataVal < hoje) { counts.vencidos++; }
+                    else if (dataVal <= semanaQueVem) { counts.vencendo++; }
                     else { counts.ok++; }
                 } catch (e) { counts.ok++; }
             }
             return counts;
         },
-        
+
         getPlannerMealCountData() {
             const counts = {};
             for (const day in this.state.planejador) {
@@ -3590,12 +3420,12 @@ handleSaveRecipe() {
             const semanaQueVem = new Date(hoje); semanaQueVem.setDate(hoje.getDate() + 7);
             for (const item of this.state.despensa) {
                 let itemStatus = 'ok';
-                if (item.validade) { 
-                    try { 
+                if (item.validade) {
+                    try {
                         const [y, m, d] = item.validade.split('-').map(Number);
                         const dataVal = new Date(y, m - 1, d); dataVal.setHours(0,0,0,0);
-                        if (dataVal < hoje) itemStatus = 'vencidos'; else if (dataVal <= semanaQueVem) itemStatus = 'vencendo'; 
-                    } catch (e) { } 
+                        if (dataVal < hoje) itemStatus = 'vencidos'; else if (dataVal <= semanaQueVem) itemStatus = 'vencendo';
+                    } catch (e) { }
                 }
                 if (itemStatus === statusKey) { itemsHtml += ` <li style="display: flex; justify-content: space-between; padding: 5px; border-bottom: 1px solid var(--glass-border);"> <span>${this.escapeHtml(item.name)}</span> <span style="font-family: 'Roboto Mono', monospace;">Val: ${item.validade ? item.validade.split('-').reverse().join('/') : 'N/A'}</span> </li> `; }
             }
@@ -3699,7 +3529,7 @@ handleSaveRecipe() {
         },
 
         openListNameModal({ title = 'Nome da lista', placeholder = 'Digite...', initialValue = '', confirmText = 'Salvar', onConfirm }) {
-            // Modal reutilizável para criar/renomear lista (substitui prompt do Windows)
+
             let overlay = document.getElementById('list-name-modal');
             if (!overlay) {
                 overlay = document.createElement('div');
@@ -3737,8 +3567,6 @@ const close = () => {
                 overlay.style.display = 'none';
             }
 
-
-
             titleEl.textContent = title;
             input.placeholder = placeholder;
             input.value = initialValue || '';
@@ -3750,7 +3578,6 @@ const close = () => {
                 if (typeof onConfirm === 'function') onConfirm(val);
             };
 
-            // garante listeners únicos
             const newBtn = btnConfirm.cloneNode(true);
             btnConfirm.parentNode.replaceChild(newBtn, btnConfirm);
 
@@ -3763,7 +3590,6 @@ overlay.style.display = 'flex';
             overlay.classList.add('active');
             setTimeout(() => input.focus(), 50);
 
-
         },
 
 openListEditView(listId) {
@@ -3772,11 +3598,9 @@ openListEditView(listId) {
             this.renderListasSalvas();
             this.renderListaAtiva(listId);
 
-            // Abre o container de edição (no mobile isso ativa a tela cheia)
             const listManager = document.getElementById('list-manager');
             if (listManager) listManager.classList.add('view-active-list');
 
-            // Foco imediato no campo de nome de item para agilizar o uso
             setTimeout(() => {
                 const inputItem = document.getElementById('lista-form-nome-full');
                 if (inputItem) {
@@ -3873,8 +3697,7 @@ openListEditView(listId) {
             const unitSource = itemData.unit_desc || itemData.unid || itemData.unit || 'un';
             const unitMatch = String(unitSource).match(/^(un|kg|g|L|ml|pct|cx|xícara|colher|pitada|dentes|a gosto|fio)/i);
             const itemUnit = unitMatch ? unitMatch[1] : 'un';
-            
-            // Lógica para preencher os campos dependendo de onde o autocomplete foi chamado
+
             if (inputId.includes('lista-form-nome')) {
                 const suffix = inputId.includes('-dash') ? '-dash' : '-full';
                 const qtdInput = form.querySelector(`input[id="lista-form-qtd${suffix}"]`);
@@ -3901,7 +3724,7 @@ openListEditView(listId) {
                 const unidSelect = form.querySelector('#recipe-ing-unid');
                 if (unidSelect) unidSelect.value = itemUnit;
             }
-            
+
             this.hideAutocomplete(); this.activeAutocompleteInput.focus();
         },
         escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); },
@@ -3930,18 +3753,18 @@ openListEditView(listId) {
              const sendBtn = chatbotModal.querySelector('#ai-chat-send-btn'); const input = chatbotModal.querySelector('#ai-chat-input'); const messagesContainer = chatbotModal.querySelector('#ai-chat-messages-container');
 	     const voiceBtn = chatbotModal.querySelector('#ai-voice-btn');
              if (voiceBtn) voiceBtn.onclick = () => this.startVoiceRecognition();
-             const sendMessage = () => { 
-                 const userText = input.value.trim(); 
-                 if (!userText || this.isIAProcessing) return; 
-                 input.value = ''; 
-                 const userMessage = document.createElement('div'); 
-                 userMessage.className = 'chat-message user'; 
-                 userMessage.innerHTML = `<div class="bubble">${this.escapeHtml(userText)}</div>`; 
-                 messagesContainer.appendChild(userMessage); 
-                 messagesContainer.scrollTop = messagesContainer.scrollHeight; 
-                 this.triggerChefIAAnalysis(userText); 
+             const sendMessage = () => {
+                 const userText = input.value.trim();
+                 if (!userText || this.isIAProcessing) return;
+                 input.value = '';
+                 const userMessage = document.createElement('div');
+                 userMessage.className = 'chat-message user';
+                 userMessage.innerHTML = `<div class="bubble">${this.escapeHtml(userText)}</div>`;
+                 messagesContainer.appendChild(userMessage);
+                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                 this.triggerChefIAAnalysis(userText);
              };
-             sendBtn.onclick = sendMessage; 
+             sendBtn.onclick = sendMessage;
              input.onkeyup = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
              messagesContainer.onclick = (e) => {
                  const button = e.target.closest('[data-action]'); if (!button) return;
@@ -3978,19 +3801,18 @@ async triggerChefIAAnalysis(prompt) {
                 return;
             }
 
-            // --- CONTROLE DE RATE LIMIT (BACKEND-LIKE) ---
             const now = new Date();
             const todayStr = now.toDateString();
             if (!this.state.aiUsage) this.state.aiUsage = { tokensThisMonth: 0, dailyMsgs: 0, lastMsgDate: null, minuteHistory: [] };
-            
+
             if (this.state.aiUsage.lastMsgDate !== todayStr) {
                 this.state.aiUsage.dailyMsgs = 0;
                 this.state.aiUsage.lastMsgDate = todayStr;
             }
-            
+
             const oneMinAgo = now.getTime() - 60000;
             this.state.aiUsage.minuteHistory = this.state.aiUsage.minuteHistory.filter(time => time > oneMinAgo);
-            
+
             if (this.state.aiUsage.minuteHistory.length >= 5) {
                 this.showNotification("Limite de mensagens por minuto atingido. Aguarde um instante.", "error");
                 return;
@@ -4001,8 +3823,7 @@ async triggerChefIAAnalysis(prompt) {
             }
 
             this.isIAProcessing = true;
-            
-            // UI Feedback
+
             const sendBtn = document.getElementById('ai-chat-send-btn');
             if (sendBtn) {
                 sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
@@ -4019,7 +3840,7 @@ async triggerChefIAAnalysis(prompt) {
             try {
                 this.state.aiUsage.minuteHistory.push(now.getTime());
                 this.state.aiUsage.dailyMsgs++;
-                
+
                 const apiResponse = await this.callGeminiAPI(prompt);
                 this.processIAResponse(apiResponse.json, apiResponse.html, thinkingMessage);
             } catch (error) {
@@ -4036,7 +3857,7 @@ async triggerChefIAAnalysis(prompt) {
         },
 
 async callGeminiAPI(userText) {
-            // SIMULADOR DE IA OFFLINE PREMIUM
+
             return new Promise((resolve) => {
                 setTimeout(() => {
                     const txt = String(userText || '').toLowerCase();
@@ -4114,36 +3935,36 @@ async callGeminiAPI(userText) {
             });
         },
 
-        processIAResponse(jsonResponse, htmlResponse, thinkingMessageElement) { 
-            let newRecipeId, newListId; 
+        processIAResponse(jsonResponse, htmlResponse, thinkingMessageElement) {
+            let newRecipeId, newListId;
             let finalHtml = htmlResponse || jsonResponse.response_text_html;
-            try { 
-                const intent = jsonResponse.intent; const data = jsonResponse.data; 
-                switch (intent) { 
-                    case 'create_shopping_list': newListId = this.executeCreateList(data); if (newListId) finalHtml = finalHtml.replace('[NEW_LIST_ID]', newListId); break; 
-                    case 'create_recipe': newRecipeId = this.executeCreateRecipe(data); if (newRecipeId) finalHtml = finalHtml.replace('[NEW_RECIPE_ID]', newRecipeId); break; 
-                    case 'update_shopping_list': this.executeUpdateList(data); break; 
-                    case 'add_recipe_to_planner': this.executeAddRecipeToPlanner(data); break; 
-                    case 'answer_question': break; 
-                    default: console.warn("Intent IA não reconhecido:", intent); 
-                } 
-            } catch(e) { console.error("Erro ao executar ação IA:", e); finalHtml += `<br><small style="color:var(--red)">Erro ao executar ação: ${e.message}</small>`; } 
-            this.saveState(); 
-            thinkingMessageElement.innerHTML = `<div class="bubble">${finalHtml}</div>`; 
-            if (['create_shopping_list', 'update_shopping_list'].includes(jsonResponse.intent)) { if (this.activeModule === 'lista') this.renderListas(); this.renderListaWidget(); this.renderListasSalvas(); } 
-            if (['create_recipe'].includes(jsonResponse.intent)) { if (this.activeModule === 'receitas') this.renderReceitas(); } 
-            if (['add_recipe_to_planner'].includes(jsonResponse.intent)) { if (this.activeModule === 'planejador') this.renderPlanejador(); this.renderPlannerWidget(); } 
+            try {
+                const intent = jsonResponse.intent; const data = jsonResponse.data;
+                switch (intent) {
+                    case 'create_shopping_list': newListId = this.executeCreateList(data); if (newListId) finalHtml = finalHtml.replace('[NEW_LIST_ID]', newListId); break;
+                    case 'create_recipe': newRecipeId = this.executeCreateRecipe(data); if (newRecipeId) finalHtml = finalHtml.replace('[NEW_RECIPE_ID]', newRecipeId); break;
+                    case 'update_shopping_list': this.executeUpdateList(data); break;
+                    case 'add_recipe_to_planner': this.executeAddRecipeToPlanner(data); break;
+                    case 'answer_question': break;
+                    default: console.warn("Intent IA não reconhecido:", intent);
+                }
+            } catch(e) { console.error("Erro ao executar ação IA:", e); finalHtml += `<br><small style="color:var(--red)">Erro ao executar ação: ${e.message}</small>`; }
+            this.saveState();
+            thinkingMessageElement.innerHTML = `<div class="bubble">${finalHtml}</div>`;
+            if (['create_shopping_list', 'update_shopping_list'].includes(jsonResponse.intent)) { if (this.activeModule === 'lista') this.renderListas(); this.renderListaWidget(); this.renderListasSalvas(); }
+            if (['create_recipe'].includes(jsonResponse.intent)) { if (this.activeModule === 'receitas') this.renderReceitas(); }
+            if (['add_recipe_to_planner'].includes(jsonResponse.intent)) { if (this.activeModule === 'planejador') this.renderPlanejador(); this.renderPlannerWidget(); }
         },
 
-        executeCreateList(listData) { 
-            const newListId = this.generateId(); 
-            this.state.listas[newListId] = { nome: listData.list_name || "Lista da IA", items: (listData.items || []).map(item => ({ id: this.generateId(), name: item.name || "Item", qtd: item.quantity || 1, unid: item.unit || "un", checked: false, valor: 0 })) }; 
-            return newListId; 
+        executeCreateList(listData) {
+            const newListId = this.generateId();
+            this.state.listas[newListId] = { nome: listData.list_name || "Lista da IA", items: (listData.items || []).map(item => ({ id: this.generateId(), name: item.name || "Item", qtd: item.quantity || 1, unid: item.unit || "un", checked: false, valor: 0 })) };
+            return newListId;
         },
-        executeCreateRecipe(recipeData) { 
+        executeCreateRecipe(recipeData) {
             const newId = this.generateId(); const ingredients = recipeData.ingredients || []; const prepMode = recipeData.prepMode || "Não informado.";
-            this.state.receitas[newId] = { id: newId, name: recipeData.recipe_name || "Receita sugerida", desc: recipeData.desc || "Criada automaticamente", content: `<h4>Ingredientes</h4><ul>${ingredients.map(ing => `<li>${ing.qty || ''} ${ing.unit || ''} ${ing.name || '?'}` ).join('')}</ul><h4>Preparo</h4><p>${prepMode.replace(/\n/g, '<br>')}</p>`, ingredients: ingredients.map(ing => ({ name: ing.name || "?", qty: ing.qty || "1", unit: ing.unit || "un" })) }; 
-            return newId; 
+            this.state.receitas[newId] = { id: newId, name: recipeData.recipe_name || "Receita sugerida", desc: recipeData.desc || "Criada automaticamente", content: `<h4>Ingredientes</h4><ul>${ingredients.map(ing => `<li>${ing.qty || ''} ${ing.unit || ''} ${ing.name || '?'}` ).join('')}</ul><h4>Preparo</h4><p>${prepMode.replace(/\n/g, '<br>')}</p>`, ingredients: ingredients.map(ing => ({ name: ing.name || "?", qty: ing.qty || "1", unit: ing.unit || "un" })) };
+            return newId;
         },
         executeAddRecipeToPlanner(data) {
              const { recipe_id, day, meal } = data;
@@ -4151,7 +3972,7 @@ async callGeminiAPI(userText) {
              if (!recipe) { const foundKey = Object.keys(this.state.receitas).find(k => this.state.receitas[k].name.toLowerCase().includes(String(recipe_id).toLowerCase())); recipe = this.state.receitas[foundKey]; }
              if(recipe && day && meal) { if(!this.state.planejador[day]) this.state.planejador[day] = {}; this.state.planejador[day][meal] = { id: recipe.id, name: recipe.name }; }
         },
-        executeUpdateList(data) { 
+        executeUpdateList(data) {
             const { list_id, changes } = data; const targetId = list_id || this.activeListId;
             if (this.state.listas[targetId] && changes && changes.add) { changes.add.forEach(item => { this.state.listas[targetId].items.unshift({ id: this.generateId(), name: item.name, qtd: item.quantity || 1, unid: item.unit || 'un', checked: false, valor: 0 }); }); }
         },
@@ -4183,7 +4004,7 @@ async callGeminiAPI(userText) {
                         case 'scroll_contact': this.renderMessage("Indo para contato...", 'bot'); document.getElementById('sobre')?.scrollIntoView({ behavior: 'smooth' }); app.elements.nodeCluster?.classList.remove('is-open'); break;
                         case 'nav_lista': case 'nav_despensa': case 'nav_receitas': case 'nav_planejador':
                             const module = action.split('_')[1];
-                            if (app.isAppMode) { this.renderMessage(`Navegando para ${module}...`, 'bot'); app.activateModuleAndRender(module); } 
+                            if (app.isAppMode) { this.renderMessage(`Navegando para ${module}...`, 'bot'); app.activateModuleAndRender(module); }
                             else { this.renderMessage("Faça login primeiro.", 'bot'); this.renderOptions([{ label: "Login", action: "open_auth_login" }]); } break;
                     }
                 },
@@ -4309,9 +4130,6 @@ const ALL_ITEMS_DATA = [
     { name: 'Zimbro', price: 1.00, unit_desc: 'baga de zimbro', icon: 'icone-zimbro.png' }
 ];
 
-
-
-// === PATCH OBRIGATÓRIO ALIMENTE FÁCIL ===
 (() => {
     const originalLoadState = app.loadState.bind(app);
     app.loadState = function() {
@@ -4878,9 +4696,6 @@ const ALL_ITEMS_DATA = [
     };
 })();
 
-
-
-// === PATCH VISUAL LUXURY + SORT PREMIUM ===
 (() => {
     const baseLoadStatePremium = app.loadState.bind(app);
     app.loadState = function() {
@@ -5192,9 +5007,6 @@ const ALL_ITEMS_DATA = [
     }, true);
 })();
 
-
-
-// === PATCH FINAL UX/LUXO 2026-03-21 ===
 (() => {
     const unitOptions = ['un','kg','g','L','ml','pct','cx'];
 
@@ -5589,7 +5401,7 @@ const ALL_ITEMS_DATA = [
             </div>`;
         footerEl.className = 'modal-footer detail-modal-footer unified-detail-actions compact-export-row';
         footerEl.innerHTML = `
-            
+
             <button type="button" class="icon-button minimal-export-btn share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
             <button type="button" class="icon-button minimal-export-btn print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
             <button type="button" class="icon-button minimal-export-btn pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
@@ -5867,8 +5679,6 @@ const ALL_ITEMS_DATA = [
     });
 })();
 
-
-// === PATCH MAGNIFICO FINAL 2026-03-21 ===
 (() => {
     const originalHandleDeleteItemMagnifico = app.handleDeleteItem ? app.handleDeleteItem.bind(app) : null;
 
@@ -6249,7 +6059,7 @@ const ALL_ITEMS_DATA = [
             </div>`;
         footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
         footerEl.innerHTML = `
-            
+
             <button type="button" class="icon-button minimal-export-btn share-btn" data-day="${dayKey}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
             <button type="button" class="icon-button minimal-export-btn print-btn" data-day="${dayKey}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
             <button type="button" class="icon-button minimal-export-btn pdf-btn" data-day="${dayKey}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>`;
@@ -6500,8 +6310,6 @@ const ALL_ITEMS_DATA = [
     });
 })();
 
-
-// === PATCH UX V5 FINAL 2026-03-21 ===
 (() => {
     const originalGetAnalysisOptionsV5 = app.getAnalysisOptions ? app.getAnalysisOptions.bind(app) : null;
     let modalStackSeed = 21000;
@@ -6636,7 +6444,7 @@ const ALL_ITEMS_DATA = [
                 </span>
                 <span class="list-title-actions">
                     <button type="button" class="icon-button smart-save-btn" id="lista-save-changes-btn" title="Salvar lista"><i class="fa-solid fa-floppy-disk"></i></button>
-                    
+
                 </span>
             </span>`;
         actionsContainer.innerHTML = footerHTML;
@@ -6893,15 +6701,13 @@ const ALL_ITEMS_DATA = [
     }, true);
 })();
 
+window.app = app;
 
-window.app = app; 
-    
     app.init();
     app.installMandatoryPatches();
 
 });
 
-// === PATCH FINAL V6.1 — bugs finais de listas, receitas, planner, análises e Chef IA ===
 (() => {
   if (!window.app) return;
   const app = window.app;
@@ -6984,7 +6790,7 @@ window.app = app;
         </span>
         <span class="list-title-actions">
           <button type="button" class="icon-button smart-save-btn" id="lista-save-changes-btn" title="Salvar lista"><i class="fa-solid fa-floppy-disk"></i></button>
-          
+
         </span>
       </span>`;
     actionsContainer.innerHTML = '';
@@ -7564,8 +7370,6 @@ window.app = app;
   }, 80);
 })();
 
-
-/* === FIX 2100 | Chef IA + Análises premium === */
 (() => {
   const app = window.app;
   if (!app) return;
@@ -8185,14 +7989,11 @@ window.app = app;
     this.updateDynamicChart();
   };
 
-  // ensure modal/chat setup uses new logic after script load
   setTimeout(() => {
     try { app.setupChatbotModal?.(); } catch (e) {}
   }, 50);
 })();
 
-
-/* === PATCH EXECUTÁVEL 4560 | Correções finais solicitadas === */
 (() => {
   const app = window.app;
   if (!app) return;
@@ -8579,8 +8380,6 @@ window.app = app;
   }, 60);
 })();
 
-
-/* === ANALISES REBUILD FINAL | 2026-04-10 === */
 (() => {
   const app = window.app;
   if (!app) return;
@@ -9129,8 +8928,6 @@ window.app = app;
   }, 60);
 })();
 
-
-/* === ANALISES NEO DASHBOARD REBUILD | 2026-04-10 FINAL === */
 (() => {
   const app = window.app;
   if (!app) return;
@@ -9632,8 +9429,6 @@ window.app = app;
   }, 80);
 })();
 
-
-/* === HOTFIX: aba Análises em branco, sem mexer no restante do app === */
 (function(){
   document.addEventListener('DOMContentLoaded', function(){
     const app = window.app;
@@ -9670,8 +9465,6 @@ window.app = app;
   });
 })();
 
-
-/* === REBUILD REAL: Aba Análises refeita do zero, mobile-first e integrada ao layout === */
 (function(){
   document.addEventListener('DOMContentLoaded', function(){
     const app = window.app;
@@ -10078,7 +9871,6 @@ window.app = app;
   });
 })();
 
-/* === PATCH UI CIRÚRGICO | ajustes solicitados do painel === */
 (() => {
   const boot = () => {
     const app = window.app;
@@ -10153,7 +9945,7 @@ window.app = app;
               <div class="form-group">
                 <label for="config-password">Senha atual</label>
                 <input type="password" id="config-password" placeholder="Digite sua senha atual" autocomplete="current-password">
-          
+
               </div>
             </div>
 
@@ -10598,8 +10390,6 @@ window.app = app;
   }
 })();
 
-
-/* === PATCH FINAL | landing limpa + análises sem legenda quebrada === */
 (() => {
   const patch = () => {
     const app = window.app;
@@ -10720,7 +10510,6 @@ window.app = app;
   }
 })();
 
-/* === PATCH V3.2 — planejador mobile confiável === */
 (() => {
   const patchPlanner = () => {
     const app = window.app;
@@ -10848,8 +10637,6 @@ window.app = app;
   }
 })();
 
-
-/* === PATCH V3.3 — confirmação de exclusão do planejador acima de tudo === */
 (() => {
   const applyPatch = () => {
     const app = window.app;
@@ -10950,8 +10737,6 @@ window.app = app;
   }
 })();
 
-
-// === PATCH v4.0 | autocomplete de ingredientes + gerar lista do planejador ===
 (() => {
   if (typeof app === 'undefined') return;
 
@@ -11194,8 +10979,6 @@ window.app = app;
   });
 })();
 
-
-// === PATCH V4.1 | busca de ingredientes, listas por receita/refeição e confirmações acima de tudo ===
 (() => {
   const app = window.app;
   if (!app) return;
@@ -11847,9 +11630,6 @@ window.app = app;
   }, true);
 })();
 
-
-
-/* === AUTH + PAYMENT GATE CLEAN | 2026-04-14 === */
 (() => {
   const app = window.app;
   if (!app) return;
@@ -12003,7 +11783,6 @@ app.apiFetchJson = async function(url, options = {}) {
     document.body.appendChild(overlay);
   };
 
-
   app.handleForgotPassword = async function() {
     const email = String(document.getElementById('forgot-email')?.value || '').trim();
     this.clearAuthInlineError?.();
@@ -12147,7 +11926,6 @@ app.saveProfileSettings = async function(scope) {
       app.openForgotPasswordFromSettings?.();
     }
   });
-
 
 app.handleSignup = async function() {
 console.log('handleSignup chamada');
@@ -12372,7 +12150,6 @@ console.log('handleSignup chamada');
     appRef.showPaymentGateModal?.({ checkoutUrl: appRef.checkoutLinks?.premium || '' });
   }, true);
 
-  // Neutraliza estado fake antigo salvo no navegador.
   const token = app.getStoredAuthToken?.();
   if (!token) {
     app.forceLoggedOutLanding?.();
@@ -12382,7 +12159,6 @@ console.log('handleSignup chamada');
   app.restoreBackendSession?.();
 })();
 
-/* === STRICT PREMIUM GATE HOTFIX | 2026-04-14 === */
 (() => {
   const app = window.app;
   if (!app) return;
@@ -12630,11 +12406,8 @@ console.log('handleSignup chamada');
 
   }
 
-
 })();
 
-
-/* === PATCH V5.0 | autocomplete multisseleção + voz no painel === */
 (() => {
   const app = window.app;
   if (!app) return;
@@ -13422,4 +13195,6 @@ console.log('handleSignup chamada');
       app.positionAutocompleteCard(input);
     }
   }, true);
+
+
 })();
