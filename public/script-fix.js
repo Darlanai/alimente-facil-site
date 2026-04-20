@@ -1,0 +1,1 @@
+// sem JS pesado, scroll nativo

@@ -13232,3 +13232,72 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+(function(){
+  const heroShots = [
+    'landing-showcase/shot-01.png','landing-showcase/shot-02.png','landing-showcase/shot-03.png','landing-showcase/shot-04.png','landing-showcase/shot-05.png','landing-showcase/shot-06.png','landing-showcase/shot-07.png','landing-showcase/shot-08.png','landing-showcase/shot-09.png','landing-showcase/shot-10.png','landing-showcase/shot-11.png','landing-showcase/shot-12.png','landing-showcase/shot-13.png','landing-showcase/shot-14.png'
+  ];
+
+  const showcaseShots = [
+    { src:'landing-showcase/shot-03.png', kicker:'Lista', title:'Listas inteligentes sem bagunça', desc:'Monte compras com clareza, preço visível e fluxo direto para o mercado.' },
+    { src:'landing-showcase/shot-04.png', kicker:'Painel', title:'Visual premium e leitura imediata', desc:'Cada área do painel foi pensada para ser rápida, bonita e funcional no celular.' },
+    { src:'landing-showcase/shot-05.png', kicker:'Planejamento', title:'Semana organizada com mais lógica', desc:'Distribua refeições, acompanhe a rotina e mantenha tudo conectado.' },
+    { src:'landing-showcase/shot-06.png', kicker:'Controle', title:'Despensa viva e sempre visível', desc:'Acompanhe estoque, validade e o que realmente faz falta em casa.' },
+    { src:'landing-showcase/shot-07.png', kicker:'Receitas', title:'Receitas dentro do seu fluxo real', desc:'Use o que você já tem e transforme organização em praticidade diária.' },
+    { src:'landing-showcase/shot-08.png', kicker:'Análises', title:'Decisões melhores com dados visuais', desc:'Entenda hábitos, desperdícios e economia com uma interface clara.' },
+    { src:'landing-showcase/shot-09.png', kicker:'Experiência', title:'Produto com presença e acabamento', desc:'Uma apresentação limpa, moderna e pensada para passar valor.' },
+    { src:'landing-showcase/shot-10.png', kicker:'Rotina', title:'Tudo conectado em uma única experiência', desc:'Lista, despensa, receitas e planejamento conversando entre si.' }
+  ];
+
+  function initLandingPremium(){
+    const heroImg = document.getElementById('af-hero-visual-image');
+    if (heroImg && !heroImg.dataset.bound) {
+      heroImg.dataset.bound = '1';
+      let heroIndex = 0;
+      setInterval(() => {
+        heroImg.classList.add('is-switching');
+        heroIndex = (heroIndex + 1) % heroShots.length;
+        setTimeout(() => {
+          heroImg.src = heroShots[heroIndex];
+          heroImg.classList.remove('is-switching');
+        }, 180);
+      }, 2600);
+    }
+
+    const stageImg = document.getElementById('af-showcase-image');
+    const prevBtn = document.getElementById('af-showcase-prev');
+    const nextBtn = document.getElementById('af-showcase-next');
+    const kicker = document.getElementById('af-showcase-kicker');
+    const title = document.getElementById('af-showcase-title');
+    const desc = document.getElementById('af-showcase-desc');
+    const stage = document.getElementById('af-showcase-stage');
+    if (!stageImg || !prevBtn || !nextBtn || !kicker || !title || !desc || !stage || stage.dataset.bound) return;
+    stage.dataset.bound = '1';
+    let index = 0;
+    let startX = 0;
+    function render(nextIndex){
+      index = (nextIndex + showcaseShots.length) % showcaseShots.length;
+      const item = showcaseShots[index];
+      stageImg.classList.add('is-switching');
+      setTimeout(() => {
+        stageImg.src = item.src;
+        stageImg.alt = item.title;
+        kicker.textContent = item.kicker;
+        title.textContent = item.title;
+        desc.textContent = item.desc;
+        stageImg.classList.remove('is-switching');
+      }, 160);
+    }
+    prevBtn.addEventListener('click', () => render(index - 1));
+    nextBtn.addEventListener('click', () => render(index + 1));
+    stage.addEventListener('touchstart', (e) => { startX = e.changedTouches[0].clientX; }, { passive:true });
+    stage.addEventListener('touchend', (e) => {
+      const delta = e.changedTouches[0].clientX - startX;
+      if (Math.abs(delta) < 40) return;
+      render(index + (delta < 0 ? 1 : -1));
+    }, { passive:true });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLandingPremium, { once:true });
+  else initLandingPremium();
+})();
