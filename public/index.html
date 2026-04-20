@@ -87,20 +87,29 @@
 
     <main class="main-container">
 
-        <section id="inicio" class="page-section">
+        <section id="inicio" class="page-section landing-hero-refined">
             <div class="identity-container hero-clean-layout" >
-                <div class="hero-clean-shell">
-                    <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
-                    <h2 class="hero-tagline">Organização alimentar premium</h2>
-                    <p class="simple-subtitle scroll-reveal"></p>
+                <div class="hero-clean-shell refined-hero-shell">
+                                        <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
+                    <h2 class="hero-tagline">Planeje refeições, acompanhe sua despensa e compre com mais clareza.</h2>
 
-                    <div class="hero-cta-stack">
+                    <div class="hero-compact-points" aria-label="Destaques principais">
+                        <span>Sem bagunça</span>
+                        <span>Sem desperdício</span>
+                        <span>Tudo conectado</span>
+                    </div>
+
+                    <div class="hero-cta-row refined-cta-row">
                         <a href="#" class="modern-start-btn" onclick="if(window.app){window.app.handleStartButtonClick(); return false;}">
-                            <span class="btn-text">Começar Agora</span>
+                            <span class="btn-text">Começar agora</span>
                             <span class="btn-icon-wrapper"><i class="fa-solid fa-arrow-right"></i></span>
                         </a>
-                        <div class="hero-pricing-note">Plano único <strong>R$ 9,90/mês</strong></div>
+                        <a href="#recursos" class="hero-secondary-btn" aria-label="Ver prévia do painel">
+                            <span>Conhecer painel</span>
+                        </a>
                     </div>
+
+                    <div class="hero-pricing-note refined-pricing-note">Plano único <strong>R$ 9,90/mês</strong></div>
                 </div>
             </div>
 
@@ -110,33 +119,44 @@
             </div>
         </section>
 
-        <section class="page-section landing-resources-section" id="recursos" aria-labelledby="recursos-title">
-            <div class="section-content">
-                <div class="section-heading scroll-reveal">
-                    <div class="section-eyebrow">Recursos centrais</div>
-                    <h2 id="recursos-title" class="page-title">Tudo conectado em uma experiência só</h2>
-                    <p class="page-subtitle">Listas, despensa, receitas e planejamento funcionando como um único sistema.</p>
+        <section class="page-section landing-showcase-section" id="recursos" aria-labelledby="recursos-title">
+            <div class="section-content showcase-section-content">
+                <div class="showcase-heading scroll-reveal">
+                    <div class="section-eyebrow">Prévia do produto</div>
+                    <h2 id="recursos-title" class="page-title">Toque ou passe o mouse e veja cada tela ganhar destaque.</h2>
+                    <p class="page-subtitle">Sem excesso de texto. O produto aparece com presença, profundidade e foco.</p>
                 </div>
-                <div class="landing-feature-grid">
-                    <article class="landing-feature-card scroll-reveal">
-                        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-                        <h3>Listas Inteligentes</h3>
-                        <p>Crie listas limpas, editáveis e prontas para virar estoque real sem fricção.</p>
+
+                <div class="landing-accordion-gallery scroll-reveal" id="landing-accordion-gallery">
+                    <button type="button" class="landing-shot-card is-active" data-shot="1" aria-pressed="true">
+                        <img src="tela1.png" alt="Prévia do painel com listas de compras" loading="lazy">
+                                            </button>
+                    <button type="button" class="landing-shot-card" data-shot="2" aria-pressed="false">
+                        <img src="tela2.png" alt="Prévia do painel com despensa inteligente" loading="lazy">
+                                            </button>
+                    <button type="button" class="landing-shot-card" data-shot="3" aria-pressed="false">
+                        <img src="tela3.png" alt="Prévia do painel com receitas" loading="lazy">
+                                            </button>
+                    <button type="button" class="landing-shot-card" data-shot="4" aria-pressed="false">
+                        <img src="tela4.png" alt="Prévia do painel com planejador semanal" loading="lazy">
+                                            </button>
+                    <button type="button" class="landing-shot-card" data-shot="5" aria-pressed="false">
+                        <img src="tela5.png" alt="Prévia do painel com análises" loading="lazy">
+                                            </button>
+                </div>
+
+                <div class="landing-benefit-ribbon scroll-reveal" aria-label="Benefícios rápidos">
+                    <article>
+                        <span>Lista pronta</span>
+                        <strong>Saiba o que comprar</strong>
                     </article>
-                    <article class="landing-feature-card scroll-reveal">
-                        <i class="fa-solid fa-box-archive" aria-hidden="true"></i>
-                        <h3>Despensa Gerenciada</h3>
-                        <p>Validade, quantidade e nível de estoque em um fluxo visual simples e rápido.</p>
+                    <article>
+                        <span>Despensa viva</span>
+                        <strong>Validade e estoque visíveis</strong>
                     </article>
-                    <article class="landing-feature-card scroll-reveal">
-                        <i class="fa-solid fa-utensils" aria-hidden="true"></i>
-                        <h3>Receitas Personalizadas</h3>
-                        <p>Transforme ingredientes disponíveis em refeições úteis para a rotina de verdade.</p>
-                    </article>
-                    <article class="landing-feature-card scroll-reveal">
-                        <i class="fa-solid fa-calendar-week" aria-hidden="true"></i>
-                        <h3>Planejador Semanal</h3>
-                        <p>Monte a semana, reaproveite ingredientes e gere compras com mais inteligência.</p>
+                    <article>
+                        <span>Semana organizada</span>
+                        <strong>Planeje refeições com lógica</strong>
                     </article>
                 </div>
             </div>
@@ -748,6 +768,27 @@
                 }
                 if (attempts >= 200) clearInterval(timer);
             }, 50);
+        });
+    </script>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const gallery = document.getElementById('landing-accordion-gallery');
+            if (!gallery) return;
+            const cards = Array.from(gallery.querySelectorAll('.landing-shot-card'));
+            const activateCard = (card) => {
+                cards.forEach(item => {
+                    const active = item === card;
+                    item.classList.toggle('is-active', active);
+                    item.setAttribute('aria-pressed', active ? 'true' : 'false');
+                });
+            };
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => activateCard(card));
+                card.addEventListener('focus', () => activateCard(card));
+                card.addEventListener('click', () => activateCard(card));
+                card.addEventListener('touchstart', () => activateCard(card), { passive: true });
+            });
         });
     </script>
 

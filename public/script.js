@@ -13198,3 +13198,37 @@ console.log('handleSignup chamada');
 
 
 })();
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const tiltCards = document.querySelectorAll('.tilt-card');
+
+  tiltCards.forEach((card) => {
+    const resetCard = () => {
+      card.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg) translateY(0)';
+    };
+
+    card.addEventListener('mousemove', (event) => {
+      if (window.innerWidth <= 980) return;
+      const rect = card.getBoundingClientRect();
+      const px = (event.clientX - rect.left) / rect.width;
+      const py = (event.clientY - rect.top) / rect.height;
+      const rotateY = (px - 0.5) * 10;
+      const rotateX = (0.5 - py) * 10;
+      card.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-3px)`;
+    });
+
+    card.addEventListener('mouseleave', resetCard);
+    card.addEventListener('blur', resetCard);
+  });
+
+  const storyVideo = document.querySelector('.story-video');
+  if (storyVideo) {
+    storyVideo.addEventListener('error', () => {
+      const shell = storyVideo.closest('.story-video-shell');
+      if (shell) {
+        shell.classList.add('asset-missing');
+      }
+    });
+  }
+});
