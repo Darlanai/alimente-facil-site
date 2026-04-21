@@ -10149,3 +10149,24 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
     justify-content: flex-start !important;
   }
 }
+
+
+/* hard reset hero floating preview */
+#inicio .af-hero-visual,
+#inicio #af-hero-visual-image,
+#inicio .hero-showcase,
+#inicio .hero-floating-image,
+#inicio .hero-preview-floating,
+#inicio .hero-product-preview {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* autocomplete reset polish */
+#af-autocomplete-hidden-fix,
+#autocomplete-suggestions { z-index: 2147483000 !important; }
+#autocomplete-suggestions .af-autocomplete-card { max-height: min(70vh, 520px); overflow: hidden; }
+#autocomplete-suggestions .af-autocomplete-list { max-height: min(44vh, 320px); overflow: auto; }
+#af-autocomplete-voice-inline { display:none; }
