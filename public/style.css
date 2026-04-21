@@ -10124,3 +10124,28 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
     z-index:4!important;
   }
 }
+
+
+/* Ajuste final: remover qualquer imagem alternando sobre o vídeo no hero */
+#inicio .af-hero-visual,
+#inicio #af-hero-visual-image{
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+#inicio .identity-container.hero-clean-layout{
+  display: flex !important;
+  justify-content: flex-start !important;
+}
+
+#inicio .hero-clean-shell.af-hero-shell{
+  max-width: 760px !important;
+}
+
+@media (max-width: 991px){
+  #inicio .identity-container.hero-clean-layout{
+    justify-content: flex-start !important;
+  }
+}

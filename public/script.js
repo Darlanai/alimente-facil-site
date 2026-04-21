@@ -12418,7 +12418,13 @@ console.log('handleSignup chamada');
     'edit-item-name',
     'edit-item-name-dt',
     'pantry-edit-name',
-    'recipe-ing-name'
+    'recipe-ing-name',
+    'inline-edit-name',
+    'item-name',
+    'essential-name',
+    'planner-custom-name',
+    'recipe-edit-name',
+    'calc-item-name'
   ]);
 
   const UNIT_OPTIONS = ['un','kg','g','L','ml','pct','cx','xícara','colher','pitada','dentes','a gosto','fio','filés'];
@@ -12492,35 +12498,39 @@ console.log('handleSignup chamada');
   };
 
   app.isIngredientAutocompleteInput = function(input) {
-    return !!input && FIELD_IDS.has(String(input.id || ''));
+    if (!input || input.tagName !== 'INPUT' || input.type === 'hidden' || input.disabled || input.readOnly) return false;
+    const id = String(input.id || '').trim();
+    if (FIELD_IDS.has(id)) return true;
+
+    const nameAttr = String(input.getAttribute('name') || '').toLowerCase();
+    const placeholder = String(input.getAttribute('placeholder') || '').toLowerCase();
+    const aria = String(input.getAttribute('aria-label') || '').toLowerCase();
+    const nearbyLabel = String(input.closest('.form-group, .input-group, .modal-content, .modal-box, .card-content, form')?.querySelector('label')?.textContent || '').toLowerCase();
+    const haystack = [id.toLowerCase(), nameAttr, placeholder, aria, nearbyLabel].join(' ');
+
+    const looksLikeItemField = /(ingred|item|produto|despensa|lista|receita|essencial|planej|calc)/.test(haystack) && /(nome|name|digite|buscar|adicionar|insira)/.test(haystack);
+    return looksLikeItemField;
   };
 
   app.getIngredientAutocompleteContext = function(input) {
-    const id = String(input?.id || '');
-    const isBulkList = id === 'lista-form-nome-full' || id === 'lista-form-nome-dash';
-    const isRecipe = id === 'recipe-ing-name';
-    const isDesktopEdit = id === 'edit-item-name-dt';
-    const isInlinePantryModal = id === 'edit-item-name';
-    const isFullEdit = id === 'pantry-edit-name';
+    const id = String(input?.id || '').trim();
+    const formRoot = input?.closest('#recipe-ing-form, #item-edit-modal, #pantry-edit-form-fullscreen, #lista-detail-desktop, #module-listas, #module-despensa, #module-receitas, #module-planejador, #calculadora, .modal-box, form') || document;
+    const rootText = String(formRoot?.id || '') + ' ' + String(formRoot?.className || '');
+    const lowerRoot = rootText.toLowerCase();
+    const isBulkList = id === 'lista-form-nome-full' || id === 'lista-form-nome-dash' || (lowerRoot.includes('module-listas') && (id === 'item-name' || id === 'inline-edit-name'));
+    const isRecipe = id === 'recipe-ing-name' || id === 'recipe-edit-name' || lowerRoot.includes('module-receitas');
+    const isPantry = id === 'pantry-edit-name' || id === 'edit-item-name' || id === 'essential-name' || lowerRoot.includes('module-despensa');
+    const isPlanner = id === 'planner-custom-name' || lowerRoot.includes('module-planejador');
+    const isCalc = id === 'calc-item-name' || lowerRoot.includes('calculadora');
     const editItemId = document.getElementById('edit-item-id')?.value?.trim();
     const editItemType = document.getElementById('edit-item-type')?.value?.trim();
 
     if (isBulkList) return { entity: 'lista', mode: 'bulk', label: 'Adicionar itens na lista' };
     if (isRecipe) return { entity: 'receita', mode: 'bulk', label: 'Adicionar ingredientes' };
-    if (isInlinePantryModal && !editItemId && editItemType === 'despensa') {
-      return { entity: 'despensa', mode: 'bulk', label: 'Adicionar itens na despensa' };
-    }
-    if (isInlinePantryModal && editItemType === 'despensa') {
-      return { entity: 'despensa', mode: 'single', label: 'Editar item da despensa' };
-    }
-    if (isInlinePantryModal && editItemType === 'lista') {
-      return { entity: 'lista', mode: 'single', label: 'Editar item da lista' };
-    }
-    if (isFullEdit) {
-      const type = document.getElementById('pantry-edit-form-fullscreen')?.dataset?.editType || 'despensa';
-      return { entity: type === 'lista' ? 'lista' : 'despensa', mode: 'single', label: type === 'lista' ? 'Editar item da lista' : 'Editar item da despensa' };
-    }
-    if (isDesktopEdit) return { entity: 'lista', mode: 'single', label: 'Editar item da lista' };
+    if (isPantry && !editItemId && editItemType === 'despensa') return { entity: 'despensa', mode: 'bulk', label: 'Adicionar itens na despensa' };
+    if (isPantry) return { entity: 'despensa', mode: 'single', label: 'Selecionar item da despensa' };
+    if (isPlanner) return { entity: 'receita', mode: 'single', label: 'Selecionar refeição' };
+    if (isCalc) return { entity: 'geral', mode: 'single', label: 'Selecionar item' };
     return { entity: 'geral', mode: 'single', label: 'Selecionar item' };
   };
 
@@ -13234,10 +13244,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 (function(){
-  const heroShots = [
-    'landing-showcase/shot-01.png','landing-showcase/shot-02.png','landing-showcase/shot-03.png','landing-showcase/shot-04.png','landing-showcase/shot-05.png','landing-showcase/shot-06.png','landing-showcase/shot-07.png','landing-showcase/shot-08.png','landing-showcase/shot-09.png','landing-showcase/shot-10.png','landing-showcase/shot-11.png','landing-showcase/shot-12.png','landing-showcase/shot-13.png','landing-showcase/shot-14.png'
-  ];
-
   const showcaseShots = [
     { src:'landing-showcase/shot-03.png', kicker:'Lista', title:'Listas inteligentes sem bagunça', desc:'Monte compras com clareza, preço visível e fluxo direto para o mercado.' },
     { src:'landing-showcase/shot-04.png', kicker:'Painel', title:'Visual premium e leitura imediata', desc:'Cada área do painel foi pensada para ser rápida, bonita e funcional no celular.' },
@@ -13250,20 +13256,6 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   function initLandingPremium(){
-    const heroImg = document.getElementById('af-hero-visual-image');
-    if (heroImg && !heroImg.dataset.bound) {
-      heroImg.dataset.bound = '1';
-      let heroIndex = 0;
-      setInterval(() => {
-        heroImg.classList.add('is-switching');
-        heroIndex = (heroIndex + 1) % heroShots.length;
-        setTimeout(() => {
-          heroImg.src = heroShots[heroIndex];
-          heroImg.classList.remove('is-switching');
-        }, 180);
-      }, 2600);
-    }
-
     const stageImg = document.getElementById('af-showcase-image');
     const prevBtn = document.getElementById('af-showcase-prev');
     const nextBtn = document.getElementById('af-showcase-next');
