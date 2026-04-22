@@ -868,11 +868,33 @@ this.elements.body.addEventListener('submit', e => {
              document.getElementById('budget-save-btn')?.addEventListener('click', () => this.handleSaveOrcamento());
              document.getElementById('essentials-add-btn')?.addEventListener('click', () => this.handleAddEssential());
 
+            this.elements.body.addEventListener('input', e => {
+                const targetId = e.target.id;
+                if (targetId === 'lista-form-nome-dash' || targetId === 'lista-form-nome-full' || targetId === 'edit-item-name' || targetId === 'essential-name' || targetId === 'recipe-ing-name' || targetId === 'pantry-edit-name') { this.handleAutocomplete(e.target); }
+            });
+            this.elements.body.addEventListener('focusout', e => {
+                 const targetId = e.target.id;
+                 if (targetId === 'lista-form-nome-dash' || targetId === 'lista-form-nome-full' || targetId === 'edit-item-name' || targetId === 'essential-name' || targetId === 'recipe-ing-name' || targetId === 'pantry-edit-name') {
+                    setTimeout(() => { if (document.activeElement !== this.elements.autocompleteSuggestions) { this.hideAutocomplete(); } }, 150);
+                 }
+            });
+            this.elements.autocompleteSuggestions?.addEventListener('mousedown', e => {
+                 const itemEl = e.target.closest('.autocomplete-item');
+                 if (itemEl) { this.selectAutocompleteItem(itemEl.dataset.name); e.preventDefault(); }
+            });
+
         },
+
         bindGlobalAutocompleteFields(scope = document) {
             ['#lista-form-nome-dash','#lista-form-nome-full','#edit-item-name','#essential-name','#recipe-ing-name','#pantry-edit-name','#config-name','#config-email','#config-name-modal','#config-email-modal'].forEach((selector) => {
                 scope.querySelectorAll?.(selector).forEach((input) => {
+                    if (input.dataset.afBindAutocomplete === '1') return;
+                    input.dataset.afBindAutocomplete = '1';
                     input.setAttribute('autocomplete', 'off');
+                    input.addEventListener('input', () => this.handleAutocomplete(input));
+                    input.addEventListener('focus', () => {
+                        if (String(input.value || '').trim()) this.handleAutocomplete(input);
+                    });
                 });
             });
         },
@@ -4295,7 +4317,7 @@ const ALL_ITEMS_DATA = [
         return `<div class="placeholder-item ${item.checked ? 'is-checked' : ''}" data-id="${item.id}" data-name="${item.name}" data-qtd="${item.qtd}" data-unid="${item.unid}" data-valor="${item.valor}"><div class="item-row"><div class="item-main-info"><i class="fa-solid fa-grip-vertical drag-handle" title="Arrastar item"></i><input type="checkbox" ${item.checked ? 'checked' : ''} aria-label="Marcar ${itemName}"><span class="item-name">${itemName}</span></div><div class="item-actions"><button class="icon-button edit-btn" title="Editar"><i class="fa-solid fa-pencil"></i></button><button class="icon-button delete-btn" title="Excluir"><i class="fa-solid fa-times"></i></button></div></div><div class="item-details-grid"><div>Qtd: <span>${item.qtd}</span></div><div>Un: <span>${item.unid}</span></div><div>Preço: <span>R$ ${parseFloat(item.valor || 0).toFixed(2)}</span></div></div><div class="item-checked-actions"><div class="form-group-checked"><label for="validade-${item.id}">Validade (Opcional)</label><input type="date" id="validade-${item.id}" class="item-validade-input"></div><div class="confirm-actions-group"><small class="confirm-pantry-text">Deseja enviar para a despensa?</small><div class="confirm-buttons"><button class="icon-button cancel-move-btn" title="Não"><i class="fa-solid fa-times-circle" style="color: var(--red);"></i></button><button class="icon-button move-to-despensa-btn" title="Sim"><i class="fa-solid fa-check-circle" style="color: var(--green);"></i></button></div></div></div></div>`;
     };
 
-    app._legacy_handleAutocomplete_v1 = function(inputElement) {
+    app.handleAutocomplete = function(inputElement) {
         const rawQuery = inputElement.value.trim();
         const query = this.normalizeSearchText(rawQuery);
         this.activeAutocompleteInput = inputElement;
@@ -4321,7 +4343,7 @@ const ALL_ITEMS_DATA = [
             this.showAutocomplete(suggestions, query, inputElement);
         }, 120);
     };
-    app._legacy_hideAutocomplete_v1 = function() {
+    app.hideAutocomplete = function() {
         if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
         if (this.elements.autocompleteSuggestions) {
             this.elements.autocompleteSuggestions.style.display = 'none';
@@ -8905,6 +8927,2058 @@ window.app = app;
     } catch (e) {}
   }, 60);
 })();
+
+(() => {
+  const app = window.app;
+  if (!app) return;
+
+  const money = (v) => `R$ ${Number(v || 0).toFixed(2)}`;
+
+  app.analysisState = { key: 'validade_despensa', type: 'doughnut' };
+  app.analysisChartDefaults = {
+    validade_despensa: 'doughnut',
+    overview_360: 'radar',
+    gastos_categoria: 'polarArea',
+    gastos_lista: 'bar',
+    estoque_despensa: 'doughnut',
+    uso_receitas: 'bar',
+    rotina_semana: 'line'
+  };
+
+  app.getAnalysisOptions = function() {
+    return {
+      validade_despensa: { icon: 'fa-solid fa-hourglass-half', label: 'Validade da despensa', note: 'Veja o que está vencido, vencendo e seguro.' },
+      overview_360: { icon: 'fa-solid fa-globe', label: 'Visão 360°', note: 'Conecta listas, despensa, receitas e planejador.' },
+      gastos_categoria: { icon: 'fa-solid fa-layer-group', label: 'Gastos por categoria', note: 'Mostra a concentração do orçamento.' },
+      gastos_lista: { icon: 'fa-solid fa-cart-shopping', label: 'Gastos por lista', note: 'Compara o peso financeiro de cada lista.' },
+      estoque_despensa: { icon: 'fa-solid fa-boxes-stacked', label: 'Nível de estoque', note: 'Separa baixo, médio e alto estoque.' },
+      uso_receitas: { icon: 'fa-solid fa-utensils', label: 'Uso de receitas', note: 'Identifica as receitas mais usadas.' },
+      rotina_semana: { icon: 'fa-solid fa-calendar-days', label: 'Carga semanal', note: 'Mostra os dias mais carregados do planejador.' }
+    };
+  };
+
+  app.getAnalysisSelectOptionsHTML = function(selectedKey = 'validade_despensa') {
+    return Object.entries(this.getAnalysisOptions())
+      .map(([key, cfg]) => `<option value="${key}" ${key === selectedKey ? 'selected' : ''}>${cfg.label}</option>`)
+      .join('');
+  };
+
+  app.getChartTypeOptionsHTML = function(selected = 'doughnut') {
+    const opts = [
+      ['doughnut', 'Rosca'],
+      ['pie', 'Pizza'],
+      ['bar', 'Barras'],
+      ['line', 'Linha'],
+      ['polarArea', 'Polar'],
+      ['radar', 'Radar']
+    ];
+    return opts.map(([v, label]) => `<option value="${v}" ${v === selected ? 'selected' : ''}>${label}</option>`).join('');
+  };
+
+  app.getAnalysisColorPalette = function(size = 6) {
+    const base = [
+      'rgba(54, 110, 255, 0.92)',
+      'rgba(255, 54, 145, 0.92)',
+      'rgba(112, 81, 255, 0.92)',
+      'rgba(66, 205, 255, 0.92)',
+      'rgba(255, 125, 191, 0.92)',
+      'rgba(132, 97, 255, 0.92)',
+      'rgba(31, 167, 255, 0.92)'
+    ];
+    return Array.from({length: size}, (_, i) => base[i % base.length]);
+  };
+
+  app.getPantryValidityData = function() {
+    const today = new Date();
+    const result = { Vencidos: 0, 'Vencendo em 7 dias': 0, Seguros: 0, 'Sem validade': 0 };
+    (this.state?.despensa || []).forEach((item) => {
+      if (!item.validade) {
+        result['Sem validade'] += 1;
+        return;
+      }
+      const d = new Date(`${item.validade}T12:00:00`);
+      if (Number.isNaN(d.getTime())) {
+        result['Sem validade'] += 1;
+        return;
+      }
+      const diff = Math.ceil((d - today) / 86400000);
+      if (diff < 0) result['Vencidos'] += 1;
+      else if (diff <= 7) result['Vencendo em 7 dias'] += 1;
+      else result['Seguros'] += 1;
+    });
+    return result;
+  };
+
+  app.getPantryStockBandsData = function() {
+    const result = { 'Baixo estoque': 0, 'Estoque médio': 0, 'Estoque alto': 0 };
+    (this.state?.despensa || []).forEach((item) => {
+      const stock = parseInt(item.stock || 0, 10);
+      if (stock <= 25) result['Baixo estoque'] += 1;
+      else if (stock <= 75) result['Estoque médio'] += 1;
+      else result['Estoque alto'] += 1;
+    });
+    return result;
+  };
+
+  app.getCategoryDataFromListsSafe = function() {
+    const result = {};
+    Object.values(this.state?.listas || {}).forEach((lista, idx) => {
+      (lista.items || []).forEach((item) => {
+        const key = item.categoria || item.category || item.tipo || `Grupo ${idx + 1}`;
+        result[key] = (result[key] || 0) + ((parseFloat(item.qtd) || 0) * (parseFloat(item.valor) || 0));
+      });
+    });
+    return result;
+  };
+
+  app.getListTotalsData = function() {
+    const result = {};
+    Object.values(this.state?.listas || {}).forEach((lista, idx) => {
+      result[lista.nome || `Lista ${idx + 1}`] = (lista.items || []).reduce((sum, item) => sum + ((parseFloat(item.qtd) || 0) * (parseFloat(item.valor) || 0)), 0);
+    });
+    return result;
+  };
+
+  app.getPlannerMealCountData = function() {
+    const result = {};
+    Object.values(this.state?.planejador || {}).forEach((day) => {
+      Object.values(day || {}).forEach((meal) => {
+        if (!meal || !meal.id) return;
+        const recipe = this.state?.receitas?.[meal.id];
+        const label = recipe?.name || meal.nome || `Receita ${meal.id}`;
+        result[label] = (result[label] || 0) + 1;
+      });
+    });
+    return result;
+  };
+
+  app.getPlannerWeekLoadData = function() {
+    const order = [
+      ['segunda', 'Seg'], ['terca', 'Ter'], ['terça', 'Ter'], ['quarta', 'Qua'], ['quinta', 'Qui'], ['sexta', 'Sex'], ['sabado', 'Sáb'], ['sábado', 'Sáb'], ['domingo', 'Dom'],
+      ['seg', 'Seg'], ['ter', 'Ter'], ['qua', 'Qua'], ['qui', 'Qui'], ['sex', 'Sex'], ['sab', 'Sáb'], ['dom', 'Dom']
+    ];
+    const map = { Seg: 0, Ter: 0, Qua: 0, Qui: 0, Sex: 0, 'Sáb': 0, Dom: 0 };
+    Object.entries(this.state?.planejador || {}).forEach(([key, meals]) => {
+      const found = order.find(([test]) => String(key).toLowerCase().includes(test));
+      const day = found ? found[1] : key;
+      const count = Object.values(meals || {}).filter(Boolean).length;
+      if (map[day] == null) map[day] = 0;
+      map[day] += count;
+    });
+    return map;
+  };
+
+  app.getAnalysisDataBundle = function(key = 'validade_despensa') {
+    const toBundle = (title, source, datasetLabel, formatter) => {
+      const entries = Object.entries(source || {}).filter(([, v]) => Number(v) > 0);
+      return {
+        title,
+        datasetLabel,
+        labels: entries.map(([k]) => k),
+        values: entries.map(([, v]) => Number(v) || 0),
+        valueFormatter: formatter
+      };
+    };
+    switch (key) {
+      case 'validade_despensa':
+        return toBundle('Despensa por validade', this.getPantryValidityData(), 'Itens', (v) => `${v} item(ns)`);
+      case 'overview_360': {
+        const validity = this.getPantryValidityData();
+        const listsSpend = Object.values(this.getListTotalsData()).reduce((a, b) => a + b, 0);
+        const plannerUse = Object.values(this.getPlannerMealCountData()).reduce((a, b) => a + b, 0);
+        const recipes = Object.keys(this.state?.receitas || {}).length;
+        const pantry = (this.state?.despensa || []).length;
+        return {
+          title: 'Visão 360° do aplicativo',
+          datasetLabel: 'Painel',
+          labels: ['Gastos', 'Despensa', 'Alertas', 'Receitas', 'Planejador'],
+          values: [listsSpend, pantry, (validity['Vencidos'] || 0) + (validity['Vencendo em 7 dias'] || 0), recipes, plannerUse],
+          valueFormatter: (v, i, label) => label === 'Gastos' ? money(v) : `${v}`
+        };
+      }
+      case 'gastos_categoria':
+        return toBundle('Gastos por categoria', this.getCategoryDataFromListsSafe(), 'Valor', (v) => money(v));
+      case 'gastos_lista':
+        return toBundle('Gastos por lista', this.getListTotalsData(), 'Valor', (v) => money(v));
+      case 'estoque_despensa':
+        return toBundle('Nível de estoque da despensa', this.getPantryStockBandsData(), 'Itens', (v) => `${v} item(ns)`);
+      case 'uso_receitas':
+        return toBundle('Receitas mais usadas', this.getPlannerMealCountData(), 'Usos', (v) => `${v} uso(s)`);
+      case 'rotina_semana':
+        return toBundle('Carga semanal do planejador', this.getPlannerWeekLoadData(), 'Refeições', (v) => `${v} refeição(ões)`);
+      default:
+        return toBundle('Despensa por validade', this.getPantryValidityData(), 'Itens', (v) => `${v} item(ns)`);
+    }
+  };
+
+  app.getAnalysisSnapshot = function(key = 'validade_despensa') {
+    const bundle = this.getAnalysisDataBundle(key);
+    const max = Math.max(...bundle.values, 0);
+    const idx = bundle.values.indexOf(max);
+    const topLabel = idx >= 0 ? bundle.labels[idx] : 'Sem dados';
+    const total = bundle.values.reduce((a, b) => a + b, 0);
+    const map = {
+      validade_despensa: {
+        headline: total ? `${total} item(ns) classificados na despensa` : 'Sem itens suficientes para classificar',
+        insight: total ? `${topLabel} é a faixa dominante agora.` : 'Cadastre itens com validade para liberar esta leitura.',
+        action: 'Priorize vencidos e vencendo primeiro.'
+      },
+      overview_360: {
+        headline: total ? `${bundle.labels.length} áreas cruzadas em uma leitura única` : 'Visão geral vazia',
+        insight: total ? `${topLabel} está puxando mais atenção no painel.` : 'Adicione movimentação em listas, despensa e planejador.',
+        action: 'Use esta visão para decidir a próxima prioridade.'
+      },
+      gastos_categoria: {
+        headline: total ? `${money(total)} mapeados por categoria` : 'Nenhum gasto categorizado',
+        insight: total ? `${topLabel} concentra a maior fatia do gasto.` : 'Preencha preços nas listas para abrir esta análise.',
+        action: 'Corte excessos na categoria líder.'
+      },
+      gastos_lista: {
+        headline: total ? `${Object.keys(this.state?.listas || {}).length} lista(s) comparadas` : 'Sem listas com valor',
+        insight: total ? `${topLabel} é a lista mais pesada financeiramente.` : 'Adicione itens com preço nas listas.',
+        action: 'Revise a lista mais cara primeiro.'
+      },
+      estoque_despensa: {
+        headline: total ? `${total} item(ns) com nível de estoque lido` : 'Sem dados de estoque',
+        insight: total ? `${topLabel} é a faixa dominante do estoque.` : 'Atualize os níveis de estoque na despensa.',
+        action: 'Equilibre excesso e risco de falta.'
+      },
+      uso_receitas: {
+        headline: total ? `${total} uso(s) de receitas no planejador` : 'Nenhum uso de receita detectado',
+        insight: total ? `${topLabel} é a receita mais reaproveitada.` : 'Planeje refeições para ativar esta leitura.',
+        action: 'Repita o que funciona e varie o resto.'
+      },
+      rotina_semana: {
+        headline: total ? `${total} refeição(ões) distribuídas na semana` : 'Semana ainda sem carga',
+        insight: total ? `${topLabel} é o dia mais carregado.` : 'Adicione refeições ao planejador.',
+        action: 'Espalhe melhor a carga entre os dias.'
+      }
+    };
+    return map[key] || map.validade_despensa;
+  };
+
+  app.renderAnalises = function(container) {
+    if (!container) container = document.getElementById('module-analises');
+    if (!container) return;
+
+    const userName = this.state?.user?.nome || 'Seu Painel';
+    const options = this.getAnalysisOptions();
+    const keys = Object.keys(options);
+    const activeKey = this.analysisState?.key || 'validade_despensa';
+    const activeType = this.analysisState?.type || this.analysisChartDefaults[activeKey] || 'doughnut';
+    const snapshot = this.getAnalysisSnapshot(activeKey);
+    const validity = this.getPantryValidityData();
+    const listTotal = Object.values(this.getListTotalsData()).reduce((a, b) => a + b, 0);
+    const plannerCount = Object.values(this.getPlannerMealCountData()).reduce((a, b) => a + b, 0);
+    const pills = keys.map((key) => `<button type="button" class="neo-analysis-pill ${key === activeKey ? 'active' : ''}" data-analysis-pill="${key}"><i class="${options[key].icon}"></i><span>${options[key].label}</span></button>`).join('');
+
+    container.innerHTML = `
+      <section class="neo-analysis-shell">
+        <header class="neo-analysis-topbar">
+          <div class="neo-analysis-profile">
+            <div class="neo-analysis-avatar"><i class="fa-solid fa-user"></i></div>
+            <div>
+              <strong>${this.escapeHtml ? this.escapeHtml(userName) : userName}</strong>
+              <span>Central de análises do Alimente Fácil</span>
+            </div>
+          </div>
+          <div class="neo-analysis-status">
+            <span><i class="fa-solid fa-circle"></i> visão ativa</span>
+            <strong id="neo-analysis-badge"><i class="${options[activeKey].icon}"></i> ${options[activeKey].label}</strong>
+          </div>
+        </header>
+
+        <div class="neo-analysis-stage">
+          <div class="neo-analysis-primary">
+            <div class="neo-analysis-panel neo-analysis-main-panel">
+              <div class="neo-panel-header">
+                <div>
+                  <small>Análise principal</small>
+                  <h3 id="neo-analysis-title">${options[activeKey].label}</h3>
+                </div>
+                <div class="neo-analysis-arrow-group">
+                  <button type="button" class="neo-arrow-btn" id="analysis-prev-btn" aria-label="Análise anterior"><i class="fa-solid fa-chevron-left"></i></button>
+                  <button type="button" class="neo-arrow-btn" id="analysis-next-btn" aria-label="Próxima análise"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+              </div>
+
+              <div class="neo-analysis-controlbar">
+                <div class="neo-control-field">
+                  <label for="analysis-data-select">Análise</label>
+                  <div class="neo-select-wrap">
+                    <select id="analysis-data-select">${this.getAnalysisSelectOptionsHTML(activeKey)}</select>
+                  </div>
+                </div>
+                <div class="neo-control-field">
+                  <label for="analysis-type-select">Gráfico</label>
+                  <div class="neo-select-wrap">
+                    <select id="analysis-type-select">${this.getChartTypeOptionsHTML(activeType)}</select>
+                  </div>
+                </div>
+                <button type="button" class="neo-cycle-btn" id="analysis-cycle-type-btn"><i class="fa-solid fa-shuffle"></i><span>Trocar gráfico</span></button>
+              </div>
+
+              <div class="neo-chart-hero">
+                <div class="neo-chart-hero-canvas">
+                  <canvas id="dynamic-analysis-chart"></canvas>
+                </div>
+                <div class="neo-chart-center-copy">
+                  <div class="neo-center-orb"></div>
+                  <div class="neo-center-content">
+                    <small>Leitura imediata</small>
+                    <strong id="analysis-meta-headline">${snapshot.headline}</strong>
+                    <span id="analysis-meta-insight">${snapshot.insight}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="neo-analysis-side">
+            <div class="neo-analysis-panel neo-insight-stack">
+              <div class="neo-panel-header compact"><h3>Prioridade</h3></div>
+              <div class="neo-mini-kpi-grid">
+                <article class="neo-mini-kpi"><small>Listas</small><strong>${money(listTotal)}</strong></article>
+                <article class="neo-mini-kpi"><small>Despensa</small><strong>${(this.state?.despensa || []).length}</strong></article>
+                <article class="neo-mini-kpi"><small>Alertas</small><strong>${(validity['Vencidos']||0) + (validity['Vencendo em 7 dias']||0)}</strong></article>
+                <article class="neo-mini-kpi"><small>Planejador</small><strong>${plannerCount}</strong></article>
+              </div>
+              <div class="neo-priority-copy">
+                <strong>O que fazer agora</strong>
+                <p id="analysis-meta-action">${snapshot.action}</p>
+              </div>
+            </div>
+
+            <div class="neo-analysis-panel neo-pill-panel">
+              <div class="neo-panel-header compact"><h3>Explorador 360°</h3></div>
+              <div class="neo-pill-grid">${pills}</div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="neo-analysis-bottom">
+          <article class="neo-analysis-panel neo-secondary-card">
+            <div class="neo-panel-header compact"><h3>Resumo operacional</h3></div>
+            <div class="neo-summary-rows">
+              <div class="neo-summary-row"><span>Visão atual</span><strong>${options[activeKey].label}</strong></div>
+              <div class="neo-summary-row"><span>Leitura</span><strong id="neo-analysis-note">${options[activeKey].note}</strong></div>
+              <div class="neo-summary-row"><span>Gráfico</span><strong id="neo-analysis-chart-type">${document ? '' : ''}</strong></div>
+            </div>
+          </article>
+          <article class="neo-analysis-panel neo-secondary-card">
+            <div class="neo-panel-header compact"><h3>Atalho inteligente</h3></div>
+            <div class="neo-chef-actions">${this.buildChefButton ? this.buildChefButton('Faça uma leitura 360 graus do meu aplicativo e me diga prioridades práticas.', 'Chef IA', 'chef-glass-btn') : ''}</div>
+          </article>
+        </div>
+      </section>`;
+
+    const dataSelect = document.getElementById('analysis-data-select');
+    const typeSelect = document.getElementById('analysis-type-select');
+
+    const syncPills = () => {
+      document.querySelectorAll('[data-analysis-pill]').forEach((btn) => btn.classList.toggle('active', btn.dataset.analysisPill === this.analysisState.key));
+    };
+
+    const applyAnalysis = (key) => {
+      const next = options[key] ? key : 'validade_despensa';
+      this.analysisState.key = next;
+      const defaultType = this.analysisChartDefaults[next] || 'doughnut';
+      this.analysisState.type = defaultType;
+      if (dataSelect) dataSelect.value = next;
+      if (typeSelect) {
+        typeSelect.innerHTML = this.getChartTypeOptionsHTML(defaultType);
+        typeSelect.value = defaultType;
+      }
+      syncPills();
+      this.updateDynamicChart();
+    };
+
+    dataSelect?.addEventListener('change', (e) => applyAnalysis(e.target.value));
+    typeSelect?.addEventListener('change', (e) => { this.analysisState.type = e.target.value; this.updateDynamicChart(); });
+    document.getElementById('analysis-cycle-type-btn')?.addEventListener('click', () => {
+      if (!typeSelect) return;
+      const order = ['doughnut', 'pie', 'bar', 'line', 'polarArea', 'radar'];
+      let index = order.indexOf(typeSelect.value);
+      index = (index + 1) % order.length;
+      typeSelect.value = order[index];
+      this.analysisState.type = order[index];
+      this.updateDynamicChart();
+    });
+    document.getElementById('analysis-prev-btn')?.addEventListener('click', () => {
+      const index = keys.indexOf(this.analysisState.key);
+      applyAnalysis(keys[(index - 1 + keys.length) % keys.length]);
+    });
+    document.getElementById('analysis-next-btn')?.addEventListener('click', () => {
+      const index = keys.indexOf(this.analysisState.key);
+      applyAnalysis(keys[(index + 1) % keys.length]);
+    });
+    document.querySelectorAll('[data-analysis-pill]').forEach((btn) => btn.addEventListener('click', () => applyAnalysis(btn.dataset.analysisPill)));
+
+    this.updateDynamicChart();
+  };
+
+  app.updateDynamicChart = function() {
+    const canvas = document.getElementById('dynamic-analysis-chart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const key = document.getElementById('analysis-data-select')?.value || this.analysisState.key || 'validade_despensa';
+    const type = document.getElementById('analysis-type-select')?.value || this.analysisState.type || this.analysisChartDefaults[key] || 'doughnut';
+    this.analysisState = { key, type };
+
+    const cfg = this.getAnalysisOptions()[key] || this.getAnalysisOptions().validade_despensa;
+    const bundle = this.getAnalysisDataBundle(key);
+    const labels = bundle.labels || [];
+    const values = (bundle.values || []).map((v) => Number(v) || 0);
+    const total = values.reduce((a, b) => a + b, 0);
+
+    if (this.dynamicAnalysisChart?.destroy) this.dynamicAnalysisChart.destroy();
+
+    const badge = document.getElementById('neo-analysis-badge');
+    const title = document.getElementById('neo-analysis-title');
+    const note = document.getElementById('neo-analysis-note');
+    const chartTypeText = document.getElementById('neo-analysis-chart-type');
+    const snap = this.getAnalysisSnapshot(key);
+    if (badge) badge.innerHTML = `<i class="${cfg.icon}"></i> ${cfg.label}`;
+    if (title) title.textContent = cfg.label;
+    if (note) note.textContent = cfg.note;
+    if (chartTypeText) chartTypeText.textContent = type;
+    const h = document.getElementById('analysis-meta-headline');
+    const i = document.getElementById('analysis-meta-insight');
+    const a = document.getElementById('analysis-meta-action');
+    if (h) h.textContent = snap.headline;
+    if (i) i.textContent = snap.insight;
+    if (a) a.textContent = snap.action;
+
+    const wrap = canvas.parentElement;
+    wrap.querySelector('.neo-analysis-empty')?.remove();
+    canvas.style.display = '';
+
+    if (!labels.length || total <= 0) {
+      canvas.style.display = 'none';
+      const empty = document.createElement('div');
+      empty.className = 'neo-analysis-empty';
+      empty.innerHTML = '<div><strong>Sem dados suficientes nesta visão.</strong><span>Cadastre listas, despensa, receitas ou planejamentos para liberar este painel.</span></div>';
+      wrap.appendChild(empty);
+      return;
+    }
+
+    const colors = this.getAnalysisColorPalette(labels.length);
+    const ctx = canvas.getContext('2d');
+    this.dynamicAnalysisChart = new Chart(ctx, {
+      type,
+      data: {
+        labels,
+        datasets: [{
+          label: bundle.datasetLabel || cfg.label,
+          data: values,
+          backgroundColor: colors,
+          borderColor: colors.map((c) => c.replace('0.92', '1')),
+          borderWidth: 2,
+          pointRadius: type === 'line' ? 4 : 3,
+          pointHoverRadius: 6,
+          tension: 0.35,
+          fill: type === 'line' ? true : false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: type === 'bar' || type === 'line' ? 'bottom' : 'right',
+            labels: { color: '#eef3ff', usePointStyle: true, boxWidth: 10, padding: 16 }
+          },
+          title: {
+            display: true,
+            text: bundle.title || cfg.label,
+            color: '#ffffff',
+            font: { size: 18, weight: '700' },
+            padding: { bottom: 20 }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(10, 12, 26, 0.96)',
+            borderColor: 'rgba(255,255,255,.12)',
+            borderWidth: 1,
+            callbacks: {
+              label: (context) => bundle.valueFormatter ? bundle.valueFormatter(Number(context.parsed?.y ?? context.parsed?.r ?? context.raw ?? 0), context.dataIndex, context.label) : `${context.raw}`
+            }
+          }
+        },
+        scales: ['bar', 'line'].includes(type) ? {
+          x: { ticks: { color: 'rgba(238,243,255,.8)' }, grid: { color: 'rgba(255,255,255,.06)' } },
+          y: { beginAtZero: true, ticks: { color: 'rgba(238,243,255,.8)' }, grid: { color: 'rgba(255,255,255,.06)' } }
+        } : type === 'radar' ? {
+          r: {
+            angleLines: { color: 'rgba(255,255,255,.08)' },
+            grid: { color: 'rgba(255,255,255,.08)' },
+            pointLabels: { color: 'rgba(238,243,255,.85)' },
+            ticks: { color: 'rgba(238,243,255,.55)', backdropColor: 'transparent' },
+            suggestedMin: 0
+          }
+        } : {},
+        animation: { duration: 650, easing: 'easeOutQuart' }
+      }
+    });
+  };
+
+  setTimeout(() => {
+    try {
+      if (app.isAppMode && app.activeModule === 'analises') app.renderAnalises();
+    } catch (e) {}
+  }, 80);
+})();
+
+(function(){
+  document.addEventListener('DOMContentLoaded', function(){
+    const app = window.app;
+    if (!app) return;
+
+    const blankHtml = '<div class="analysis-blank-state" aria-label="Aba Análises vazia"></div>';
+
+    app.renderAnalises = function(container) {
+      if (!container) container = document.getElementById('module-analises');
+      if (!container) return;
+      if (this.charts && this.charts.dynamicAnalysisChart) {
+        try { this.charts.dynamicAnalysisChart.destroy(); } catch (e) {}
+        this.charts.dynamicAnalysisChart = null;
+      }
+      container.innerHTML = blankHtml;
+    };
+
+    app.renderAnalysisDetailDesktop = function() {
+      const container = document.getElementById('analises-detail-desktop');
+      if (container) container.innerHTML = '';
+    };
+
+    app.openAnalysisDetailModal = function() {
+      return;
+    };
+
+    app.updateDynamicChart = function() {
+      return;
+    };
+
+    if (app.isAppMode && app.activeModule === 'analises') {
+      app.renderAnalises();
+    }
+  });
+})();
+
+(function(){
+  document.addEventListener('DOMContentLoaded', function(){
+    const app = window.app;
+    if (!app) return;
+
+    app.analysisV3State = {
+      analysisKey: 'validade_despensa',
+      chartType: 'doughnut'
+    };
+
+    app.getAnalysisV3Order = function(){
+      return ['validade_despensa', 'estoque_despensa', 'gastos_categoria', 'gastos_lista', 'uso_receitas', 'carga_semanal', 'visao_360'];
+    };
+
+    app.getAnalysisV3Meta = function(){
+      return {
+        validade_despensa: { title: 'Validade da despensa', subtitle: 'Itens por faixa de validade', icon: 'fa-solid fa-hourglass-half', defaultType: 'doughnut' },
+        estoque_despensa: { title: 'Nível de estoque', subtitle: 'Percentual dos itens da despensa', icon: 'fa-solid fa-boxes-stacked', defaultType: 'bar' },
+        gastos_categoria: { title: 'Gastos por categoria', subtitle: 'Peso financeiro das listas', icon: 'fa-solid fa-layer-group', defaultType: 'doughnut' },
+        gastos_lista: { title: 'Gastos por lista', subtitle: 'Comparativo entre listas salvas', icon: 'fa-solid fa-list-check', defaultType: 'bar' },
+        uso_receitas: { title: 'Uso de receitas', subtitle: 'Receitas mais usadas no planejador', icon: 'fa-solid fa-utensils', defaultType: 'bar' },
+        carga_semanal: { title: 'Carga semanal', subtitle: 'Refeições distribuídas por dia', icon: 'fa-solid fa-calendar-week', defaultType: 'line' },
+        visao_360: { title: 'Leitura 360°', subtitle: 'Pulso geral do aplicativo', icon: 'fa-solid fa-satellite-dish', defaultType: 'radar' }
+      };
+    };
+
+    app.analysisV3Colors = function(alpha = 0.92){
+      return [
+        `rgba(0,242,234,${alpha})`,
+        `rgba(252,235,154,${alpha})`,
+        `rgba(52,199,89,${alpha})`,
+        `rgba(175,82,222,${alpha})`,
+        `rgba(255,204,0,${alpha})`,
+        `rgba(255,59,48,${alpha})`
+      ];
+    };
+
+    app.getAnalysisV3Payload = function(key){
+      const meta = this.getAnalysisV3Meta()[key] || this.getAnalysisV3Meta().validade_despensa;
+      const currency = (n) => `R$ ${Number(n || 0).toFixed(2)}`;
+      const orderBreakdown = (labels, values, formatter = v => `${v}`) => labels.map((label, idx) => ({ label, value: values[idx], display: formatter(values[idx]) }));
+
+      if (key === 'validade_despensa') {
+        const data = this.getPantryValidityData();
+        const labels = ['Vencidos', 'Vence em 7 dias', 'Em dia'];
+        const values = [data.vencidos, data.vencendo, data.ok];
+        const total = values.reduce((a,b) => a+b, 0);
+        return {
+          ...meta,
+          labels,
+          values,
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Itens',
+          centerValue: `${total}`,
+          centerSub: total === 1 ? 'item na despensa' : 'itens na despensa',
+          kpis: [
+            { label: 'Vencidos', value: `${data.vencidos}` },
+            { label: 'Atenção', value: `${data.vencendo}` },
+            { label: 'Em dia', value: `${data.ok}` },
+            { label: 'Total', value: `${total}` }
+          ],
+          breakdown: orderBreakdown(labels, values, v => `${v} item(ns)`),
+          insight: data.vencidos > 0 ? 'Sua prioridade deve ser consumir ou revisar os itens vencidos agora.' : (data.vencendo > 0 ? 'Existem itens perto do vencimento. Vale priorizar essas receitas.' : 'Sua despensa está estável no momento.')
+        };
+      }
+
+      if (key === 'estoque_despensa') {
+        const labels = [];
+        const values = [];
+        (this.state.despensa || []).forEach(item => {
+          labels.push(item.name);
+          values.push(Number(item.stock || 0));
+        });
+        const avg = values.length ? values.reduce((a,b)=>a+b,0) / values.length : 0;
+        return {
+          ...meta,
+          labels: labels.length ? labels : ['Sem itens'],
+          values: values.length ? values : [0],
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Média',
+          centerValue: `${Math.round(avg)}%`,
+          centerSub: 'nível médio de estoque',
+          kpis: [
+            { label: 'Itens', value: `${labels.length}` },
+            { label: 'Média', value: `${Math.round(avg)}%` },
+            { label: 'Baixos', value: `${values.filter(v => v <= 25).length}` },
+            { label: 'Cheios', value: `${values.filter(v => v >= 75).length}` }
+          ],
+          breakdown: orderBreakdown(labels.length ? labels : ['Sem itens'], values.length ? values : [0], v => `${v}%`),
+          insight: values.filter(v => v <= 25).length ? 'Há itens com estoque baixo. Vale acionar reposição nas listas.' : 'Os níveis de estoque estão confortáveis.'
+        };
+      }
+
+      if (key === 'gastos_categoria') {
+        const data = this.getCategoryDataFromLists();
+        const labels = Object.keys(data);
+        const values = Object.values(data);
+        const total = values.reduce((a,b)=>a+b,0);
+        const topIdx = values.length ? values.indexOf(Math.max(...values)) : -1;
+        return {
+          ...meta,
+          labels: labels.length ? labels : ['Sem dados'],
+          values: values.length ? values : [0],
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Total',
+          centerValue: currency(total),
+          centerSub: topIdx >= 0 ? `maior peso em ${labels[topIdx]}` : 'sem gasto mapeado',
+          kpis: [
+            { label: 'Categorias', value: `${labels.length}` },
+            { label: 'Total', value: currency(total) },
+            { label: 'Maior grupo', value: topIdx >= 0 ? labels[topIdx] : '—' },
+            { label: 'Listas', value: `${Object.keys(this.state.listas || {}).length}` }
+          ],
+          breakdown: orderBreakdown(labels.length ? labels : ['Sem dados'], values.length ? values : [0], currency),
+          insight: topIdx >= 0 ? `${labels[topIdx]} concentra a maior parte do custo atual.` : 'Adicione valores às listas para liberar esta leitura.'
+        };
+      }
+
+      if (key === 'gastos_lista') {
+        const labels = [];
+        const values = [];
+        Object.values(this.state.listas || {}).forEach(lista => {
+          labels.push(lista.nome || 'Lista');
+          values.push((lista.items || []).reduce((acc, item) => acc + ((parseFloat(item.qtd) || 0) * (parseFloat(item.valor) || 0)), 0));
+        });
+        const total = values.reduce((a,b)=>a+b,0);
+        return {
+          ...meta,
+          labels: labels.length ? labels : ['Sem listas'],
+          values: values.length ? values : [0],
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Listas',
+          centerValue: `${labels.length}`,
+          centerSub: `total de ${currency(total)}`,
+          kpis: [
+            { label: 'Total', value: currency(total) },
+            { label: 'Listas', value: `${labels.length}` },
+            { label: 'Maior', value: labels.length ? labels[values.indexOf(Math.max(...values))] : '—' },
+            { label: 'Orçamento', value: currency(this.state.orcamento?.total || 0) }
+          ],
+          breakdown: orderBreakdown(labels.length ? labels : ['Sem listas'], values.length ? values : [0], currency),
+          insight: total > (this.state.orcamento?.total || 0) ? 'O total das listas já ultrapassa o orçamento definido.' : 'O total das listas ainda cabe no orçamento configurado.'
+        };
+      }
+
+      if (key === 'uso_receitas') {
+        const data = this.getPlannerMealCountData();
+        const labels = Object.keys(data);
+        const values = Object.values(data);
+        const total = values.reduce((a,b)=>a+b,0);
+        return {
+          ...meta,
+          labels: labels.length ? labels : ['Sem receitas planejadas'],
+          values: values.length ? values : [0],
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Usos',
+          centerValue: `${total}`,
+          centerSub: 'total de encaixes no planejador',
+          kpis: [
+            { label: 'Receitas', value: `${labels.length}` },
+            { label: 'Usos', value: `${total}` },
+            { label: 'Top', value: labels.length ? labels[values.indexOf(Math.max(...values))] : '—' },
+            { label: 'Dias ativos', value: `${Object.keys(this.state.planejador || {}).length}` }
+          ],
+          breakdown: orderBreakdown(labels.length ? labels : ['Sem receitas planejadas'], values.length ? values : [0], v => `${v} uso(s)`),
+          insight: labels.length ? 'Seu planejador já mostra um padrão claro de repetição de receitas.' : 'Quando você começar a planejar refeições, esta leitura ganha vida.'
+        };
+      }
+
+      if (key === 'carga_semanal') {
+        const map = this.getPlannerDaysMap();
+        const labels = Object.keys(map).map(k => map[k].slice(0,3));
+        const values = Object.keys(map).map(dayKey => {
+          const meals = this.state.planejador?.[dayKey] || {};
+          return ['cafe','almoco','jantar'].filter(slot => meals[slot]).length;
+        });
+        const total = values.reduce((a,b)=>a+b,0);
+        return {
+          ...meta,
+          labels,
+          values,
+          preferredType: this.analysisV3State.chartType || meta.defaultType,
+          centerLabel: 'Semana',
+          centerValue: `${total}`,
+          centerSub: 'refeições planejadas',
+          kpis: [
+            { label: 'Total', value: `${total}` },
+            { label: 'Pico', value: `${Math.max(...values, 0)}` },
+            { label: 'Dias ativos', value: `${values.filter(v => v > 0).length}` },
+            { label: 'Meta', value: '21' }
+          ],
+          breakdown: orderBreakdown(labels, values, v => `${v} refeição(ões)`),
+          insight: total ? 'Você já consegue ver os dias mais carregados da sua semana.' : 'Seu planejador ainda está vazio. Adicione refeições para abrir esta análise.'
+        };
+      }
+
+      const validade = this.getPantryValidityData();
+      const categorias = this.getCategoryDataFromLists();
+      const receitas = this.getPlannerMealCountData();
+      const plannerDays = this.getPlannerDaysMap();
+      const totalPantry = (this.state.despensa || []).length;
+      const totalLists = Object.values(this.state.listas || {}).reduce((acc, lista) => acc + ((lista.items || []).length), 0);
+      const totalPlanner = Object.keys(this.state.planejador || {}).reduce((acc, day) => acc + ['cafe','almoco','jantar'].filter(slot => this.state.planejador?.[day]?.[slot]).length, 0);
+      const totalRecipes = Object.keys(this.state.receitas || {}).length;
+      const labels = ['Despensa', 'Listas', 'Receitas', 'Planejador', 'Atenção validade', 'Categorias'];
+      const values = [totalPantry, totalLists, totalRecipes, totalPlanner, validade.vencidos + validade.vencendo, Object.keys(categorias).length];
+      return {
+        ...meta,
+        labels,
+        values,
+        preferredType: this.analysisV3State.chartType || meta.defaultType,
+        centerLabel: 'Radar',
+        centerValue: `${values.reduce((a,b)=>a+b,0)}`,
+        centerSub: 'sinais ativos no app',
+        kpis: [
+          { label: 'Despensa', value: `${totalPantry}` },
+          { label: 'Itens em listas', value: `${totalLists}` },
+          { label: 'Receitas', value: `${totalRecipes}` },
+          { label: 'Refeições', value: `${totalPlanner}` }
+        ],
+        breakdown: orderBreakdown(labels, values, v => `${v}`),
+        insight: 'Esta visão cruza seus quatro pilares principais em uma leitura única.'
+      };
+    };
+
+    app.renderAnalises = function(container){
+      if (!container) container = document.getElementById('module-analises');
+      if (!container) return;
+      const key = this.analysisV3State?.analysisKey || 'validade_despensa';
+      const payload = this.getAnalysisV3Payload(key);
+      this.analysisV3State.analysisKey = key;
+      if (!this.analysisV3State.chartType) this.analysisV3State.chartType = payload.preferredType || 'doughnut';
+
+      container.innerHTML = `
+        <section class="analysis-v3-wrap">
+          <div class="dashboard-card analysis-v3-shell">
+            <div class="card-header analysis-v3-header">
+              <h3><i class="${payload.icon}"></i> Análises</h3>
+              <div class="card-actions">
+                <button type="button" class="analysis-v3-modepill">leitura 360°</button>
+              </div>
+            </div>
+            <div class="card-content analysis-v3-content">
+              <div class="analysis-v3-topline">
+                <div class="analysis-v3-copy">
+                  <small>Central de análises</small>
+                  <h4 id="analysis-v3-title">${payload.title}</h4>
+                  <p id="analysis-v3-subtitle">${payload.subtitle}</p>
+                </div>
+                <div class="analysis-v3-controls">
+                  <button type="button" class="analysis-v3-navbtn" data-analysis-nav="prev" aria-label="Análise anterior"><i class="fa-solid fa-arrow-left"></i></button>
+                  <button type="button" class="analysis-v3-typebtn" data-analysis-chart-cycle aria-label="Trocar tipo de gráfico"><i class="fa-solid fa-shuffle"></i><span id="analysis-v3-type-label">${this.analysisV3State.chartType}</span></button>
+                  <button type="button" class="analysis-v3-navbtn" data-analysis-nav="next" aria-label="Próxima análise"><i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+              </div>
+
+              <div class="analysis-v3-stage">
+                <div class="analysis-v3-chartcard">
+                  <div class="analysis-v3-chartwrap">
+                    <canvas id="analysis-v3-chart"></canvas>
+                  </div>
+                </div>
+
+                <div class="analysis-v3-sidepanel">
+                  <div class="analysis-v3-kpis" id="analysis-v3-kpis"></div>
+                  <div class="analysis-v3-summarycard">
+                    <strong>Resumo rápido</strong>
+                    <p id="analysis-v3-insight">${payload.insight}</p>
+                  </div>
+                  <div class="analysis-v3-breakdown" id="analysis-v3-breakdown"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+
+      container.querySelector('[data-analysis-nav="prev"]')?.addEventListener('click', () => this.analysisV3Navigate(-1));
+      container.querySelector('[data-analysis-nav="next"]')?.addEventListener('click', () => this.analysisV3Navigate(1));
+      container.querySelector('[data-analysis-chart-cycle]')?.addEventListener('click', () => this.analysisV3CycleType());
+      this.analysisV3PaintSide(payload);
+      this.analysisV3DrawChart(payload);
+    };
+
+    app.analysisV3PaintSide = function(payload){
+      const kpiEl = document.getElementById('analysis-v3-kpis');
+      const breakdownEl = document.getElementById('analysis-v3-breakdown');
+      if (kpiEl) {
+        kpiEl.innerHTML = (payload.kpis || []).map(item => `
+          <article class="analysis-v3-kpi">
+            <span>${item.label}</span>
+            <strong>${item.value}</strong>
+          </article>
+        `).join('');
+      }
+      if (breakdownEl) {
+        breakdownEl.innerHTML = `
+          <div class="analysis-v3-breakdown-head"><span>Leitura detalhada</span></div>
+          ${(payload.breakdown || []).slice(0,6).map(item => `
+            <div class="analysis-v3-row">
+              <span>${this.escapeHtml(item.label)}</span>
+              <strong>${this.escapeHtml(String(item.display))}</strong>
+            </div>
+          `).join('')}
+        `;
+      }
+      const insightEl = document.getElementById('analysis-v3-insight');
+      if (insightEl) insightEl.textContent = payload.insight || '';
+    };
+
+    app.analysisV3Navigate = function(direction){
+      const order = this.getAnalysisV3Order();
+      let idx = order.indexOf(this.analysisV3State.analysisKey);
+      if (idx < 0) idx = 0;
+      idx = (idx + direction + order.length) % order.length;
+      this.analysisV3State.analysisKey = order[idx];
+      const meta = this.getAnalysisV3Meta()[order[idx]];
+      this.analysisV3State.chartType = meta.defaultType;
+      this.renderAnalises();
+    };
+
+    app.analysisV3CycleType = function(){
+      const order = ['doughnut', 'pie', 'bar', 'line', 'polarArea', 'radar'];
+      let idx = order.indexOf(this.analysisV3State.chartType);
+      if (idx < 0) idx = 0;
+      this.analysisV3State.chartType = order[(idx + 1) % order.length];
+      this.renderAnalises();
+    };
+
+    app.analysisV3DrawChart = function(payload){
+      if (this.charts && this.charts.analysisRebuiltChart) {
+        try { this.charts.analysisRebuiltChart.destroy(); } catch(e) {}
+      }
+      const canvas = document.getElementById('analysis-v3-chart');
+      if (!canvas || !window.Chart) return;
+      const ctx = canvas.getContext('2d');
+      const type = this.analysisV3State.chartType || payload.preferredType || 'doughnut';
+      const colors = this.analysisV3Colors(0.92);
+      const lineColor = 'rgba(0,242,234,0.95)';
+      const glowColor = 'rgba(0,242,234,0.18)';
+      const dataset = {
+        label: payload.title,
+        data: payload.values,
+        backgroundColor: (type === 'line' || type === 'radar') ? colors.map(c => c.replace('0.92','0.22')) : colors,
+        borderColor: (type === 'line' || type === 'radar') ? lineColor : colors,
+        pointBackgroundColor: lineColor,
+        pointBorderColor: '#ffffff',
+        borderWidth: type === 'line' ? 3 : 2,
+        tension: 0.42,
+        fill: type === 'line' || type === 'radar',
+        pointRadius: type === 'line' ? 4 : 3,
+        hoverOffset: 8
+      };
+      const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: 8 },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              color: '#dbe6ea',
+              usePointStyle: true,
+              boxWidth: 8,
+              padding: 16,
+              font: { family: 'Roboto, sans-serif', size: 11 }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(8,12,20,.96)',
+            borderColor: 'rgba(255,255,255,.08)',
+            borderWidth: 1,
+            titleColor: '#ffffff',
+            bodyColor: '#c9d6db',
+            displayColors: true
+          }
+        },
+        scales: (type === 'bar' || type === 'line') ? {
+          x: { ticks: { color: '#dbe6ea' }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } },
+          y: { beginAtZero: true, ticks: { color: '#9fb2bb', precision: 0 }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } }
+        } : (type === 'radar') ? {
+          r: {
+            angleLines: { color: 'rgba(255,255,255,.08)' },
+            grid: { color: 'rgba(255,255,255,.08)' },
+            pointLabels: { color: '#dbe6ea', font: { size: 11 } },
+            ticks: { display: false, backdropColor: 'transparent' },
+            suggestedMin: 0
+          }
+        } : {},
+        cutout: (type === 'doughnut') ? '68%' : undefined,
+        animation: { duration: 420, easing: 'easeOutCubic' }
+      };
+      this.charts.analysisRebuiltChart = new Chart(ctx, { type, data: { labels: payload.labels, datasets: [dataset] }, options });
+    };
+
+    app.renderAnalysisDetailDesktop = function(){ return; };
+    app.openAnalysisDetailModal = function(){ return; };
+    app.updateDynamicChart = function(){ return; };
+
+    if (app.isAppMode && app.activeModule === 'analises') {
+      app.renderAnalises();
+    }
+  });
+})();
+
+(() => {
+  const boot = () => {
+    const app = window.app;
+    if (!app) return false;
+
+    app.getFriendlyChartTypeLabel = function(type = 'doughnut') {
+      const labels = {
+        doughnut: 'Rosca',
+        pie: 'Pizza',
+        bar: 'Barras',
+        line: 'Linha',
+        radar: 'Radar',
+        polarArea: 'Área polar'
+      };
+      return labels[type] || type;
+    };
+
+    app.renderConfiguracoes = function(container) {
+      if (!container) container = document.getElementById('module-configuracoes');
+      if (!container) return;
+      const nav = [
+        { key: 'perfil', label: 'Perfil', note: 'Identidade básica do usuário e preferências principais.' },
+        { key: 'notificacoes', label: 'Notificações', note: 'Alertas de validade, IA e lembretes.' },
+        { key: 'dados', label: 'Dados', note: 'Exportação, limpeza e manutenção das informações do app.' }
+      ].map((item, index) => `
+        <button type="button" class="module-nav-item config-nav-item ${index === 0 ? 'active' : ''}" data-config-section="${item.key}">
+          <strong>${item.label}</strong>
+          <span>${item.note}</span>
+        </button>`).join('');
+
+      container.innerHTML = `
+        <div class="master-detail-layout">
+          <div class="md-list-column dashboard-card">
+            <div class="card-header"><h3><i class="fa-solid fa-sliders"></i> Configurações</h3></div>
+            <div class="card-content">
+              <p class="detail-note">Tudo separado em blocos claros para facilitar leitura, edição e manutenção.</p>
+              <div class="module-nav-list">${nav}</div>
+            </div>
+          </div>
+          <div class="md-detail-column dashboard-card" id="config-detail-desktop"></div>
+        </div>`;
+
+      if (window.innerWidth >= 992) this.renderConfigDetailDesktop('perfil');
+    };
+
+    app.renderConfigDetailDesktop = function(section = 'perfil') {
+      const container = document.getElementById('config-detail-desktop');
+      if (!container) return;
+
+      let title = 'Configurações';
+      let subtitle = '';
+      let content = '';
+      let footer = '';
+
+      if (section === 'perfil') {
+        title = 'Perfil';
+        subtitle = 'Altere nome ou e-mail com confirmação da sua senha atual.';
+        content = `
+          <div class="detail-stack">
+            <div class="form-group">
+              <label for="config-name">Nome</label>
+              <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name">
+            </div>
+            <div class="form-group">
+              <label for="config-email">Email</label>
+              <input type="email" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com" autocomplete="email">
+            </div>
+            <div id="config-profile-feedback" class="auth-feedback-message is-info" style="display:none;"></div>
+
+            <!-- CAMPOS DE SENHA (agora permanentes e visíveis) -->
+            <div id="config-profile-security-fields" class="detail-stack" style="margin-top:16px; display:block;">
+              <div class="form-group">
+                <label for="config-password">Senha atual</label>
+                <input type="password" id="config-password" placeholder="Digite sua senha atual" autocomplete="current-password">
+
+              </div>
+            </div>
+
+            <hr class="divider" />
+
+            <div class="detail-listing-item" style="align-items:flex-start; gap:16px;">
+              <div>
+                <strong>Troca de senha</strong>
+                <p class="detail-note" style="margin-top:6px;">Para alterar sua senha com segurança, clique em <strong>Esqueci minha senha</strong>. O link será enviado para o e-mail cadastrado e a alteração acontecerá conectada ao banco de dados.</p>
+              </div>
+              <button type="button" class="btn btn-secondary" id="config-open-forgot-password-btn">Esqueci minha senha</button>
+            </div>
+          </div>
+        `;
+        footer = `<button class="btn btn-primary" id="config-save-profile-btn">Salvar alterações</button>`;
+      } else if (section === 'notificacoes') {
+        title = 'Notificações';
+        subtitle = 'Alertas de validade, IA e lembretes.';
+        content = `
+          <div class="detail-stack">
+            <div class="detail-listing-item">
+              <div><strong>Validade</strong><p class="detail-note">Receba aviso quando houver item vencido ou perto de vencer.</p></div>
+              <label class="toggle-switch"><input type="checkbox" id="notif-validade" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="detail-listing-item">
+              <div><strong>Sugestões rápidas</strong><p class="detail-note">Permite receber sugestões rápidas no fluxo do app.</p></div>
+              <label class="toggle-switch"><input type="checkbox" id="notif-ia" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="detail-listing-item">
+              <div><strong>E-mail</strong><p class="detail-note">Envia lembretes e resumos por e-mail quando necessário.</p></div>
+              <label class="toggle-switch"><input type="checkbox" id="notif-email"><span class="toggle-slider"></span></label>
+            </div>
+          </div>`;
+        footer = `<button type="button" class="btn btn-primary">Salvar preferências</button>`;
+      } else {
+        title = 'Dados';
+        subtitle = 'Exportação, limpeza e manutenção das informações do app.';
+        content = `
+          <div class="detail-stack">
+            <div class="detail-listing-item">
+              <div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div>
+              <button class="btn btn-secondary">Exportar</button>
+            </div>
+            <div class="detail-listing-item">
+              <div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div>
+              <button class="btn btn-danger" id="config-delete-account-btn">Apagar conta</button>
+            </div>
+          </div>`;
+      }
+
+      container.innerHTML = `
+        <div class="card-header"><h3><i class="fa-solid fa-sliders"></i> ${title}</h3></div>
+        <div class="card-content">
+          <p class="detail-note">${subtitle}</p>
+          ${content}
+        </div>
+        ${footer ? `<div class="card-footer">${footer}</div>` : ''}`;
+
+      if (section === 'perfil') {
+        const saveBtn = container.querySelector('#config-save-profile-btn');
+        if (saveBtn) {
+          saveBtn.onclick = async () => {
+            await this.saveProfileSettings(container);
+          };
+        }
+        container.querySelector('#config-open-forgot-password-btn')?.addEventListener('click', () => {
+          this.openForgotPasswordFromSettings?.();
+        });
+      }
+
+      container.querySelector('#config-delete-account-btn')?.addEventListener('click', () => {
+        this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
+          this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
+          this.handleLogout();
+        });
+      });
+    };
+
+    app.openConfigSectionModal = function(section = 'perfil') {
+      let title = 'Configurações';
+      let subtitle = '';
+      let content = '';
+      const actions = [{ label: 'Fechar', className: 'btn-secondary', onClick: () => this.closeModal('detail-modal') }];
+
+      if (section === 'perfil') {
+        title = 'Perfil';
+        subtitle = 'Altere nome ou e-mail com confirmação da sua senha atual.';
+        content = `
+          <p class="detail-note">${subtitle}</p>
+          <div class="detail-stack">
+            <div class="form-group"><label for="config-name-modal">Nome</label><input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name"></div>
+            <div class="form-group"><label for="config-email-modal">Email</label><input type="email" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || '')}" autocomplete="email"></div>
+            <div class="detail-listing-item config-security-hint" style="align-items:flex-start; gap:16px;">
+              <div>
+                <strong>Confirmação obrigatória</strong>
+                <p class="detail-note" style="margin-top:6px;">Ao alterar nome ou e-mail, confirme sua senha atual duas vezes para gravar no banco de dados.</p>
+              </div>
+            </div>
+            <div id="config-profile-security-fields-modal" class="detail-stack" style="display:none;">
+              <div class="form-group"><label for="config-password-modal">Senha atual</label><input type="password" id="config-password-modal" placeholder="Digite sua senha atual" autocomplete="current-password"></div>
+              <div class="form-group"><label for="config-password-confirm-modal">Confirmar senha atual</label><input type="password" id="config-password-confirm-modal" placeholder="Repita sua senha atual" autocomplete="current-password"></div>
+            </div>
+            <div id="config-profile-feedback-modal" class="auth-feedback-message is-info" style="display:none;"></div>
+            <hr class="divider" />
+            <div class="detail-listing-item" style="align-items:flex-start; gap:16px;">
+              <div>
+                <strong>Troca de senha</strong>
+                <p class="detail-note" style="margin-top:6px;">Para trocar a senha, use <strong>Esqueci minha senha</strong>. O link será enviado ao e-mail cadastrado.</p>
+              </div>
+              <button type="button" class="btn btn-secondary" id="config-open-forgot-password-btn-modal">Esqueci minha senha</button>
+            </div>
+          </div>`;
+        actions.unshift({
+          label: 'Salvar alterações',
+          className: 'btn-primary',
+          onClick: async () => {
+            const modal = document.getElementById('detail-modal-body') || document;
+            const ok = await this.saveProfileSettings(modal);
+            if (ok) this.closeModal('detail-modal');
+          }
+        });
+      } else if (section === 'notificacoes') {
+        title = 'Notificações';
+        subtitle = 'Alertas de validade, IA e lembretes.';
+        content = `
+          <p class="detail-note">${subtitle}</p>
+          <div class="detail-stack">
+            <div class="detail-listing-item"><div><strong>Validade</strong><p class="detail-note">Receba aviso quando houver item vencido ou perto de vencer.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-validade-modal" checked><span class="toggle-slider"></span></label></div>
+            <div class="detail-listing-item"><div><strong>Sugestões rápidas</strong><p class="detail-note">Permite receber sugestões rápidas.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-ia-modal" checked><span class="toggle-slider"></span></label></div>
+            <div class="detail-listing-item"><div><strong>E-mail</strong><p class="detail-note">Envia lembretes e resumos por e-mail.</p></div><label class="toggle-switch"><input type="checkbox" id="notif-email-modal"><span class="toggle-slider"></span></label></div>
+          </div>`;
+        actions.unshift({ label: 'Salvar preferências', className: 'btn-primary', onClick: () => this.closeModal('detail-modal') });
+      } else {
+        title = 'Dados';
+        subtitle = 'Exportação, limpeza e manutenção das informações do app.';
+        content = `
+          <p class="detail-note">${subtitle}</p>
+          <div class="detail-stack">
+            <div class="detail-listing-item"><div><strong>Exportar dados</strong><p class="detail-note">Baixe seus dados em JSON para backup ou migração.</p></div><button class="btn btn-secondary">Exportar</button></div>
+            <div class="detail-listing-item"><div><strong>Apagar todos os dados</strong><p class="detail-note">Ação irreversível. Use apenas quando quiser reiniciar tudo.</p></div><button class="btn btn-danger" id="config-delete-account-btn-modal">Apagar conta</button></div>
+          </div>`;
+      }
+
+      this.openDetailModal({ title: `<i class="fa-solid fa-sliders"></i> ${title}`, content, actions });
+
+      if (section === 'perfil') {
+        this.bindProfileSettingsSecurityFields?.(document.getElementById('detail-modal-body') || document);
+      }
+
+      document.getElementById('config-delete-account-btn-modal')?.addEventListener('click', () => {
+        this.openConfirmModal('Apagar Conta', 'Tem certeza que deseja apagar todos os seus dados? Esta ação é irreversível.', () => {
+          this.showInfoModal('Conta Apagada', 'Seus dados foram apagados.');
+          this.handleLogout();
+        });
+      });
+      document.getElementById('config-open-forgot-password-btn-modal')?.addEventListener('click', () => {
+        this.openForgotPasswordFromSettings?.();
+      });
+    };
+
+    app.renderListasSalvas = function() {
+      const container = document.getElementById('saved-lists-container');
+      if (!container) return;
+      const lists = this.sortSavedLists(Object.entries(this.state.listas).map(([listId, lista]) => ({ listId, ...lista })));
+      container.innerHTML = lists.map(lista => this.renderUniversalCard({
+        type: 'saved-list',
+        data: { id: lista.listId, name: lista.nome, items: lista.items || [] },
+        actions: [
+          { type: 'edit select-list-btn', icon: 'fa-solid fa-pen', label: 'Abrir e editar' },
+          { type: 'danger delete-list-btn', icon: 'fa-solid fa-trash', label: 'Excluir lista' }
+        ],
+        isClickable: true
+      })).join('') || '<p class="empty-list-message">Nenhuma lista salva. Crie uma nova acima!</p>';
+    };
+
+    app.renderRecipeDetail = function(recipeId, targetElementId = 'recipe-detail-desktop-body', footerElementId = 'recipe-detail-desktop-footer') {
+      const recipe = this.state.receitas[recipeId];
+      const bodyEl = document.getElementById(targetElementId);
+      const footerEl = document.getElementById(footerElementId);
+      if (!recipe || !bodyEl || !footerEl) return;
+      const ingredients = recipe.ingredients || [];
+      const prepText = (recipe.content || '')
+        .replace(/<h4>Ingredientes<\/h4>/gi, '')
+        .replace(/<ul>[\s\S]*?<\/ul>/i, '')
+        .replace(/<h4>Preparo<\/h4>/gi, '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .trim();
+      const desc = this.escapeHtml(recipe.desc || 'Receita salva com visual premium.');
+      const ingredientChips = ingredients.length
+        ? ingredients.map(ing => `<li class="recipe-chip"><span>${this.escapeHtml(ing.qty || '1')} ${this.escapeHtml(ing.unit || 'un')}</span><strong>${this.escapeHtml(ing.name || '')}</strong></li>`).join('')
+        : '<li class="recipe-chip recipe-chip--empty"><strong>Sem ingredientes cadastrados</strong></li>';
+      const chefPrompt = `Tenho a receita ${recipe.name}. Quero sugestões de melhorias, substituições, forma de servir, tempo de preparo e uma lista de compras organizada.`;
+
+      bodyEl.innerHTML = `
+        <div class="recipe-rich-content recipe-luxury-view">
+          <div class="recipe-hero-head">
+            <div class="recipe-title-block">
+              <span class="recipe-eyebrow">Receita premium</span>
+              <h4>${this.escapeHtml(recipe.name)}</h4>
+              <p class="detail-note">${desc}</p>
+            </div>
+            <div class="recipe-meta-grid">
+              <div class="detail-kpi"><strong>${ingredients.length}</strong><span>ingredientes</span></div>
+              <div class="detail-kpi"><strong>${prepText ? prepText.split('\n').filter(Boolean).length || 1 : 1}</strong><span>etapas</span></div>
+            </div>
+          </div>
+          <div class="recipe-section-card">
+            <h5>Ingredientes</h5>
+            <ul class="recipe-ingredient-chips">${ingredientChips}</ul>
+          </div>
+          <div class="recipe-section-card">
+            <h5>Modo de preparo</h5>
+            <div class="recipe-prep-copy">${prepText ? prepText.split('\n').filter(Boolean).map(step => `<p>${this.escapeHtml(step)}</p>`).join('') : '<p>Adicione o modo de preparo para deixar a receita completa.</p>'}</div>
+          </div>
+        </div>`;
+
+      footerEl.className = 'card-footer module-actions-footer compact-export-row';
+      footerEl.innerHTML = `
+        ${this.buildChefButton(chefPrompt, 'Chef IA', 'chef-glass-btn')}
+        <button type="button" class="icon-button minimal-export-btn share-btn" data-recipe-id="${recipeId}" title="Compartilhar"><i class="fa-solid fa-share-alt"></i></button>
+        <button type="button" class="icon-button minimal-export-btn print-btn" data-recipe-id="${recipeId}" title="Imprimir"><i class="fa-solid fa-print"></i></button>
+        <button type="button" class="icon-button minimal-export-btn pdf-btn" data-recipe-id="${recipeId}" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+        <div class="recipe-detail-main-actions">
+          <button type="button" class="icon-button edit-recipe-btn" data-recipe-id="${recipeId}" title="Editar receita"><i class="fa-solid fa-pen"></i><span>Editar</span></button>
+          <button type="button" class="icon-button delete-recipe-btn danger" data-recipe-id="${recipeId}" title="Excluir receita"><i class="fa-solid fa-trash"></i><span>Excluir</span></button>
+        </div>`;
+      footerEl.style.display = 'flex';
+    };
+
+    app.openPlannerDayDetailModal = function(dayKey) {
+      const titleEl = document.getElementById('detail-modal-title');
+      const bodyEl = document.getElementById('detail-modal-body');
+      const footerEl = document.getElementById('detail-modal-footer');
+      const headerActionsEl = document.getElementById('detail-modal-header-actions');
+      const dayLabel = this.getPlannerDaysMap()[dayKey] || 'Dia';
+      const dayMeals = this.state.planejador[dayKey] || {};
+      const standardSlots = [
+        { key: 'cafe', label: 'Café da Manhã', icon: 'fa-solid fa-mug-saucer' },
+        { key: 'almoco', label: 'Almoço', icon: 'fa-solid fa-bowl-food' },
+        { key: 'jantar', label: 'Jantar', icon: 'fa-solid fa-utensils' }
+      ];
+
+      const slotCards = standardSlots.map(slot => {
+        const meal = dayMeals[slot.key];
+        if (!meal) {
+          return `
+            <article class="planner-slot-card planner-slot-empty" data-day="${dayKey}" data-meal="${slot.key}">
+              <div class="planner-slot-head"><div class="planner-slot-title"><small>${slot.label}</small><strong>Sem receita definida</strong></div><i class="${slot.icon}" style="opacity:.72"></i></div>
+              <div class="planner-slot-body"><p>Escolha uma receita para deixar o seu ${slot.label.toLowerCase()} organizado e bonito.</p></div>
+              <div class="planner-slot-actions"><button type="button" class="icon-button planner-slot-direct-btn" data-day="${dayKey}" data-meal="${slot.key}" title="Escolher receita"><i class="fa-solid fa-plus"></i></button></div>
+            </article>`;
+        }
+        const recipeId = meal.recipeId || meal.id || '';
+        return `
+          <article class="planner-slot-card ${meal.completed ? 'completed' : ''} planner-meal-item" data-day="${dayKey}" data-meal="${slot.key}" data-recipe-id="${recipeId}">
+            <div class="planner-slot-head">
+              <div class="planner-slot-title"><small>${slot.label}</small><strong>${this.escapeHtml(meal.name || 'Refeição')}</strong>${meal.time ? `<span class="planner-slot-time">${this.escapeHtml(meal.time)}</span>` : ''}</div>
+              <i class="${slot.icon}" style="opacity:.78"></i>
+            </div>
+            <div class="planner-slot-body"><p>${meal.completed ? 'Marcada como usada. Ótimo para acompanhar sua rotina.' : 'Use os botões abaixo para visualizar, concluir ou remover.'}</p></div>
+            <div class="planner-slot-actions meal-item-actions">
+              <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i><span>Ver</span></button>
+              <button type="button" class="icon-button meal-complete-btn ${meal.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i><span>Concluir</span></button>
+              <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i><span>Excluir</span></button>
+            </div>
+          </article>`;
+      }).join('');
+
+      const extras = (dayMeals.extras || []).map(extra => {
+        const recipeId = extra.recipeId || extra.id || '';
+        return `
+          <article class="planner-slot-card planner-meal-item ${extra.completed ? 'completed' : ''}" data-day="${dayKey}" data-meal="extra:${extra.key}" data-recipe-id="${recipeId}">
+            <div class="planner-slot-head"><div class="planner-slot-title"><small>${this.escapeHtml(extra.mealLabel || 'Refeição extra')}</small><strong>${this.escapeHtml(extra.name || 'Receita')}</strong>${extra.time ? `<span class="planner-slot-time">${this.escapeHtml(extra.time)}</span>` : ''}</div><i class="fa-solid fa-star" style="opacity:.78"></i></div>
+            <div class="planner-slot-body"><p>Refeição personalizada adicionada ao seu dia.</p></div>
+            <div class="planner-slot-actions meal-item-actions">
+              <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i><span>Ver</span></button>
+              <button type="button" class="icon-button meal-complete-btn ${extra.completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i><span>Concluir</span></button>
+              <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i><span>Excluir</span></button>
+            </div>
+          </article>`;
+      }).join('');
+
+      titleEl.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${dayLabel}`;
+      headerActionsEl.innerHTML = `<button class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>`;
+      bodyEl.innerHTML = `
+        <div class="planner-day-detail-shell">
+          <div class="detail-kpi-grid">
+            <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).length}</strong><span>refeições no dia</span></div>
+            <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).filter(meal => meal.completed).length}</strong><span>marcadas como usadas</span></div>
+          </div>
+          <div class="planner-slot-grid">${slotCards}${extras}
+            <article class="planner-slot-card planner-slot-add-card">
+              <div class="planner-slot-head"><div class="planner-slot-title"><small>Personalizado</small><strong>Adicionar refeição</strong></div><i class="fa-solid fa-sparkles" style="opacity:.78"></i></div>
+              <div class="planner-slot-body"><p>Crie uma refeição com nome e horário personalizados e escolha a receita depois.</p></div>
+              <div class="planner-slot-actions"><button type="button" class="icon-button planner-custom-meal-launch" data-day="${dayKey}" title="Criar refeição"><i class="fa-solid fa-plus"></i></button></div>
+            </article>
+          </div>
+        </div>`;
+      footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+      footerEl.innerHTML = `${this.buildExportButtons(`data-day="${dayKey}"`)}`;
+      this.openModal('detail-modal');
+    };
+
+    app.analysisV3PaintSide = function(payload){
+      const kpiEl = document.getElementById('analysis-v3-kpis');
+      const breakdownEl = document.getElementById('analysis-v3-breakdown');
+      if (kpiEl) {
+        kpiEl.innerHTML = (payload.kpis || []).map(item => `
+          <article class="analysis-v3-kpi">
+            <span>${item.label}</span>
+            <strong>${item.value}</strong>
+          </article>`).join('');
+      }
+      if (breakdownEl) {
+        breakdownEl.innerHTML = `
+          <div class="analysis-v3-breakdown-head"><span>Leitura detalhada</span></div>
+          ${(payload.breakdown || []).map(item => `
+            <div class="analysis-v3-row">
+              <span>${item.label}</span>
+              <strong>${item.value}</strong>
+            </div>`).join('')}`;
+      }
+      const insightEl = document.getElementById('analysis-v3-insight');
+      if (insightEl) insightEl.textContent = payload.insight || '';
+      const typeLabel = document.getElementById('analysis-v3-type-label');
+      if (typeLabel) typeLabel.textContent = this.getFriendlyChartTypeLabel(this.analysisV3State?.chartType || payload.preferredType || 'doughnut');
+    };
+
+    app.analysisV3CycleType = function(){
+      const order = ['doughnut', 'pie', 'bar', 'line'];
+      let idx = order.indexOf(this.analysisV3State.chartType);
+      if (idx < 0) idx = 0;
+      this.analysisV3State.chartType = order[(idx + 1) % order.length];
+      const label = document.getElementById('analysis-v3-type-label');
+      if (label) label.textContent = this.getFriendlyChartTypeLabel(this.analysisV3State.chartType);
+      this.renderAnalises?.();
+    };
+
+    app.analysisV3DrawChart = function(payload){
+      if (this.charts && this.charts.analysisRebuiltChart) {
+        try { this.charts.analysisRebuiltChart.destroy(); } catch(e) {}
+      }
+      const canvas = document.getElementById('analysis-v3-chart');
+      if (!canvas || !window.Chart) return;
+      const chartCard = document.querySelector('#module-analises .analysis-v3-chartcard');
+      const ctx = canvas.getContext('2d');
+      const type = this.analysisV3State.chartType || payload.preferredType || 'doughnut';
+      if (chartCard) chartCard.dataset.chartType = type;
+      const colors = this.analysisV3Colors(0.92);
+      const lineColor = 'rgba(0,242,234,0.95)';
+      const total = (payload.values || []).reduce((sum, value) => sum + (Number(value) || 0), 0);
+
+      const dataset = {
+        label: payload.title,
+        data: payload.values,
+        backgroundColor: (type === 'line' || type === 'radar') ? colors.map(c => c.replace('0.92','0.22')) : colors,
+        borderColor: (type === 'line' || type === 'radar') ? lineColor : colors,
+        pointBackgroundColor: lineColor,
+        pointBorderColor: '#ffffff',
+        borderWidth: type === 'line' ? 3 : 2,
+        tension: 0.42,
+        fill: type === 'line' || type === 'radar',
+        pointRadius: type === 'line' ? 4 : 3,
+        hoverOffset: 8
+      };
+
+      const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: 8 },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              color: '#dbe6ea',
+              usePointStyle: true,
+              boxWidth: 8,
+              padding: 16,
+              font: { family: 'Roboto, sans-serif', size: 11 },
+              generateLabels: (chart) => {
+                const defaults = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                return defaults.map((item) => {
+                  const value = chart.data.datasets?.[item.datasetIndex || 0]?.data?.[item.index] ?? 0;
+                  const percent = total > 0 ? Math.round((Number(value || 0) / total) * 100) : 0;
+                  return {
+                    ...item,
+                    text: ['doughnut', 'pie'].includes(type)
+                      ? `${chart.data.labels[item.index]} • ${value} (${percent}%)`
+                      : `${chart.data.labels[item.index]} • ${value}`
+                  };
+                });
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(8,12,20,.96)',
+            borderColor: 'rgba(255,255,255,.08)',
+            borderWidth: 1,
+            titleColor: '#ffffff',
+            bodyColor: '#c9d6db',
+            displayColors: true,
+            callbacks: {
+              label: (context) => {
+                const value = Number(context.parsed?.y ?? context.parsed ?? 0);
+                const percent = total > 0 ? Math.round((value / total) * 100) : 0;
+                return ['doughnut', 'pie'].includes(type)
+                  ? `${context.label}: ${value} (${percent}%)`
+                  : `${context.label}: ${value}`;
+              }
+            }
+          }
+        },
+        scales: (type === 'bar' || type === 'line') ? {
+          x: { ticks: { color: '#dbe6ea' }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } },
+          y: { beginAtZero: true, ticks: { color: '#9fb2bb', precision: 0 }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } }
+        } : {},
+        cutout: (type === 'doughnut') ? '68%' : undefined,
+        animation: { duration: 420, easing: 'easeOutCubic' }
+      };
+
+      this.charts.analysisRebuiltChart = new Chart(ctx, { type, data: { labels: payload.labels, datasets: [dataset] }, options });
+      const typeLabel = document.getElementById('analysis-v3-type-label');
+      if (typeLabel) typeLabel.textContent = this.getFriendlyChartTypeLabel(type);
+    };
+
+    if (app.isAppMode && app.activeModule === 'configuracoes') app.renderConfiguracoes();
+    if (app.isAppMode && app.activeModule === 'analises') app.renderAnalises();
+    if (app.isAppMode && app.activeModule === 'lista') app.renderListas?.();
+    if (app.isAppMode && app.activeModule === 'receitas') app.renderReceitas?.();
+    if (app.isAppMode && app.activeModule === 'planejador') app.renderPlanejador?.();
+    return true;
+  };
+
+  if (!boot()) {
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      if (boot() || tries > 40) clearInterval(timer);
+    }, 120);
+  }
+})();
+
+(() => {
+  const patch = () => {
+    const app = window.app;
+    if (!app || app.__cleanLandingDesktopPatch) return !!app;
+    app.__cleanLandingDesktopPatch = true;
+
+    app.analysisV3DrawChart = function(payload){
+      const canvas = document.getElementById('analysis-v3-chart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      const ctx = canvas.getContext('2d');
+      if (this.charts.analysisRebuiltChart) this.charts.analysisRebuiltChart.destroy();
+
+      const type = this.analysisV3State.chartType || payload.preferredType || 'doughnut';
+      const colors = this.analysisV3Colors(0.92);
+      const lineColor = 'rgba(0,242,234,0.95)';
+      const total = (payload.values || []).reduce((sum, value) => sum + (Number(value) || 0), 0);
+      const legendVisible = ['doughnut', 'pie'].includes(type);
+
+      const dataset = {
+        label: payload.title,
+        data: payload.values,
+        backgroundColor: (type === 'line' || type === 'radar') ? colors.map(c => c.replace('0.92','0.22')) : colors,
+        borderColor: (type === 'line' || type === 'radar') ? lineColor : colors,
+        pointBackgroundColor: lineColor,
+        pointBorderColor: '#ffffff',
+        borderWidth: type === 'line' ? 3 : 2,
+        tension: 0.42,
+        fill: type === 'line' || type === 'radar',
+        pointRadius: type === 'line' ? 4 : 3,
+        hoverOffset: 8
+      };
+
+      const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: 8 },
+        plugins: {
+          legend: {
+            display: legendVisible,
+            position: 'bottom',
+            labels: {
+              color: '#dbe6ea',
+              usePointStyle: true,
+              boxWidth: 8,
+              padding: 16,
+              font: { family: 'Roboto, sans-serif', size: 11 },
+              generateLabels: (chart) => {
+                const datasetValues = chart.data.datasets?.[0]?.data || [];
+                return (chart.data.labels || []).map((label, index) => {
+                  const value = Number(datasetValues[index] || 0);
+                  const percent = total > 0 ? Math.round((value / total) * 100) : 0;
+                  const fillStyle = Array.isArray(chart.data.datasets?.[0]?.backgroundColor)
+                    ? chart.data.datasets[0].backgroundColor[index]
+                    : chart.data.datasets?.[0]?.backgroundColor;
+                  return {
+                    text: `${label} • ${value} (${percent}%)`,
+                    fillStyle,
+                    strokeStyle: fillStyle,
+                    lineWidth: 0,
+                    hidden: false,
+                    index,
+                    datasetIndex: 0,
+                    pointStyle: 'circle'
+                  };
+                });
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(8,12,20,.96)',
+            borderColor: 'rgba(255,255,255,.08)',
+            borderWidth: 1,
+            titleColor: '#ffffff',
+            bodyColor: '#c9d6db',
+            displayColors: true,
+            callbacks: {
+              label: (context) => {
+                const value = Number(context.parsed?.y ?? context.parsed ?? 0);
+                const percent = total > 0 ? Math.round((value / total) * 100) : 0;
+                return legendVisible
+                  ? `${context.label}: ${value} (${percent}%)`
+                  : `${context.label}: ${value}`;
+              }
+            }
+          }
+        },
+        scales: (type === 'bar' || type === 'line') ? {
+          x: { ticks: { color: '#dbe6ea' }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } },
+          y: { beginAtZero: true, ticks: { color: '#9fb2bb', precision: 0 }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } }
+        } : (type === 'radar') ? {
+          r: {
+            angleLines: { color: 'rgba(255,255,255,.08)' },
+            grid: { color: 'rgba(255,255,255,.08)' },
+            pointLabels: { color: '#dbe6ea', font: { size: 11 } },
+            ticks: { display: false, backdropColor: 'transparent' },
+            suggestedMin: 0
+          }
+        } : {},
+        cutout: (type === 'doughnut') ? '68%' : undefined,
+        animation: { duration: 420, easing: 'easeOutCubic' }
+      };
+
+      this.charts.analysisRebuiltChart = new Chart(ctx, {
+        type,
+        data: { labels: payload.labels, datasets: [dataset] },
+        options
+      });
+    };
+
+    return true;
+  };
+  if (!patch()) {
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      if (patch() || tries > 80) clearInterval(timer);
+    }, 120);
+  }
+})();
+
+(() => {
+  const patchPlanner = () => {
+    const app = window.app;
+    if (!app || app.__plannerMobileFix320) return !!app;
+    app.__plannerMobileFix320 = true;
+
+    app.openPlannerDayDetailModal = function(dayKey) {
+      const titleEl = document.getElementById('detail-modal-title');
+      const bodyEl = document.getElementById('detail-modal-body');
+      const footerEl = document.getElementById('detail-modal-footer');
+      const headerActionsEl = document.getElementById('detail-modal-header-actions');
+      if (!titleEl || !bodyEl || !footerEl || !headerActionsEl) return;
+
+      const dayLabel = this.getPlannerDaysMap?.()[dayKey] || 'Dia';
+      const dayMeals = this.state?.planejador?.[dayKey] || {};
+      const standardSlots = [
+        { key: 'cafe', label: 'Café da manhã', icon: 'fa-solid fa-mug-saucer' },
+        { key: 'almoco', label: 'Almoço', icon: 'fa-solid fa-bowl-food' },
+        { key: 'jantar', label: 'Jantar', icon: 'fa-solid fa-utensils' }
+      ];
+
+      const renderFilledSlot = (slotLabel, slotIcon, meal, mealKey) => {
+        const recipeId = meal?.recipeId || meal?.id || '';
+        const completed = !!meal?.completed;
+        const helper = completed
+          ? 'Marcada como usada. Toque em ver para abrir a receita novamente.'
+          : 'Use os botões abaixo para visualizar, concluir ou remover.';
+        return `
+          <article class="planner-slot-card planner-meal-item ${completed ? 'completed' : ''}" data-day="${dayKey}" data-meal="${mealKey}" data-recipe-id="${recipeId}">
+            <div class="planner-slot-head">
+              <div class="planner-slot-title">
+                <small>${this.escapeHtml(slotLabel)}</small>
+                <strong>${this.escapeHtml(meal?.name || 'Refeição')}</strong>
+                ${meal?.time ? `<span class="planner-slot-time">${this.escapeHtml(meal.time)}</span>` : ''}
+              </div>
+              <i class="${slotIcon}" aria-hidden="true" style="opacity:.78"></i>
+            </div>
+            <div class="planner-slot-body"><p>${helper}</p></div>
+            <div class="planner-slot-actions meal-item-actions">
+              <button type="button" class="icon-button meal-view-btn" title="Ver receita"><i class="fa-solid fa-eye"></i><span>Ver</span></button>
+              <button type="button" class="icon-button meal-complete-btn ${completed ? 'is-complete' : ''}" title="Marcar como usado"><i class="fa-solid fa-check"></i><span>Concluir</span></button>
+              <button type="button" class="icon-button meal-delete-btn" title="Remover"><i class="fa-solid fa-trash"></i><span>Excluir</span></button>
+            </div>
+          </article>`;
+      };
+
+      const renderEmptySlot = (slotLabel, slotIcon, mealKey) => `
+        <article class="planner-slot-card planner-slot-empty" data-day="${dayKey}" data-meal="${mealKey}">
+          <div class="planner-slot-head">
+            <div class="planner-slot-title">
+              <small>${slotLabel}</small>
+              <strong>Sem receita definida</strong>
+            </div>
+            <i class="${slotIcon}" aria-hidden="true" style="opacity:.72"></i>
+          </div>
+          <div class="planner-slot-body"><p>Escolha uma receita para organizar melhor este horário.</p></div>
+          <div class="planner-slot-actions">
+            <button type="button" class="icon-button planner-slot-direct-btn" data-day="${dayKey}" data-meal="${mealKey}" title="Escolher receita"><i class="fa-solid fa-plus"></i><span>Adicionar</span></button>
+          </div>
+        </article>`;
+
+      const slotCards = standardSlots.map(slot => {
+        const meal = dayMeals[slot.key];
+        return meal ? renderFilledSlot(slot.label, slot.icon, meal, slot.key) : renderEmptySlot(slot.label, slot.icon, slot.key);
+      }).join('');
+
+      const extras = (dayMeals.extras || []).map(extra => {
+        return renderFilledSlot(extra?.mealLabel || 'Refeição extra', 'fa-solid fa-star', extra, `extra:${extra.key}`);
+      }).join('');
+
+      titleEl.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${dayLabel}`;
+      headerActionsEl.innerHTML = `<button class="icon-button add-meal-btn" data-day-target="${dayKey}" title="Inserir refeição"><i class="fa-solid fa-plus"></i></button>`;
+      bodyEl.innerHTML = `
+        <div class="planner-day-detail-shell">
+          <div class="detail-kpi-grid">
+            <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).length}</strong><span>refeições no dia</span></div>
+            <div class="detail-kpi"><strong>${this.getPlannerMealsForDay(dayKey).filter(meal => meal.completed).length}</strong><span>concluídas</span></div>
+          </div>
+          <div class="planner-slot-grid">
+            ${slotCards}
+            ${extras}
+            <article class="planner-slot-card planner-slot-add-card">
+              <div class="planner-slot-head">
+                <div class="planner-slot-title"><small>Personalizado</small><strong>Adicionar refeição</strong></div>
+                <i class="fa-solid fa-sparkles" aria-hidden="true" style="opacity:.78"></i>
+              </div>
+              <div class="planner-slot-body"><p>Crie uma refeição com nome e horário personalizados.</p></div>
+              <div class="planner-slot-actions">
+                <button type="button" class="icon-button planner-custom-meal-launch" data-day="${dayKey}" title="Criar refeição"><i class="fa-solid fa-plus"></i><span>Criar</span></button>
+              </div>
+            </article>
+          </div>
+        </div>`;
+
+      footerEl.className = 'modal-footer detail-modal-footer compact-export-row';
+      footerEl.innerHTML = `${this.buildExportButtons(`data-day="${dayKey}"`)}`;
+      this.openModal('detail-modal');
+    };
+
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      const viewBtn = target.closest('#detail-modal .planner-slot-card .meal-view-btn');
+      if (viewBtn) {
+        const card = viewBtn.closest('.planner-slot-card[data-recipe-id]');
+        const recipeId = card?.dataset?.recipeId;
+        if (!recipeId) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        app.closeModal?.('detail-modal');
+        setTimeout(() => app.showRecipeDetailModal?.(recipeId), 120);
+        return;
+      }
+    }, true);
+
+    return true;
+  };
+
+  if (!patchPlanner()) {
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      if (patchPlanner() || tries > 120) clearInterval(timer);
+    }, 120);
+  }
+})();
+
+(() => {
+  const applyPatch = () => {
+    const app = window.app;
+    if (!app || app.__plannerDeleteConfirmFix330) return !!app;
+    app.__plannerDeleteConfirmFix330 = true;
+
+    app.__getPlannerMealRef = function(dayKey, mealKey) {
+      const dayMeals = this.state?.planejador?.[dayKey];
+      if (!dayMeals || !mealKey) return null;
+      if (String(mealKey).startsWith('extra:')) {
+        const extraKey = String(mealKey).split(':').slice(1).join(':');
+        const extras = Array.isArray(dayMeals.extras) ? dayMeals.extras : [];
+        const index = extras.findIndex(item => String(item?.key) === String(extraKey));
+        if (index === -1) return null;
+        return { type: 'extra', index, meal: extras[index] };
+      }
+      if (!dayMeals[mealKey]) return null;
+      return { type: 'slot', key: mealKey, meal: dayMeals[mealKey] };
+    };
+
+    app.handleDeleteMeal = function(dayKey, mealKey) {
+      const ref = this.__getPlannerMealRef(dayKey, mealKey);
+      if (!ref?.meal) return;
+
+      const mealName = ref.meal?.name || 'esta refeição';
+      const detailWasVisible = !!document.getElementById('detail-modal')?.classList.contains('is-visible');
+
+      const reopenPlannerDay = () => {
+        if (!detailWasVisible) return;
+        setTimeout(() => this.openPlannerDayDetailModal?.(dayKey), 80);
+      };
+
+      const removeMeal = () => {
+        const dayMeals = this.state?.planejador?.[dayKey];
+        if (!dayMeals) return;
+
+        if (ref.type === 'extra') {
+          if (Array.isArray(dayMeals.extras) && ref.index > -1) {
+            dayMeals.extras.splice(ref.index, 1);
+            if (!dayMeals.extras.length) delete dayMeals.extras;
+          }
+        } else if (ref.type === 'slot' && ref.key) {
+          delete dayMeals[ref.key];
+        }
+
+        const hasEntries = Object.keys(dayMeals).some((key) => {
+          if (key === 'extras') return Array.isArray(dayMeals.extras) && dayMeals.extras.length > 0;
+          return !!dayMeals[key];
+        });
+        if (!hasEntries) delete this.state.planejador[dayKey];
+
+        this.saveState();
+        if (this.activeModule === 'planejador') this.renderPlanejador?.();
+        this.renderPlannerWidget?.();
+        reopenPlannerDay();
+        this.showNotification('Refeição removida.', 'info');
+      };
+
+      const openConfirm = () => {
+        this.openConfirmModal('Remover refeição', `Deseja remover "${mealName}" do planejamento?`, removeMeal);
+        const confirmModal = document.getElementById('custom-confirm-modal');
+        const cancelBtn = document.getElementById('confirm-cancel-btn');
+        const closeBtn = confirmModal?.querySelector('[data-modal-close="custom-confirm-modal"]');
+
+        if (confirmModal) {
+          confirmModal.style.zIndex = '45000';
+          const box = confirmModal.querySelector('.modal-box');
+          if (box) box.style.zIndex = '45001';
+        }
+
+        if (detailWasVisible) {
+          cancelBtn?.addEventListener('click', reopenPlannerDay, { once: true });
+          closeBtn?.addEventListener('click', reopenPlannerDay, { once: true });
+          confirmModal?.addEventListener('click', (ev) => {
+            if (ev.target === confirmModal) reopenPlannerDay();
+          }, { once: true });
+        }
+      };
+
+      if (detailWasVisible) {
+        this.closeModal?.('detail-modal');
+        setTimeout(openConfirm, 90);
+        return;
+      }
+
+      openConfirm();
+    };
+
+    return true;
+  };
+
+  if (!applyPatch()) {
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      if (applyPatch() || tries > 120) clearInterval(timer);
+    }, 120);
+  }
+})();
+
+(() => {
+  if (typeof app === 'undefined') return;
+
+  app.normalizeSearchText = function(value) {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  app.showAutocomplete = function(suggestions, query, inputElement) {
+    const suggestionsEl = this.elements?.autocompleteSuggestions;
+    if (!suggestionsEl || !inputElement) return;
+
+    const renderLabel = (item) => {
+      const isManual = String(item?.name || '').startsWith('Insira manual:');
+      const original = String(item?.name || '');
+      if (isManual || !query) return this.escapeHtml(original);
+      const normalizedOriginal = this.normalizeSearchText(original);
+      const idx = normalizedOriginal.indexOf(query);
+      if (idx < 0) return this.escapeHtml(original);
+      const sliceEnd = Math.min(original.length, idx + query.length);
+      return `${this.escapeHtml(original.slice(0, idx))}<strong>${this.escapeHtml(original.slice(idx, sliceEnd))}</strong>${this.escapeHtml(original.slice(sliceEnd))}`;
+    };
+
+    suggestionsEl.innerHTML = suggestions.map(item => {
+      const name = String(item?.name || '');
+      const safeName = this.escapeHtml(name);
+      const isManual = name.startsWith('Insira manual:');
+      return `<div class="autocomplete-item" data-name="${safeName}" data-manual="${isManual ? '1' : '0'}">${renderLabel(item)}</div>`;
+    }).join('');
+
+    const rect = inputElement.getBoundingClientRect();
+    suggestionsEl.style.position = 'fixed';
+    suggestionsEl.style.left = `${Math.max(12, rect.left)}px`;
+    suggestionsEl.style.top = `${Math.min(window.innerHeight - 12, rect.bottom + 6)}px`;
+    suggestionsEl.style.width = `${Math.max(220, rect.width)}px`;
+    suggestionsEl.style.maxWidth = `calc(100vw - 24px)`;
+    suggestionsEl.style.display = 'block';
+  };
+
+  app.hideAutocomplete = function() {
+    if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
+    if (this.elements?.autocompleteSuggestions) {
+      this.elements.autocompleteSuggestions.style.display = 'none';
+      this.elements.autocompleteSuggestions.innerHTML = '';
+    }
+    this.activeAutocompleteInput = null;
+  };
+
+  app.handleAutocomplete = function(inputElement) {
+    if (!inputElement) return;
+    const rawQuery = String(inputElement.value || '').trim();
+    const query = this.normalizeSearchText(rawQuery);
+    this.activeAutocompleteInput = inputElement;
+
+    if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
+    if (query.length < 1) {
+      this.hideAutocomplete();
+      return;
+    }
+
+    const suggestionsSource = [];
+    if (Array.isArray(window.ALL_ITEMS_DATA)) suggestionsSource.push(...window.ALL_ITEMS_DATA);
+    suggestionsSource.push(...(this.state?.despensa || []).map(item => ({ name: item.name, price: Number(item.valor || 0), unit_desc: item.unid || 'un' })));
+    suggestionsSource.push(...(this.state?.essenciais || []).map(item => ({ name: item.name, price: Number(item.preco || 0), unit_desc: item.unid || 'un' })));
+    Object.values(this.state?.receitas || {}).forEach(recipe => {
+      (recipe?.ingredients || []).forEach(ing => {
+        suggestionsSource.push({ name: ing.name, price: 0, unit_desc: ing.unit || 'un' });
+      });
+    });
+
+    this.autocompleteTimeout = setTimeout(() => {
+      const normalizedQueryWords = query.split(' ').filter(Boolean);
+      const dedup = new Map();
+
+      suggestionsSource.forEach(item => {
+        const name = String(item?.name || '').trim();
+        if (!name) return;
+        const normalizedName = this.normalizeSearchText(name);
+        if (!normalizedName) return;
+        const matches = normalizedQueryWords.every(word => normalizedName.includes(word));
+        if (!matches) return;
+        const score = normalizedName.startsWith(query) ? 0 : normalizedName.includes(` ${query}`) ? 1 : 2;
+        const key = normalizedName;
+        if (!dedup.has(key)) dedup.set(key, { ...item, __score: score });
+        else if ((dedup.get(key).__score ?? 9) > score) dedup.set(key, { ...item, __score: score });
+      });
+
+      const suggestions = Array.from(dedup.values())
+        .sort((a, b) => (a.__score - b.__score) || String(a.name).localeCompare(String(b.name), 'pt-BR'))
+        .slice(0, 8)
+        .map(({ __score, ...item }) => item);
+
+      if (!suggestions.length) {
+        this.showAutocomplete([{ name: `Insira manual: ${rawQuery}` }], query, inputElement);
+        return;
+      }
+
+      this.showAutocomplete(suggestions, query, inputElement);
+    }, 80);
+  };
+
+  app.selectAutocompleteItem = function(itemName) {
+    const activeInput = this.activeAutocompleteInput;
+    if (!activeInput) {
+      this.hideAutocomplete();
+      return;
+    }
+
+    if (String(itemName).startsWith('Insira manual:')) {
+      const manualName = String(itemName).replace('Insira manual:', '').trim();
+      activeInput.value = manualName;
+      this.hideAutocomplete();
+      activeInput.focus();
+      return;
+    }
+
+    const normalizedItemName = this.normalizeSearchText(itemName);
+    const recipeIngredients = Object.values(this.state?.receitas || {}).flatMap(recipe => recipe?.ingredients || []);
+    const candidates = [
+      ...(Array.isArray(window.ALL_ITEMS_DATA) ? window.ALL_ITEMS_DATA : []),
+      ...(this.state?.despensa || []).map(item => ({ name: item.name, price: Number(item.valor || 0), unit_desc: item.unid || 'un' })),
+      ...(this.state?.essenciais || []).map(item => ({ name: item.name, price: Number(item.preco || 0), unit_desc: item.unid || 'un' })),
+      ...recipeIngredients.map(ing => ({ name: ing.name, price: 0, unit_desc: ing.unit || 'un' }))
+    ];
+
+    const itemData = candidates.find(item => this.normalizeSearchText(item?.name || '') === normalizedItemName) || { name: itemName, price: 0, unit_desc: 'un' };
+    activeInput.value = itemData.name;
+
+    const modal = activeInput.closest('.modal-box, .modal-content, #custom-confirm-modal, form') || document;
+    const unitSource = String(itemData.unit_desc || itemData.unid || itemData.unit || 'un');
+    const matchedUnit = ['un','kg','g','L','ml','pct','cx','xícara','colher','pitada','dentes','a gosto','fio'].find(unit => unitSource.toLowerCase().includes(unit.toLowerCase())) || 'un';
+
+    if (activeInput.id === 'recipe-ing-name') {
+      const qtdInput = modal.querySelector('#recipe-ing-qtd');
+      const unitSelect = modal.querySelector('#recipe-ing-unid');
+      if (qtdInput && !String(qtdInput.value || '').trim()) qtdInput.value = '1';
+      if (unitSelect) unitSelect.value = matchedUnit;
+    }
+
+    this.hideAutocomplete();
+    activeInput.focus();
+  };
+
+  app.handleGenerateListFromPlanner = function(dayKey = null) {
+    const source = dayKey
+      ? { [dayKey]: this.state?.planejador?.[dayKey] || {} }
+      : (this.state?.planejador || {});
+
+    const aggregated = new Map();
+    const addIngredient = (ingredient) => {
+      if (!ingredient?.name) return;
+      const unit = String(ingredient.unit || ingredient.unid || 'un').trim() || 'un';
+      const qty = parseFloat(ingredient.qty || ingredient.quantity || 1) || 1;
+      const key = `${this.normalizeSearchText(ingredient.name)}|${unit.toLowerCase()}`;
+      const current = aggregated.get(key) || {
+        id: this.generateId(),
+        name: String(ingredient.name).trim(),
+        qtd: 0,
+        unid: unit,
+        valor: 0,
+        checked: false
+      };
+      current.qtd = Number((current.qtd + qty).toFixed(2));
+      aggregated.set(key, current);
+    };
+
+    Object.values(source).forEach(dayState => {
+      if (!dayState || typeof dayState !== 'object') return;
+      ['cafe', 'almoco', 'jantar'].forEach(slot => {
+        const ref = dayState[slot];
+        const recipe = ref ? this.state?.receitas?.[ref.recipeId || ref.id] : null;
+        (recipe?.ingredients || []).forEach(addIngredient);
+      });
+      (Array.isArray(dayState.extras) ? dayState.extras : []).forEach(extra => {
+        const recipe = this.state?.receitas?.[extra.recipeId || extra.id];
+        (recipe?.ingredients || []).forEach(addIngredient);
+      });
+    });
+
+    if (!aggregated.size) {
+      const title = dayKey ? 'Nada para gerar neste dia' : 'Nada para gerar no planejador';
+      const text = dayKey
+        ? 'Adicione pelo menos uma receita com ingredientes neste dia para gerar a lista.'
+        : 'Adicione pelo menos uma receita com ingredientes ao planejador para gerar a lista.';
+      this.showInfoModal?.(title, `<p>${text}</p>`) || this.showNotification(text, 'info');
+      return;
+    }
+
+    const newListId = this.generateId();
+    const listName = dayKey ? `Lista ${this.getPlannerDaysMap?.()[dayKey] || 'do dia'}` : 'Lista do Planejamento';
+    this.state.listas[newListId] = {
+      nome: listName,
+      createdAt: new Date().toISOString(),
+      items: Array.from(aggregated.values())
+    };
+    this.activeListId = newListId;
+    this.saveState();
+    this.closeModal?.('detail-modal');
+    this.activateModuleAndRender?.('lista');
+    setTimeout(() => {
+      document.getElementById('list-manager')?.classList.add('view-active-list');
+      this.renderListasSalvas?.();
+      this.renderListaWidget?.();
+      this.renderOrcamento?.();
+      this.renderListaAtiva?.(newListId);
+      this.showNotification?.(`Lista "${listName}" criada com ${aggregated.size} ingrediente(s).`, 'success');
+    }, 60);
+  };
+
+  const bindRecipeIngredientField = (scope = document) => {
+    const input = scope.querySelector?.('#recipe-ing-name');
+    if (!input || input.dataset.afBindAutocomplete === '1') return;
+    input.dataset.afBindAutocomplete = '1';
+    input.setAttribute('autocomplete', 'off');
+    input.addEventListener('input', () => app.handleAutocomplete(input));
+    input.addEventListener('focus', () => {
+      if (String(input.value || '').trim()) app.handleAutocomplete(input);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') app.hideAutocomplete();
+    });
+  };
+
+  const originalHandleOpenRecipeEditModal = app.handleOpenRecipeEditModal?.bind(app);
+  if (originalHandleOpenRecipeEditModal) {
+    app.handleOpenRecipeEditModal = function(...args) {
+      const result = originalHandleOpenRecipeEditModal(...args);
+      setTimeout(() => bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document), 30);
+      return result;
+    };
+  }
+
+  document.addEventListener('focusin', (e) => {
+    if (e.target?.id === 'recipe-ing-name') bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document);
+  });
+})();
+
 (() => {
   const app = window.app;
   if (!app) return;
@@ -8967,7 +11041,7 @@ window.app = app;
     return Array.from(dedup.values());
   };
 
-  app._legacy_showAutocomplete_v2 = function(suggestions, query, inputElement) {
+  app.showAutocomplete = function(suggestions, query, inputElement) {
     const suggestionsEl = this.elements?.autocompleteSuggestions;
     if (!suggestionsEl || !inputElement) return;
 
@@ -9002,7 +11076,7 @@ window.app = app;
     this.activeAutocompleteInput = inputElement;
   };
 
-  app._legacy_hideAutocomplete_v2 = function() {
+  app.hideAutocomplete = function() {
     if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
     const suggestionsEl = this.elements?.autocompleteSuggestions;
     if (suggestionsEl) {
@@ -9012,7 +11086,7 @@ window.app = app;
     this.activeAutocompleteInput = null;
   };
 
-  app._legacy_handleAutocomplete_v2 = function(inputElement) {
+  app.handleAutocomplete = function(inputElement) {
     if (!inputElement) return;
     const rawQuery = String(inputElement.value || '').trim();
     const query = this.normalizeSearchText(rawQuery);
@@ -9048,7 +11122,7 @@ window.app = app;
     }, 40);
   };
 
-  app._legacy_selectAutocompleteItem_v2 = function(itemName) {
+  app.selectAutocompleteItem = function(itemName) {
     const input = this.activeAutocompleteInput;
     if (!input) {
       this.hideAutocomplete();
@@ -9512,6 +11586,15 @@ window.app = app;
     if (e.target?.id === 'recipe-ing-name') bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document);
   });
 
+  document.addEventListener('mousedown', (e) => {
+    const itemEl = e.target.closest?.('.autocomplete-item');
+    if (!itemEl) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const name = itemEl.getAttribute('data-name') || '';
+    app.selectAutocompleteItem(name.replace(/&quot;/g, '"'));
+  }, true);
+
   document.addEventListener('click', (e) => {
     const closest = (sel) => e.target.closest(sel);
 
@@ -9831,7 +11914,6 @@ app.saveProfileSettings = async function(scope) {
     if (saveDesktopBtn) {
       event.preventDefault();
       event.stopPropagation();
-      event.stopImmediatePropagation?.();
       const desktopScope = document.getElementById('config-detail-desktop') || document;
       await app.saveProfileSettings(desktopScope);
       return;
@@ -10324,20 +12406,6 @@ console.log('handleSignup chamada');
 
   }
 
-  const afRebindKnownFields = () => {
-    ['lista-form-nome-full','lista-form-nome-dash','edit-item-name','pantry-edit-name','recipe-ing-name','essential-name'].forEach((id) => {
-      const input = document.getElementById(id);
-      if (!input) return;
-      app.decorateIngredientAutocompleteInput(input);
-      input.setAttribute('autocomplete', 'off');
-    });
-  };
-
-  afRebindKnownFields();
-  const afObserver = new MutationObserver(() => afRebindKnownFields());
-  afObserver.observe(document.body, { childList: true, subtree: true });
-
-
 })();
 
 (() => {
@@ -10451,17 +12519,15 @@ console.log('handleSignup chamada');
     const lowerRoot = rootText.toLowerCase();
     const isBulkList = id === 'lista-form-nome-full' || id === 'lista-form-nome-dash' || (lowerRoot.includes('module-listas') && (id === 'item-name' || id === 'inline-edit-name'));
     const isRecipe = id === 'recipe-ing-name' || id === 'recipe-edit-name' || lowerRoot.includes('module-receitas');
-    const isPantry = id === 'pantry-edit-name' || id === 'edit-item-name' || id === 'essential-name' || lowerRoot.includes('module-despensa') || lowerRoot.includes('item-edit-modal') || lowerRoot.includes('pantry-edit-form-fullscreen');
+    const isPantry = id === 'pantry-edit-name' || id === 'edit-item-name' || id === 'essential-name' || lowerRoot.includes('module-despensa');
     const isPlanner = id === 'planner-custom-name' || lowerRoot.includes('module-planejador');
     const isCalc = id === 'calc-item-name' || lowerRoot.includes('calculadora');
     const editItemId = document.getElementById('edit-item-id')?.value?.trim();
     const editItemType = document.getElementById('edit-item-type')?.value?.trim();
-    const pantryEditId = document.getElementById('pantry-edit-id')?.value?.trim();
-    const isPantryBulk = id === 'pantry-edit-name' ? !pantryEditId : (!editItemId && editItemType === 'despensa');
 
     if (isBulkList) return { entity: 'lista', mode: 'bulk', label: 'Adicionar itens na lista' };
     if (isRecipe) return { entity: 'receita', mode: 'bulk', label: 'Adicionar ingredientes' };
-    if (isPantry && isPantryBulk) return { entity: 'despensa', mode: 'bulk', label: 'Adicionar itens na despensa' };
+    if (isPantry && !editItemId && editItemType === 'despensa') return { entity: 'despensa', mode: 'bulk', label: 'Adicionar itens na despensa' };
     if (isPantry) return { entity: 'despensa', mode: 'single', label: 'Selecionar item da despensa' };
     if (isPlanner) return { entity: 'receita', mode: 'single', label: 'Selecionar refeição' };
     if (isCalc) return { entity: 'geral', mode: 'single', label: 'Selecionar item' };
@@ -10962,6 +13028,7 @@ console.log('handleSignup chamada');
       this.renderIngredientAutocomplete(state.input, '');
     } else {
       this.hideAutocomplete(true);
+      if (context.entity === 'despensa') this.closeModal?.('item-edit-modal');
     }
 
     const labels = {
@@ -11043,12 +13110,34 @@ console.log('handleSignup chamada');
     }
   }, true);
 
-  document.addEventListener('pointerdown', (event) => {
-    const targetEl = event.target instanceof Element ? event.target : null;
-    const option = targetEl ? targetEl.closest('.af-autocomplete-option') : null;
-    if (option) {
+  document.addEventListener('mousedown', (event) => {
+    const option = event.target.closest?.('.af-autocomplete-option');
+    const action = event.target.closest?.('[data-af-action]');
+    const voice = event.target.closest?.('[data-af-voice]');
+    const chip = event.target.closest?.('[data-af-chip-remove]');
+    const voiceBtn = event.target.closest?.('.af-voice-trigger');
+    if (option || action || voice || chip || voiceBtn) {
       event.preventDefault();
-      event.stopPropagation();
+    }
+  }, true);
+
+  document.addEventListener('click', (event) => {
+    const voiceBtn = event.target.closest?.('.af-voice-trigger');
+    if (voiceBtn) {
+      const input = voiceBtn.parentElement?.querySelector('input');
+      if (input) app.startIngredientVoiceSearch(input);
+      return;
+    }
+
+    const panelVoiceBtn = event.target.closest?.('[data-af-voice]');
+    if (panelVoiceBtn) {
+      const input = app.__afAutocomplete?.input;
+      if (input) app.startIngredientVoiceSearch(input);
+      return;
+    }
+
+    const option = event.target.closest?.('.af-autocomplete-option');
+    if (option) {
       const name = option.getAttribute('data-af-name') || '';
       const state = app.__afAutocomplete;
       const context = state.context || app.getIngredientAutocompleteContext(state.input);
@@ -11062,21 +13151,17 @@ console.log('handleSignup chamada');
       }
       return;
     }
-    const chip = event.target.closest?.('[data-af-chip-remove]');
-    if (chip) {
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation?.();
-      const name = chip.getAttribute('data-af-chip-remove') || '';
+
+    const removeChip = event.target.closest?.('[data-af-chip-remove]');
+    if (removeChip) {
+      const name = removeChip.getAttribute('data-af-chip-remove') || '';
       app.__afAutocomplete.selected.delete(normalize(name));
       if (app.__afAutocomplete.input) app.renderIngredientAutocomplete(app.__afAutocomplete.input, app.__afAutocomplete.input.value || '');
       return;
     }
+
     const action = event.target.closest?.('[data-af-action]');
     if (action) {
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation?.();
       const act = action.getAttribute('data-af-action');
       if (act === 'clear') {
         app.clearAutocompleteSelection();
@@ -11094,37 +13179,15 @@ console.log('handleSignup chamada');
       }
       return;
     }
-    const voice = event.target.closest?.('[data-af-voice]');
-    const voiceBtn = event.target.closest?.('.af-voice-trigger');
-    if (voice || voiceBtn) {
-      event.preventDefault();
-    }
-  }, true);
 
-  document.addEventListener('click', (event) => {
-    const targetEl = event.target instanceof Element ? event.target : null;
-    const voiceBtn = targetEl ? targetEl.closest('.af-voice-trigger') : null;
-    if (voiceBtn) {
-      const input = voiceBtn.parentElement?.querySelector('input');
-      if (input) app.startIngredientVoiceSearch(input);
-      return;
-    }
-
-    const panelVoiceBtn = targetEl ? targetEl.closest('[data-af-voice]') : null;
-    if (panelVoiceBtn) {
-      const input = app.__afAutocomplete?.input;
-      if (input) app.startIngredientVoiceSearch(input);
-      return;
-    }
-
-    const input = targetEl ? targetEl.closest('input') : null;
+    const input = event.target.closest?.('input');
     if (app.isIngredientAutocompleteInput(input)) {
       app.decorateIngredientAutocompleteInput(input);
       app.renderIngredientAutocomplete(input, input.value || '');
       return;
     }
 
-    if (!(targetEl && targetEl.closest('#autocomplete-suggestions'))) {
+    if (!event.target.closest?.('#autocomplete-suggestions')) {
       app.hideAutocomplete(true);
     }
   }, true);
@@ -11229,4 +13292,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLandingPremium, { once:true });
   else initLandingPremium();
+})();
+
+
+/* AF hard reset autocomplete bootstrap */
+(function(){
+  function boot(){
+    const app = window.app;
+    if (!app) { setTimeout(boot, 250); return; }
+    if (app.__afHardResetBooted) return;
+    app.__afHardResetBooted = true;
+
+    try { if (typeof ALL_ITEMS_DATA !== 'undefined' && !window.ALL_ITEMS_DATA) window.ALL_ITEMS_DATA = ALL_ITEMS_DATA; } catch(_) {}
+
+    const fieldIds = new Set([
+      'lista-form-nome-full','lista-form-nome-dash','edit-item-name','edit-item-name-dt','pantry-edit-name',
+      'recipe-ing-name','inline-edit-name','item-name','essential-name','planner-custom-name','recipe-edit-name','calc-item-name'
+    ]);
+
+    const isTarget = (input) => {
+      if (!input || input.tagName !== 'INPUT' || input.type === 'hidden' || input.disabled || input.readOnly) return false;
+      const id = String(input.id||'').trim();
+      if (fieldIds.has(id)) return true;
+      const hay = [id, input.name||'', input.placeholder||'', input.getAttribute('aria-label')||'', input.closest('form,.modal-box,.card-content,.form-group')?.textContent||''].join(' ').toLowerCase();
+      return /(ingred|item|produto|despensa|lista|receita|essencial|planej|calc)/.test(hay) && /(nome|name|buscar|digite|adicionar|insira)/.test(hay);
+    };
+
+    const bindInput = (input) => {
+      if (!isTarget(input) || input.dataset.afHardBound === '1') return;
+      input.dataset.afHardBound = '1';
+      input.setAttribute('autocomplete','off');
+      input.addEventListener('focus', () => {
+        try { app.renderIngredientAutocomplete?.(input, input.value || ''); } catch(e) {}
+      });
+      input.addEventListener('input', () => {
+        try { app.renderIngredientAutocomplete?.(input, input.value || ''); } catch(e) {}
+      });
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          app.hideAutocomplete?.(true);
+          return;
+        }
+        if (event.key === 'Enter') {
+          const state = app.__afAutocomplete || {};
+          const context = app.getIngredientAutocompleteContext ? app.getIngredientAutocompleteContext(input) : { mode: 'single' };
+          if (context.mode === 'bulk') {
+            event.preventDefault();
+            app.applyBulkAutocompleteSelection?.();
+          } else if (state.suggestions && state.suggestions[0]) {
+            event.preventDefault();
+            app.applySingleAutocompleteItem?.(state.suggestions[0].name);
+          }
+        }
+      });
+    };
+
+    const scan = (scope=document) => {
+      scope.querySelectorAll?.('input').forEach(bindInput);
+    };
+
+    // neutralize legacy behavior by routing old calls to the final renderer
+    app.handleAutocomplete = function(input){
+      if (!isTarget(input)) return;
+      return app.renderIngredientAutocomplete?.(input, input.value || '');
+    };
+
+    const oldHide = app.hideAutocomplete?.bind(app);
+    app.hideAutocomplete = function(forceClearSelection=false){
+      return oldHide ? oldHide(forceClearSelection) : undefined;
+    };
+
+    scan(document);
+    const mo = new MutationObserver((muts) => {
+      muts.forEach((m) => m.addedNodes.forEach((n) => {
+        if (n.nodeType !== 1) return;
+        if (n.matches?.('input')) bindInput(n);
+        scan(n);
+      }));
+    });
+    mo.observe(document.documentElement || document.body, { childList:true, subtree:true });
+
+    document.addEventListener('click', (event) => {
+      const input = event.target.closest?.('input');
+      if (isTarget(input)) {
+        setTimeout(() => { try { app.renderIngredientAutocomplete?.(input, input.value || ''); } catch(e) {} }, 10);
+      }
+    }, true);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once:true });
+  else boot();
 })();
