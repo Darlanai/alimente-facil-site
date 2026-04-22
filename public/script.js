@@ -66,9 +66,7 @@ orcamento: {
         init() {
             this.loadState();
             this.cacheDOMElements();
-            this.createAutocompleteElement();
             this.attachEventListeners();
-            this.bindGlobalAutocompleteFields?.(document);
             this.applySavedTheme();
             this.updateBodyClasses();
             this.updateStartButton();
@@ -868,35 +866,7 @@ this.elements.body.addEventListener('submit', e => {
              document.getElementById('budget-save-btn')?.addEventListener('click', () => this.handleSaveOrcamento());
              document.getElementById('essentials-add-btn')?.addEventListener('click', () => this.handleAddEssential());
 
-            this.elements.body.addEventListener('input', e => {
-                const targetId = e.target.id;
-                if (targetId === 'lista-form-nome-dash' || targetId === 'lista-form-nome-full' || targetId === 'edit-item-name' || targetId === 'essential-name' || targetId === 'recipe-ing-name' || targetId === 'pantry-edit-name') { this.handleAutocomplete(e.target); }
-            });
-            this.elements.body.addEventListener('focusout', e => {
-                 const targetId = e.target.id;
-                 if (targetId === 'lista-form-nome-dash' || targetId === 'lista-form-nome-full' || targetId === 'edit-item-name' || targetId === 'essential-name' || targetId === 'recipe-ing-name' || targetId === 'pantry-edit-name') {
-                    setTimeout(() => { if (document.activeElement !== this.elements.autocompleteSuggestions) { this.hideAutocomplete(); } }, 150);
-                 }
-            });
-            this.elements.autocompleteSuggestions?.addEventListener('mousedown', e => {
-                 const itemEl = e.target.closest('.autocomplete-item');
-                 if (itemEl) { this.selectAutocompleteItem(itemEl.dataset.name); e.preventDefault(); }
-            });
 
-        },
-
-        bindGlobalAutocompleteFields(scope = document) {
-            ['#lista-form-nome-dash','#lista-form-nome-full','#edit-item-name','#essential-name','#recipe-ing-name','#pantry-edit-name','#config-name','#config-email','#config-name-modal','#config-email-modal'].forEach((selector) => {
-                scope.querySelectorAll?.(selector).forEach((input) => {
-                    if (input.dataset.afBindAutocomplete === '1') return;
-                    input.dataset.afBindAutocomplete = '1';
-                    input.setAttribute('autocomplete', 'off');
-                    input.addEventListener('input', () => this.handleAutocomplete(input));
-                    input.addEventListener('focus', () => {
-                        if (String(input.value || '').trim()) this.handleAutocomplete(input);
-                    });
-                });
-            });
         },
 
         updateBodyClasses() { this.elements.body.classList.toggle('app-mode', this.isAppMode); },
@@ -2479,7 +2449,6 @@ renderOrcamento() {
                       <div class="md-detail-column dashboard-card" id="config-detail-desktop"></div>
                   </div>
              `;
-             this.bindGlobalAutocompleteFields?.(container);
              if (window.innerWidth >= 992) this.renderConfigDetailDesktop('perfil');
         },
 
@@ -2496,11 +2465,11 @@ if (section === 'perfil') {
     <div class="detail-stack">
       <div class="form-group">
         <label for="config-name">Nome</label>
-        <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name">
+        <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}">
       </div>
       <div class="form-group">
         <label for="config-email">Email</label>
-        <input type="email" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com" autocomplete="email">
+        <input type="email" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com">
       </div>
       <div id="config-profile-feedback" class="auth-feedback-message is-info" style="display:none;"></div>
 
@@ -2508,7 +2477,7 @@ if (section === 'perfil') {
       <div id="config-profile-security-fields" class="detail-stack" style="margin-top:16px; display:block;">
         <div class="form-group">
           <label for="config-password">Senha atual</label>
-          <input type="password" id="config-password" placeholder="Digite sua senha atual" autocomplete="current-password">
+          <input type="password" id="config-password" placeholder="Digite sua senha atual">
         </div>
       </div>
 
@@ -2566,7 +2535,6 @@ if (section === 'perfil') {
     <div class="card-content">${content}</div>
     <div class="card-footer">${footer}</div>
   `;
-  this.bindGlobalAutocompleteFields?.(container);
 
 if (section === 'perfil') {
     const saveBtn = container.querySelector('#config-save-profile-btn');
@@ -2599,11 +2567,11 @@ openConfigSectionModal(section = 'perfil') {
       <div class="detail-stack">
         <div class="form-group">
           <label for="config-name-modal">Nome</label>
-          <input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name">
+          <input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}">
         </div>
         <div class="form-group">
           <label for="config-email-modal">Email</label>
-          <input type="email" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com" autocomplete="email">
+          <input type="email" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com">
         </div>
         <div id="config-profile-feedback-modal" class="auth-feedback-message is-info" style="display:none;"></div>
 
@@ -3610,123 +3578,6 @@ openListEditView(listId) {
             }, 300);
         },
 
-        createAutocompleteElement() {
-            const el = document.createElement('div'); el.id = 'autocomplete-suggestions'; document.body.appendChild(el); this.elements.autocompleteSuggestions = el; this.activeAutocompleteInput = null;
-        },
-
-        handleAutocomplete(inputElement) {
-            const rawQuery = inputElement.value.trim();
-            const query = this.normalizeSearchText(rawQuery);
-            this.activeAutocompleteInput = inputElement;
-            if (query.length < 1) { this.hideAutocomplete(); return; }
-
-            const suggestionMap = new Map();
-            const pushSuggestion = (item) => {
-                if (!item?.name) return;
-                const key = this.normalizeSearchText(item.name);
-                if (!key || suggestionMap.has(key) || !key.includes(query)) return;
-                suggestionMap.set(key, item);
-            };
-
-            ALL_ITEMS_DATA.forEach(pushSuggestion);
-            (this.state?.despensa || []).forEach(item => pushSuggestion({ name: item.name, price: Number(item.valor || 0), unit_desc: item.unid || 'un' }));
-            (this.state?.essenciais || []).forEach(item => pushSuggestion({ name: item.name, price: Number(item.preco || 0), unit_desc: item.unid || 'un' }));
-            Object.values(this.state?.receitas || {}).forEach(recipe => {
-                (recipe?.ingredients || []).forEach(ing => pushSuggestion({ name: ing.name, price: 0, unit_desc: ing.unit || 'un' }));
-            });
-
-            const suggestions = Array.from(suggestionMap.values()).slice(0, 10);
-            if (suggestions.length === 0) {
-                this.showAutocomplete([{ name: `Insira manual: ${rawQuery}` }], query, inputElement);
-                return;
-            }
-
-            this.showAutocomplete(suggestions, query, inputElement);
-        },
-        showAutocomplete(suggestions, query, inputElement) {
-            const suggestionsEl = this.elements.autocompleteSuggestions;
-            if (!suggestionsEl) return;
-            suggestionsEl.innerHTML = suggestions.map(item => {
-                const isManual = String(item.name).startsWith('Insira manual:');
-                const safeName = this.escapeHtml(item.name);
-                let nameHtml = safeName;
-                if (!isManual && query) {
-                    const normalizedName = this.normalizeSearchText(item.name);
-                    const matchIndex = normalizedName.indexOf(query);
-                    if (matchIndex >= 0) {
-                        const originalName = String(item.name);
-                        const sliceEnd = Math.min(originalName.length, matchIndex + query.length);
-                        const before = this.escapeHtml(originalName.slice(0, matchIndex));
-                        const hit = this.escapeHtml(originalName.slice(matchIndex, sliceEnd));
-                        const after = this.escapeHtml(originalName.slice(sliceEnd));
-                        nameHtml = `${before}<strong>${hit}</strong>${after}`;
-                    }
-                }
-                return ` <div class="autocomplete-item" data-name="${safeName}" data-manual="${isManual ? '1' : '0'}"> ${nameHtml} </div> `;
-            }).join('');
-            const rect = inputElement.getBoundingClientRect();
-            suggestionsEl.style.left = `${rect.left}px`;
-            suggestionsEl.style.top = `${rect.bottom + 5}px`;
-            suggestionsEl.style.width = `${rect.width}px`;
-            suggestionsEl.style.display = 'block';
-        },
-        hideAutocomplete() { if (this.elements.autocompleteSuggestions) { this.elements.autocompleteSuggestions.style.display = 'none'; } this.activeAutocompleteInput = null; },
-        selectAutocompleteItem(itemName) {
-            if (!this.activeAutocompleteInput) { this.hideAutocomplete(); return; }
-            if (String(itemName).startsWith('Insira manual:')) {
-                const manual = String(itemName).replace('Insira manual:', '').trim();
-                if (manual) this.activeAutocompleteInput.value = manual;
-                this.hideAutocomplete();
-                return;
-            }
-            const normalizedItemName = this.normalizeSearchText(itemName);
-            const itemData = ALL_ITEMS_DATA.find(item => this.normalizeSearchText(item.name) === normalizedItemName)
-                || (this.state?.despensa || []).find(item => this.normalizeSearchText(item.name) === normalizedItemName)
-                || (this.state?.essenciais || []).find(item => this.normalizeSearchText(item.name) === normalizedItemName)
-                || Object.values(this.state?.receitas || {}).flatMap(recipe => recipe?.ingredients || []).find(ing => this.normalizeSearchText(ing.name) === normalizedItemName);
-            if (!itemData) {
-                this.activeAutocompleteInput.value = itemName;
-                this.hideAutocomplete();
-                this.activeAutocompleteInput.focus();
-                return;
-            }
-            const inputId = this.activeAutocompleteInput.id;
-            this.activeAutocompleteInput.value = itemData.name;
-            const form = this.activeAutocompleteInput.closest('form, .modal-box, .dashboard-card');
-            if (!form) { this.hideAutocomplete(); return; }
-            const unitSource = itemData.unit_desc || itemData.unid || itemData.unit || 'un';
-            const unitMatch = String(unitSource).match(/^(un|kg|g|L|ml|pct|cx|xícara|colher|pitada|dentes|a gosto|fio)/i);
-            const itemUnit = unitMatch ? unitMatch[1] : 'un';
-
-            if (inputId.includes('lista-form-nome')) {
-                const suffix = inputId.includes('-dash') ? '-dash' : '-full';
-                const qtdInput = form.querySelector(`input[id="lista-form-qtd${suffix}"]`);
-                if (qtdInput) qtdInput.value = 1;
-                const unidSelect = form.querySelector(`select[id="lista-form-unid${suffix}"]`);
-                if (unidSelect) unidSelect.value = itemUnit;
-                const valorInput = form.querySelector(`input[id="lista-form-valor${suffix}"]`);
-                if (valorInput) valorInput.value = itemData.price.toFixed(2);
-            } else if (inputId === 'edit-item-name') {
-                form.querySelector('#edit-item-qtd').value = 1;
-                form.querySelector('#edit-item-unid').value = itemUnit;
-                form.querySelector('#edit-item-valor').value = itemData.price.toFixed(2);
-            } else if (inputId === 'essential-name') {
-                form.querySelector('#essential-price').value = itemData.price.toFixed(2);
-                form.querySelector('#essential-unit').value = itemUnit;
-            } else if (inputId === 'pantry-edit-name') {
-                const qtdInput = form.querySelector('#pantry-edit-qtd');
-                if (qtdInput) qtdInput.value = 1;
-                const unidSelect = form.querySelector('#pantry-edit-unid');
-                if (unidSelect) unidSelect.value = itemUnit;
-            } else if (inputId === 'recipe-ing-name') {
-                const qtdInput = form.querySelector('#recipe-ing-qtd');
-                if (qtdInput && !String(qtdInput.value || '').trim()) qtdInput.value = 1;
-                const unidSelect = form.querySelector('#recipe-ing-unid');
-                if (unidSelect) unidSelect.value = itemUnit;
-            }
-
-            this.hideAutocomplete(); this.activeAutocompleteInput.focus();
-        },
         escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); },
         escapeHtml(str) { return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); },
 
@@ -4135,7 +3986,6 @@ const ALL_ITEMS_DATA = [
     app.loadState = function() {
         originalLoadState();
         this.listSortMode = this.listSortMode || 'date_desc';
-        this.autocompleteTimeout = null;
         this.inlineListEdit = null;
         this.pendingCustomMeal = null;
         Object.entries(this.state?.listas || {}).forEach(([listId, lista]) => {
@@ -4317,40 +4167,6 @@ const ALL_ITEMS_DATA = [
         return `<div class="placeholder-item ${item.checked ? 'is-checked' : ''}" data-id="${item.id}" data-name="${item.name}" data-qtd="${item.qtd}" data-unid="${item.unid}" data-valor="${item.valor}"><div class="item-row"><div class="item-main-info"><i class="fa-solid fa-grip-vertical drag-handle" title="Arrastar item"></i><input type="checkbox" ${item.checked ? 'checked' : ''} aria-label="Marcar ${itemName}"><span class="item-name">${itemName}</span></div><div class="item-actions"><button class="icon-button edit-btn" title="Editar"><i class="fa-solid fa-pencil"></i></button><button class="icon-button delete-btn" title="Excluir"><i class="fa-solid fa-times"></i></button></div></div><div class="item-details-grid"><div>Qtd: <span>${item.qtd}</span></div><div>Un: <span>${item.unid}</span></div><div>Preço: <span>R$ ${parseFloat(item.valor || 0).toFixed(2)}</span></div></div><div class="item-checked-actions"><div class="form-group-checked"><label for="validade-${item.id}">Validade (Opcional)</label><input type="date" id="validade-${item.id}" class="item-validade-input"></div><div class="confirm-actions-group"><small class="confirm-pantry-text">Deseja enviar para a despensa?</small><div class="confirm-buttons"><button class="icon-button cancel-move-btn" title="Não"><i class="fa-solid fa-times-circle" style="color: var(--red);"></i></button><button class="icon-button move-to-despensa-btn" title="Sim"><i class="fa-solid fa-check-circle" style="color: var(--green);"></i></button></div></div></div></div>`;
     };
 
-    app.handleAutocomplete = function(inputElement) {
-        const rawQuery = inputElement.value.trim();
-        const query = this.normalizeSearchText(rawQuery);
-        this.activeAutocompleteInput = inputElement;
-        if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
-        if (this.elements.autocompleteSuggestions) this.elements.autocompleteSuggestions.innerHTML = '';
-        if (query.length < 1) return this.hideAutocomplete();
-        this.autocompleteTimeout = setTimeout(() => {
-            const unique = new Map();
-            const pushSuggestion = (item) => {
-                if (!item?.name) return;
-                const key = this.normalizeSearchText(item.name);
-                if (!key || unique.has(key) || !key.includes(query)) return;
-                unique.set(key, item);
-            };
-            ALL_ITEMS_DATA.forEach(pushSuggestion);
-            (this.state?.despensa || []).forEach(item => pushSuggestion({ name: item.name, price: Number(item.valor || 0), unit_desc: item.unid || 'un' }));
-            (this.state?.essenciais || []).forEach(item => pushSuggestion({ name: item.name, price: Number(item.preco || 0), unit_desc: item.unid || 'un' }));
-            Object.values(this.state?.receitas || {}).forEach(recipe => {
-                (recipe?.ingredients || []).forEach(ing => pushSuggestion({ name: ing.name, price: 0, unit_desc: ing.unit || 'un' }));
-            });
-            const suggestions = Array.from(unique.values()).slice(0, 10);
-            if (!suggestions.length) return this.showAutocomplete([{ name: `Insira manual: ${rawQuery}` }], query, inputElement);
-            this.showAutocomplete(suggestions, query, inputElement);
-        }, 120);
-    };
-    app.hideAutocomplete = function() {
-        if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
-        if (this.elements.autocompleteSuggestions) {
-            this.elements.autocompleteSuggestions.style.display = 'none';
-            this.elements.autocompleteSuggestions.innerHTML = '';
-        }
-        this.activeAutocompleteInput = null;
-    };
 
     app.handleOpenListViewModal = function(listId) {
         const lista = this.state.listas[listId];
@@ -6701,6 +6517,7 @@ const ALL_ITEMS_DATA = [
     }, true);
 })();
 
+window.ALL_ITEMS_DATA = ALL_ITEMS_DATA;
 window.app = app;
 
     app.init();
@@ -9932,11 +9749,11 @@ window.app = app;
           <div class="detail-stack">
             <div class="form-group">
               <label for="config-name">Nome</label>
-              <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name">
+              <input type="text" id="config-name" value="${this.escapeHtml(this.state.user.nome || 'User')}">
             </div>
             <div class="form-group">
               <label for="config-email">Email</label>
-              <input type="email" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com" autocomplete="email">
+              <input type="email" id="config-email" value="${this.escapeHtml(this.state.user.email || '')}" placeholder="seuemail@exemplo.com">
             </div>
             <div id="config-profile-feedback" class="auth-feedback-message is-info" style="display:none;"></div>
 
@@ -9944,7 +9761,7 @@ window.app = app;
             <div id="config-profile-security-fields" class="detail-stack" style="margin-top:16px; display:block;">
               <div class="form-group">
                 <label for="config-password">Senha atual</label>
-                <input type="password" id="config-password" placeholder="Digite sua senha atual" autocomplete="current-password">
+                <input type="password" id="config-password" placeholder="Digite sua senha atual">
 
               </div>
             </div>
@@ -10036,8 +9853,8 @@ window.app = app;
         content = `
           <p class="detail-note">${subtitle}</p>
           <div class="detail-stack">
-            <div class="form-group"><label for="config-name-modal">Nome</label><input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}" autocomplete="name"></div>
-            <div class="form-group"><label for="config-email-modal">Email</label><input type="email" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || '')}" autocomplete="email"></div>
+            <div class="form-group"><label for="config-name-modal">Nome</label><input type="text" id="config-name-modal" value="${this.escapeHtml(this.state.user.nome || 'User')}"></div>
+            <div class="form-group"><label for="config-email-modal">Email</label><input type="email" id="config-email-modal" value="${this.escapeHtml(this.state.user.email || '')}"></div>
             <div class="detail-listing-item config-security-hint" style="align-items:flex-start; gap:16px;">
               <div>
                 <strong>Confirmação obrigatória</strong>
@@ -10045,8 +9862,8 @@ window.app = app;
               </div>
             </div>
             <div id="config-profile-security-fields-modal" class="detail-stack" style="display:none;">
-              <div class="form-group"><label for="config-password-modal">Senha atual</label><input type="password" id="config-password-modal" placeholder="Digite sua senha atual" autocomplete="current-password"></div>
-              <div class="form-group"><label for="config-password-confirm-modal">Confirmar senha atual</label><input type="password" id="config-password-confirm-modal" placeholder="Repita sua senha atual" autocomplete="current-password"></div>
+              <div class="form-group"><label for="config-password-modal">Senha atual</label><input type="password" id="config-password-modal" placeholder="Digite sua senha atual"></div>
+              <div class="form-group"><label for="config-password-confirm-modal">Confirmar senha atual</label><input type="password" id="config-password-confirm-modal" placeholder="Repita sua senha atual"></div>
             </div>
             <div id="config-profile-feedback-modal" class="auth-feedback-message is-info" style="display:none;"></div>
             <hr class="divider" />
@@ -10750,140 +10567,6 @@ window.app = app;
       .trim();
   };
 
-  app.showAutocomplete = function(suggestions, query, inputElement) {
-    const suggestionsEl = this.elements?.autocompleteSuggestions;
-    if (!suggestionsEl || !inputElement) return;
-
-    const renderLabel = (item) => {
-      const isManual = String(item?.name || '').startsWith('Insira manual:');
-      const original = String(item?.name || '');
-      if (isManual || !query) return this.escapeHtml(original);
-      const normalizedOriginal = this.normalizeSearchText(original);
-      const idx = normalizedOriginal.indexOf(query);
-      if (idx < 0) return this.escapeHtml(original);
-      const sliceEnd = Math.min(original.length, idx + query.length);
-      return `${this.escapeHtml(original.slice(0, idx))}<strong>${this.escapeHtml(original.slice(idx, sliceEnd))}</strong>${this.escapeHtml(original.slice(sliceEnd))}`;
-    };
-
-    suggestionsEl.innerHTML = suggestions.map(item => {
-      const name = String(item?.name || '');
-      const safeName = this.escapeHtml(name);
-      const isManual = name.startsWith('Insira manual:');
-      return `<div class="autocomplete-item" data-name="${safeName}" data-manual="${isManual ? '1' : '0'}">${renderLabel(item)}</div>`;
-    }).join('');
-
-    const rect = inputElement.getBoundingClientRect();
-    suggestionsEl.style.position = 'fixed';
-    suggestionsEl.style.left = `${Math.max(12, rect.left)}px`;
-    suggestionsEl.style.top = `${Math.min(window.innerHeight - 12, rect.bottom + 6)}px`;
-    suggestionsEl.style.width = `${Math.max(220, rect.width)}px`;
-    suggestionsEl.style.maxWidth = `calc(100vw - 24px)`;
-    suggestionsEl.style.display = 'block';
-  };
-
-  app.hideAutocomplete = function() {
-    if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
-    if (this.elements?.autocompleteSuggestions) {
-      this.elements.autocompleteSuggestions.style.display = 'none';
-      this.elements.autocompleteSuggestions.innerHTML = '';
-    }
-    this.activeAutocompleteInput = null;
-  };
-
-  app.handleAutocomplete = function(inputElement) {
-    if (!inputElement) return;
-    const rawQuery = String(inputElement.value || '').trim();
-    const query = this.normalizeSearchText(rawQuery);
-    this.activeAutocompleteInput = inputElement;
-
-    if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
-    if (query.length < 1) {
-      this.hideAutocomplete();
-      return;
-    }
-
-    const suggestionsSource = [];
-    if (Array.isArray(window.ALL_ITEMS_DATA)) suggestionsSource.push(...window.ALL_ITEMS_DATA);
-    suggestionsSource.push(...(this.state?.despensa || []).map(item => ({ name: item.name, price: Number(item.valor || 0), unit_desc: item.unid || 'un' })));
-    suggestionsSource.push(...(this.state?.essenciais || []).map(item => ({ name: item.name, price: Number(item.preco || 0), unit_desc: item.unid || 'un' })));
-    Object.values(this.state?.receitas || {}).forEach(recipe => {
-      (recipe?.ingredients || []).forEach(ing => {
-        suggestionsSource.push({ name: ing.name, price: 0, unit_desc: ing.unit || 'un' });
-      });
-    });
-
-    this.autocompleteTimeout = setTimeout(() => {
-      const normalizedQueryWords = query.split(' ').filter(Boolean);
-      const dedup = new Map();
-
-      suggestionsSource.forEach(item => {
-        const name = String(item?.name || '').trim();
-        if (!name) return;
-        const normalizedName = this.normalizeSearchText(name);
-        if (!normalizedName) return;
-        const matches = normalizedQueryWords.every(word => normalizedName.includes(word));
-        if (!matches) return;
-        const score = normalizedName.startsWith(query) ? 0 : normalizedName.includes(` ${query}`) ? 1 : 2;
-        const key = normalizedName;
-        if (!dedup.has(key)) dedup.set(key, { ...item, __score: score });
-        else if ((dedup.get(key).__score ?? 9) > score) dedup.set(key, { ...item, __score: score });
-      });
-
-      const suggestions = Array.from(dedup.values())
-        .sort((a, b) => (a.__score - b.__score) || String(a.name).localeCompare(String(b.name), 'pt-BR'))
-        .slice(0, 8)
-        .map(({ __score, ...item }) => item);
-
-      if (!suggestions.length) {
-        this.showAutocomplete([{ name: `Insira manual: ${rawQuery}` }], query, inputElement);
-        return;
-      }
-
-      this.showAutocomplete(suggestions, query, inputElement);
-    }, 80);
-  };
-
-  app.selectAutocompleteItem = function(itemName) {
-    const activeInput = this.activeAutocompleteInput;
-    if (!activeInput) {
-      this.hideAutocomplete();
-      return;
-    }
-
-    if (String(itemName).startsWith('Insira manual:')) {
-      const manualName = String(itemName).replace('Insira manual:', '').trim();
-      activeInput.value = manualName;
-      this.hideAutocomplete();
-      activeInput.focus();
-      return;
-    }
-
-    const normalizedItemName = this.normalizeSearchText(itemName);
-    const recipeIngredients = Object.values(this.state?.receitas || {}).flatMap(recipe => recipe?.ingredients || []);
-    const candidates = [
-      ...(Array.isArray(window.ALL_ITEMS_DATA) ? window.ALL_ITEMS_DATA : []),
-      ...(this.state?.despensa || []).map(item => ({ name: item.name, price: Number(item.valor || 0), unit_desc: item.unid || 'un' })),
-      ...(this.state?.essenciais || []).map(item => ({ name: item.name, price: Number(item.preco || 0), unit_desc: item.unid || 'un' })),
-      ...recipeIngredients.map(ing => ({ name: ing.name, price: 0, unit_desc: ing.unit || 'un' }))
-    ];
-
-    const itemData = candidates.find(item => this.normalizeSearchText(item?.name || '') === normalizedItemName) || { name: itemName, price: 0, unit_desc: 'un' };
-    activeInput.value = itemData.name;
-
-    const modal = activeInput.closest('.modal-box, .modal-content, #custom-confirm-modal, form') || document;
-    const unitSource = String(itemData.unit_desc || itemData.unid || itemData.unit || 'un');
-    const matchedUnit = ['un','kg','g','L','ml','pct','cx','xícara','colher','pitada','dentes','a gosto','fio'].find(unit => unitSource.toLowerCase().includes(unit.toLowerCase())) || 'un';
-
-    if (activeInput.id === 'recipe-ing-name') {
-      const qtdInput = modal.querySelector('#recipe-ing-qtd');
-      const unitSelect = modal.querySelector('#recipe-ing-unid');
-      if (qtdInput && !String(qtdInput.value || '').trim()) qtdInput.value = '1';
-      if (unitSelect) unitSelect.value = matchedUnit;
-    }
-
-    this.hideAutocomplete();
-    activeInput.focus();
-  };
 
   app.handleGenerateListFromPlanner = function(dayKey = null) {
     const source = dayKey
@@ -10951,32 +10634,6 @@ window.app = app;
     }, 60);
   };
 
-  const bindRecipeIngredientField = (scope = document) => {
-    const input = scope.querySelector?.('#recipe-ing-name');
-    if (!input || input.dataset.afBindAutocomplete === '1') return;
-    input.dataset.afBindAutocomplete = '1';
-    input.setAttribute('autocomplete', 'off');
-    input.addEventListener('input', () => app.handleAutocomplete(input));
-    input.addEventListener('focus', () => {
-      if (String(input.value || '').trim()) app.handleAutocomplete(input);
-    });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') app.hideAutocomplete();
-    });
-  };
-
-  const originalHandleOpenRecipeEditModal = app.handleOpenRecipeEditModal?.bind(app);
-  if (originalHandleOpenRecipeEditModal) {
-    app.handleOpenRecipeEditModal = function(...args) {
-      const result = originalHandleOpenRecipeEditModal(...args);
-      setTimeout(() => bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document), 30);
-      return result;
-    };
-  }
-
-  document.addEventListener('focusin', (e) => {
-    if (e.target?.id === 'recipe-ing-name') bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document);
-  });
 })();
 
 (() => {
@@ -11041,118 +10698,6 @@ window.app = app;
     return Array.from(dedup.values());
   };
 
-  app.showAutocomplete = function(suggestions, query, inputElement) {
-    const suggestionsEl = this.elements?.autocompleteSuggestions;
-    if (!suggestionsEl || !inputElement) return;
-
-    const q = this.normalizeSearchText(query || '');
-    const renderLabel = (item) => {
-      const original = String(item?.name || '');
-      const isManual = original.startsWith('Insira manual:');
-      if (!q || isManual) return this.escapeHtml(original);
-      const originalWords = original.split(/(\s+)/);
-      return originalWords.map(part => {
-        if (!part.trim()) return part;
-        return this.normalizeSearchText(part).includes(q)
-          ? `<strong>${this.escapeHtml(part)}</strong>`
-          : this.escapeHtml(part);
-      }).join('');
-    };
-
-    suggestionsEl.innerHTML = suggestions.map(item => {
-      const name = String(item?.name || '');
-      const safeName = this.escapeHtml(name);
-      const isManual = name.startsWith('Insira manual:');
-      return `<button type="button" class="autocomplete-item" data-name="${safeName}" data-manual="${isManual ? '1' : '0'}">${renderLabel(item)}</button>`;
-    }).join('');
-
-    const rect = inputElement.getBoundingClientRect();
-    suggestionsEl.style.position = 'fixed';
-    suggestionsEl.style.left = `${Math.max(12, rect.left)}px`;
-    suggestionsEl.style.top = `${Math.min(window.innerHeight - 16, rect.bottom + 6)}px`;
-    suggestionsEl.style.width = `${Math.max(220, rect.width)}px`;
-    suggestionsEl.style.maxWidth = 'calc(100vw - 24px)';
-    suggestionsEl.style.display = 'block';
-    this.activeAutocompleteInput = inputElement;
-  };
-
-  app.hideAutocomplete = function() {
-    if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
-    const suggestionsEl = this.elements?.autocompleteSuggestions;
-    if (suggestionsEl) {
-      suggestionsEl.style.display = 'none';
-      suggestionsEl.innerHTML = '';
-    }
-    this.activeAutocompleteInput = null;
-  };
-
-  app.handleAutocomplete = function(inputElement) {
-    if (!inputElement) return;
-    const rawQuery = String(inputElement.value || '').trim();
-    const query = this.normalizeSearchText(rawQuery);
-    this.activeAutocompleteInput = inputElement;
-
-    if (this.autocompleteTimeout) clearTimeout(this.autocompleteTimeout);
-    if (!query) {
-      this.hideAutocomplete();
-      return;
-    }
-
-    const source = this.getAllIngredientSuggestions();
-    this.autocompleteTimeout = setTimeout(() => {
-      const words = query.split(' ').filter(Boolean);
-      const suggestions = source
-        .map(item => {
-          const normalizedName = this.normalizeSearchText(item.name);
-          const starts = normalizedName.startsWith(query) ? 0 : 1;
-          const includesAll = words.every(word => normalizedName.includes(word));
-          if (!includesAll) return null;
-          return { ...item, __score: starts, __normalizedName: normalizedName };
-        })
-        .filter(Boolean)
-        .sort((a, b) => (a.__score - b.__score) || a.__normalizedName.localeCompare(b.__normalizedName, 'pt-BR'))
-        .slice(0, 8)
-        .map(({ __score, __normalizedName, ...item }) => item);
-
-      if (!suggestions.length) {
-        this.showAutocomplete([{ name: `Insira manual: ${rawQuery}` }], rawQuery, inputElement);
-        return;
-      }
-      this.showAutocomplete(suggestions, rawQuery, inputElement);
-    }, 40);
-  };
-
-  app.selectAutocompleteItem = function(itemName) {
-    const input = this.activeAutocompleteInput;
-    if (!input) {
-      this.hideAutocomplete();
-      return;
-    }
-
-    if (String(itemName).startsWith('Insira manual:')) {
-      input.value = String(itemName).replace('Insira manual:', '').trim();
-      this.hideAutocomplete();
-      input.focus();
-      return;
-    }
-
-    const normalizedTarget = this.normalizeSearchText(itemName);
-    const itemData = this.getAllIngredientSuggestions().find(item => this.normalizeSearchText(item.name) === normalizedTarget) || { name: itemName, unit_desc: 'un' };
-    input.value = itemData.name;
-
-    if (input.id === 'recipe-ing-name') {
-      const modal = input.closest('#custom-confirm-modal, .modal-box, form') || document;
-      const qtdInput = modal.querySelector('#recipe-ing-qtd');
-      const unitSelect = modal.querySelector('#recipe-ing-unid');
-      const unitSource = String(itemData.unit_desc || itemData.unid || itemData.unit || 'un');
-      const matchedUnit = UNIT_OPTIONS.find(unit => unitSource.toLowerCase().includes(String(unit).toLowerCase())) || 'un';
-      if (qtdInput && !String(qtdInput.value || '').trim()) qtdInput.value = '1';
-      if (unitSelect) unitSelect.value = matchedUnit;
-    }
-
-    this.hideAutocomplete();
-    input.focus();
-  };
 
   app.createListFromIngredients = function(listName, ingredients) {
     const validIngredients = Array.isArray(ingredients) ? ingredients.filter(ing => String(ing?.name || '').trim()) : [];
@@ -11559,41 +11104,6 @@ window.app = app;
     this.openModal('detail-modal');
   };
 
-  const bindRecipeIngredientField = (scope = document) => {
-    const input = scope.querySelector?.('#recipe-ing-name');
-    if (!input || input.dataset.afBindAutocomplete === '1') return;
-    input.dataset.afBindAutocomplete = '1';
-    input.setAttribute('autocomplete', 'off');
-    input.addEventListener('input', () => app.handleAutocomplete(input));
-    input.addEventListener('focus', () => {
-      if (String(input.value || '').trim()) app.handleAutocomplete(input);
-    });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') app.hideAutocomplete();
-    });
-  };
-
-  const originalHandleOpenRecipeEditModal = app.handleOpenRecipeEditModal?.bind(app);
-  if (originalHandleOpenRecipeEditModal) {
-    app.handleOpenRecipeEditModal = function(...args) {
-      const result = originalHandleOpenRecipeEditModal(...args);
-      setTimeout(() => bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document), 10);
-      return result;
-    };
-  }
-
-  document.addEventListener('focusin', (e) => {
-    if (e.target?.id === 'recipe-ing-name') bindRecipeIngredientField(document.getElementById('custom-confirm-modal') || document);
-  });
-
-  document.addEventListener('mousedown', (e) => {
-    const itemEl = e.target.closest?.('.autocomplete-item');
-    if (!itemEl) return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    const name = itemEl.getAttribute('data-name') || '';
-    app.selectAutocompleteItem(name.replace(/&quot;/g, '"'));
-  }, true);
 
   document.addEventListener('click', (e) => {
     const closest = (sel) => e.target.closest(sel);
@@ -12408,62 +11918,273 @@ console.log('handleSignup chamada');
 
 })();
 
-(() => {
-  const app = window.app;
-  if (!app) return;
 
-  const FIELD_IDS = new Set([
+
+
+
+
+;(() => {
+  const PATCH_FLAG = '__afProductAutocompletePatchAppliedLite';
+  const TARGET_IDS = new Set([
     'lista-form-nome-full',
-    'lista-form-nome-dash',
+    'active-list-name-input',
+    'widget-list-name-input',
+    'pantry-edit-name',
     'edit-item-name',
     'edit-item-name-dt',
-    'pantry-edit-name',
-    'recipe-ing-name',
-    'inline-edit-name',
-    'item-name',
-    'essential-name',
-    'planner-custom-name',
-    'recipe-edit-name',
-    'calc-item-name'
+    'recipe-ing-name'
   ]);
+  const MAX_SUGGESTIONS = 10;
+  const INPUT_DEBOUNCE = 90;
+  const LANG = 'pt-BR';
+  const instances = new WeakMap();
+  let catalogCache = null;
+  let appRef = null;
 
-  const UNIT_OPTIONS = ['un','kg','g','L','ml','pct','cx','xícara','colher','pitada','dentes','a gosto','fio','filés'];
-  const COMMON_ITEMS = [
+  const FALLBACK_CATALOG = [
     { name: 'Arroz', unit_desc: 'kg' },
-    { name: 'Feijão', unit_desc: 'kg' },
-    { name: 'Açúcar', unit_desc: 'kg' },
-    { name: 'Café', unit_desc: 'pct' },
-    { name: 'Sal', unit_desc: 'a gosto' },
-    { name: 'Óleo de soja', unit_desc: 'L' },
-    { name: 'Leite', unit_desc: 'L' },
-    { name: 'Ovos', unit_desc: 'un' },
-    { name: 'Tomate', unit_desc: 'un' },
-    { name: 'Cebola', unit_desc: 'un' },
-    { name: 'Alho', unit_desc: 'dentes' },
+    { name: 'Arroz Integral', unit_desc: 'kg' },
+    { name: 'Feijão Preto', unit_desc: 'kg' },
+    { name: 'Feijão Carioca', unit_desc: 'kg' },
+    { name: 'Feijão Branco', unit_desc: 'kg' },
+    { name: 'Lentilha', unit_desc: 'kg' },
+    { name: 'Grão-de-bico', unit_desc: 'kg' },
+    { name: 'Ervilha Seca', unit_desc: 'kg' },
     { name: 'Macarrão', unit_desc: 'pct' },
-    { name: 'Farinha de trigo', unit_desc: 'kg' },
-    { name: 'Manteiga', unit_desc: 'g' },
-    { name: 'Pão', unit_desc: 'un' },
-    { name: 'Banana', unit_desc: 'un' },
-    { name: 'Maçã', unit_desc: 'un' },
-    { name: 'Batata', unit_desc: 'kg' },
-    { name: 'Cenoura', unit_desc: 'kg' },
-    { name: 'Abóbora', unit_desc: 'kg' },
-    { name: 'Frango', unit_desc: 'kg' },
-    { name: 'Carne moída', unit_desc: 'kg' },
-    { name: 'Queijo', unit_desc: 'g' },
+    { name: 'Macarrão Integral', unit_desc: 'pct' },
+    { name: 'Espaguete', unit_desc: 'pct' },
+    { name: 'Penne', unit_desc: 'pct' },
+    { name: 'Parafuso', unit_desc: 'pct' },
+    { name: 'Lasanha', unit_desc: 'pct' },
+    { name: 'Farinha de Trigo', unit_desc: 'kg' },
+    { name: 'Farinha de Mandioca', unit_desc: 'kg' },
+    { name: 'Farinha de Milho', unit_desc: 'kg' },
+    { name: 'Fubá', unit_desc: 'kg' },
+    { name: 'Polvilho Doce', unit_desc: 'kg' },
+    { name: 'Polvilho Azedo', unit_desc: 'kg' },
+    { name: 'Amido de Milho', unit_desc: 'cx' },
+    { name: 'Aveia', unit_desc: 'cx' },
+    { name: 'Granola', unit_desc: 'pct' },
+    { name: 'Quinoa', unit_desc: 'pct' },
+    { name: 'Cuscuz', unit_desc: 'pct' },
+    { name: 'Tapioca', unit_desc: 'pct' },
+    { name: 'Pão Francês', unit_desc: 'un' },
+    { name: 'Pão de Forma', unit_desc: 'pct' },
+    { name: 'Pão Integral', unit_desc: 'pct' },
+    { name: 'Torrada', unit_desc: 'pct' },
+    { name: 'Biscoito Água e Sal', unit_desc: 'pct' },
+    { name: 'Biscoito Recheado', unit_desc: 'pct' },
+    { name: 'Bolacha Maria', unit_desc: 'pct' },
+    { name: 'Bolo', unit_desc: 'un' },
+    { name: 'Mistura para Bolo', unit_desc: 'cx' },
+    { name: 'Açúcar', unit_desc: 'kg' },
+    { name: 'Açúcar Mascavo', unit_desc: 'kg' },
+    { name: 'Adoçante', unit_desc: 'un' },
+    { name: 'Sal', unit_desc: 'kg' },
+    { name: 'Sal Grosso', unit_desc: 'kg' },
+    { name: 'Pimenta do Reino', unit_desc: 'pct' },
+    { name: 'Páprica', unit_desc: 'pct' },
+    { name: 'Cominho', unit_desc: 'pct' },
+    { name: 'Orégano', unit_desc: 'pct' },
+    { name: 'Canela', unit_desc: 'pct' },
+    { name: 'Cravo', unit_desc: 'pct' },
+    { name: 'Noz Moscada', unit_desc: 'un' },
+    { name: 'Louro', unit_desc: 'pct' },
+    { name: 'Açafrão', unit_desc: 'pct' },
+    { name: 'Colorau', unit_desc: 'pct' },
+    { name: 'Caldo de Galinha', unit_desc: 'cx' },
+    { name: 'Molho de Tomate', unit_desc: 'un' },
+    { name: 'Extrato de Tomate', unit_desc: 'un' },
+    { name: 'Ketchup', unit_desc: 'un' },
+    { name: 'Mostarda', unit_desc: 'un' },
+    { name: 'Maionese', unit_desc: 'un' },
+    { name: 'Vinagre', unit_desc: 'un' },
+    { name: 'Azeite de Oliva', unit_desc: 'un' },
+    { name: 'Óleo de Soja', unit_desc: 'un' },
+    { name: 'Óleo de Girassol', unit_desc: 'un' },
+    { name: 'Manteiga', unit_desc: 'un' },
+    { name: 'Margarina', unit_desc: 'un' },
+    { name: 'Requeijão', unit_desc: 'un' },
+    { name: 'Creme de Leite', unit_desc: 'cx' },
+    { name: 'Leite Condensado', unit_desc: 'cx' },
+    { name: 'Leite', unit_desc: 'L' },
+    { name: 'Leite Desnatado', unit_desc: 'L' },
+    { name: 'Leite Integral', unit_desc: 'L' },
+    { name: 'Leite em Pó', unit_desc: 'pct' },
+    { name: 'Iogurte Natural', unit_desc: 'un' },
+    { name: 'Iogurte Grego', unit_desc: 'un' },
+    { name: 'Queijo Mussarela', unit_desc: 'g' },
+    { name: 'Queijo Minas', unit_desc: 'g' },
+    { name: 'Queijo Prato', unit_desc: 'g' },
+    { name: 'Parmesão', unit_desc: 'g' },
+    { name: 'Queijo Ralado', unit_desc: 'pct' },
     { name: 'Presunto', unit_desc: 'g' },
-    { name: 'Milho', unit_desc: 'pct' }
+    { name: 'Peito de Peru', unit_desc: 'g' },
+    { name: 'Bacon', unit_desc: 'g' },
+    { name: 'Salsicha', unit_desc: 'pct' },
+    { name: 'Linguiça', unit_desc: 'kg' },
+    { name: 'Carne Bovina', unit_desc: 'kg' },
+    { name: 'Carne Moída', unit_desc: 'kg' },
+    { name: 'Acém', unit_desc: 'kg' },
+    { name: 'Patinho', unit_desc: 'kg' },
+    { name: 'Fraldinha', unit_desc: 'kg' },
+    { name: 'Contra Filé', unit_desc: 'kg' },
+    { name: 'Peito de Frango', unit_desc: 'kg' },
+    { name: 'Coxa de Frango', unit_desc: 'kg' },
+    { name: 'Sobrecoxa', unit_desc: 'kg' },
+    { name: 'Filé de Frango', unit_desc: 'kg' },
+    { name: 'Peixe', unit_desc: 'kg' },
+    { name: 'Tilápia', unit_desc: 'kg' },
+    { name: 'Sardinha', unit_desc: 'un' },
+    { name: 'Atum', unit_desc: 'un' },
+    { name: 'Camarão', unit_desc: 'kg' },
+    { name: 'Ovo', unit_desc: 'un' },
+    { name: 'Ovo de Codorna', unit_desc: 'pct' },
+    { name: 'Tomate', unit_desc: 'un' },
+    { name: 'Tomate Cereja', unit_desc: 'cx' },
+    { name: 'Tomate Seco', unit_desc: 'pct' },
+    { name: 'Cebola', unit_desc: 'un' },
+    { name: 'Cebola Roxa', unit_desc: 'un' },
+    { name: 'Alho', unit_desc: 'pct' },
+    { name: 'Alho-poró', unit_desc: 'un' },
+    { name: 'Batata', unit_desc: 'kg' },
+    { name: 'Batata Doce', unit_desc: 'kg' },
+    { name: 'Mandioca', unit_desc: 'kg' },
+    { name: 'Inhame', unit_desc: 'kg' },
+    { name: 'Cenoura', unit_desc: 'kg' },
+    { name: 'Beterraba', unit_desc: 'kg' },
+    { name: 'Abóbora', unit_desc: 'kg' },
+    { name: 'Abobrinha', unit_desc: 'un' },
+    { name: 'Berinjela', unit_desc: 'un' },
+    { name: 'Pepino', unit_desc: 'un' },
+    { name: 'Pimentão Verde', unit_desc: 'un' },
+    { name: 'Pimentão Vermelho', unit_desc: 'un' },
+    { name: 'Pimentão Amarelo', unit_desc: 'un' },
+    { name: 'Quiabo', unit_desc: 'kg' },
+    { name: 'Chuchu', unit_desc: 'kg' },
+    { name: 'Brócolis', unit_desc: 'un' },
+    { name: 'Couve-flor', unit_desc: 'un' },
+    { name: 'Repolho', unit_desc: 'un' },
+    { name: 'Couve', unit_desc: 'maço' },
+    { name: 'Espinafre', unit_desc: 'maço' },
+    { name: 'Alface', unit_desc: 'un' },
+    { name: 'Rúcula', unit_desc: 'maço' },
+    { name: 'Agrião', unit_desc: 'maço' },
+    { name: 'Salsa', unit_desc: 'maço' },
+    { name: 'Cebolinha', unit_desc: 'maço' },
+    { name: 'Coentro', unit_desc: 'maço' },
+    { name: 'Manjericão', unit_desc: 'maço' },
+    { name: 'Hortelã', unit_desc: 'maço' },
+    { name: 'Gengibre', unit_desc: 'g' },
+    { name: 'Batata Palha', unit_desc: 'pct' },
+    { name: 'Milho Verde', unit_desc: 'un' },
+    { name: 'Ervilha', unit_desc: 'un' },
+    { name: 'Azeitona', unit_desc: 'pct' },
+    { name: 'Palmito', unit_desc: 'un' },
+    { name: 'Cogumelo', unit_desc: 'pct' },
+    { name: 'Banana', unit_desc: 'kg' },
+    { name: 'Maçã', unit_desc: 'kg' },
+    { name: 'Pera', unit_desc: 'kg' },
+    { name: 'Mamão', unit_desc: 'un' },
+    { name: 'Melancia', unit_desc: 'un' },
+    { name: 'Melão', unit_desc: 'un' },
+    { name: 'Abacaxi', unit_desc: 'un' },
+    { name: 'Manga', unit_desc: 'un' },
+    { name: 'Uva', unit_desc: 'pct' },
+    { name: 'Morango', unit_desc: 'cx' },
+    { name: 'Laranja', unit_desc: 'kg' },
+    { name: 'Mexerica', unit_desc: 'kg' },
+    { name: 'Limão', unit_desc: 'kg' },
+    { name: 'Maracujá', unit_desc: 'kg' },
+    { name: 'Kiwi', unit_desc: 'kg' },
+    { name: 'Goiaba', unit_desc: 'kg' },
+    { name: 'Abacate', unit_desc: 'un' },
+    { name: 'Coco', unit_desc: 'un' },
+    { name: 'Ameixa', unit_desc: 'pct' },
+    { name: 'Pêssego', unit_desc: 'pct' },
+    { name: 'Suco de Laranja', unit_desc: 'un' },
+    { name: 'Suco de Uva', unit_desc: 'un' },
+    { name: 'Refrigerante Cola', unit_desc: 'un' },
+    { name: 'Refrigerante Guaraná', unit_desc: 'un' },
+    { name: 'Água Mineral', unit_desc: 'un' },
+    { name: 'Água com Gás', unit_desc: 'un' },
+    { name: 'Água de Coco', unit_desc: 'un' },
+    { name: 'Café', unit_desc: 'pct' },
+    { name: 'Café Solúvel', unit_desc: 'un' },
+    { name: 'Chá', unit_desc: 'cx' },
+    { name: 'Chá Verde', unit_desc: 'cx' },
+    { name: 'Chá de Camomila', unit_desc: 'cx' },
+    { name: 'Cerveja Sem Álcool', unit_desc: 'pct' },
+    { name: 'Energético', unit_desc: 'un' },
+    { name: 'Achocolatado', unit_desc: 'pct' },
+    { name: 'Chocolate em Pó', unit_desc: 'pct' },
+    { name: 'Cacau em Pó', unit_desc: 'pct' },
+    { name: 'Bombom', unit_desc: 'cx' },
+    { name: 'Chocolate', unit_desc: 'pct' },
+    { name: 'Sorvete', unit_desc: 'un' },
+    { name: 'Papel Higiênico', unit_desc: 'pct' },
+    { name: 'Papel Toalha', unit_desc: 'pct' },
+    { name: 'Guardanapo', unit_desc: 'pct' },
+    { name: 'Detergente', unit_desc: 'un' },
+    { name: 'Sabão em Pó', unit_desc: 'pct' },
+    { name: 'Sabão Líquido', unit_desc: 'un' },
+    { name: 'Amaciante', unit_desc: 'un' },
+    { name: 'Água Sanitária', unit_desc: 'un' },
+    { name: 'Desinfetante', unit_desc: 'un' },
+    { name: 'Limpador Multiuso', unit_desc: 'un' },
+    { name: 'Álcool 70', unit_desc: 'un' },
+    { name: 'Esponja', unit_desc: 'un' },
+    { name: 'Palha de Aço', unit_desc: 'pct' },
+    { name: 'Saco de Lixo', unit_desc: 'pct' },
+    { name: 'Inseticida', unit_desc: 'un' },
+    { name: 'Desodorizador', unit_desc: 'un' },
+    { name: 'Sabonete', unit_desc: 'un' },
+    { name: 'Shampoo', unit_desc: 'un' },
+    { name: 'Condicionador', unit_desc: 'un' },
+    { name: 'Creme Dental', unit_desc: 'un' },
+    { name: 'Escova de Dente', unit_desc: 'un' },
+    { name: 'Fio Dental', unit_desc: 'un' },
+    { name: 'Desodorante', unit_desc: 'un' },
+    { name: 'Absorvente', unit_desc: 'pct' },
+    { name: 'Algodão', unit_desc: 'pct' },
+    { name: 'Cotonete', unit_desc: 'cx' },
+    { name: 'Luva de Limpeza', unit_desc: 'pct' },
+    { name: 'Pano de Chão', unit_desc: 'un' },
+    { name: 'Pano de Prato', unit_desc: 'un' },
+    { name: 'Amendoim', unit_desc: 'pct' },
+    { name: 'Castanha de Caju', unit_desc: 'pct' },
+    { name: 'Castanha-do-Pará', unit_desc: 'pct' },
+    { name: 'Uva Passa', unit_desc: 'pct' },
+    { name: 'Coco Ralado', unit_desc: 'pct' },
+    { name: 'Fermento em Pó', unit_desc: 'un' },
+    { name: 'Fermento Biológico', unit_desc: 'un' },
+    { name: 'Gelatina', unit_desc: 'cx' },
+    { name: 'Pudim', unit_desc: 'cx' },
+    { name: 'Milho para Pipoca', unit_desc: 'pct' },
+    { name: 'Pipoca de Microondas', unit_desc: 'pct' },
+    { name: 'Mel', unit_desc: 'un' },
+    { name: 'Geleia', unit_desc: 'un' },
+    { name: 'Doce de Leite', unit_desc: 'un' },
+    { name: 'Paçoca', unit_desc: 'pct' },
+    { name: 'Arroz Arbóreo', unit_desc: 'pct' },
+    { name: 'Feijão Fradinho', unit_desc: 'kg' },
+    { name: 'Molho Shoyu', unit_desc: 'un' },
+    { name: 'Molho Inglês', unit_desc: 'un' },
+    { name: 'Molho Barbecue', unit_desc: 'un' },
+    { name: 'Mostarda Dijon', unit_desc: 'un' },
+    { name: 'Iogurte de Morango', unit_desc: 'un' },
+    { name: 'Queijo Cottage', unit_desc: 'un' },
+    { name: 'Ricota', unit_desc: 'un' },
+    { name: 'Creme de Ricota', unit_desc: 'un' },
+    { name: 'Lasanha Congelada', unit_desc: 'un' },
+    { name: 'Hambúrguer', unit_desc: 'cx' },
+    { name: 'Nuggets', unit_desc: 'pct' },
+    { name: 'Batata Congelada', unit_desc: 'pct' },
+    { name: 'Pizza Congelada', unit_desc: 'un' },
+    { name: 'Tempero Baiano', unit_desc: 'pct' }
   ];
 
-  const escapeAttr = (value) => String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-
-  const normalize = app.normalizeSearchText || function(value) {
+  function normalize(value = '') {
     return String(value ?? '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -12471,915 +12192,450 @@ console.log('handleSignup chamada');
       .replace(/[^a-z0-9\s]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
-  };
+  }
 
-  app.normalizeSearchText = normalize;
+  function tokens(value = '') {
+    return normalize(value).split(' ').filter(Boolean);
+  }
 
-  app.__afAutocomplete = app.__afAutocomplete || {
-    input: null,
-    query: '',
-    suggestions: [],
-    selected: new Map(),
-    context: null,
-    recognition: null,
-    listening: false
-  };
+  function escapeHtml(value = '') {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[char]));
+  }
 
-  app.ensureAutocompleteContainer = function() {
-    if (!this.elements) this.elements = {};
-    let el = this.elements.autocompleteSuggestions || document.getElementById('autocomplete-suggestions');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'autocomplete-suggestions';
-      document.body.appendChild(el);
-    }
-    this.elements.autocompleteSuggestions = el;
-    return el;
-  };
+  function isTargetInput(element) {
+    return element instanceof HTMLInputElement && TARGET_IDS.has(element.id) && !element.disabled && !element.readOnly;
+  }
 
-  app.isIngredientAutocompleteInput = function(input) {
-    if (!input || input.tagName !== 'INPUT' || input.type === 'hidden' || input.disabled || input.readOnly) return false;
-    const id = String(input.id || '').trim();
-    if (FIELD_IDS.has(id)) return true;
+  function extractName(entry) {
+    if (!entry) return '';
+    if (typeof entry === 'string') return entry.trim();
+    return String(entry.name ?? entry.nome ?? entry.label ?? entry.title ?? '').trim();
+  }
 
-    const nameAttr = String(input.getAttribute('name') || '').toLowerCase();
-    const placeholder = String(input.getAttribute('placeholder') || '').toLowerCase();
-    const aria = String(input.getAttribute('aria-label') || '').toLowerCase();
-    const nearbyLabel = String(input.closest('.form-group, .input-group, .modal-content, .modal-box, .card-content, form')?.querySelector('label')?.textContent || '').toLowerCase();
-    const haystack = [id.toLowerCase(), nameAttr, placeholder, aria, nearbyLabel].join(' ');
+  function extractMeta(entry) {
+    if (!entry || typeof entry !== 'object') return '';
+    return String(entry.unit_desc ?? entry.unid ?? entry.unit ?? entry.category ?? entry.categoria ?? '').trim();
+  }
 
-    const looksLikeItemField = /(ingred|item|produto|despensa|lista|receita|essencial|planej|calc)/.test(haystack) && /(nome|name|digite|buscar|adicionar|insira)/.test(haystack);
-    return looksLikeItemField;
-  };
+  function collectDynamicCatalog(app) {
+    const rows = [];
+    const push = (name, meta = '') => {
+      if (name) rows.push({ name, unit_desc: meta });
+    };
 
-  app.getIngredientAutocompleteContext = function(input) {
-    const id = String(input?.id || '').trim();
-    const formRoot = input?.closest('#recipe-ing-form, #item-edit-modal, #pantry-edit-form-fullscreen, #lista-detail-desktop, #module-listas, #module-despensa, #module-receitas, #module-planejador, #calculadora, .modal-box, form') || document;
-    const rootText = String(formRoot?.id || '') + ' ' + String(formRoot?.className || '');
-    const lowerRoot = rootText.toLowerCase();
-    const isBulkList = id === 'lista-form-nome-full' || id === 'lista-form-nome-dash' || (lowerRoot.includes('module-listas') && (id === 'item-name' || id === 'inline-edit-name'));
-    const isRecipe = id === 'recipe-ing-name' || id === 'recipe-edit-name' || lowerRoot.includes('module-receitas');
-    const isPantry = id === 'pantry-edit-name' || id === 'edit-item-name' || id === 'essential-name' || lowerRoot.includes('module-despensa');
-    const isPlanner = id === 'planner-custom-name' || lowerRoot.includes('module-planejador');
-    const isCalc = id === 'calc-item-name' || lowerRoot.includes('calculadora');
-    const editItemId = document.getElementById('edit-item-id')?.value?.trim();
-    const editItemType = document.getElementById('edit-item-type')?.value?.trim();
+    Object.values(app?.state?.listas || {}).forEach((list) => {
+      (Array.isArray(list?.items) ? list.items : []).forEach((item) => push(item?.name, item?.unid || ''));
+    });
+    (Array.isArray(app?.state?.despensa) ? app.state.despensa : []).forEach((item) => push(item?.name, item?.unid || ''));
+    (Array.isArray(app?.state?.essenciais) ? app.state.essenciais : []).forEach((item) => push(item?.name, item?.unid || ''));
+    Object.values(app?.state?.receitas || {}).forEach((recipe) => {
+      (Array.isArray(recipe?.ingredients) ? recipe.ingredients : []).forEach((ing) => push(ing?.name, ing?.unit || ''));
+    });
 
-    if (isBulkList) return { entity: 'lista', mode: 'bulk', label: 'Adicionar itens na lista' };
-    if (isRecipe) return { entity: 'receita', mode: 'bulk', label: 'Adicionar ingredientes' };
-    if (isPantry && !editItemId && editItemType === 'despensa') return { entity: 'despensa', mode: 'bulk', label: 'Adicionar itens na despensa' };
-    if (isPantry) return { entity: 'despensa', mode: 'single', label: 'Selecionar item da despensa' };
-    if (isPlanner) return { entity: 'receita', mode: 'single', label: 'Selecionar refeição' };
-    if (isCalc) return { entity: 'geral', mode: 'single', label: 'Selecionar item' };
-    return { entity: 'geral', mode: 'single', label: 'Selecionar item' };
-  };
+    return rows;
+  }
 
-  app.decorateIngredientAutocompleteInput = function(input) {
-    if (!this.isIngredientAutocompleteInput(input) || input.dataset.afAutocompleteDecorated === '1') return;
-    const parent = input.parentElement;
-    if (!parent) return;
+  function buildCatalog(app) {
+    const merged = [
+      ...(Array.isArray(window.ALL_ITEMS_DATA) ? window.ALL_ITEMS_DATA : []),
+      ...collectDynamicCatalog(app),
+      ...FALLBACK_CATALOG
+    ];
 
-    let wrap = input.closest('.af-autocomplete-input-wrap');
-    if (!wrap) {
-      wrap = document.createElement('div');
-      wrap.className = 'af-autocomplete-input-wrap';
-      parent.insertBefore(wrap, input);
-      wrap.appendChild(input);
-    }
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'af-voice-trigger';
-    button.setAttribute('aria-label', 'Pesquisar por voz');
-    button.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-    wrap.appendChild(button);
-    input.dataset.afAutocompleteDecorated = '1';
-    input.setAttribute('autocomplete', 'off');
-  };
-
-  app.getIngredientUsageMap = function() {
-    const usage = new Map();
-    const bump = (name, amount = 1) => {
+    const seen = new Map();
+    merged.forEach((entry) => {
+      const name = extractName(entry);
       const key = normalize(name);
       if (!key) return;
-      usage.set(key, (usage.get(key) || 0) + amount);
+      const current = seen.get(key);
+      if (!current) {
+        seen.set(key, {
+          name,
+          meta: extractMeta(entry),
+          norm: key,
+          parts: tokens(name)
+        });
+      } else if (!current.meta) {
+        current.meta = extractMeta(entry);
+      }
+    });
+
+    return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name, LANG));
+  }
+
+  function getCatalog(app) {
+    if (!catalogCache) catalogCache = buildCatalog(app);
+    return catalogCache;
+  }
+
+  function scoreItem(item, query) {
+    const q = normalize(query);
+    if (!q) return 1;
+    const qTokens = tokens(q);
+    let score = 0;
+
+    if (item.norm === q) score += 5000;
+    if (item.norm.startsWith(q)) score += 3000;
+    if (item.norm.includes(q)) score += 1200;
+
+    const exactTokenHits = qTokens.filter((part) => item.parts.includes(part)).length;
+    const prefixTokenHits = qTokens.filter((part) => item.parts.some((token) => token.startsWith(part))).length;
+    score += exactTokenHits * 700;
+    score += prefixTokenHits * 250;
+
+    if (qTokens.length && exactTokenHits === qTokens.length) score += 1200;
+    if (qTokens.length && prefixTokenHits === qTokens.length) score += 600;
+
+    score += Math.max(0, 120 - item.name.length);
+    return score;
+  }
+
+  function findMatches(app, query) {
+    const list = getCatalog(app);
+    const q = normalize(query);
+    if (!q) return list.slice(0, MAX_SUGGESTIONS);
+
+    return list
+      .map((item) => ({ item, score: scoreItem(item, q) }))
+      .filter((row) => row.score > 0)
+      .sort((a, b) => b.score - a.score || a.item.name.length - b.item.name.length || a.item.name.localeCompare(b.item.name, LANG))
+      .slice(0, MAX_SUGGESTIONS)
+      .map((row) => row.item);
+  }
+
+  function debounce(fn, wait) {
+    let timer = null;
+    return function debounced(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), wait);
     };
-    Object.values(this.state?.listas || {}).forEach((lista) => {
-      (lista?.items || []).forEach((item) => bump(item?.name, 3));
-    });
-    (this.state?.despensa || []).forEach((item) => bump(item?.name, 2));
-    Object.values(this.state?.receitas || {}).forEach((recipe) => {
-      (recipe?.ingredients || []).forEach((ing) => bump(ing?.name, 2));
-    });
-    return usage;
-  };
+  }
 
-  app.getAutocompleteCatalog = function() {
-    const usage = this.getIngredientUsageMap();
-    const catalog = [];
-    const globalItems = Array.isArray(window.ALL_ITEMS_DATA) ? window.ALL_ITEMS_DATA : [];
-    catalog.push(...globalItems);
-    catalog.push(...(this.state?.despensa || []).map((item) => ({ name: item.name, unit_desc: item.unid || 'un', price: Number(item.valor || 0) })));
-    catalog.push(...Object.values(this.state?.listas || {}).flatMap((lista) => (lista?.items || []).map((item) => ({ name: item.name, unit_desc: item.unid || 'un', price: Number(item.valor || 0) }))));
-    catalog.push(...Object.values(this.state?.receitas || {}).flatMap((recipe) => (recipe?.ingredients || []).map((ing) => ({ name: ing.name, unit_desc: ing.unit || 'un', price: 0 }))));
-    catalog.push(...COMMON_ITEMS.map((item) => ({ ...item, isCommon: true })));
-
-    const dedup = new Map();
-    catalog.forEach((item) => {
-      const name = String(item?.name || '').trim();
-      const key = normalize(name);
-      if (!name || !key) return;
-      const unitDesc = String(item?.unit_desc || item?.unid || item?.unit || 'un').trim() || 'un';
-      const base = dedup.get(key) || {
-        name,
-        unit_desc: unitDesc,
-        price: Number(item?.price || item?.valor || item?.preco || 0) || 0,
-        usageCount: usage.get(key) || 0,
-        commonBoost: item?.isCommon ? 4 : 0
-      };
-      if (!base.name || base.name.length > name.length) base.name = name;
-      if (item?.isCommon) base.commonBoost = Math.max(base.commonBoost, 4);
-      if ((!base.unit_desc || base.unit_desc === 'un') && unitDesc) base.unit_desc = unitDesc;
-      if ((!base.price || base.price === 0) && Number(item?.price || item?.valor || item?.preco || 0) > 0) base.price = Number(item?.price || item?.valor || item?.preco || 0);
-      base.usageCount = Math.max(base.usageCount || 0, usage.get(key) || 0);
-      dedup.set(key, base);
-    });
-    return Array.from(dedup.values());
-  };
-
-  app.highlightAutocompleteLabel = function(label, rawQuery) {
-    const safeLabel = this.escapeHtml ? this.escapeHtml(label) : escapeAttr(label);
-    const q = normalize(rawQuery);
-    if (!q) return safeLabel;
-    const normalizedLabel = normalize(label);
-    const idx = normalizedLabel.indexOf(q);
-    if (idx < 0) return safeLabel;
-    return `${safeLabel.slice(0, idx)}<mark>${safeLabel.slice(idx, idx + String(rawQuery).trim().length)}</mark>${safeLabel.slice(idx + String(rawQuery).trim().length)}`;
-  };
-
-  app.searchAutocompleteSuggestions = function(rawQuery) {
-    const source = this.getAutocompleteCatalog();
-    const query = normalize(rawQuery);
-    if (!query) {
-      return source
-        .sort((a, b) => ((b.usageCount + b.commonBoost) - (a.usageCount + a.commonBoost)) || a.name.localeCompare(b.name, 'pt-BR'))
-        .slice(0, 14);
+  class ProductAutocompleteLite {
+    constructor(app, input) {
+      this.app = app;
+      this.input = input;
+      this.uid = `af-lite-${Math.random().toString(36).slice(2, 10)}`;
+      this.wrapper = null;
+      this.dropdown = null;
+      this.voiceButton = null;
+      this.suggestions = [];
+      this.activeIndex = -1;
+      this.closeTimer = null;
+      this.recognition = null;
+      this.suppressOpenOnce = false;
+      this.onInput = debounce(this.onInput.bind(this), INPUT_DEBOUNCE);
+      this.onFocus = this.onFocus.bind(this);
+      this.onBlur = this.onBlur.bind(this);
+      this.onKeyDown = this.onKeyDown.bind(this);
+      this.onPointerDown = this.onPointerDown.bind(this);
+      this.mount();
+      this.bind();
     }
 
-    const words = query.split(' ').filter(Boolean);
-    const exactThreshold = words.join(' ');
-    const ranked = source
-      .map((item) => {
-        const normalizedName = normalize(item.name);
-        if (!normalizedName) return null;
-        const includesAll = words.every((word) => normalizedName.includes(word));
-        if (!includesAll) return null;
-        let score = 0;
-        if (normalizedName === exactThreshold) score += 90;
-        if (normalizedName.startsWith(query)) score += 60;
-        if (normalizedName.includes(` ${query}`)) score += 30;
-        score += Math.max(0, 12 - normalizedName.length / 3);
-        score += (item.usageCount || 0) * 5;
-        score += item.commonBoost || 0;
-        return { ...item, __score: score };
-      })
-      .filter(Boolean)
-      .sort((a, b) => (b.__score - a.__score) || a.name.localeCompare(b.name, 'pt-BR'))
-      .slice(0, 14)
-      .map(({ __score, ...item }) => item);
+    mount() {
+      if (this.input.parentElement?.classList.contains('af-autocomplete-field')) {
+        this.wrapper = this.input.parentElement;
+      } else {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'af-autocomplete-field';
+        this.input.parentNode?.insertBefore(wrapper, this.input);
+        wrapper.appendChild(this.input);
+        this.wrapper = wrapper;
+      }
 
-    return ranked;
-  };
+      let dropdown = this.wrapper.querySelector('.af-autocomplete-dropdown');
+      if (!dropdown) {
+        dropdown = document.createElement('div');
+        dropdown.className = 'af-autocomplete-dropdown';
+        dropdown.hidden = true;
+        dropdown.id = `${this.uid}-listbox`;
+        dropdown.setAttribute('role', 'listbox');
+        this.wrapper.appendChild(dropdown);
+      }
+      this.dropdown = dropdown;
 
-  app.positionAutocompleteCard = function(input) {
-    const container = this.ensureAutocompleteContainer();
-    if (!container || !input) return;
-    const rect = input.getBoundingClientRect();
-    const width = Math.max(290, rect.width);
-    const estimatedHeight = Math.min(420, window.innerHeight * 0.55);
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const showAbove = spaceBelow < 260 && rect.top > estimatedHeight;
-    container.style.position = 'fixed';
-    container.style.left = `${Math.max(12, Math.min(rect.left, window.innerWidth - width - 12))}px`;
-    container.style.top = showAbove ? `${Math.max(12, rect.top - estimatedHeight - 10)}px` : `${Math.min(window.innerHeight - 12, rect.bottom + 8)}px`;
-    container.style.width = `${Math.min(width, window.innerWidth - 24)}px`;
-    container.style.maxWidth = 'calc(100vw - 24px)';
-  };
+      let voice = this.wrapper.querySelector('.af-autocomplete-voice');
+      if (!voice) {
+        voice = document.createElement('button');
+        voice.type = 'button';
+        voice.className = 'af-autocomplete-voice';
+        voice.setAttribute('aria-label', 'Pesquisar por voz');
+        voice.innerHTML = '<i class="fa-solid fa-microphone" aria-hidden="true"></i>';
+        this.wrapper.appendChild(voice);
+      }
+      this.voiceButton = voice;
 
-  app.renderIngredientAutocomplete = function(input, rawQuery = null) {
-    if (!this.isIngredientAutocompleteInput(input)) return;
-    this.decorateIngredientAutocompleteInput(input);
-    const state = this.__afAutocomplete;
-    const container = this.ensureAutocompleteContainer();
-    const query = rawQuery === null ? String(input.value || '') : String(rawQuery || '');
-    const context = this.getIngredientAutocompleteContext(input);
-    const suggestions = this.searchAutocompleteSuggestions(query);
-    const queryNorm = normalize(query);
+      this.input.dataset.afAutocompleteReady = 'true';
+      this.input.setAttribute('autocomplete', 'off');
+      this.input.setAttribute('role', 'combobox');
+      this.input.setAttribute('aria-autocomplete', 'list');
+      this.input.setAttribute('aria-expanded', 'false');
+      this.input.setAttribute('aria-controls', dropdown.id);
 
-    state.input = input;
-    state.query = query;
-    state.context = context;
-    state.suggestions = suggestions;
-    this.activeAutocompleteInput = input;
-
-    const selectedNames = Array.from(state.selected.values());
-    const selectedChips = selectedNames.length
-      ? `<div class="af-autocomplete-selected">${selectedNames.map((name) => `<button type="button" class="af-selected-chip" data-af-chip-remove="${escapeAttr(name)}"><span>${this.escapeHtml ? this.escapeHtml(name) : escapeAttr(name)}</span><i class="fa-solid fa-xmark"></i></button>`).join('')}</div>`
-      : '';
-
-    const rows = suggestions.length
-      ? suggestions.map((item) => {
-          const key = normalize(item.name);
-          const checked = state.selected.has(key);
-          const meta = [];
-          if (item.unit_desc) meta.push(item.unit_desc);
-          if (item.usageCount) meta.push(`${item.usageCount}x usado`);
-          return `
-            <button type="button" class="af-autocomplete-option ${checked ? 'is-checked' : ''}" data-af-name="${escapeAttr(item.name)}" data-af-option="1">
-              ${context.mode === 'bulk' ? `<span class="af-autocomplete-box"><i class="fa-solid fa-check"></i></span>` : `<span class="af-autocomplete-box af-single-box"><i class="fa-solid fa-arrow-turn-down-left"></i></span>`}
-              <span class="af-autocomplete-copy">
-                <strong>${this.highlightAutocompleteLabel(item.name, query)}</strong>
-                <small>${this.escapeHtml ? this.escapeHtml(meta.join(' • ')) : escapeAttr(meta.join(' • '))}</small>
-              </span>
-            </button>`;
-        }).join('')
-      : `<div class="af-autocomplete-empty">Nenhum item encontrado. Você pode inserir manualmente ou usar áudio.</div>`;
-
-    const footerCount = selectedNames.length;
-    const exactExists = suggestions.some((item) => normalize(item.name) === queryNorm);
-    const manualText = query.trim();
-    const canUseManual = !!manualText && !exactExists;
-    const footerPrimary = context.mode === 'bulk'
-      ? `Adicionar ${footerCount || (canUseManual ? 1 : 0)} item${footerCount + (canUseManual && footerCount === 0 ? 1 : 0) > 1 ? 's' : ''}`
-      : 'Usar item';
-
-    container.innerHTML = `
-      <div class="af-autocomplete-card ${context.mode === 'bulk' ? 'is-bulk' : 'is-single'} ${state.listening ? 'is-listening' : ''}">
-        <div class="af-autocomplete-head">
-          <div class="af-autocomplete-title-wrap">
-            <span class="af-autocomplete-eyebrow">${this.escapeHtml ? this.escapeHtml(context.label) : escapeAttr(context.label)}</span>
-            <strong>${context.mode === 'bulk' ? 'Selecione um ou vários itens' : 'Escolha um item'}</strong>
-          </div>
-          <button type="button" class="af-autocomplete-audio ${state.listening ? 'is-active' : ''}" data-af-voice="1">
-            <i class="fa-solid fa-microphone"></i>
-            <span>${state.listening ? 'Ouvindo...' : 'Áudio'}</span>
-          </button>
-        </div>
-        ${selectedChips}
-        <div class="af-autocomplete-list">${rows}</div>
-        <div class="af-autocomplete-footer">
-          <button type="button" class="af-autocomplete-action secondary" data-af-action="clear">Limpar</button>
-          ${canUseManual ? `<button type="button" class="af-autocomplete-action secondary" data-af-action="manual">Usar "${this.escapeHtml ? this.escapeHtml(manualText) : escapeAttr(manualText)}"</button>` : ''}
-          <button type="button" class="af-autocomplete-action primary" data-af-action="apply">${footerPrimary}</button>
-        </div>
-      </div>`;
-
-    this.positionAutocompleteCard(input);
-    container.style.display = 'block';
-  };
-
-  app.hideAutocomplete = function(forceClearSelection = false) {
-    const state = this.__afAutocomplete;
-    if (state?.recognition && state.listening) {
-      try { state.recognition.stop(); } catch (_) {}
-    }
-    if (forceClearSelection && state?.selected) state.selected.clear();
-    const container = this.ensureAutocompleteContainer();
-    if (container) {
-      container.style.display = 'none';
-      container.innerHTML = '';
-    }
-    if (state) {
-      state.input = null;
-      state.query = '';
-      state.suggestions = [];
-      state.context = null;
-      state.listening = false;
-    }
-    this.activeAutocompleteInput = null;
-    document.querySelectorAll('.af-voice-trigger, .af-autocomplete-audio').forEach((btn) => btn.classList.remove('is-active'));
-  };
-
-  app.clearAutocompleteSelection = function() {
-    const state = this.__afAutocomplete;
-    state.selected.clear();
-    if (state.input) this.renderIngredientAutocomplete(state.input, state.input.value || '');
-  };
-
-  app.resolveAutocompleteMeta = function(name) {
-    const key = normalize(name);
-    return this.getAutocompleteCatalog().find((item) => normalize(item.name) === key) || { name, unit_desc: 'un', price: 0 };
-  };
-
-  app.applyUnitToSelect = function(select, sourceUnit) {
-    if (!select) return;
-    const unitSource = String(sourceUnit || 'un').toLowerCase();
-    const option = Array.from(select.options || []).find((opt) => unitSource.includes(String(opt.value || '').toLowerCase()));
-    select.value = option ? option.value : (select.value || 'un');
-  };
-
-  app.applySuggestionMetadataToInput = function(input, itemData) {
-    if (!input || !itemData) return;
-    const id = String(input.id || '');
-    const unit = String(itemData.unit_desc || itemData.unid || itemData.unit || 'un');
-    const price = Number(itemData.price || itemData.valor || itemData.preco || 0);
-
-    if (id === 'recipe-ing-name') {
-      const wrap = input.closest('#recipe-ing-form, #custom-confirm-modal, form') || document;
-      const qtyInput = wrap.querySelector('#recipe-ing-qtd');
-      const unitSelect = wrap.querySelector('#recipe-ing-unid');
-      if (qtyInput && !String(qtyInput.value || '').trim()) qtyInput.value = '1';
-      this.applyUnitToSelect(unitSelect, unit);
-      return;
+      const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognitionCtor) {
+        voice.disabled = true;
+        voice.classList.add('is-disabled');
+      } else if (!voice.dataset.afVoiceBound) {
+        voice.dataset.afVoiceBound = 'true';
+        voice.addEventListener('click', () => this.startVoiceSearch(SpeechRecognitionCtor));
+      }
     }
 
-    if (id === 'lista-form-nome-full' || id === 'lista-form-nome-dash') {
-      const qtyInput = document.getElementById('lista-form-qtd-full') || document.getElementById('lista-form-qtd-dash');
-      const unitSelect = document.getElementById('lista-form-unid-full') || document.getElementById('lista-form-unid-dash');
-      const priceInput = document.getElementById('lista-form-valor-full') || document.getElementById('lista-form-valor-dash');
-      if (qtyInput && !String(qtyInput.value || '').trim()) qtyInput.value = '1';
-      this.applyUnitToSelect(unitSelect, unit);
-      if (priceInput && !String(priceInput.value || '').trim() && price > 0) priceInput.value = price.toFixed(2);
-      return;
+    bind() {
+      this.input.addEventListener('input', this.onInput);
+      this.input.addEventListener('focus', this.onFocus);
+      this.input.addEventListener('blur', this.onBlur);
+      this.input.addEventListener('keydown', this.onKeyDown);
+      document.addEventListener('pointerdown', this.onPointerDown, true);
     }
 
-    const root = input.closest('#item-edit-modal, #pantry-edit-form-fullscreen, #lista-detail-desktop, .modal-box, form, .card-content') || document;
-    const qtyInput = root.querySelector('#edit-item-qtd, #pantry-edit-qtd') || document.getElementById('edit-item-qtd') || document.getElementById('pantry-edit-qtd');
-    const unitSelect = root.querySelector('#edit-item-unid, #pantry-edit-unid') || document.getElementById('edit-item-unid') || document.getElementById('pantry-edit-unid');
-    const priceInput = root.querySelector('#edit-item-valor') || document.getElementById('edit-item-valor');
-    if (qtyInput && !String(qtyInput.value || '').trim()) qtyInput.value = '1';
-    this.applyUnitToSelect(unitSelect, unit);
-    if (priceInput && !String(priceInput.value || '').trim() && price > 0) priceInput.value = price.toFixed(2);
-  };
-
-  app.setBulkSelectionByNames = function(names) {
-    const state = this.__afAutocomplete;
-    state.selected.clear();
-    (Array.isArray(names) ? names : []).forEach((name) => {
-      const clean = String(name || '').trim();
-      if (!clean) return;
-      const key = normalize(clean);
-      const meta = this.resolveAutocompleteMeta(clean);
-      state.selected.set(key, meta.name || clean);
-    });
-  };
-
-  app.parseVoiceIngredientTokens = function(transcript) {
-    const text = String(transcript || '').trim();
-    if (!text) return [];
-    const cleaned = text.replace(/^adicionar\s+/i, '').replace(/^inserir\s+/i, '').trim();
-    if (/[;,\n]/.test(cleaned)) {
-      return cleaned.split(/[;,\n]+/).map((part) => part.trim()).filter(Boolean);
-    }
-    return [cleaned];
-  };
-
-  app.startIngredientVoiceSearch = function(input) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      this.showNotification?.('Seu navegador não liberou pesquisa por áudio neste campo.', 'info');
-      return;
+    onPointerDown(event) {
+      if (this.wrapper?.contains(event.target)) return;
+      this.close();
     }
 
-    this.decorateIngredientAutocompleteInput(input);
-    const state = this.__afAutocomplete;
-    if (state.recognition && state.listening) {
-      try { state.recognition.stop(); } catch (_) {}
+    onInput() {
+      const shouldOpen = !this.suppressOpenOnce;
+      this.suppressOpenOnce = false;
+      this.refresh(shouldOpen);
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'pt-BR';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    state.recognition = recognition;
-    state.listening = true;
-    state.input = input;
-    document.querySelectorAll('.af-voice-trigger, .af-autocomplete-audio').forEach((btn) => btn.classList.add('is-active'));
-    this.renderIngredientAutocomplete(input, input.value || '');
-
-    recognition.onresult = (event) => {
-      const transcript = String(event.results?.[0]?.[0]?.transcript || '').trim();
-      input.value = transcript;
-      const tokens = this.parseVoiceIngredientTokens(transcript);
-      const context = this.getIngredientAutocompleteContext(input);
-      if (context.mode === 'bulk' && tokens.length > 1) {
-        this.setBulkSelectionByNames(tokens);
-        this.renderIngredientAutocomplete(input, '');
-        this.showNotification?.(`${tokens.length} item(ns) captado(s) por voz.`, 'success');
+    onFocus() {
+      if (this.suppressOpenOnce) {
+        this.suppressOpenOnce = false;
         return;
       }
-      this.renderIngredientAutocomplete(input, transcript);
-    };
-
-    recognition.onerror = () => {
-      state.listening = false;
-      document.querySelectorAll('.af-voice-trigger, .af-autocomplete-audio').forEach((btn) => btn.classList.remove('is-active'));
-      this.showNotification?.('Não consegui entender o áudio. Tente novamente.', 'error');
-      if (state.input) this.renderIngredientAutocomplete(state.input, state.input.value || '');
-    };
-
-    recognition.onend = () => {
-      state.listening = false;
-      document.querySelectorAll('.af-voice-trigger, .af-autocomplete-audio').forEach((btn) => btn.classList.remove('is-active'));
-      if (state.input) this.renderIngredientAutocomplete(state.input, state.input.value || '');
-    };
-
-    try {
-      recognition.start();
-    } catch (_) {
-      state.listening = false;
-      document.querySelectorAll('.af-voice-trigger, .af-autocomplete-audio').forEach((btn) => btn.classList.remove('is-active'));
-    }
-  };
-
-  app.applySingleAutocompleteItem = function(name) {
-    const state = this.__afAutocomplete;
-    const input = state.input;
-    if (!input) return;
-    const itemData = this.resolveAutocompleteMeta(name);
-    input.value = itemData.name || name;
-    this.applySuggestionMetadataToInput(input, itemData);
-    this.hideAutocomplete(true);
-    input.focus();
-  };
-
-  app.getBulkNamesToApply = function() {
-    const state = this.__afAutocomplete;
-    const selected = Array.from(state.selected.values()).map((name) => String(name || '').trim()).filter(Boolean);
-    if (selected.length) return selected;
-    const manual = String(state.query || state.input?.value || '').trim();
-    return manual ? this.parseVoiceIngredientTokens(manual) : [];
-  };
-
-  app.addManyItemsToActiveList = function(names) {
-    const cleanNames = Array.from(new Map((Array.isArray(names) ? names : []).map((name) => [normalize(name), String(name || '').trim()]).filter(([, name]) => !!name))).map(([, name]) => name);
-    if (!cleanNames.length) {
-      this.showNotification?.('Selecione pelo menos um item para adicionar na lista.', 'info');
-      return false;
+      this.refresh(false);
     }
 
-    let targetListId = document.getElementById('active-list-id-input')?.value || this.activeListId;
-    if (!this.state?.listas?.[targetListId]) {
-      const typedListName = document.getElementById('active-list-name-input')?.value?.trim() || document.getElementById('widget-list-name-input')?.value?.trim();
-      if (!typedListName) {
-        this.showNotification?.('Dê um nome para sua lista antes de adicionar itens.', 'error');
-        return false;
-      }
-      const newListId = this.generateId();
-      this.state.listas[newListId] = { nome: typedListName, items: [] };
-      this.activeListId = newListId;
-      targetListId = newListId;
+    onBlur() {
+      clearTimeout(this.closeTimer);
+      this.closeTimer = setTimeout(() => this.close(), 120);
     }
 
-    const currentItems = this.state.listas[targetListId].items || [];
-    if (this.userPlan === 'free' && currentItems.length + cleanNames.length > 10) {
-      this.showPlansModal?.('Limite de 10 itens por lista no plano Gratuito atingido. Faça upgrade para listas ilimitadas!');
-      return false;
-    }
+    onKeyDown(event) {
+      if (!this.suggestions.length && event.key !== 'ArrowDown') return;
 
-    const newItems = cleanNames.map((name) => {
-      const item = this.resolveAutocompleteMeta(name);
-      return {
-        id: this.generateId(),
-        name: item.name,
-        qtd: 1,
-        unid: String(item.unit_desc || 'un'),
-        valor: Number(item.price || 0).toFixed(2),
-        checked: false
-      };
-    });
-
-    this.state.listas[targetListId].items.unshift(...newItems.reverse());
-    this.activeListId = targetListId;
-    this.renderListaAtiva?.(targetListId);
-    this.renderListaWidget?.();
-    this.renderListasSalvas?.();
-    this.renderOrcamento?.();
-    this.saveState?.();
-    return newItems.length;
-  };
-
-  app.addManyItemsToPantry = function(names) {
-    const cleanNames = Array.from(new Map((Array.isArray(names) ? names : []).map((name) => [normalize(name), String(name || '').trim()]).filter(([, name]) => !!name))).map(([, name]) => name);
-    if (!cleanNames.length) {
-      this.showNotification?.('Selecione pelo menos um item para adicionar na despensa.', 'info');
-      return false;
-    }
-
-    const newItems = cleanNames.map((name) => {
-      const item = this.resolveAutocompleteMeta(name);
-      return {
-        id: this.generateId(),
-        name: item.name,
-        qtd: 1,
-        unid: String(item.unit_desc || 'un'),
-        valor: Number(item.price || 0).toFixed(2),
-        validade: '',
-        stock: 100
-      };
-    });
-
-    this.state.despensa.unshift(...newItems.reverse());
-    this.renderDespensaWidget?.();
-    if (this.activeModule === 'despensa') this.renderDespensa?.();
-    this.saveState?.();
-    return newItems.length;
-  };
-
-  app.addManyIngredientsToRecipeEditor = function(names) {
-    const cleanNames = Array.from(new Map((Array.isArray(names) ? names : []).map((name) => [normalize(name), String(name || '').trim()]).filter(([, name]) => !!name))).map(([, name]) => name);
-    if (!cleanNames.length) {
-      this.showNotification?.('Selecione pelo menos um ingrediente.', 'info');
-      return false;
-    }
-
-    this.tempRecipeIngredients = Array.isArray(this.tempRecipeIngredients) ? this.tempRecipeIngredients : [];
-    cleanNames.forEach((name) => {
-      const item = this.resolveAutocompleteMeta(name);
-      this.tempRecipeIngredients.push({ name: item.name, qty: '1', unit: String(item.unit_desc || 'un') });
-    });
-    this.renderModalIngredientList?.();
-    return cleanNames.length;
-  };
-
-  app.applyBulkAutocompleteSelection = function() {
-    const state = this.__afAutocomplete;
-    const context = state.context || this.getIngredientAutocompleteContext(state.input);
-    const names = this.getBulkNamesToApply();
-    if (!names.length) {
-      this.showNotification?.('Selecione um ou mais itens antes de adicionar.', 'info');
-      return;
-    }
-
-    let added = 0;
-    if (context.entity === 'lista') added = this.addManyItemsToActiveList(names) || 0;
-    if (context.entity === 'despensa') added = this.addManyItemsToPantry(names) || 0;
-    if (context.entity === 'receita') added = this.addManyIngredientsToRecipeEditor(names) || 0;
-    if (!added) return;
-
-    if (state.input) state.input.value = '';
-    state.selected.clear();
-    if (context.entity === 'receita') {
-      const qtyInput = document.getElementById('recipe-ing-qtd');
-      const unitSelect = document.getElementById('recipe-ing-unid');
-      if (qtyInput) qtyInput.value = '1';
-      if (unitSelect) unitSelect.value = 'un';
-      this.renderIngredientAutocomplete(state.input, '');
-    } else {
-      this.hideAutocomplete(true);
-      if (context.entity === 'despensa') this.closeModal?.('item-edit-modal');
-    }
-
-    const labels = {
-      lista: 'adicionado(s) à lista',
-      despensa: 'adicionado(s) à despensa',
-      receita: 'adicionado(s) à receita'
-    };
-    this.showNotification?.(`${added} item(ns) ${labels[context.entity] || 'adicionado(s)'}.`, 'success');
-  };
-
-  app.handleAutocomplete = function(input) {
-    if (!this.isIngredientAutocompleteInput(input)) return;
-    this.renderIngredientAutocomplete(input, input.value || '');
-  };
-
-  const previousHandleSaveEditModal = app.handleSaveEditModal?.bind(app);
-  app.handleSaveEditModal = function() {
-    const id = document.getElementById('edit-item-id')?.value?.trim();
-    const type = document.getElementById('edit-item-type')?.value?.trim();
-    if (!id && type === 'despensa') {
-      const name = document.getElementById('edit-item-name')?.value?.trim();
-      if (!name) {
-        this.showNotification?.('Informe o nome do item da despensa.', 'error');
-        document.getElementById('edit-item-name')?.focus();
-        return;
-      }
-      this.state.despensa.unshift({
-        id: this.generateId(),
-        name,
-        qtd: parseFloat(document.getElementById('edit-item-qtd')?.value) || 1,
-        unid: document.getElementById('edit-item-unid')?.value || 'un',
-        valor: (parseFloat(document.getElementById('edit-item-valor')?.value) || 0).toFixed(2),
-        validade: document.getElementById('edit-item-validade')?.value || '',
-        stock: parseInt(document.getElementById('edit-item-stock')?.value || '100', 10)
-      });
-      this.saveState?.();
-      this.renderDespensaWidget?.();
-      if (this.activeModule === 'despensa') this.renderDespensa?.();
-      this.closeModal?.('item-edit-modal');
-      this.showNotification?.('Item adicionado à despensa!', 'success');
-      return;
-    }
-    return previousHandleSaveEditModal ? previousHandleSaveEditModal() : undefined;
-  };
-
-  document.addEventListener('focusin', (event) => {
-    const input = event.target;
-    if (!app.isIngredientAutocompleteInput(input)) return;
-    app.decorateIngredientAutocompleteInput(input);
-    setTimeout(() => app.renderIngredientAutocomplete(input, input.value || ''), 10);
-  });
-
-  document.addEventListener('input', (event) => {
-    const input = event.target;
-    if (!app.isIngredientAutocompleteInput(input)) return;
-    app.renderIngredientAutocomplete(input, input.value || '');
-  }, true);
-
-  document.addEventListener('keydown', (event) => {
-    const input = event.target;
-    if (!app.isIngredientAutocompleteInput(input)) return;
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      app.hideAutocomplete(true);
-      return;
-    }
-    if (event.key === 'Enter' && app.__afAutocomplete?.input === input) {
-      const context = app.getIngredientAutocompleteContext(input);
-      if (context.mode === 'bulk') {
+      if (event.key === 'ArrowDown') {
         event.preventDefault();
-        app.applyBulkAutocompleteSelection();
-      } else {
-        const first = app.__afAutocomplete?.suggestions?.[0];
-        if (first) {
-          event.preventDefault();
-          app.applySingleAutocompleteItem(first.name);
-        }
+        this.setActiveIndex(this.activeIndex + 1);
+        this.open();
+        return;
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        this.setActiveIndex(this.activeIndex <= 0 ? this.suggestions.length - 1 : this.activeIndex - 1);
+        this.open();
+        return;
+      }
+      if (event.key === 'Enter') {
+        if (this.dropdown.hidden || !this.suggestions.length) return;
+        event.preventDefault();
+        const selected = this.suggestions[this.activeIndex >= 0 ? this.activeIndex : 0];
+        if (selected) this.applySuggestion(selected);
+        return;
+      }
+      if (event.key === 'Escape') this.close();
+    }
+
+    startVoiceSearch(SpeechRecognitionCtor) {
+      if (this.voiceButton?.disabled) return;
+      if (this.recognition) {
+        try { this.recognition.stop(); } catch (_error) {}
+      }
+
+      const recognition = new SpeechRecognitionCtor();
+      this.recognition = recognition;
+      recognition.lang = LANG;
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      this.voiceButton.classList.add('is-listening');
+
+      recognition.onresult = (event) => {
+        const transcript = String(event?.results?.[0]?.[0]?.transcript || '').trim();
+        if (!transcript) return;
+        this.input.value = transcript;
+        this.emit();
+        this.refresh(true);
+      };
+      recognition.onend = () => {
+        this.voiceButton?.classList.remove('is-listening');
+        this.recognition = null;
+      };
+      recognition.onerror = () => {
+        this.voiceButton?.classList.remove('is-listening');
+        this.recognition = null;
+      };
+
+      try { recognition.start(); } catch (_error) {
+        this.voiceButton?.classList.remove('is-listening');
+        this.recognition = null;
       }
     }
-  }, true);
 
-  document.addEventListener('mousedown', (event) => {
-    const option = event.target.closest?.('.af-autocomplete-option');
-    const action = event.target.closest?.('[data-af-action]');
-    const voice = event.target.closest?.('[data-af-voice]');
-    const chip = event.target.closest?.('[data-af-chip-remove]');
-    const voiceBtn = event.target.closest?.('.af-voice-trigger');
-    if (option || action || voice || chip || voiceBtn) {
-      event.preventDefault();
-    }
-  }, true);
-
-  document.addEventListener('click', (event) => {
-    const voiceBtn = event.target.closest?.('.af-voice-trigger');
-    if (voiceBtn) {
-      const input = voiceBtn.parentElement?.querySelector('input');
-      if (input) app.startIngredientVoiceSearch(input);
-      return;
+    emit() {
+      this.input.dispatchEvent(new Event('input', { bubbles: true }));
+      this.input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    const panelVoiceBtn = event.target.closest?.('[data-af-voice]');
-    if (panelVoiceBtn) {
-      const input = app.__afAutocomplete?.input;
-      if (input) app.startIngredientVoiceSearch(input);
-      return;
-    }
-
-    const option = event.target.closest?.('.af-autocomplete-option');
-    if (option) {
-      const name = option.getAttribute('data-af-name') || '';
-      const state = app.__afAutocomplete;
-      const context = state.context || app.getIngredientAutocompleteContext(state.input);
-      if (context.mode === 'bulk') {
-        const key = normalize(name);
-        if (state.selected.has(key)) state.selected.delete(key);
-        else state.selected.set(key, name);
-        app.renderIngredientAutocomplete(state.input, state.input?.value || '');
-      } else {
-        app.applySingleAutocompleteItem(name);
+    refresh(forceOpen) {
+      this.suggestions = findMatches(this.app, this.input.value || '');
+      this.activeIndex = this.suggestions.length ? 0 : -1;
+      this.render();
+      if (forceOpen || document.activeElement === this.input) {
+        this.open();
       }
-      return;
     }
 
-    const removeChip = event.target.closest?.('[data-af-chip-remove]');
-    if (removeChip) {
-      const name = removeChip.getAttribute('data-af-chip-remove') || '';
-      app.__afAutocomplete.selected.delete(normalize(name));
-      if (app.__afAutocomplete.input) app.renderIngredientAutocomplete(app.__afAutocomplete.input, app.__afAutocomplete.input.value || '');
-      return;
-    }
+    render() {
+      if (!this.dropdown) return;
 
-    const action = event.target.closest?.('[data-af-action]');
-    if (action) {
-      const act = action.getAttribute('data-af-action');
-      if (act === 'clear') {
-        app.clearAutocompleteSelection();
-      } else if (act === 'manual') {
-        const input = app.__afAutocomplete?.input;
-        const context = app.__afAutocomplete?.context || app.getIngredientAutocompleteContext(input);
-        if (context.mode === 'bulk') app.applyBulkAutocompleteSelection();
-        else if (input) app.applySingleAutocompleteItem(input.value || '');
-      } else if (act === 'apply') {
-        const input = app.__afAutocomplete?.input;
-        const context = app.__afAutocomplete?.context || app.getIngredientAutocompleteContext(input);
-        if (context.mode === 'bulk') app.applyBulkAutocompleteSelection();
-        else if (app.__afAutocomplete?.suggestions?.[0]) app.applySingleAutocompleteItem(app.__afAutocomplete.suggestions[0].name);
-        else if (input?.value?.trim()) app.applySingleAutocompleteItem(input.value.trim());
+      if (!this.suggestions.length) {
+        this.dropdown.innerHTML = '<div class="af-autocomplete-empty">Nenhuma sugestão encontrada.</div>';
+        this.input.removeAttribute('aria-activedescendant');
+        return;
       }
-      return;
+
+      this.dropdown.innerHTML = this.suggestions.map((item, index) => `
+        <button
+          type="button"
+          class="af-autocomplete-option ${index === this.activeIndex ? 'is-active' : ''}"
+          id="${this.uid}-opt-${index}"
+          role="option"
+          aria-selected="${index === this.activeIndex ? 'true' : 'false'}"
+          data-index="${index}"
+        >
+          <span class="af-autocomplete-label">${escapeHtml(item.name)}</span>
+          ${item.meta ? `<span class="af-autocomplete-meta">${escapeHtml(item.meta)}</span>` : ''}
+        </button>
+      `).join('');
+
+      this.dropdown.querySelectorAll('.af-autocomplete-option').forEach((button) => {
+        button.addEventListener('mousedown', (event) => event.preventDefault());
+        button.addEventListener('mouseenter', () => this.setActiveIndex(Number(button.dataset.index)));
+        button.addEventListener('click', () => {
+          const selected = this.suggestions[Number(button.dataset.index)];
+          if (selected) this.applySuggestion(selected);
+        });
+      });
+
+      this.updateActiveDescendant();
     }
 
-    const input = event.target.closest?.('input');
-    if (app.isIngredientAutocompleteInput(input)) {
-      app.decorateIngredientAutocompleteInput(input);
-      app.renderIngredientAutocomplete(input, input.value || '');
-      return;
+    setActiveIndex(index) {
+      if (!this.suggestions.length || !this.dropdown) return;
+      const total = this.suggestions.length;
+      this.activeIndex = ((index % total) + total) % total;
+      this.dropdown.querySelectorAll('.af-autocomplete-option').forEach((option, optionIndex) => {
+        const active = optionIndex === this.activeIndex;
+        option.classList.toggle('is-active', active);
+        option.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      this.updateActiveDescendant();
     }
 
-    if (!event.target.closest?.('#autocomplete-suggestions')) {
-      app.hideAutocomplete(true);
-    }
-  }, true);
-
-  window.addEventListener('resize', () => {
-    const input = app.__afAutocomplete?.input;
-    if (input && app.ensureAutocompleteContainer().style.display === 'block') {
-      app.positionAutocompleteCard(input);
-    }
-  });
-
-  window.addEventListener('scroll', () => {
-    const input = app.__afAutocomplete?.input;
-    if (input && app.ensureAutocompleteContainer().style.display === 'block') {
-      app.positionAutocompleteCard(input);
-    }
-  }, true);
-
-
-})();
-
-
-document.addEventListener('DOMContentLoaded', () => {
-  const tiltCards = document.querySelectorAll('.tilt-card');
-
-  tiltCards.forEach((card) => {
-    const resetCard = () => {
-      card.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg) translateY(0)';
-    };
-
-    card.addEventListener('mousemove', (event) => {
-      if (window.innerWidth <= 980) return;
-      const rect = card.getBoundingClientRect();
-      const px = (event.clientX - rect.left) / rect.width;
-      const py = (event.clientY - rect.top) / rect.height;
-      const rotateY = (px - 0.5) * 10;
-      const rotateX = (0.5 - py) * 10;
-      card.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-3px)`;
-    });
-
-    card.addEventListener('mouseleave', resetCard);
-    card.addEventListener('blur', resetCard);
-  });
-
-  const storyVideo = document.querySelector('.story-video');
-  if (storyVideo) {
-    storyVideo.addEventListener('error', () => {
-      const shell = storyVideo.closest('.story-video-shell');
-      if (shell) {
-        shell.classList.add('asset-missing');
+    updateActiveDescendant() {
+      const active = this.dropdown?.querySelector('.af-autocomplete-option.is-active');
+      if (!active) {
+        this.input.removeAttribute('aria-activedescendant');
+        return;
       }
-    });
-  }
-});
-
-(function(){
-  const showcaseShots = [
-    { src:'landing-showcase/shot-03.png', kicker:'Lista', title:'Listas inteligentes sem bagunça', desc:'Monte compras com clareza, preço visível e fluxo direto para o mercado.' },
-    { src:'landing-showcase/shot-04.png', kicker:'Painel', title:'Visual premium e leitura imediata', desc:'Cada área do painel foi pensada para ser rápida, bonita e funcional no celular.' },
-    { src:'landing-showcase/shot-05.png', kicker:'Planejamento', title:'Semana organizada com mais lógica', desc:'Distribua refeições, acompanhe a rotina e mantenha tudo conectado.' },
-    { src:'landing-showcase/shot-06.png', kicker:'Controle', title:'Despensa viva e sempre visível', desc:'Acompanhe estoque, validade e o que realmente faz falta em casa.' },
-    { src:'landing-showcase/shot-07.png', kicker:'Receitas', title:'Receitas dentro do seu fluxo real', desc:'Use o que você já tem e transforme organização em praticidade diária.' },
-    { src:'landing-showcase/shot-08.png', kicker:'Análises', title:'Decisões melhores com dados visuais', desc:'Entenda hábitos, desperdícios e economia com uma interface clara.' },
-    { src:'landing-showcase/shot-09.png', kicker:'Experiência', title:'Produto com presença e acabamento', desc:'Uma apresentação limpa, moderna e pensada para passar valor.' },
-    { src:'landing-showcase/shot-10.png', kicker:'Rotina', title:'Tudo conectado em uma única experiência', desc:'Lista, despensa, receitas e planejamento conversando entre si.' }
-  ];
-
-  function initLandingPremium(){
-    const stageImg = document.getElementById('af-showcase-image');
-    const prevBtn = document.getElementById('af-showcase-prev');
-    const nextBtn = document.getElementById('af-showcase-next');
-    const kicker = document.getElementById('af-showcase-kicker');
-    const title = document.getElementById('af-showcase-title');
-    const desc = document.getElementById('af-showcase-desc');
-    const stage = document.getElementById('af-showcase-stage');
-    if (!stageImg || !prevBtn || !nextBtn || !kicker || !title || !desc || !stage || stage.dataset.bound) return;
-    stage.dataset.bound = '1';
-    let index = 0;
-    let startX = 0;
-    function render(nextIndex){
-      index = (nextIndex + showcaseShots.length) % showcaseShots.length;
-      const item = showcaseShots[index];
-      stageImg.classList.add('is-switching');
-      setTimeout(() => {
-        stageImg.src = item.src;
-        stageImg.alt = item.title;
-        kicker.textContent = item.kicker;
-        title.textContent = item.title;
-        desc.textContent = item.desc;
-        stageImg.classList.remove('is-switching');
-      }, 160);
+      this.input.setAttribute('aria-activedescendant', active.id);
     }
-    prevBtn.addEventListener('click', () => render(index - 1));
-    nextBtn.addEventListener('click', () => render(index + 1));
-    stage.addEventListener('touchstart', (e) => { startX = e.changedTouches[0].clientX; }, { passive:true });
-    stage.addEventListener('touchend', (e) => {
-      const delta = e.changedTouches[0].clientX - startX;
-      if (Math.abs(delta) < 40) return;
-      render(index + (delta < 0 ? 1 : -1));
-    }, { passive:true });
+
+    applySuggestion(item) {
+      this.suppressOpenOnce = true;
+      this.input.value = item.name;
+      this.emit();
+      this.close();
+      this.input.blur();
+    }
+
+    open() {
+      if (!this.dropdown) return;
+      this.dropdown.hidden = false;
+      this.input.setAttribute('aria-expanded', 'true');
+    }
+
+    close() {
+      if (!this.dropdown) return;
+      this.dropdown.hidden = true;
+      this.input.setAttribute('aria-expanded', 'false');
+      this.input.removeAttribute('aria-activedescendant');
+    }
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLandingPremium, { once:true });
-  else initLandingPremium();
-})();
+  function initInput(app, input) {
+    if (!isTargetInput(input) || instances.has(input)) return;
+    instances.set(input, new ProductAutocompleteLite(app, input));
+  }
 
-
-/* AF hard reset autocomplete bootstrap */
-(function(){
-  function boot(){
-    const app = window.app;
-    if (!app) { setTimeout(boot, 250); return; }
-    if (app.__afHardResetBooted) return;
-    app.__afHardResetBooted = true;
-
-    try { if (typeof ALL_ITEMS_DATA !== 'undefined' && !window.ALL_ITEMS_DATA) window.ALL_ITEMS_DATA = ALL_ITEMS_DATA; } catch(_) {}
-
-    const fieldIds = new Set([
-      'lista-form-nome-full','lista-form-nome-dash','edit-item-name','edit-item-name-dt','pantry-edit-name',
-      'recipe-ing-name','inline-edit-name','item-name','essential-name','planner-custom-name','recipe-edit-name','calc-item-name'
-    ]);
-
-    const isTarget = (input) => {
-      if (!input || input.tagName !== 'INPUT' || input.type === 'hidden' || input.disabled || input.readOnly) return false;
-      const id = String(input.id||'').trim();
-      if (fieldIds.has(id)) return true;
-      const hay = [id, input.name||'', input.placeholder||'', input.getAttribute('aria-label')||'', input.closest('form,.modal-box,.card-content,.form-group')?.textContent||''].join(' ').toLowerCase();
-      return /(ingred|item|produto|despensa|lista|receita|essencial|planej|calc)/.test(hay) && /(nome|name|buscar|digite|adicionar|insira)/.test(hay);
-    };
-
-    const bindInput = (input) => {
-      if (!isTarget(input) || input.dataset.afHardBound === '1') return;
-      input.dataset.afHardBound = '1';
-      input.setAttribute('autocomplete','off');
-      input.addEventListener('focus', () => {
-        try { app.renderIngredientAutocomplete?.(input, input.value || ''); } catch(e) {}
-      });
-      input.addEventListener('input', () => {
-        try { app.renderIngredientAutocomplete?.(input, input.value || ''); } catch(e) {}
-      });
-      input.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          app.hideAutocomplete?.(true);
-          return;
-        }
-        if (event.key === 'Enter') {
-          const state = app.__afAutocomplete || {};
-          const context = app.getIngredientAutocompleteContext ? app.getIngredientAutocompleteContext(input) : { mode: 'single' };
-          if (context.mode === 'bulk') {
-            event.preventDefault();
-            app.applyBulkAutocompleteSelection?.();
-          } else if (state.suggestions && state.suggestions[0]) {
-            event.preventDefault();
-            app.applySingleAutocompleteItem?.(state.suggestions[0].name);
-          }
-        }
-      });
-    };
-
-    const scan = (scope=document) => {
-      scope.querySelectorAll?.('input').forEach(bindInput);
-    };
-
-    // neutralize legacy behavior by routing old calls to the final renderer
-    app.handleAutocomplete = function(input){
-      if (!isTarget(input)) return;
-      return app.renderIngredientAutocomplete?.(input, input.value || '');
-    };
-
-    const oldHide = app.hideAutocomplete?.bind(app);
-    app.hideAutocomplete = function(forceClearSelection=false){
-      return oldHide ? oldHide(forceClearSelection) : undefined;
-    };
-
-    scan(document);
-    const mo = new MutationObserver((muts) => {
-      muts.forEach((m) => m.addedNodes.forEach((n) => {
-        if (n.nodeType !== 1) return;
-        if (n.matches?.('input')) bindInput(n);
-        scan(n);
-      }));
+  function initUnder(app, root) {
+    if (!root) return;
+    if (isTargetInput(root)) {
+      initInput(app, root);
+      return;
+    }
+    if (!(root instanceof Document) && !(root instanceof HTMLElement)) return;
+    root.querySelectorAll?.('input').forEach((input) => {
+      if (isTargetInput(input)) initInput(app, input);
     });
-    mo.observe(document.documentElement || document.body, { childList:true, subtree:true });
+  }
 
-    document.addEventListener('click', (event) => {
-      const input = event.target.closest?.('input');
-      if (isTarget(input)) {
-        setTimeout(() => { try { app.renderIngredientAutocomplete?.(input, input.value || ''); } catch(e) {} }, 10);
-      }
+  function attach(app) {
+    if (window[PATCH_FLAG]) return;
+    window[PATCH_FLAG] = true;
+    appRef = app;
+    catalogCache = buildCatalog(app);
+
+    app.rebuildProductAutocompleteCatalog = () => {
+      catalogCache = buildCatalog(app);
+      return catalogCache;
+    };
+
+    const originalOpenModal = typeof app.openModal === 'function' ? app.openModal.bind(app) : null;
+    if (originalOpenModal && !app.__afAutocompleteLiteWrappedOpenModal) {
+      app.__afAutocompleteLiteWrappedOpenModal = true;
+      app.openModal = function(modalId, ...args) {
+        const result = originalOpenModal(modalId, ...args);
+        setTimeout(() => {
+          const modal = document.getElementById(modalId);
+          if (modal) initUnder(app, modal);
+        }, 0);
+        return result;
+      };
+    }
+
+    document.addEventListener('focusin', (event) => {
+      const target = event.target;
+      if (isTargetInput(target)) initInput(app, target);
     }, true);
+
+    initUnder(app, document);
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once:true });
-  else boot();
+
+  function waitForApp(attempt = 0) {
+    if (window.app && document.body) {
+      attach(window.app);
+      return;
+    }
+    if (attempt > 240) return;
+    requestAnimationFrame(() => waitForApp(attempt + 1));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => waitForApp(), { once: true });
+  } else {
+    waitForApp();
+  }
 })();
+
