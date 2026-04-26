@@ -88,32 +88,64 @@
 
     <main class="main-container">
 
-        <section id="inicio" class="page-section landing-hero-refined">
-            <div class="identity-container hero-clean-layout">
-                <div class="hero-clean-shell refined-hero-shell af-hero-shell">
-                    <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
-                    <h2 class="hero-tagline">Planeje refeições, acompanhe sua despensa e compre com mais clareza.</h2>
+<section id="inicio" class="page-section landing-hero-refined af-hero-marketing">
+    <div class="identity-container hero-clean-layout">
+        <div class="hero-clean-shell refined-hero-shell af-hero-shell af-hero-conversion-shell">
+            <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
+            <h2 class="hero-tagline af-premium-tagline">
+                <i class="fa-solid fa-apple-whole af-apple-red" aria-hidden="true"></i>
+                <span>O futuro da sua cozinha, agora.</span>
+            </h2>
 
-                    <div class="hero-compact-points" aria-label="Destaques principais">
-                        <span>Sem bagunça</span>
-                        <span>Sem desperdício</span>
-                        <span>Tudo conectado</span>
-                    </div>
+                    <form class="af-lead-calculator af-lead-calculator-premium" id="heroSavingsCalculator" novalidate aria-label="Simulador rápido de economia no supermercado">
+                        <div class="af-calc-entry-view">
+                            <div class="af-calc-headline-row">
+                                <div class="af-calc-food-icons" aria-hidden="true">
+                                    <span><i class="fa-solid fa-apple-whole"></i></span>
+                                    <span><i class="fa-solid fa-carrot"></i></span>
+                                    <span><i class="fa-solid fa-basket-shopping"></i></span>
+                                </div>
+                                <p class="af-calc-caption">Digite seu gasto mensal e veja, em segundos, o potencial de economia da sua rotina.</p>
+                            </div>
+
+                            <div class="af-calc-bar">
+                                <span class="af-calc-currency" aria-hidden="true">R$</span>
+                                <label class="sr-only" for="heroMonthlySpend">Gasto mensal com supermercado</label>
+                                <input type="text" id="heroMonthlySpend" name="heroMonthlySpend" placeholder="Ex: 1.200" inputmode="decimal" autocomplete="off" aria-describedby="heroCalcFeedback heroResult">
+                                <button type="submit" id="heroCalcBtn" class="af-calc-submit">Simular economia</button>
+                            </div>
+
+                            <p id="heroCalcFeedback" class="af-calc-feedback hidden" role="alert">Digite um valor mensal válido.</p>
+                        </div>
+
+                        <div id="heroResult" class="af-calc-result hidden" aria-live="polite" aria-hidden="true">
+                            <div class="af-calc-result-topline">
+                                <div class="af-calc-result-chip"><i class="fa-solid fa-sparkles" aria-hidden="true"></i><span>Estimativa inteligente</span></div>
+                            </div>
+                            <div class="af-calc-result-main">
+                                <strong id="heroMonthlyResult">R$ 0,00</strong>
+                                <small>de economia estimada por mês</small>
+                            </div>
+                            <p>Em 12 meses, isso pode se transformar em <strong id="heroAnnualResult">R$ 0,00</strong> no seu orçamento. Faça seu cadastro e teste o Alimente Fácil para começar a comprar com mais clareza, reduzir desperdícios e organizar sua cozinha com muito mais facilidade.</p>
+                            <div class="af-calc-result-actions">
+                                <button type="button" class="af-calc-start" data-af-start-trial>Criar cadastro e começar teste</button>
+                                <button type="button" id="heroCalcReset" class="af-calc-reset">Voltar</button>
+                            </div>
+                        </div>
+                    </form>
 
                     <div class="hero-cta-row refined-cta-row af-hero-cta-row">
-                        <a href="#" class="modern-start-btn" onclick="if(window.app){window.app.handleStartButtonClick(); return false;}">
-                            <span class="btn-text">Começar agora</span>
-                            <span class="btn-icon-wrapper"><i class="fa-solid fa-arrow-right"></i></span>
+                        <a href="#" class="modern-start-btn af-start-trial-btn" data-af-start-trial aria-label="Começar cadastro no Alimente Fácil">
+                            <span class="btn-text">COMEÇAR</span><span class="af-cta-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
                         </a>
-                        <a href="#recursos" class="hero-secondary-btn" aria-label="Conhecer painel">
-                            <span>Conhecer painel</span>
-                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        <a href="#recursos" class="hero-secondary-btn af-secondary-minimal-btn" aria-label="Explorar recursos do painel">
+                            <span class="btn-text">CONHEÇA</span><span class="af-cta-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
                         </a>
                     </div>
 
-                    <div class="hero-pricing-note refined-pricing-note">Plano único <strong>R$ 9,90/mês</strong></div>
+                    <p class="af-hero-microcopy">Cadastro rápido · teste pelo navegador · sem baixar app pela loja</p>
                 </div>
-</div>
+            </div>
 
             <div class="scroll-down-indicator" aria-hidden="true">
                 <span>Role para explorar</span>
@@ -134,7 +166,7 @@
                         <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
                     </button>
 
-                    <img id="af-showcase-image" src="landing-showcase/shot-03.png" alt="Tela do painel Alimente Fácil" loading="lazy" decoding="async">
+                    <img id="af-showcase-image" src="landing-showcase/shot-03.png" alt="Tela do painel Alimente Fácil em destaque" loading="lazy" decoding="async">
 
                     <div class="af-showcase-copy" id="af-showcase-copy">
                         <div class="af-showcase-kicker" id="af-showcase-kicker">Painel</div>

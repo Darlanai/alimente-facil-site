@@ -12639,3 +12639,371 @@ console.log('handleSignup chamada');
   }
 })();
 
+
+
+/* ===== AF hero marketing savings calculator - isolated v2 ===== */
+(function initAfHeroMarketingSavingsCalculator(){
+  const PATCH_FLAG = '__afHeroMarketingSavingsCalculatorV2';
+  if (window[PATCH_FLAG]) return;
+  window[PATCH_FLAG] = true;
+
+  const moneyFormatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  function parseBrazilianMoney(value) {
+    if (value == null) return NaN;
+    let text = String(value).trim();
+    if (!text) return NaN;
+
+    text = text.replace(/\s+/g, '').replace(/R\$/gi, '').replace(/[^0-9,.-]/g, '');
+
+    const hasComma = text.includes(',');
+    const hasDot = text.includes('.');
+
+    if (hasComma && hasDot) {
+      text = text.replace(/\./g, '').replace(',', '.');
+    } else if (hasComma) {
+      text = text.replace(',', '.');
+    } else if (hasDot) {
+      const parts = text.split('.');
+      const looksLikeThousands = parts.length > 1 && parts.slice(1).every((part) => part.length === 3);
+      if (looksLikeThousands) text = parts.join('');
+    }
+
+    const number = Number.parseFloat(text);
+    return Number.isFinite(number) ? number : NaN;
+  }
+
+  function setHidden(element, shouldHide) {
+    if (!element) return;
+    element.classList.toggle('hidden', shouldHide);
+    if (element.id === 'heroResult') element.setAttribute('aria-hidden', shouldHide ? 'true' : 'false');
+  }
+
+  function openSignupFlow() {
+    const app = window.app;
+
+    if (app) {
+      if (app.isLoggedIn && typeof app.enterAppMode === 'function') {
+        app.enterAppMode();
+        return;
+      }
+
+      if (typeof app.showAuthModal === 'function') {
+        app.showAuthModal();
+        window.setTimeout(() => {
+          document.querySelector('.auth-toggle-link[data-view="signup-view"]')?.click();
+        }, 90);
+        return;
+      }
+
+      if (typeof app.handleStartButtonClick === 'function') {
+        app.handleStartButtonClick();
+        return;
+      }
+    }
+
+    const authModal = document.getElementById('auth-modal');
+    if (authModal) {
+      authModal.classList.add('active');
+      document.querySelector('.auth-toggle-link[data-view="signup-view"]')?.click();
+    }
+  }
+
+  function install() {
+    const form = document.getElementById('heroSavingsCalculator');
+    if (!form || form.dataset.afMarketingCalcReady === '1') return false;
+
+    const input = document.getElementById('heroMonthlySpend');
+    const feedback = document.getElementById('heroCalcFeedback');
+    const result = document.getElementById('heroResult');
+    const monthlyTarget = document.getElementById('heroMonthlyResult');
+    const annualTarget = document.getElementById('heroAnnualResult');
+    const resetBtn = document.getElementById('heroCalcReset');
+
+    if (!input || !feedback || !result || !monthlyTarget || !annualTarget) return false;
+    form.dataset.afMarketingCalcReady = '1';
+
+    const clearError = () => setHidden(feedback, true);
+
+    const showError = () => {
+      feedback.textContent = 'Digite um valor mensal válido. Exemplo: R$ 1.200';
+      form.classList.remove('is-calculated');
+      setHidden(feedback, false);
+      setHidden(result, true);
+      input.focus({ preventScroll: true });
+    };
+
+    const calculate = () => {
+      const monthlySpend = parseBrazilianMoney(input.value);
+      if (!Number.isFinite(monthlySpend) || monthlySpend <= 0) {
+        showError();
+        return;
+      }
+
+      const monthlySavings = monthlySpend * 0.30;
+      const annualSavings = monthlySavings * 12;
+
+      monthlyTarget.textContent = moneyFormatter.format(monthlySavings);
+      annualTarget.textContent = moneyFormatter.format(annualSavings);
+      clearError();
+      setHidden(result, false);
+      form.classList.add('is-calculated');
+    };
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      calculate();
+    });
+
+    input.addEventListener('input', () => {
+      clearError();
+      if (!input.value.trim()) {
+        form.classList.remove('is-calculated');
+        setHidden(result, true);
+      }
+    });
+
+    resetBtn?.addEventListener('click', () => {
+      input.value = '';
+      form.classList.remove('is-calculated');
+      clearError();
+      setHidden(result, true);
+      input.focus({ preventScroll: true });
+    });
+
+    document.addEventListener('click', (event) => {
+      const startButton = event.target.closest?.('[data-af-start-trial]');
+      if (!startButton) return;
+      event.preventDefault();
+      openSignupFlow();
+    });
+
+    return true;
+  }
+
+  function waitForHero(attempt = 0) {
+    if (install()) return;
+    if (attempt > 180) return;
+    requestAnimationFrame(() => waitForHero(attempt + 1));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => waitForHero(), { once: true });
+  } else {
+    waitForHero();
+  }
+})();
+
+
+/* ===== AF showcase carousel fix - smooth multi-image panel gallery ===== */
+(function initAfShowcaseCarouselFix(){
+  const PATCH_FLAG = '__afShowcaseCarouselFixV1';
+  if (window[PATCH_FLAG]) return;
+  window[PATCH_FLAG] = true;
+
+  const SHOWCASE_ITEMS = [
+    {
+      src: 'landing-showcase/shot-03.png',
+      kicker: 'Painel',
+      title: 'Controle claro da sua cozinha',
+      desc: 'Visualize listas, despensa, receitas e planejamento com uma interface premium, rápida e intuitiva.',
+      alt: 'Tela principal do painel Alimente Fácil'
+    },
+    {
+      src: 'landing-showcase/shot-01.png',
+      kicker: 'Listas',
+      title: 'Compras mais leves e organizadas',
+      desc: 'Monte listas com clareza, acompanhe itens e reduza compras repetidas sem esforço.',
+      alt: 'Tela de listas de compras do Alimente Fácil'
+    },
+    {
+      src: 'landing-showcase/shot-02.png',
+      kicker: 'Despensa',
+      title: 'Sua despensa sempre visível',
+      desc: 'Veja o que você tem, o que está acabando e o que precisa entrar na próxima compra.',
+      alt: 'Tela de despensa do Alimente Fácil'
+    },
+    {
+      src: 'landing-showcase/shot-04.png',
+      kicker: 'Receitas',
+      title: 'Receitas rápidas com o que você tem',
+      desc: 'Transforme ingredientes disponíveis em ideias simples, bonitas e fáceis de preparar.',
+      alt: 'Tela de receitas do Alimente Fácil'
+    },
+    {
+      src: 'landing-showcase/shot-05.png',
+      kicker: 'Planejador',
+      title: 'Planeje a semana com tranquilidade',
+      desc: 'Organize refeições, compras e rotina alimentar em poucos toques, sem bagunça.',
+      alt: 'Tela de planejador semanal do Alimente Fácil'
+    },
+    {
+      src: 'landing-showcase/shot-06.png',
+      kicker: 'Análises',
+      title: 'Decisões melhores para economizar',
+      desc: 'Acompanhe gastos, desperdícios e hábitos para comprar com mais consciência.',
+      alt: 'Tela de análises do Alimente Fácil'
+    }
+  ];
+
+  function preloadImage(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = src;
+    });
+  }
+
+  function setText(el, value) {
+    if (el) el.textContent = value || '';
+  }
+
+  async function install() {
+    const stage = document.getElementById('af-showcase-stage');
+    const image = document.getElementById('af-showcase-image');
+    const prev = document.getElementById('af-showcase-prev');
+    const next = document.getElementById('af-showcase-next');
+    const kicker = document.getElementById('af-showcase-kicker');
+    const title = document.getElementById('af-showcase-title');
+    const desc = document.getElementById('af-showcase-desc');
+
+    if (!stage || !image || !prev || !next) return false;
+    if (stage.dataset.afCarouselReady === '1') return true;
+    stage.dataset.afCarouselReady = '1';
+
+    stage.setAttribute('tabindex', '0');
+    stage.setAttribute('aria-roledescription', 'carrossel');
+    stage.setAttribute('aria-label', 'Prévia das telas do painel Alimente Fácil');
+
+    const checks = await Promise.all(SHOWCASE_ITEMS.map(async (item) => ({
+      item,
+      ok: await preloadImage(item.src)
+    })));
+
+    let slides = checks.filter(entry => entry.ok).map(entry => entry.item);
+
+    if (!slides.length) {
+      slides = [SHOWCASE_ITEMS[0]];
+    }
+
+    const currentSrc = image.getAttribute('src') || '';
+    let index = Math.max(0, slides.findIndex(item => currentSrc.endsWith(item.src)));
+
+    const dots = document.createElement('div');
+    dots.className = 'af-showcase-dots';
+    dots.setAttribute('aria-label', 'Selecionar tela do painel');
+    dots.innerHTML = slides.map((slide, dotIndex) => `
+      <button type="button" class="af-showcase-dot" aria-label="Mostrar ${slide.kicker}" data-index="${dotIndex}"></button>
+    `).join('');
+    stage.appendChild(dots);
+
+    const dotButtons = Array.from(dots.querySelectorAll('.af-showcase-dot'));
+    let isAnimating = false;
+    let autoTimer = null;
+
+    function updateDots() {
+      dotButtons.forEach((dot, dotIndex) => {
+        const active = dotIndex === index;
+        dot.classList.toggle('is-active', active);
+        dot.setAttribute('aria-current', active ? 'true' : 'false');
+      });
+    }
+
+    function updateContent(slide, instant = false) {
+      setText(kicker, slide.kicker);
+      setText(title, slide.title);
+      setText(desc, slide.desc);
+      image.alt = slide.alt || 'Tela do painel Alimente Fácil';
+
+      if (instant) {
+        image.src = slide.src;
+        updateDots();
+        return;
+      }
+
+      isAnimating = true;
+      stage.classList.add('is-changing');
+      image.classList.add('is-switching');
+
+      window.setTimeout(() => {
+        image.src = slide.src;
+        image.onload = () => {
+          image.classList.remove('is-switching');
+          stage.classList.remove('is-changing');
+          isAnimating = false;
+          updateDots();
+        };
+        window.setTimeout(() => {
+          image.classList.remove('is-switching');
+          stage.classList.remove('is-changing');
+          isAnimating = false;
+          updateDots();
+        }, 420);
+      }, 160);
+    }
+
+    function goTo(nextIndex, instant = false) {
+      if (isAnimating && !instant) return;
+      index = (nextIndex + slides.length) % slides.length;
+      updateContent(slides[index], instant);
+    }
+
+    function restartAuto() {
+      window.clearInterval(autoTimer);
+      if (slides.length <= 1) return;
+      autoTimer = window.setInterval(() => goTo(index + 1), 5200);
+    }
+
+    prev.addEventListener('click', () => { goTo(index - 1); restartAuto(); });
+    next.addEventListener('click', () => { goTo(index + 1); restartAuto(); });
+
+    dotButtons.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const targetIndex = Number(dot.dataset.index || 0);
+        if (targetIndex === index) return;
+        goTo(targetIndex);
+        restartAuto();
+      });
+    });
+
+    stage.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') { event.preventDefault(); goTo(index - 1); restartAuto(); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); goTo(index + 1); restartAuto(); }
+    });
+
+    stage.addEventListener('mouseenter', () => window.clearInterval(autoTimer));
+    stage.addEventListener('mouseleave', restartAuto);
+    stage.addEventListener('focusin', () => window.clearInterval(autoTimer));
+    stage.addEventListener('focusout', restartAuto);
+
+    if (slides.length <= 1) {
+      prev.disabled = true;
+      next.disabled = true;
+      dots.hidden = true;
+    }
+
+    goTo(index, true);
+    restartAuto();
+    return true;
+  }
+
+  function waitForShowcase(attempt = 0) {
+    install().then((done) => {
+      if (done) return;
+      if (attempt > 180) return;
+      requestAnimationFrame(() => waitForShowcase(attempt + 1));
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => waitForShowcase(), { once: true });
+  } else {
+    waitForShowcase();
+  }
+})();
