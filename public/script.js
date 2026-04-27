@@ -12243,6 +12243,142 @@ console.log('handleSignup chamada');
     return String(entry.unit_desc ?? entry.unid ?? entry.unit ?? entry.category ?? entry.categoria ?? '').trim();
   }
 
+
+  function normalizeUnitFromText(text) {
+    const raw = normalize(String(text || ''));
+    if (!raw) return 'un';
+    if (/\bkg\b|quilo/.test(raw)) return 'kg';
+    if (/\b100g\b/.test(raw)) return 'g';
+    if (/\bg\b|grama/.test(raw)) return 'g';
+    if (/\bml\b/.test(raw)) return 'ml';
+    if (/\blitro\b|\bl\b/.test(raw)) return 'L';
+    if (/\bpct\b|pacote/.test(raw)) return 'pct';
+    if (/\bcx\b|caixa/.test(raw)) return 'cx';
+    return 'un';
+  }
+
+  function normalizeQtyFromText(text, unit) {
+    const raw = normalize(String(text || ''));
+    if (!raw) return 1;
+    if (/\b100g\b/.test(raw) && unit === 'g') return 100;
+    if (/\b500g\b/.test(raw) && unit === 'g') return 500;
+    if (/\b250g\b/.test(raw) && unit === 'g') return 250;
+    if (/\b2l\b/.test(raw) && unit === 'L') return 2;
+    return 1;
+  }
+
+  function findCatalogDefaults(itemName) {
+    const key = normalize(itemName || '');
+    if (!key) return { qty: 1, unit: 'un', price: '', meta: '', estimated: false };
+
+    const source = (Array.isArray(window.ALL_ITEMS_DATA) ? window.ALL_ITEMS_DATA : []).find((row) => normalize(row?.name) === key);
+    const meta = String(source?.unit_desc || '').trim();
+    const unit = normalizeUnitFromText(meta);
+    const qty = normalizeQtyFromText(meta, unit);
+    const priceNumber = Number(source?.price);
+    const price = Number.isFinite(priceNumber) ? priceNumber.toFixed(2) : '';
+
+    return {
+      qty,
+      unit,
+      price,
+      meta,
+      estimated: Boolean(price)
+    };
+  }
+
+  function dispatchFieldEvents(field) {
+    if (!field) return;
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function setSelectValue(select, value) {
+    if (!select || !value) return false;
+    const target = String(value).toLowerCase();
+    const option = Array.from(select.options || []).find((opt) => String(opt.value).toLowerCase() === target || String(opt.textContent).trim().toLowerCase() === target);
+    if (!option) return false;
+    select.value = option.value;
+    dispatchFieldEvents(select);
+    return true;
+  }
+
+  function findNearbyField(root, selectors) {
+    if (!root || !selectors?.length) return null;
+    for (const selector of selectors) {
+      const found = root.querySelector(selector);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function ensureEstimatedPriceNote(valueField) {
+    const host = valueField?.closest('.form-group, .inline-field') || valueField?.parentElement;
+    if (!host) return;
+    let note = host.querySelector('.af-estimated-price-note');
+    if (!note) {
+      note = document.createElement('small');
+      note.className = 'af-estimated-price-note';
+      host.appendChild(note);
+    }
+    note.textContent = 'Valor médio estimado.';
+  }
+
+  function applyAutocompleteDefaultsToForm(input, itemName) {
+    if (!input || !itemName) return;
+    const defaults = findCatalogDefaults(itemName);
+    const scope = input.closest('.add-item-form, #recipe-ing-form, .modal-body, form, .form-group, .inline-edit-grid, .inline-field, .add-item-form-container') || input.parentElement || document;
+    const searchRoot = scope.closest('.add-item-form, #recipe-ing-form, .modal-body, form, .add-item-form-container') || scope;
+
+    const qtyField = findNearbyField(searchRoot, [
+      'input[id*="qtd"]',
+      'input[name*="qtd"]',
+      'input[id*="qty"]',
+      'input[name*="qty"]',
+      '#recipe-ing-qtd',
+      '.inline-edit-qtd'
+    ]);
+
+    const unitField = findNearbyField(searchRoot, [
+      'select[id*="unid"]',
+      'select[name*="unid"]',
+      'select[id*="unit"]',
+      'select[name*="unit"]',
+      '#recipe-ing-unid',
+      '.inline-edit-unid',
+      '#essential-unit'
+    ]);
+
+    const valueField = findNearbyField(searchRoot, [
+      'input[id*="valor"]',
+      'input[name*="valor"]',
+      'input[id*="price"]',
+      'input[name*="price"]',
+      '#essential-price',
+      '.inline-edit-valor'
+    ]);
+
+    if (qtyField) {
+      qtyField.value = String(defaults.qty || 1);
+      dispatchFieldEvents(qtyField);
+    }
+
+    if (unitField) {
+      if (unitField.tagName === 'SELECT') {
+        setSelectValue(unitField, defaults.unit || 'un');
+      } else {
+        unitField.value = defaults.unit || 'un';
+        dispatchFieldEvents(unitField);
+      }
+    }
+
+    if (valueField && defaults.price) {
+      valueField.value = defaults.price;
+      dispatchFieldEvents(valueField);
+      ensureEstimatedPriceNote(valueField);
+    }
+  }
+
   function collectDynamicCatalog(app) {
     const rows = [];
     const push = (name, meta = '') => {
@@ -12438,7 +12574,9 @@ console.log('handleSignup chamada');
 
     onBlur() {
       clearTimeout(this.closeTimer);
-      this.closeTimer = setTimeout(() => this.close(), 120);
+      const isMobile = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+      if (isMobile) return;
+      this.closeTimer = setTimeout(() => this.close(), 180);
     }
 
     onKeyDown(event) {
@@ -12541,6 +12679,7 @@ console.log('handleSignup chamada');
 
       this.dropdown.querySelectorAll('.af-autocomplete-option').forEach((button) => {
         button.addEventListener('mousedown', (event) => event.preventDefault());
+        button.addEventListener('pointerdown', () => clearTimeout(this.closeTimer), { passive: true });
         button.addEventListener('mouseenter', () => this.setActiveIndex(Number(button.dataset.index)));
         button.addEventListener('click', () => {
           const selected = this.suggestions[Number(button.dataset.index)];
@@ -12576,8 +12715,10 @@ console.log('handleSignup chamada');
       this.suppressOpenOnce = true;
       this.input.value = item.name;
       this.emit();
+      applyAutocompleteDefaultsToForm(this.input, item.name);
       this.close();
-      this.input.blur();
+      const isMobile = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+      if (!isMobile) this.input.blur();
     }
 
     open() {
@@ -13075,9 +13216,73 @@ console.log('handleSignup chamada');
     event.preventDefault();
     event.stopPropagation();
 
+    const amount = Math.max(280, Math.round(viewport.clientWidth * 0.92));
     viewport.scrollBy({
-      left: next ? viewport.clientWidth : -viewport.clientWidth,
+      left: next ? amount : -amount,
       behavior: 'smooth'
     });
   }, true);
+})();
+
+
+/* V17 — abrir imagem do showcase em tela cheia */
+(function(){
+  if (window.__afShowcaseLightboxV17) return;
+  window.__afShowcaseLightboxV17 = true;
+
+  function ensureLightbox() {
+    let box = document.querySelector('.af-showcase-lightbox');
+    if (box) return box;
+
+    box = document.createElement('div');
+    box.className = 'af-showcase-lightbox';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-label', 'Prévia do painel em tela cheia');
+    box.innerHTML = `
+      <button type="button" class="af-showcase-lightbox-close" aria-label="Fechar prévia">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+      <img src="" alt="Tela do painel Alimente Fácil em tela cheia">
+    `;
+    document.body.appendChild(box);
+
+    box.addEventListener('click', (event) => {
+      if (event.target === box || event.target.closest('.af-showcase-lightbox-close')) {
+        closeLightbox();
+      }
+    });
+
+    return box;
+  }
+
+  function openLightbox(src, alt) {
+    if (!src) return;
+    const box = ensureLightbox();
+    const img = box.querySelector('img');
+    img.src = src;
+    img.alt = alt || 'Tela do painel Alimente Fácil em tela cheia';
+    box.classList.add('is-open');
+    document.body.classList.add('af-showcase-lightbox-open');
+    box.querySelector('.af-showcase-lightbox-close')?.focus({ preventScroll: true });
+  }
+
+  function closeLightbox() {
+    const box = document.querySelector('.af-showcase-lightbox');
+    if (!box) return;
+    box.classList.remove('is-open');
+    document.body.classList.remove('af-showcase-lightbox-open');
+  }
+
+  document.addEventListener('click', (event) => {
+    const image = event.target.closest && event.target.closest('#af-showcase-image');
+    if (!image) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openLightbox(image.currentSrc || image.src, image.alt);
+  }, true);
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeLightbox();
+  });
 })();
