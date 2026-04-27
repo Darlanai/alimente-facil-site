@@ -13,15 +13,22 @@
     </script>
 
     <meta charset="UTF-8">
-    <title>Alimente Fácil</title>
+    <title>Alimente Fácil | Compras, despensa e receitas em um só app</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#00f2ea">
-    <meta name="description" content="Organização alimentar premium, simples e sem ruído com o Alimente Fácil.">
+    <meta name="description" content="Organize listas de compras, controle a despensa, planeje refeições e reduza desperdícios com o Alimente Fácil. Teste grátis por 7 dias.">
     <meta name="author" content="Alimente Fácil">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://www.alimentefacil.com.br/">
 
-    <meta property="og:title" content="Alimente Fácil">
-    <meta property="og:description" content="Organização alimentar premium, simples e sem ruído.">
+    <meta property="og:title" content="Alimente Fácil | Sua cozinha organizada">
+    <meta property="og:description" content="Listas de compras, despensa, receitas, planejamento semanal e economia em uma experiência simples e premium.">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.alimentefacil.com.br/">
+    <meta property="og:image" content="https://www.alimentefacil.com.br/icons/icon-512x512.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Alimente Fácil | Sua cozinha organizada">
+    <meta name="twitter:description" content="Organize compras, despensa, receitas e planejamento semanal. Teste grátis por 7 dias.">
 
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
@@ -40,6 +47,23 @@
         --starlight-gold: conic-gradient(from 0deg at 50% 50%, #FFD700 0deg, #D4AF37 180deg, #FFD700 360deg);
     }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Alimente Fácil",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Web, Android, iOS",
+  "url": "https://www.alimentefacil.com.br/",
+  "description": "Aplicativo web para organizar listas de compras, despensa, receitas e planejamento alimentar.",
+  "offers": {
+    "@type": "Offer",
+    "price": "9.90",
+    "priceCurrency": "BRL",
+    "availability": "https://schema.org/InStock"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -78,11 +102,11 @@
     <div class="menu-item" data-action="open-plans"><span>Planos</span></div>
     <div class="menu-item" data-action="open-calculator"><span>Calculadora</span></div>
     <div class="menu-item" id="pwa-install-menu" data-action="pwa-install" style="display:none"><span>Adicionar à Tela Inicial</span></div>
-    <div class="menu-item"><a href="#dicas-valiosas"><span>Dicas Valiosas</span></a></div>
-    <div class="menu-item"><a href="#receitas-landing"><span>Receitas Rápidas</span></a></div>
+    <div class="menu-item"><a href="#dicas-valiosas"><span>Dicas</span></a></div>
+    <div class="menu-item"><a href="#receitas-landing"><span>Receitas</span></a></div>
     <div class="menu-item"><a href="#sobre"><span>Sobre & Contato</span></a></div>
     <div class="menu-sep"></div>
-    <div class="menu-item cta" onclick="if(window.app){window.app.showAuthModal();}"><span>Acessar Painel</span></div>
+    <div class="menu-item cta" onclick="if(window.app){window.app.showAuthModal();}"><span>Entrar no Painel</span></div>
   </div>
 </header>
 
@@ -92,10 +116,7 @@
     <div class="identity-container hero-clean-layout">
         <div class="hero-clean-shell refined-hero-shell af-hero-shell af-hero-conversion-shell">
             <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
-            <h2 class="hero-tagline af-premium-tagline">
-                <i class="fa-solid fa-apple-whole af-apple-red" aria-hidden="true"></i>
-                <span>O futuro da sua cozinha, agora.</span>
-            </h2>
+<h2 class="hero-tagline af-premium-tagline"><span>O futuro da sua cozinha, agora.</span></h2>
 
                     <form class="af-lead-calculator af-lead-calculator-premium" id="heroSavingsCalculator" novalidate aria-label="Simulador rápido de economia no supermercado">
                         <div class="af-calc-entry-view">
@@ -105,14 +126,14 @@
                                     <span><i class="fa-solid fa-carrot"></i></span>
                                     <span><i class="fa-solid fa-basket-shopping"></i></span>
                                 </div>
-                                <p class="af-calc-caption">Digite seu gasto mensal e veja, em segundos, o potencial de economia da sua rotina.</p>
+                                <p class="af-calc-caption">Simule sua economia no supermercado.</p>
                             </div>
 
                             <div class="af-calc-bar">
                                 <span class="af-calc-currency" aria-hidden="true">R$</span>
                                 <label class="sr-only" for="heroMonthlySpend">Gasto mensal com supermercado</label>
-                                <input type="text" id="heroMonthlySpend" name="heroMonthlySpend" placeholder="Ex: 1.200" inputmode="decimal" autocomplete="off" aria-describedby="heroCalcFeedback heroResult">
-                                <button type="submit" id="heroCalcBtn" class="af-calc-submit">Simular economia</button>
+                                <input type="text" id="heroMonthlySpend" name="heroMonthlySpend" placeholder="Digite o valor mensal com supermercado" inputmode="decimal" autocomplete="off" aria-describedby="heroCalcFeedback heroResult">
+                                <button type="submit" id="heroCalcBtn" class="af-calc-submit">Ver economia</button>
                             </div>
 
                             <p id="heroCalcFeedback" class="af-calc-feedback hidden" role="alert">Digite um valor mensal válido.</p>
@@ -126,9 +147,9 @@
                                 <strong id="heroMonthlyResult">R$ 0,00</strong>
                                 <small>de economia estimada por mês</small>
                             </div>
-                            <p>Em 12 meses, isso pode se transformar em <strong id="heroAnnualResult">R$ 0,00</strong> no seu orçamento. Faça seu cadastro e teste o Alimente Fácil para começar a comprar com mais clareza, reduzir desperdícios e organizar sua cozinha com muito mais facilidade.</p>
+                            <p>Em 12 meses, isso pode se transformar em <strong id="heroAnnualResult">R$ 0,00</strong> no seu orçamento. Use essa estimativa como ponto de partida. O Alimente Fácil ajuda você a comprar com mais clareza, visualizar o que já tem em casa e reduzir desperdícios na rotina.</p>
                             <div class="af-calc-result-actions">
-                                <button type="button" class="af-calc-start" data-af-start-trial>Criar cadastro e começar teste</button>
+                                <button type="button" class="af-calc-start" data-af-start-trial>Começar teste grátis</button>
                                 <button type="button" id="heroCalcReset" class="af-calc-reset">Voltar</button>
                             </div>
                         </div>
@@ -136,14 +157,18 @@
 
                     <div class="hero-cta-row refined-cta-row af-hero-cta-row">
                         <a href="#" class="modern-start-btn af-start-trial-btn" data-af-start-trial aria-label="Começar cadastro no Alimente Fácil">
-                            <span class="btn-text">COMEÇAR</span><span class="af-cta-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
+                            <span class="btn-text">COMEÇAR TESTE</span><span class="af-cta-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
                         </a>
                         <a href="#recursos" class="hero-secondary-btn af-secondary-minimal-btn" aria-label="Explorar recursos do painel">
-                            <span class="btn-text">CONHEÇA</span><span class="af-cta-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
+                            <span class="btn-text">VER PAINEL</span><span class="af-cta-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
                         </a>
                     </div>
 
-                    <p class="af-hero-microcopy">Cadastro rápido · teste pelo navegador · sem baixar app pela loja</p>
+                    <div class="af-trust-row" aria-label="Diferenciais do Alimente Fácil">
+                        <span><i class="fa-solid fa-shield-heart" aria-hidden="true"></i> Sem anúncios</span>
+                        <span><i class="fa-solid fa-credit-card" aria-hidden="true"></i> Mercado Pago</span>
+                        <span><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> PWA instalável</span>
+                    </div>
                 </div>
             </div>
 
@@ -153,12 +178,51 @@
             </div>
         </section>
 
+        <section id="economia-inteligente" class="page-section af-proof-section" aria-labelledby="economia-title">
+            <div class="section-content af-proof-content">
+                <div class="section-eyebrow scroll-reveal">Economia com organização</div>
+                <h2 id="economia-title" class="page-title scroll-reveal">Sua cozinha pode estar fazendo você gastar mais do que precisa.</h2>
+                <p class="page-subtitle scroll-reveal">O Alimente Fácil foi criado para transformar pequenas decisões do dia a dia em uma rotina mais clara, econômica e sem desperdício.</p>
+
+                <div class="af-pain-grid scroll-reveal" aria-label="Problemas que o Alimente Fácil ajuda a resolver">
+                    <article class="af-pain-card">
+                        <i class="fa-solid fa-cart-plus" aria-hidden="true"></i>
+                        <h3>Compras repetidas</h3>
+                        <p>Evite comprar de novo o que já está na sua despensa.</p>
+                    </article>
+                    <article class="af-pain-card">
+                        <i class="fa-solid fa-calendar-xmark" aria-hidden="true"></i>
+                        <h3>Validade esquecida</h3>
+                        <p>Tenha mais clareza sobre o que precisa ser usado primeiro.</p>
+                    </article>
+                    <article class="af-pain-card">
+                        <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+                        <h3>Lista bagunçada</h3>
+                        <p>Organize itens, quantidades e valores antes de ir ao mercado.</p>
+                    </article>
+                    <article class="af-pain-card">
+                        <i class="fa-solid fa-utensils" aria-hidden="true"></i>
+                        <h3>Semana sem plano</h3>
+                        <p>Planeje refeições e transforme ingredientes em receitas simples.</p>
+                    </article>
+                </div>
+
+                <div class="af-solution-band scroll-reveal">
+                    <div>
+                        <strong>Lista + Despensa + Receitas + Planejador + Análises</strong>
+                        <span>Tudo conectado para você comprar melhor, desperdiçar menos e enxergar sua rotina alimentar com clareza.</span>
+                    </div>
+                    <button type="button" class="af-inline-cta" data-af-start-trial>Começar teste grátis</button>
+                </div>
+            </div>
+        </section>
+
         <section class="page-section landing-showcase-section" id="recursos" aria-labelledby="recursos-title">
             <div class="section-content showcase-section-content af-showcase-content">
                 <div class="showcase-heading scroll-reveal">
                     <div class="section-eyebrow">Painel premium</div>
-                    <h2 id="recursos-title" class="page-title">Uma experiência limpa, viva e inteligente para organizar sua rotina.</h2>
-                    <p class="page-subtitle">Explore o painel com foco total no produto. Sem cards pesados. Sem poluição. Só presença visual e clareza.</p>
+                    <h2 id="recursos-title" class="page-title">O painel premium que conecta sua cozinha inteira.</h2>
+                    <p class="page-subtitle">Listas de compras, despensa, receitas, planejador semanal e análises em uma interface limpa, rápida e fácil de usar.</p>
                 </div>
 
                 <div class="af-showcase-stage scroll-reveal" id="af-showcase-stage">
@@ -184,7 +248,7 @@
         <section id="calculadora" class="page-section" aria-labelledby="calc-title">
             <div class="section-content">
                 <h1 id="calc-title" class="page-title">Calculadora de Desperdício</h1>
-                <p class="page-subtitle">Veja o impacto real do desperdício no seu orçamento e no planeta.</p>
+                <p class="page-subtitle">Entenda quanto pequenos desperdícios podem pesar no seu orçamento ao longo do ano.</p>
 
                 <div class="mobile-tab-nav" role="tablist">
                     <button class="mobile-tab-btn active" data-tab-target="home-calculator" role="tab" aria-selected="true" aria-controls="home-calculator">
@@ -223,7 +287,9 @@
                             <li>Cerca de <strong>30%</strong> de toda a comida produzida no mundo é perdida ou desperdiçada.</li>
                             <li>Para uma família média, isso pode representar mais de <strong>R$ 1.000,00</strong> jogados fora por ano.</li>
                         </ul>
-                        <p>Usando nossa calculadora, você pode ter uma visão clara de como pequenas mudanças na sua rotina podem gerar uma economia significativa.</p>
+                        <p>Usando nossa calculadora, você cria uma estimativa simples do impacto financeiro do desperdício e entende por onde começar a melhorar sua rotina.</p>
+                        <p class="af-calc-disclaimer">Os valores são estimativas educativas. A economia real depende dos hábitos de compra, armazenamento e planejamento de cada família.</p>
+                        <button type="button" class="af-inline-cta af-inline-cta-small" data-af-start-trial>Organizar minha cozinha</button>
                     </div>
                 </div>
             </div>
@@ -232,7 +298,10 @@
         <section id="dicas-valiosas" class="page-section" aria-labelledby="dicas-title">
             <div class="section-content">
                 <h1 id="dicas-title" class="page-title">Dicas Valiosas</h1>
-                <p class="page-subtitle">Otimize sua rotina, economize e reduza o desperdício com nossas dicas.</p>
+                <p class="page-subtitle">Dicas práticas para comprar melhor, aproveitar mais alimentos e manter a despensa sob controle.</p>
+                <div class="af-section-proof-strip" aria-label="Benefícios das dicas">
+                    <span>Compra consciente</span><span>Menos desperdício</span><span>Despensa organizada</span>
+                </div>
                 <div class="carousel-slider dicas-carousel"></div>
             </div>
         </section>
@@ -240,7 +309,10 @@
         <section id="receitas-landing" class="page-section" aria-labelledby="receitas-title">
             <div class="section-content">
                 <h1 id="receitas-title" class="page-title">Receitas Rápidas</h1>
-                <p class="page-subtitle">Inspire-se com pratos fáceis e deliciosos para o dia a dia.</p>
+                <p class="page-subtitle">Ideias simples para usar melhor o que você já tem em casa e facilitar a semana.</p>
+                <div class="af-section-proof-strip" aria-label="Benefícios das receitas">
+                    <span>Rápidas</span><span>Econômicas</span><span>Feitas para a rotina</span>
+                </div>
                 <div class="carousel-slider receitas-carousel"></div>
             </div>
         </section>
@@ -267,10 +339,38 @@
                                 <label for="contact-message" class="sr-only">Sua Mensagem</label>
                                 <textarea rows="4" id="contact-message" placeholder="Sua Mensagem" required></textarea>
                             </div>
-                            <p style="font-size:.92rem; color:var(--glass-text-secondary); margin-bottom:.85rem;">As mensagens enviadas aqui serão encaminhadas automaticamente para a equipe do Alimente Fácil quando o envio estiver configurado.</p><button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Mensagem</button>
+                            <p style="font-size:.92rem; color:var(--glass-text-secondary); margin-bottom:.85rem;">Envie sua dúvida, sugestão ou solicitação de suporte. A equipe do Alimente Fácil responderá pelo e-mail informado.</p><button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Mensagem</button>
                         </form>
                     </div>
                 </div>
+            </div>
+        </section>
+
+
+        <section id="faq" class="page-section af-faq-section" aria-labelledby="faq-title">
+            <div class="section-content af-faq-content">
+                <div class="section-eyebrow scroll-reveal">Dúvidas rápidas</div>
+                <h2 id="faq-title" class="page-title scroll-reveal">Antes de começar</h2>
+                <p class="page-subtitle scroll-reveal">Tudo que o visitante precisa saber para testar com segurança.</p>
+                <div class="af-faq-grid scroll-reveal">
+                    <details class="af-faq-item" open>
+                        <summary>Preciso baixar pela loja de aplicativos?</summary>
+                        <p>Não. Você pode usar pelo navegador e, se quiser, adicionar à tela inicial para abrir como app.</p>
+                    </details>
+                    <details class="af-faq-item">
+                        <summary>Tem teste grátis?</summary>
+                        <p>Sim. O plano Premium informa 7 dias grátis para testar a experiência antes de seguir com a assinatura.</p>
+                    </details>
+                    <details class="af-faq-item">
+                        <summary>O que o Alimente Fácil organiza?</summary>
+                        <p>Listas de compras, despensa, receitas, planejamento semanal, orçamento e análises da rotina alimentar.</p>
+                    </details>
+                    <details class="af-faq-item">
+                        <summary>Posso cancelar?</summary>
+                        <p>Sim. A assinatura pode ser cancelada pelo fluxo de pagamento/conta, conforme os Termos de Uso e a plataforma de cobrança.</p>
+                    </details>
+                </div>
+                <button type="button" class="af-inline-cta af-faq-cta" data-af-start-trial>Começar teste grátis</button>
             </div>
         </section>
 
@@ -280,7 +380,7 @@
                     <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a>
                     <a href="/politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>
                 </div>
-                <p>Alimente Fácil &copy; 2025 - Todos os direitos reservados.</p>
+                <p>Alimente Fácil &copy; 2026 - Todos os direitos reservados.</p>
             </div>
         </footer>
     </main>
@@ -390,22 +490,24 @@
                 <button class="icon-button close-btn" data-modal-close="plans-modal"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="modal-body" style="padding: 2rem;">
-                <p class="page-subtitle" style="text-align: center; margin-bottom: 2rem;">Uma assinatura simples para organizar sua rotina alimentar sem complicação.</p>
+                <p class="page-subtitle" style="text-align: center; margin-bottom: 2rem;">Teste o painel completo e organize compras, despensa, receitas e planejamento em uma única assinatura.</p>
                 <div class="plans-container plans-container-single">
                     <div class="plan-card recommended" id="plan-premium" style="border-color: var(--primary-color); background: rgba(0, 242, 234, 0.05); max-width: 420px; margin: 0 auto;">
                         <div style="background: var(--primary-color); color: #000; font-size: 0.8rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; align-self: center; margin-bottom: 1rem;">PLANO ÚNICO</div>
                         <h4>Alimente Fácil</h4>
-                        <div class="plan-price">R$ 9,90<span>/mês</span></div><p style="margin:.35rem 0 1rem; color:var(--primary-color); font-weight:700;">7 dias grátis no Premium</p>
+                        <div class="plan-price">R$ 9,90<span>/mês</span></div><p style="margin:.35rem 0 1rem; color:var(--primary-color); font-weight:700;">7 dias grátis para testar</p>
                         <ul>
                             <li><i class="fa-solid fa-check"></i> Listas ilimitadas</li>
                             <li><i class="fa-solid fa-check"></i> Receitas ilimitadas</li>
                             <li><i class="fa-solid fa-check"></i> Planejador semanal completo</li>
                             <li><i class="fa-solid fa-check"></i> Controle de despensa</li>
                             <li><i class="fa-solid fa-check"></i> Análises e organização do painel</li>
+                            <li><i class="fa-solid fa-check"></i> Sem anúncios dentro da experiência</li>
+                            <li><i class="fa-solid fa-check"></i> Instalação como app pelo navegador</li>
                         </ul>
                         <div class="plan-actions">
-                            <button class="btn btn-primary" data-action="subscribe" data-plan="premium" style="width: 100%;">Assinar Premium</button>
-                            <div class="cancel-link">Cancelar assinatura</div>
+                            <button class="btn btn-primary" data-action="subscribe" data-plan="premium" style="width: 100%;">Começar teste grátis</button>
+                            <div class="cancel-link">Cancelamento simples pela assinatura/conta</div>
                         </div>
                     </div>
                 </div>
@@ -413,7 +515,7 @@
         </div>
     </div>
 
-    <div class="app-panel-container-standalone">
+    <div class="app-panel-container-standalone" data-nosnippet>
         <aside class="app-sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-header-logo">

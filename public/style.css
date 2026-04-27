@@ -11946,3 +11946,2514 @@ body.lua-mode .af-autocomplete-voice{
         0 0 0 1px rgba(0, 180, 255, 0.16),
         0 10px 22px rgba(0, 0, 0, 0.18) !important;
 }
+
+
+/* =========================================================
+   AF 10/10 SAFE UPGRADE - landing, confiança e conversão
+   Mantém o app/painel intacto e atua só em camadas públicas.
+   ========================================================= */
+#af-landing-safe-upgrade-anchor { display: none; }
+
+#inicio .af-hero-benefit{
+  max-width: min(680px, 92vw);
+  margin: .8rem auto 1.1rem;
+  font-family: var(--font-body);
+  font-size: clamp(.98rem, 2.2vw, 1.16rem);
+  line-height: 1.65;
+  color: rgba(255,255,255,.86);
+  text-align: center;
+  text-wrap: balance;
+}
+
+#inicio .af-trust-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:.55rem;
+  margin-top:.72rem;
+}
+#inicio .af-trust-row span{
+  display:inline-flex;
+  align-items:center;
+  gap:.45rem;
+  min-height:34px;
+  padding:.42rem .72rem;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  background:rgba(255,255,255,.045);
+  color:rgba(255,255,255,.78);
+  font:700 .74rem/1 var(--font-mono);
+  letter-spacing:.01em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 10px 26px rgba(0,0,0,.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+#inicio .af-trust-row i{ color:var(--primary-color); filter:drop-shadow(0 0 7px rgba(0,242,234,.32)); }
+
+.af-proof-section,
+.af-faq-section{
+  min-height:auto !important;
+  padding-top:6.5rem !important;
+  padding-bottom:6.5rem !important;
+}
+.af-proof-content,
+.af-faq-content{
+  width:min(1120px, 94vw);
+  margin-inline:auto;
+}
+.af-proof-section .page-title,
+.af-faq-section .page-title{
+  max-width:840px;
+  margin-inline:auto;
+  text-align:center;
+  text-wrap:balance;
+}
+.af-proof-section .page-subtitle,
+.af-faq-section .page-subtitle{
+  max-width:760px;
+  margin-inline:auto;
+  text-align:center;
+}
+.af-pain-grid{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:1rem;
+  margin-top:2.2rem;
+}
+.af-pain-card{
+  min-height:190px;
+  padding:1.35rem 1.15rem;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(0,242,234,.14), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035));
+  box-shadow: 0 24px 70px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: transform .28s var(--soft-bezier), border-color .28s ease, background .28s ease;
+}
+.af-pain-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(0,242,234,.32);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(0,242,234,.2), transparent 36%),
+    linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+}
+.af-pain-card i{
+  display:grid;
+  place-items:center;
+  width:42px;
+  height:42px;
+  margin-bottom:.9rem;
+  border-radius:15px;
+  color:#001415;
+  background:linear-gradient(135deg, var(--primary-color), rgba(252,235,154,.92));
+  box-shadow:0 0 24px rgba(0,242,234,.24);
+}
+.af-pain-card h3{
+  margin:0 0 .45rem;
+  font-size:1rem;
+  color:#fff;
+  letter-spacing:-.01em;
+}
+.af-pain-card p{
+  margin:0;
+  color:rgba(255,255,255,.68);
+  font:400 .92rem/1.55 var(--font-body);
+}
+.af-solution-band{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1.25rem;
+  margin:1.25rem auto 0;
+  padding:1rem 1.05rem 1rem 1.25rem;
+  border:1px solid rgba(0,242,234,.2);
+  border-radius:24px;
+  background:linear-gradient(135deg, rgba(0,242,234,.13), rgba(255,255,255,.045));
+  box-shadow:0 20px 60px rgba(0,0,0,.22);
+}
+.af-solution-band strong{
+  display:block;
+  color:#fff;
+  font-size:1rem;
+  margin-bottom:.22rem;
+}
+.af-solution-band span{
+  display:block;
+  color:rgba(255,255,255,.7);
+  font:400 .92rem/1.5 var(--font-body);
+}
+.af-inline-cta{
+  border:0;
+  cursor:pointer;
+  white-space:nowrap;
+  min-height:46px;
+  padding:0 1.15rem;
+  border-radius:999px;
+  color:#001415;
+  background:linear-gradient(135deg, var(--primary-color), var(--color-primary-light));
+  font:900 .82rem/1 var(--font-family);
+  letter-spacing:.02em;
+  box-shadow:0 14px 34px rgba(0,242,234,.22);
+  transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+}
+.af-inline-cta:hover,
+.af-inline-cta:focus-visible{
+  transform:translateY(-2px);
+  box-shadow:0 18px 44px rgba(0,242,234,.3);
+  filter:saturate(1.08);
+}
+.af-inline-cta-small{ margin-top:1rem; }
+.af-calc-disclaimer{
+  font-size:.82rem !important;
+  color:rgba(255,255,255,.58) !important;
+}
+
+.af-section-proof-strip{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:.55rem;
+  margin:0 auto 1.5rem;
+}
+.af-section-proof-strip span{
+  padding:.42rem .75rem;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.045);
+  color:rgba(255,255,255,.72);
+  font:700 .76rem/1 var(--font-mono);
+}
+
+.af-faq-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:1rem;
+  margin-top:2rem;
+}
+.af-faq-item{
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:22px;
+  background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.035));
+  box-shadow:0 18px 50px rgba(0,0,0,.22);
+  overflow:hidden;
+}
+.af-faq-item summary{
+  cursor:pointer;
+  list-style:none;
+  padding:1.08rem 1.2rem;
+  color:#fff;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+}
+.af-faq-item summary::-webkit-details-marker{ display:none; }
+.af-faq-item summary::after{
+  content:'+';
+  display:grid;
+  place-items:center;
+  flex:0 0 30px;
+  width:30px;
+  height:30px;
+  border-radius:999px;
+  color:var(--primary-color);
+  background:rgba(0,242,234,.08);
+  border:1px solid rgba(0,242,234,.16);
+}
+.af-faq-item[open] summary::after{ content:'–'; }
+.af-faq-item p{
+  margin:0;
+  padding:0 1.2rem 1.12rem;
+  color:rgba(255,255,255,.68);
+  font:400 .95rem/1.55 var(--font-body);
+}
+.af-faq-cta{
+  display:block;
+  margin:1.35rem auto 0;
+}
+
+#plans-modal .plan-card ul li{
+  line-height:1.45;
+}
+#plans-modal .cancel-link{
+  color:rgba(255,255,255,.62) !important;
+  font-size:.82rem;
+  margin-top:.7rem;
+}
+#plans-modal .btn-primary{
+  min-height:48px;
+  border-radius:999px;
+  font-weight:900;
+}
+
+#sobre .about-card p,
+#sobre .contact-card p{
+  line-height:1.65;
+}
+
+@media (max-width: 991px){
+  #inicio .af-hero-benefit{ font-size:.96rem; margin-top:.65rem; }
+  #inicio .af-trust-row{ gap:.42rem; margin-top:.6rem; }
+  #inicio .af-trust-row span{ min-height:30px; padding:.36rem .58rem; font-size:.68rem; }
+  .af-proof-section,
+  .af-faq-section{ padding-top:4.5rem !important; padding-bottom:4.5rem !important; }
+  .af-pain-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:.8rem; }
+  .af-pain-card{ min-height:168px; padding:1rem; border-radius:20px; }
+  .af-solution-band{ flex-direction:column; align-items:flex-start; border-radius:22px; }
+  .af-inline-cta{ width:100%; }
+  .af-faq-grid{ grid-template-columns:1fr; }
+}
+
+@media (max-width: 560px){
+  .af-pain-grid{ grid-template-columns:1fr; }
+  .af-pain-card{ min-height:auto; }
+  .af-section-proof-strip span{ font-size:.68rem; }
+  .af-faq-item summary{ padding:1rem; font-size:.94rem; }
+  .af-faq-item p{ padding:0 1rem 1rem; font-size:.9rem; }
+}
+
+
+/* =========================================================
+   AF V5 - HERO LUXO / BOTÕES ALINHADOS / MOBILE SNAP
+   Patch visual seguro: não altera lógica do app.
+   ========================================================= */
+html{
+  scroll-behavior:smooth !important;
+}
+body:not(.app-mode) .main-container{
+  overflow:visible !important;
+}
+body:not(.app-mode) #inicio{
+  position:sticky !important;
+  top:0 !important;
+  z-index:1 !important;
+  min-height:100svh !important;
+  height:100svh !important;
+  overflow:hidden !important;
+}
+body:not(.app-mode) .page-section:not(#inicio){
+  position:relative !important;
+  z-index:5 !important;
+  box-shadow:0 -30px 80px rgba(0,0,0,.24);
+}
+body:not(.app-mode) .page-section:not(#inicio)::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,0) 18%);
+  z-index:0;
+}
+body:not(.app-mode) .page-section:not(#inicio) > *{
+  position:relative;
+  z-index:1;
+}
+
+/* Menos fumaça, mais contraste premium sobre o vídeo */
+body:not(.app-mode) #inicio::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:-1;
+  background:
+    linear-gradient(180deg, rgba(7,8,10,.42) 0%, rgba(7,8,10,.20) 22%, rgba(7,8,10,.08) 52%, rgba(7,8,10,.30) 100%),
+    radial-gradient(circle at 18% 14%, rgba(255,255,255,.08), transparent 28%),
+    radial-gradient(circle at 84% 26%, rgba(0,242,234,.045), transparent 18%) !important;
+}
+body:not(.app-mode) .background-video.active{
+  filter:brightness(.98) saturate(1.06) contrast(1.02) !important;
+}
+body:not(.app-mode) .video-container::after{
+  opacity:.82 !important;
+}
+
+/* Posicionamento da hero */
+#inicio .identity-container{
+  align-items:flex-start !important;
+  text-align:left !important;
+  max-width:1180px !important;
+  padding-left:clamp(1.15rem, 8vw, 7rem) !important;
+  padding-right:clamp(1.15rem, 5vw, 4rem) !important;
+}
+#inicio .af-hero-shell{
+  width:min(660px, 100%) !important;
+  max-width:660px !important;
+  margin:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+#inicio .hero-brand{
+  margin:0 0 .42rem !important;
+  letter-spacing:-.045em !important;
+  text-align:left !important;
+  text-shadow:0 8px 34px rgba(0,0,0,.42) !important;
+}
+#inicio .hero-brand .highlight{
+  text-shadow:0 0 18px rgba(0,242,234,.36), 0 8px 28px rgba(0,0,0,.34) !important;
+}
+#inicio .af-premium-tagline{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:.5rem !important;
+  margin:.1rem 0 1rem !important;
+  text-align:left !important;
+  letter-spacing:0 !important;
+  color:rgba(255,255,255,.94) !important;
+  text-transform:none !important;
+  text-shadow:0 5px 18px rgba(0,0,0,.38) !important;
+}
+#inicio .af-premium-tagline span:not(.af-modern-apple){
+  font-weight:800 !important;
+}
+#inicio .af-modern-apple{
+  width:22px !important;
+  height:22px !important;
+  min-width:22px !important;
+  display:inline-grid !important;
+  place-items:center !important;
+  border-radius:9px !important;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255,255,255,.95), rgba(255,255,255,0) 23%),
+    linear-gradient(145deg, #ff5d69, #d71937 55%, #9f0d22) !important;
+  box-shadow:0 7px 16px rgba(0,0,0,.22), 0 0 18px rgba(255,74,88,.25), inset 0 1px 0 rgba(255,255,255,.35) !important;
+  transform:translateY(-1px);
+}
+#inicio .af-modern-apple i,
+#inicio .af-apple-red{
+  color:#fff !important;
+  font-size:.82rem !important;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.22)) !important;
+}
+
+/* Caixa da calculadora: vidro mais limpo e legível */
+#inicio .af-lead-calculator.af-lead-calculator-premium{
+  width:100% !important;
+  max-width:640px !important;
+  margin:0 !important;
+  padding:1.16rem 1.18rem 1.18rem !important;
+  border-radius:28px !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255,255,255,.12), transparent 34%),
+    linear-gradient(180deg, rgba(34,35,39,.52), rgba(14,16,22,.58)) !important;
+  border:1px solid rgba(255,255,255,.18) !important;
+  box-shadow:0 24px 58px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  backdrop-filter:blur(18px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(140%) !important;
+  transition:transform .34s cubic-bezier(.22,1,.36,1), border-color .34s ease, box-shadow .34s ease !important;
+}
+@media (hover:hover){
+  #inicio .af-lead-calculator.af-lead-calculator-premium:hover{
+    transform:translateY(-2px) !important;
+    border-color:rgba(255,255,255,.26) !important;
+    box-shadow:0 28px 68px rgba(0,0,0,.32), 0 0 0 1px rgba(0,242,234,.07), inset 0 1px 0 rgba(255,255,255,.14) !important;
+  }
+}
+#inicio .af-calc-headline-row{
+  gap:.78rem !important;
+  align-items:center !important;
+  margin-bottom:.9rem !important;
+}
+#inicio .af-calc-caption{
+  font-size:clamp(.88rem, 1.25vw, .98rem) !important;
+  line-height:1.28 !important;
+  font-weight:800 !important;
+  letter-spacing:-.01em !important;
+  color:rgba(255,255,255,.92) !important;
+  max-width:36ch !important;
+  text-wrap:balance !important;
+}
+#inicio .af-calc-food-icons{
+  gap:.42rem !important;
+}
+#inicio .af-calc-food-icons span{
+  width:36px !important;
+  height:36px !important;
+  border-radius:999px !important;
+  background:rgba(255,255,255,.055) !important;
+  border:1px solid rgba(255,255,255,.18) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 8px 18px rgba(0,0,0,.16) !important;
+}
+#inicio .af-calc-food-icons span:nth-child(1){ border-color:rgba(255,92,107,.48) !important; color:#ff6b76 !important; }
+#inicio .af-calc-food-icons span:nth-child(2){ border-color:rgba(252,197,75,.46) !important; color:#ffc857 !important; }
+#inicio .af-calc-food-icons span:nth-child(3){ border-color:rgba(0,242,234,.38) !important; color:var(--primary-color) !important; }
+#inicio .af-calc-bar{
+  display:grid !important;
+  grid-template-columns:66px minmax(0, 1fr) 164px !important;
+  align-items:center !important;
+  gap:.72rem !important;
+  padding:.78rem !important;
+  border-radius:24px !important;
+  background:rgba(9,11,15,.50) !important;
+  border:1px solid rgba(255,255,255,.13) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+#inicio .af-calc-currency{
+  width:54px !important;
+  height:54px !important;
+  display:grid !important;
+  place-items:center !important;
+  border-radius:17px !important;
+  background:rgba(0,242,234,.105) !important;
+  border:1px solid rgba(0,242,234,.34) !important;
+  color:#f6ce67 !important;
+  font-weight:900 !important;
+}
+#inicio .af-calc-bar input{
+  width:100% !important;
+  min-width:0 !important;
+  height:54px !important;
+  color:#fff !important;
+  font-size:.97rem !important;
+  font-weight:800 !important;
+  background:transparent !important;
+  border:0 !important;
+  outline:0 !important;
+}
+#inicio .af-calc-bar input::placeholder{
+  color:rgba(255,255,255,.58) !important;
+  font-size:.88rem !important;
+  font-weight:750 !important;
+  opacity:1 !important;
+}
+#inicio .af-calc-submit{
+  width:100% !important;
+  height:54px !important;
+  border-radius:17px !important;
+  background:linear-gradient(180deg, rgba(0,124,120,.82), rgba(0,94,92,.86)) !important;
+  border:1px solid rgba(0,242,234,.42) !important;
+  color:#fff !important;
+  font-size:.94rem !important;
+  font-weight:900 !important;
+  box-shadow:0 12px 26px rgba(0,242,234,.12), inset 0 1px 0 rgba(255,255,255,.10) !important;
+  transition:transform .22s ease, background .22s ease, border-color .22s ease, box-shadow .22s ease !important;
+}
+#inicio .af-calc-submit:hover,
+#inicio .af-calc-submit:focus-visible{
+  transform:translateY(-1px) !important;
+  background:linear-gradient(180deg, rgba(0,156,150,.90), rgba(0,108,106,.92)) !important;
+  border-color:rgba(0,242,234,.64) !important;
+  box-shadow:0 15px 32px rgba(0,242,234,.16), inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+
+/* Botões principais: mesmo tamanho, texto completo, setinha premium */
+#inicio .af-hero-cta-row,
+#inicio .refined-cta-row.af-hero-cta-row,
+#inicio .af-lead-calculator.is-calculated + .af-hero-cta-row,
+#inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated + .af-hero-cta-row{
+  position:static !important;
+  inset:auto !important;
+  width:100% !important;
+  max-width:640px !important;
+  margin:1rem 0 0 !important;
+  display:grid !important;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap:.82rem !important;
+  align-items:center !important;
+  justify-content:stretch !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  transform:none !important;
+}
+#inicio .af-start-trial-btn,
+#inicio .af-secondary-minimal-btn,
+#inicio .hero-clean-layout .modern-start-btn,
+#inicio .hero-clean-layout .hero-secondary-btn{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  min-height:58px !important;
+  height:58px !important;
+  padding:0 .95rem !important;
+  border-radius:22px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:.58rem !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-decoration:none !important;
+  transform:none !important;
+  position:relative !important;
+  isolation:isolate !important;
+  backdrop-filter:blur(16px) saturate(135%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(135%) !important;
+}
+#inicio .af-start-trial-btn::before,
+#inicio .af-secondary-minimal-btn::before{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  z-index:-1 !important;
+  opacity:0 !important;
+  background:linear-gradient(105deg, transparent 0%, rgba(255,255,255,.17) 44%, transparent 68%) !important;
+  transform:translateX(-120%) !important;
+  transition:transform .55s cubic-bezier(.22,1,.36,1), opacity .25s ease !important;
+  display:block !important;
+}
+#inicio .af-start-trial-btn:hover::before,
+#inicio .af-secondary-minimal-btn:hover::before,
+#inicio .af-start-trial-btn:focus-visible::before,
+#inicio .af-secondary-minimal-btn:focus-visible::before{
+  opacity:1 !important;
+  transform:translateX(120%) !important;
+}
+#inicio .af-start-trial-btn{
+  background:linear-gradient(180deg, rgba(0,242,234,.145), rgba(255,255,255,.035)) !important;
+  border:1.2px solid rgba(0,155,255,.72) !important;
+  box-shadow:0 14px 28px rgba(0,0,0,.18), 0 0 0 1px rgba(0,242,234,.08), inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+#inicio .af-secondary-minimal-btn{
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025)) !important;
+  border:1.2px solid rgba(0,155,255,.72) !important;
+  box-shadow:0 14px 28px rgba(0,0,0,.16), 0 0 0 1px rgba(0,155,255,.07), inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+#inicio .af-start-trial-btn .btn-text,
+#inicio .af-secondary-minimal-btn .btn-text{
+  display:block !important;
+  max-width:calc(100% - 38px) !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  white-space:nowrap !important;
+  color:#fff !important;
+  font-size:clamp(.78rem, 1.2vw, .94rem) !important;
+  line-height:1 !important;
+  font-weight:900 !important;
+  letter-spacing:.028em !important;
+  text-align:center !important;
+}
+#inicio .af-start-trial-btn .af-cta-arrow,
+#inicio .af-secondary-minimal-btn .af-cta-arrow{
+  width:30px !important;
+  height:30px !important;
+  min-width:30px !important;
+  display:inline-grid !important;
+  place-items:center !important;
+  border-radius:999px !important;
+  background:rgba(255,255,255,.10) !important;
+  border:1px solid rgba(255,255,255,.22) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+#inicio .af-start-trial-btn .af-cta-arrow i,
+#inicio .af-secondary-minimal-btn .af-cta-arrow i{
+  display:block !important;
+  color:#fff !important;
+  font-size:.78rem !important;
+  transform:translateX(0) !important;
+  transition:transform .24s ease, color .24s ease !important;
+}
+#inicio .af-start-trial-btn:hover,
+#inicio .af-start-trial-btn:focus-visible{
+  transform:translateY(-2px) !important;
+  border-color:rgba(0,203,255,.95) !important;
+  background:linear-gradient(180deg, rgba(0,242,234,.20), rgba(255,255,255,.045)) !important;
+  box-shadow:0 18px 38px rgba(0,0,0,.22), 0 0 22px rgba(0,175,255,.13), inset 0 1px 0 rgba(255,255,255,.16) !important;
+}
+#inicio .af-secondary-minimal-btn:hover,
+#inicio .af-secondary-minimal-btn:focus-visible{
+  transform:translateY(-2px) !important;
+  border-color:rgba(0,203,255,.95) !important;
+  background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.035)) !important;
+  box-shadow:0 18px 38px rgba(0,0,0,.22), 0 0 22px rgba(0,175,255,.10), inset 0 1px 0 rgba(255,255,255,.14) !important;
+}
+#inicio .af-start-trial-btn:hover .af-cta-arrow i,
+#inicio .af-secondary-minimal-btn:hover .af-cta-arrow i,
+#inicio .af-start-trial-btn:focus-visible .af-cta-arrow i,
+#inicio .af-secondary-minimal-btn:focus-visible .af-cta-arrow i{
+  transform:translateX(2px) !important;
+  color:var(--primary-color) !important;
+}
+#inicio .af-trust-row{
+  width:100% !important;
+  max-width:640px !important;
+  justify-content:flex-start !important;
+  gap:.5rem !important;
+  margin-top:.8rem !important;
+}
+#inicio .af-trust-row span{
+  transition:transform .22s ease, border-color .22s ease, background .22s ease !important;
+}
+#inicio .af-trust-row span:hover{
+  transform:translateY(-2px);
+  border-color:rgba(0,242,234,.25) !important;
+  background:rgba(255,255,255,.065) !important;
+}
+
+/* Resultado da calculadora sem empurrar/embaralhar a CTA */
+#inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated .af-calc-entry-view{
+  display:none !important;
+}
+#inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated .af-calc-result{
+  display:block !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+#inicio .af-calc-result-main strong{
+  line-height:1 !important;
+}
+#inicio .af-calc-result-actions{
+  display:flex !important;
+  align-items:center !important;
+  gap:.75rem !important;
+  flex-wrap:wrap !important;
+}
+#inicio .af-calc-start{
+  border-radius:999px !important;
+  transition:transform .22s ease, box-shadow .22s ease !important;
+}
+#inicio .af-calc-start:hover{ transform:translateY(-1px) !important; }
+
+/* Mobile: hero mais para cima/esquerda, sem cortar textos */
+@media (max-width: 768px){
+  body:not(.app-mode) #inicio{
+    padding:5.25rem 1.05rem 6.65rem !important;
+    justify-content:flex-start !important;
+  }
+  #inicio .identity-container{
+    padding-left:.05rem !important;
+    padding-right:.05rem !important;
+    align-items:flex-start !important;
+    text-align:left !important;
+  }
+  #inicio .af-hero-shell{
+    max-width:100% !important;
+    width:100% !important;
+  }
+  #inicio .hero-brand{
+    font-size:clamp(3.05rem, 14.2vw, 4.15rem) !important;
+    line-height:.94 !important;
+    margin-left:.02rem !important;
+    margin-top:-.25rem !important;
+    margin-bottom:.42rem !important;
+  }
+  #inicio .af-premium-tagline{
+    font-size:clamp(1rem, 4vw, 1.13rem) !important;
+    margin-bottom:.92rem !important;
+  }
+  #inicio .af-modern-apple{
+    width:21px !important;
+    height:21px !important;
+    min-width:21px !important;
+  }
+  #inicio .af-lead-calculator.af-lead-calculator-premium{
+    width:100% !important;
+    padding:1rem .95rem 1.05rem !important;
+    border-radius:24px !important;
+  }
+  #inicio .af-calc-headline-row{
+    align-items:center !important;
+    gap:.66rem !important;
+    margin-bottom:.85rem !important;
+  }
+  #inicio .af-calc-food-icons span{
+    width:34px !important;
+    height:34px !important;
+  }
+  #inicio .af-calc-caption{
+    max-width:18ch !important;
+    font-size:.88rem !important;
+    line-height:1.22 !important;
+  }
+  #inicio .af-calc-bar{
+    grid-template-columns:62px minmax(0, 1fr) !important;
+    gap:.62rem !important;
+    padding:.68rem !important;
+    border-radius:22px !important;
+  }
+  #inicio .af-calc-currency{
+    width:52px !important;
+    height:52px !important;
+    border-radius:16px !important;
+  }
+  #inicio .af-calc-bar input{
+    height:52px !important;
+    font-size:.94rem !important;
+  }
+  #inicio .af-calc-bar input::placeholder{
+    font-size:.82rem !important;
+    line-height:1.1 !important;
+  }
+  #inicio .af-calc-submit{
+    grid-column:1 / -1 !important;
+    height:52px !important;
+    border-radius:16px !important;
+    font-size:1rem !important;
+  }
+  #inicio .af-hero-cta-row,
+  #inicio .refined-cta-row.af-hero-cta-row,
+  #inicio .af-lead-calculator.is-calculated + .af-hero-cta-row,
+  #inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated + .af-hero-cta-row{
+    grid-template-columns:1fr 1fr !important;
+    gap:.62rem !important;
+    margin-top:.9rem !important;
+    max-width:100% !important;
+  }
+  #inicio .af-start-trial-btn,
+  #inicio .af-secondary-minimal-btn,
+  #inicio .hero-clean-layout .modern-start-btn,
+  #inicio .hero-clean-layout .hero-secondary-btn{
+    height:54px !important;
+    min-height:54px !important;
+    border-radius:18px !important;
+    padding:0 .56rem !important;
+    gap:.38rem !important;
+  }
+  #inicio .af-start-trial-btn .btn-text,
+  #inicio .af-secondary-minimal-btn .btn-text{
+    max-width:calc(100% - 27px) !important;
+    font-size:clamp(.72rem, 3.15vw, .84rem) !important;
+    letter-spacing:.012em !important;
+  }
+  #inicio .af-start-trial-btn .af-cta-arrow,
+  #inicio .af-secondary-minimal-btn .af-cta-arrow{
+    width:26px !important;
+    height:26px !important;
+    min-width:26px !important;
+  }
+  #inicio .af-trust-row{
+    display:flex !important;
+    justify-content:center !important;
+    gap:.38rem !important;
+    margin-top:.72rem !important;
+    max-width:100% !important;
+  }
+  #inicio .af-trust-row span{
+    min-height:28px !important;
+    padding:.34rem .48rem !important;
+    font-size:.64rem !important;
+    letter-spacing:0 !important;
+  }
+}
+@media (max-width: 390px){
+  #inicio .hero-brand{ font-size:clamp(2.86rem, 13.5vw, 3.6rem) !important; }
+  #inicio .af-calc-caption{ max-width:16ch !important; font-size:.84rem !important; }
+  #inicio .af-start-trial-btn .btn-text,
+  #inicio .af-secondary-minimal-btn .btn-text{ font-size:.70rem !important; }
+  #inicio .af-start-trial-btn .af-cta-arrow,
+  #inicio .af-secondary-minimal-btn .af-cta-arrow{ width:24px !important; height:24px !important; min-width:24px !important; }
+}
+
+/* Dicas e receitas no mobile: uma tela/card por vez, sem aparecer metade de duas */
+@media (max-width: 768px){
+  #dicas-valiosas,
+  #receitas-landing{
+    overflow:hidden !important;
+  }
+  #dicas-valiosas .section-content,
+  #receitas-landing .section-content{
+    width:100% !important;
+    max-width:100% !important;
+  }
+  #dicas-valiosas .carousel-slider,
+  #receitas-landing .carousel-slider{
+    width:100vw !important;
+    max-width:100vw !important;
+    margin-left:50% !important;
+    transform:translateX(-50%) !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    scroll-snap-type:x mandatory !important;
+    scroll-padding-left:1rem !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding:0 1rem 1rem !important;
+    mask-image:none !important;
+    -webkit-mask-image:none !important;
+    scrollbar-width:none !important;
+  }
+  #dicas-valiosas .carousel-slider::-webkit-scrollbar,
+  #receitas-landing .carousel-slider::-webkit-scrollbar{ display:none !important; }
+  #dicas-valiosas .carousel-track,
+  #receitas-landing .carousel-track{
+    width:max-content !important;
+    min-width:0 !important;
+    display:flex !important;
+    justify-content:flex-start !important;
+    align-items:stretch !important;
+    gap:1rem !important;
+    padding:0 !important;
+    margin:0 !important;
+    animation:none !important;
+    transform:none !important;
+  }
+  #dicas-valiosas .content-card,
+  #receitas-landing .content-card{
+    width:calc(100vw - 2rem) !important;
+    max-width:calc(100vw - 2rem) !important;
+    min-width:calc(100vw - 2rem) !important;
+    flex:0 0 calc(100vw - 2rem) !important;
+    margin:0 !important;
+    scroll-snap-align:start !important;
+    scroll-snap-stop:always !important;
+    border-radius:24px !important;
+    min-height:420px !important;
+    background:linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035)) !important;
+    border:1px solid rgba(255,255,255,.14) !important;
+    box-shadow:0 22px 55px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  }
+  #dicas-valiosas .content-card img,
+  #receitas-landing .content-card img{
+    width:100% !important;
+    aspect-ratio:16/10 !important;
+    object-fit:cover !important;
+    border-radius:24px 24px 0 0 !important;
+  }
+  #dicas-valiosas .content-card-content,
+  #receitas-landing .content-card-content{
+    padding:1rem 1.05rem 1.15rem !important;
+    align-items:center !important;
+    text-align:center !important;
+  }
+}
+
+/* Microinterações minimalistas em seções públicas */
+body:not(.app-mode) .glass-card,
+body:not(.app-mode) .af-pain-card,
+body:not(.app-mode) .af-faq-item,
+body:not(.app-mode) .content-card{
+  transition:transform .30s cubic-bezier(.22,1,.36,1), border-color .30s ease, box-shadow .30s ease, background .30s ease !important;
+}
+@media (hover:hover){
+  body:not(.app-mode) .glass-card:hover,
+  body:not(.app-mode) .af-pain-card:hover,
+  body:not(.app-mode) .af-faq-item:hover,
+  body:not(.app-mode) .content-card:hover{
+    transform:translateY(-3px) !important;
+    border-color:rgba(0,242,234,.28) !important;
+    box-shadow:0 26px 70px rgba(0,0,0,.26), 0 0 0 1px rgba(0,242,234,.055), inset 0 1px 0 rgba(255,255,255,.10) !important;
+  }
+}
+
+
+/* =========================================================
+   V6 - refinamento premium: marca do futuro + carrossel slim
+   ========================================================= */
+html{ scroll-behavior:smooth; }
+body:not(.app-mode){ overflow-x:hidden !important; }
+body:not(.app-mode) .main-container{ isolation:isolate !important; }
+body:not(.app-mode) #inicio{
+  position:sticky !important;
+  top:0 !important;
+  z-index:1 !important;
+  overflow:hidden !important;
+}
+body:not(.app-mode) .page-section:not(#inicio){
+  position:relative !important;
+  z-index:3 !important;
+  transform:translateZ(0);
+  box-shadow:0 -30px 70px rgba(0,0,0,.22);
+}
+body:not(.app-mode) .page-section:not(#inicio)::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg, rgba(255,255,255,.035), transparent 18%);
+  opacity:.75;
+}
+
+/* Marca gráfica da frase "O futuro..." — usa o PNG da pasta public, sem fundo e sem borda */
+#inicio .af-premium-tagline{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:.5rem !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+}
+#inicio .af-future-mark{
+  display:inline-block !important;
+  width:auto !important;
+  height:1.08em !important;
+  max-width:1.35em !important;
+  object-fit:contain !important;
+  border:0 !important;
+  outline:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.28));
+  flex:0 0 auto !important;
+}
+#inicio .af-future-mark::before,
+#inicio .af-future-mark::after{ content:none !important; }
+#inicio .af-premium-tagline span{
+  line-height:1.1 !important;
+  font-weight:800 !important;
+}
+
+/* Texto da calculadora mais curto e elegante */
+#inicio .af-calc-caption{
+  font-size:clamp(.92rem, 1.8vw, 1.02rem) !important;
+  line-height:1.24 !important;
+  letter-spacing:-.01em !important;
+  max-width:18rem !important;
+}
+#inicio .af-calc-bar input::placeholder{
+  color:rgba(255,255,255,.64) !important;
+  opacity:1 !important;
+}
+
+/* Botões da hero: cabem, ficam iguais e com seta premium */
+#inicio .af-hero-cta-row,
+#inicio .af-lead-calculator.is-calculated + .af-hero-cta-row,
+#inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated + .af-hero-cta-row{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  align-items:stretch !important;
+  gap:12px !important;
+  width:min(100%, 424px) !important;
+  max-width:424px !important;
+  margin-inline:auto !important;
+  position:static !important;
+  inset:auto !important;
+}
+#inicio .af-start-trial-btn,
+#inicio .af-secondary-minimal-btn{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:58px !important;
+  min-height:58px !important;
+  padding:0 .66rem 0 .78rem !important;
+  border-radius:18px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:.48rem !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-decoration:none !important;
+  transform:translateZ(0);
+  transition:transform .24s cubic-bezier(.2,.8,.2,1), border-color .24s ease, background .24s ease, box-shadow .24s ease !important;
+}
+#inicio .af-start-trial-btn .btn-text,
+#inicio .af-secondary-minimal-btn .btn-text{
+  display:block !important;
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  white-space:nowrap !important;
+  text-align:left !important;
+  font-size:.92rem !important;
+  line-height:1 !important;
+  letter-spacing:-.015em !important;
+  font-weight:900 !important;
+}
+#inicio .af-start-trial-btn .af-cta-arrow,
+#inicio .af-secondary-minimal-btn .af-cta-arrow{
+  width:34px !important;
+  height:34px !important;
+  min-width:34px !important;
+  flex:0 0 34px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,.32) !important;
+  background:rgba(255,255,255,.14) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 8px 18px rgba(0,0,0,.16) !important;
+  color:#fff !important;
+  transition:transform .24s cubic-bezier(.2,.8,.2,1), background .24s ease, border-color .24s ease !important;
+}
+#inicio .af-start-trial-btn .af-cta-arrow i,
+#inicio .af-secondary-minimal-btn .af-cta-arrow i{
+  font-size:.82rem !important;
+  transform:translateX(0) !important;
+  transition:transform .24s cubic-bezier(.2,.8,.2,1) !important;
+}
+#inicio .af-start-trial-btn:hover,
+#inicio .af-secondary-minimal-btn:hover,
+#inicio .af-start-trial-btn:focus-visible,
+#inicio .af-secondary-minimal-btn:focus-visible{
+  transform:translateY(-2px) !important;
+}
+#inicio .af-start-trial-btn:hover .af-cta-arrow,
+#inicio .af-secondary-minimal-btn:hover .af-cta-arrow,
+#inicio .af-start-trial-btn:focus-visible .af-cta-arrow,
+#inicio .af-secondary-minimal-btn:focus-visible .af-cta-arrow{
+  background:rgba(0,242,234,.16) !important;
+  border-color:rgba(0,242,234,.48) !important;
+}
+#inicio .af-start-trial-btn:hover .af-cta-arrow i,
+#inicio .af-secondary-minimal-btn:hover .af-cta-arrow i,
+#inicio .af-start-trial-btn:focus-visible .af-cta-arrow i,
+#inicio .af-secondary-minimal-btn:focus-visible .af-cta-arrow i{
+  transform:translateX(2px) !important;
+}
+
+/* Carrossel premium slim - desktop */
+#dicas-valiosas .carousel-slider,
+#receitas-landing .carousel-slider{
+  --af-card-w: min(360px, 30vw);
+  width:100% !important;
+  max-width:1180px !important;
+  margin:1.6rem auto 0 !important;
+  overflow:hidden !important;
+  position:relative !important;
+  border-radius:30px !important;
+  padding:.35rem 0 1rem !important;
+  mask-image:linear-gradient(to right, transparent, #000 7%, #000 93%, transparent) !important;
+  -webkit-mask-image:linear-gradient(to right, transparent, #000 7%, #000 93%, transparent) !important;
+}
+#dicas-valiosas .carousel-slider::before,
+#receitas-landing .carousel-slider::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 50%;
+  width:min(520px, 72vw);
+  transform:translateX(-50%);
+  border-radius:30px;
+  border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01));
+  pointer-events:none;
+  opacity:.75;
+}
+#dicas-valiosas .carousel-track,
+#receitas-landing .carousel-track{
+  display:flex !important;
+  gap:16px !important;
+  align-items:stretch !important;
+  padding:.5rem max(1.2rem, calc((100vw - 1180px)/2 + 1.2rem)) 1rem !important;
+  animation:scroll-desktop 38s linear infinite !important;
+  will-change:transform;
+}
+#dicas-valiosas .carousel-slider:hover .carousel-track,
+#receitas-landing .carousel-slider:hover .carousel-track{ animation-play-state:paused !important; }
+#dicas-valiosas .content-card,
+#receitas-landing .content-card{
+  flex:0 0 var(--af-card-w) !important;
+  width:var(--af-card-w) !important;
+  height:238px !important;
+  margin:0 !important;
+  display:grid !important;
+  grid-template-columns:118px 1fr !important;
+  align-items:stretch !important;
+  overflow:hidden !important;
+  border-radius:24px !important;
+  background:linear-gradient(135deg, rgba(255,255,255,.078), rgba(255,255,255,.032)) !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  box-shadow:0 18px 34px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  backdrop-filter:blur(16px) saturate(125%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(125%) !important;
+}
+#dicas-valiosas .content-card:hover,
+#receitas-landing .content-card:hover{
+  transform:translateY(-5px) scale(1.01) !important;
+  border-color:rgba(0,242,234,.34) !important;
+  background:linear-gradient(135deg, rgba(0,242,234,.095), rgba(255,255,255,.045)) !important;
+  box-shadow:0 24px 46px rgba(0,0,0,.28), 0 0 0 1px rgba(0,242,234,.08), inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+#dicas-valiosas .content-card img,
+#receitas-landing .content-card img{
+  width:118px !important;
+  height:100% !important;
+  min-height:100% !important;
+  aspect-ratio:auto !important;
+  object-fit:cover !important;
+  filter:saturate(.96) contrast(.98) brightness(.92) !important;
+}
+#dicas-valiosas .content-card:hover img,
+#receitas-landing .content-card:hover img{
+  filter:saturate(1.08) contrast(1.03) brightness(1) !important;
+}
+#dicas-valiosas .content-card-content,
+#receitas-landing .content-card-content{
+  min-width:0 !important;
+  padding:1.1rem 1.15rem !important;
+  justify-content:center !important;
+}
+#dicas-valiosas .content-card-content h3,
+#receitas-landing .content-card-content h3{
+  font-family:var(--font-display) !important;
+  font-size:1rem !important;
+  line-height:1.08 !important;
+  margin:0 0 .55rem !important;
+  letter-spacing:-.02em !important;
+}
+#dicas-valiosas .content-card-content p,
+#receitas-landing .content-card-content p{
+  font-size:.82rem !important;
+  line-height:1.38 !important;
+  color:rgba(255,255,255,.70) !important;
+  display:-webkit-box !important;
+  -webkit-line-clamp:5 !important;
+  -webkit-box-orient:vertical !important;
+  overflow:hidden !important;
+}
+
+@media (max-width: 768px){
+  body:not(.app-mode) #inicio{
+    min-height:100svh !important;
+    height:100svh !important;
+  }
+  #inicio .af-premium-tagline{ gap:.45rem !important; }
+  #inicio .af-future-mark{
+    height:1.04em !important;
+    max-width:1.22em !important;
+  }
+  #inicio .af-calc-caption{
+    max-width:12.5rem !important;
+    font-size:.9rem !important;
+  }
+  #inicio .af-calc-bar input{
+    font-size:.92rem !important;
+    letter-spacing:-.02em !important;
+  }
+  #inicio .af-calc-bar input::placeholder{
+    font-size:.74rem !important;
+    letter-spacing:-.045em !important;
+  }
+  #inicio .af-hero-cta-row,
+  #inicio .af-lead-calculator.is-calculated + .af-hero-cta-row,
+  #inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated + .af-hero-cta-row{
+    width:100% !important;
+    max-width:424px !important;
+    gap:10px !important;
+  }
+  #inicio .af-start-trial-btn,
+  #inicio .af-secondary-minimal-btn{
+    height:58px !important;
+    min-height:58px !important;
+    padding:0 .56rem 0 .62rem !important;
+    border-radius:18px !important;
+  }
+  #inicio .af-start-trial-btn .btn-text,
+  #inicio .af-secondary-minimal-btn .btn-text{
+    font-size:.82rem !important;
+    letter-spacing:-.03em !important;
+  }
+  #inicio .af-start-trial-btn .af-cta-arrow,
+  #inicio .af-secondary-minimal-btn .af-cta-arrow{
+    width:32px !important;
+    height:32px !important;
+    min-width:32px !important;
+    flex-basis:32px !important;
+  }
+
+  /* Carrossel mobile: um card por vez, slim, com snap e sem metade de card */
+  #dicas-valiosas .carousel-slider,
+  #receitas-landing .carousel-slider{
+    width:100vw !important;
+    max-width:100vw !important;
+    margin:1.15rem calc(50% - 50vw) 0 !important;
+    padding:.2rem 0 1.2rem !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    border-radius:0 !important;
+    scroll-snap-type:x mandatory !important;
+    scroll-padding-inline:1rem !important;
+    -webkit-overflow-scrolling:touch !important;
+    mask-image:none !important;
+    -webkit-mask-image:none !important;
+  }
+  #dicas-valiosas .carousel-slider::-webkit-scrollbar,
+  #receitas-landing .carousel-slider::-webkit-scrollbar{ display:none !important; }
+  #dicas-valiosas .carousel-slider,
+  #receitas-landing .carousel-slider{ scrollbar-width:none !important; }
+  #dicas-valiosas .carousel-slider::before,
+  #receitas-landing .carousel-slider::before{
+    display:none !important;
+  }
+  #dicas-valiosas .carousel-track,
+  #receitas-landing .carousel-track{
+    width:max-content !important;
+    animation:none !important;
+    transform:none !important;
+    gap:12px !important;
+    padding:.25rem 1rem 1rem !important;
+  }
+  #dicas-valiosas .content-card,
+  #receitas-landing .content-card{
+    flex:0 0 calc(100vw - 2rem) !important;
+    width:calc(100vw - 2rem) !important;
+    max-width:430px !important;
+    height:174px !important;
+    scroll-snap-align:center !important;
+    scroll-snap-stop:always !important;
+    grid-template-columns:104px 1fr !important;
+    border-radius:24px !important;
+  }
+  #dicas-valiosas .content-card img,
+  #receitas-landing .content-card img{
+    width:104px !important;
+    height:100% !important;
+  }
+  #dicas-valiosas .content-card-content,
+  #receitas-landing .content-card-content{
+    padding:.95rem 1rem !important;
+  }
+  #dicas-valiosas .content-card-content h3,
+  #receitas-landing .content-card-content h3{
+    font-size:.98rem !important;
+    margin-bottom:.42rem !important;
+  }
+  #dicas-valiosas .content-card-content p,
+  #receitas-landing .content-card-content p{
+    font-size:.76rem !important;
+    line-height:1.34 !important;
+    -webkit-line-clamp:4 !important;
+  }
+  #dicas-valiosas .section-content::after,
+  #receitas-landing .section-content::after{
+    content:"Arraste para ver mais  ›";
+    display:block;
+    width:max-content;
+    margin:.15rem auto 0;
+    padding:.42rem .78rem;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.045);
+    color:rgba(255,255,255,.62);
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.01em;
+  }
+}
+@media (max-width: 390px){
+  #inicio .af-start-trial-btn .btn-text,
+  #inicio .af-secondary-minimal-btn .btn-text{
+    font-size:.76rem !important;
+  }
+  #inicio .af-start-trial-btn,
+  #inicio .af-secondary-minimal-btn{
+    padding-left:.5rem !important;
+    padding-right:.48rem !important;
+  }
+  #inicio .af-start-trial-btn .af-cta-arrow,
+  #inicio .af-secondary-minimal-btn .af-cta-arrow{
+    width:29px !important;
+    height:29px !important;
+    min-width:29px !important;
+    flex-basis:29px !important;
+  }
+  #inicio .af-calc-bar input::placeholder{ font-size:.70rem !important; }
+}
+
+
+/* ===== V7 reenvio: ícone real, ícones animados e vidro mais minimalista ===== */
+
+#inicio .af-premium-tagline {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: .52rem !important;
+}
+
+#inicio .af-future-kitchen-icon {
+  width: 1.05em !important;
+  height: 1.05em !important;
+  display: inline-block !important;
+  object-fit: contain !important;
+  flex: 0 0 auto !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 .02rem 0 0 !important;
+  transform: translateY(.02em);
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.18));
+}
+
+#inicio .af-premium-tagline > i,
+#inicio .af-premium-tagline .af-apple-red,
+#inicio .af-tagline-icon {
+  display: none !important;
+}
+
+/* Caixa externa da simulação: mais transparente, com luxo discreto */
+#inicio .af-lead-calculator.af-lead-calculator-premium {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.105), rgba(255,255,255,.035)),
+    rgba(12,14,18,.18) !important;
+  border: 1px solid rgba(255,255,255,.145) !important;
+  box-shadow:
+    0 18px 42px rgba(0,0,0,.16),
+    inset 0 1px 0 rgba(255,255,255,.08) !important;
+  backdrop-filter: blur(13px) saturate(128%) !important;
+  -webkit-backdrop-filter: blur(13px) saturate(128%) !important;
+  transition:
+    border-color .28s ease,
+    box-shadow .28s ease,
+    background .28s ease,
+    transform .28s ease !important;
+}
+
+@media (hover:hover) {
+  #inicio .af-lead-calculator.af-lead-calculator-premium:hover {
+    border-color: rgba(0,242,234,.34) !important;
+    background:
+      linear-gradient(145deg, rgba(255,255,255,.13), rgba(255,255,255,.045)),
+      rgba(12,14,18,.20) !important;
+    box-shadow:
+      0 22px 54px rgba(0,0,0,.20),
+      0 0 0 1px rgba(0,242,234,.08),
+      inset 0 1px 0 rgba(255,255,255,.10) !important;
+    transform: translateY(-1px);
+  }
+}
+
+/* O campo de digitação permanece escuro/legível */
+#inicio .af-calc-bar {
+  background: rgba(10,12,16,.74) !important;
+  border: 1px solid rgba(255,255,255,.115) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+/* Placeholder menor para caber melhor sem cortar no mobile */
+#inicio .af-calc-bar input::placeholder {
+  color: rgba(255,255,255,.68) !important;
+  font-size: clamp(.74rem, 2.55vw, .92rem) !important;
+  font-weight: 700 !important;
+}
+
+/* Animação premium nos 3 ícones */
+@keyframes afIconLuxuryFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 rgba(0,242,234,0);
+  }
+  45% {
+    transform: translateY(-3px) rotate(-2deg) scale(1.035);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 8px 20px rgba(0,242,234,.08);
+  }
+  70% {
+    transform: translateY(1px) rotate(1deg) scale(.995);
+  }
+}
+
+#inicio .af-calc-food-icons span {
+  position: relative !important;
+  overflow: hidden !important;
+  background: rgba(255,255,255,.055) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  animation: afIconLuxuryFloat 4.8s ease-in-out infinite;
+  transition:
+    transform .24s ease,
+    border-color .24s ease,
+    background .24s ease,
+    box-shadow .24s ease !important;
+}
+
+#inicio .af-calc-food-icons span:nth-child(2) {
+  animation-delay: .45s;
+}
+
+#inicio .af-calc-food-icons span:nth-child(3) {
+  animation-delay: .9s;
+}
+
+#inicio .af-calc-food-icons span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.18) 45%, transparent 70%);
+  transform: translateX(-130%);
+  transition: transform .7s ease;
+}
+
+@media (hover:hover) {
+  #inicio .af-calc-food-icons span:hover {
+    transform: translateY(-3px) scale(1.06) !important;
+    border-color: rgba(0,242,234,.42) !important;
+    background: rgba(0,242,234,.08) !important;
+    box-shadow: 0 10px 26px rgba(0,242,234,.13), inset 0 1px 0 rgba(255,255,255,.16) !important;
+  }
+
+  #inicio .af-calc-food-icons span:hover::after {
+    transform: translateX(130%);
+  }
+}
+
+#inicio .af-calc-food-icons span i {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.20));
+}
+
+/* Botões mais seguros contra corte de texto */
+#inicio .af-start-trial-btn,
+#inicio .af-secondary-minimal-btn {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+#inicio .af-start-trial-btn .btn-text,
+#inicio .af-secondary-minimal-btn .btn-text {
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  font-size: clamp(.82rem, 2.75vw, .98rem) !important;
+  letter-spacing: -.01em !important;
+}
+
+#inicio .af-start-trial-btn .af-cta-arrow,
+#inicio .af-secondary-minimal-btn .af-cta-arrow {
+  flex: 0 0 30px !important;
+}
+
+@media (max-width: 430px) {
+  #inicio .af-hero-cta-row {
+    gap: 9px !important;
+  }
+
+  #inicio .af-start-trial-btn,
+  #inicio .af-secondary-minimal-btn {
+    padding-inline: .72rem !important;
+  }
+
+  #inicio .af-start-trial-btn .btn-text,
+  #inicio .af-secondary-minimal-btn .btn-text {
+    font-size: .82rem !important;
+  }
+
+  #inicio .af-start-trial-btn .af-cta-arrow,
+  #inicio .af-secondary-minimal-btn .af-cta-arrow {
+    flex-basis: 27px !important;
+    width: 27px !important;
+    height: 27px !important;
+  }
+}
+/* =========================================================
+   DESKTOP — BOTÕES NO VAZIO DA DIREITA, UM ABAIXO DO OUTRO
+   Cole no FINAL do style.css
+========================================================= */
+
+@media (min-width: 992px) {
+
+  /* Garante que o posicionamento seja baseado na tela inteira da hero */
+  #inicio {
+    position: sticky !important;
+    top: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Não deixa o bloco da esquerda prender os botões */
+  #inicio .identity-container,
+  #inicio .hero-clean-layout,
+  #inicio .af-hero-shell,
+  #inicio .af-hero-conversion-shell {
+    position: static !important;
+  }
+
+  /* Limita apenas o conteúdo da esquerda */
+  #inicio .hero-brand,
+  #inicio .af-premium-tagline,
+  #inicio .af-lead-calculator {
+    max-width: 640px !important;
+  }
+
+  /* Joga os botões para o vazio da direita */
+  html body #inicio .af-hero-cta-row,
+  html body #inicio .af-lead-calculator + .af-hero-cta-row,
+  html body #inicio .af-lead-calculator.is-calculated + .af-hero-cta-row,
+  html body #inicio .af-lead-calculator.af-lead-calculator-premium + .af-hero-cta-row {
+    position: absolute !important;
+
+    left: auto !important;
+    right: clamp(120px, 13vw, 240px) !important;
+    top: 50% !important;
+    bottom: auto !important;
+
+    transform: translateY(-50%) !important;
+
+    width: 300px !important;
+    max-width: 300px !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    gap: 16px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    z-index: 30 !important;
+  }
+
+  /* Botões iguais, alinhados e com nome visível */
+  html body #inicio .af-hero-cta-row .af-start-trial-btn,
+  html body #inicio .af-hero-cta-row .af-secondary-minimal-btn {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+
+    height: 58px !important;
+    min-height: 58px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    padding: 0 16px 0 22px !important;
+    border-radius: 999px !important;
+
+    white-space: nowrap !important;
+    overflow: hidden !important;
+
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(255, 255, 255, 0.24) !important;
+
+    box-shadow:
+      0 18px 42px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+
+    backdrop-filter: blur(16px) saturate(135%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(135%) !important;
+
+    transition:
+      transform .25s ease,
+      background .25s ease,
+      border-color .25s ease,
+      box-shadow .25s ease !important;
+  }
+
+  html body #inicio .af-hero-cta-row .btn-text {
+    display: block !important;
+    color: #fff !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.01em !important;
+    line-height: 1 !important;
+
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  html body #inicio .af-hero-cta-row .af-cta-arrow {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.13) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+
+    margin-left: 12px !important;
+    transition: transform .25s ease, background .25s ease, border-color .25s ease !important;
+  }
+
+  html body #inicio .af-hero-cta-row .af-cta-arrow i {
+    color: #fff !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Hover chique */
+  html body #inicio .af-hero-cta-row .af-start-trial-btn:hover,
+  html body #inicio .af-hero-cta-row .af-secondary-minimal-btn:hover {
+    transform: translateY(-2px) !important;
+    background: rgba(0, 242, 234, 0.12) !important;
+    border-color: rgba(0, 242, 234, 0.48) !important;
+
+    box-shadow:
+      0 24px 54px rgba(0, 0, 0, 0.28),
+      0 0 0 1px rgba(0, 242, 234, 0.13),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  }
+
+  html body #inicio .af-hero-cta-row .af-start-trial-btn:hover .af-cta-arrow,
+  html body #inicio .af-hero-cta-row .af-secondary-minimal-btn:hover .af-cta-arrow {
+    transform: translateX(4px) !important;
+    background: rgba(0, 242, 234, 0.20) !important;
+    border-color: rgba(0, 242, 234, 0.48) !important;
+  }
+}
+/* =========================================================
+   DESKTOP — RESULTADO DA SIMULAÇÃO NÃO FICAR ESCONDIDO
+   Cole no FINAL do style.css
+========================================================= */
+
+@media (min-width: 992px) {
+
+  /* Quando a simulação vira resultado, sobe um pouco o card */
+  html body #inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated {
+    transform: translateY(-46px) !important;
+    max-height: calc(100vh - 170px) !important;
+    overflow: visible !important;
+  }
+
+  /* Resultado mais compacto para caber melhor no desktop */
+  html body #inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated .af-calc-result {
+    padding: 1.35rem 1.45rem !important;
+  }
+
+  html body #inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated .af-calc-result-main strong {
+    font-size: clamp(2rem, 3vw, 2.85rem) !important;
+    line-height: 1 !important;
+  }
+
+  html body #inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated .af-calc-result p {
+    font-size: 0.92rem !important;
+    line-height: 1.45 !important;
+    max-width: 480px !important;
+    margin-top: .75rem !important;
+  }
+
+  html body #inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated .af-calc-result-actions {
+    margin-top: 1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+  }
+
+  html body #inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated .af-calc-start {
+    min-height: 46px !important;
+    padding: 0 1.25rem !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+  }
+
+  html body #inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated .af-calc-reset {
+    min-height: 46px !important;
+    padding: 0 .6rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* Quando calculado, deixa os botões grandes da direita um pouco mais altos,
+     para não competir com o resultado */
+  html body #inicio .af-lead-calculator.is-calculated + .af-hero-cta-row,
+  html body #inicio .af-lead-calculator.af-lead-calculator-premium.is-calculated + .af-hero-cta-row {
+    top: 42% !important;
+  }
+}
+/* =========================================================
+   MAÇÃ DA FRASE "O futuro da sua cozinha, agora."
+   Mesma altura da fonte + animação premium
+   Cole no FINAL do style.css
+========================================================= */
+
+#inicio .af-premium-tagline {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.42rem !important;
+  line-height: 1.1 !important;
+}
+
+/* Caso esteja usando imagem PNG */
+#inicio .af-future-kitchen-icon {
+  width: 1.05em !important;
+  height: 1.05em !important;
+  max-width: 1.05em !important;
+  max-height: 1.05em !important;
+
+  object-fit: contain !important;
+  display: inline-block !important;
+  flex: 0 0 auto !important;
+
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  transform: translateY(0.04em);
+  filter:
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.28))
+    drop-shadow(0 0 5px rgba(255, 65, 65, 0.18));
+
+  animation: afFutureAppleFloat 3.8s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+/* Caso ainda esteja aparecendo como ícone FontAwesome antigo */
+#inicio .af-premium-tagline > i.af-apple-red {
+  font-size: 1.05em !important;
+  width: 1.05em !important;
+  height: 1.05em !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  transform: translateY(0.04em);
+  animation: afFutureAppleFloat 3.8s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+/* Animação sutil: sobe, respira e dá um brilho leve */
+@keyframes afFutureAppleFloat {
+  0%, 100% {
+    transform: translateY(0.04em) scale(1) rotate(0deg);
+    filter:
+      drop-shadow(0 1px 2px rgba(0, 0, 0, 0.28))
+      drop-shadow(0 0 4px rgba(255, 65, 65, 0.16));
+  }
+
+  42% {
+    transform: translateY(-0.08em) scale(1.045) rotate(-2deg);
+    filter:
+      drop-shadow(0 2px 3px rgba(0, 0, 0, 0.30))
+      drop-shadow(0 0 8px rgba(255, 65, 65, 0.28));
+  }
+
+  68% {
+    transform: translateY(0.02em) scale(0.99) rotate(1deg);
+  }
+}
+
+/* No mobile, deixa a maçã um tiquinho menor para não parecer bolinha grande */
+@media (max-width: 768px) {
+  #inicio .af-future-kitchen-icon,
+  #inicio .af-premium-tagline > i.af-apple-red {
+    width: 0.96em !important;
+    height: 0.96em !important;
+    max-width: 0.96em !important;
+    max-height: 0.96em !important;
+    font-size: 0.96em !important;
+  }
+
+  #inicio .af-premium-tagline {
+    gap: 0.36rem !important;
+  }
+}
+/* =========================================================
+   MAÇÃ REAL DA FRASE — V8
+   Usa /o_futuro_da_sua_cozinha_agora.png
+========================================================= */
+
+#inicio .hero-tagline.af-premium-tagline {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.42rem !important;
+  line-height: 1.1 !important;
+}
+
+#inicio .hero-tagline.af-premium-tagline .af-future-icon-v8 {
+  width: 0.95em !important;
+  height: 0.95em !important;
+  max-width: 0.95em !important;
+  max-height: 0.95em !important;
+
+  display: inline-block !important;
+  object-fit: contain !important;
+  flex: 0 0 auto !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+
+  transform: translateY(0.04em);
+  transform-origin: center bottom;
+
+  filter:
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25))
+    drop-shadow(0 0 4px rgba(255, 60, 60, 0.18));
+
+  animation: afFutureAppleV8 3.6s ease-in-out infinite;
+}
+
+@keyframes afFutureAppleV8 {
+  0%, 100% {
+    transform: translateY(0.04em) scale(1) rotate(0deg);
+  }
+
+  42% {
+    transform: translateY(-0.07em) scale(1.05) rotate(-2deg);
+  }
+
+  68% {
+    transform: translateY(0.02em) scale(0.99) rotate(1deg);
+  }
+}
+
+@media (max-width: 768px) {
+  #inicio .hero-tagline.af-premium-tagline .af-future-icon-v8 {
+    width: 0.88em !important;
+    height: 0.88em !important;
+    max-width: 0.88em !important;
+    max-height: 0.88em !important;
+  }
+
+  #inicio .hero-tagline.af-premium-tagline {
+    gap: 0.35rem !important;
+  }
+}
+
+
+/* =========================================================
+   V8 - remove maçã da tagline + carrossel ultra moderno
+   ========================================================= */
+#inicio .hero-tagline.af-premium-tagline{
+  display:block !important;
+  align-items:initial !important;
+  gap:0 !important;
+}
+#inicio .hero-tagline.af-premium-tagline img,
+#inicio .hero-tagline.af-premium-tagline i,
+#inicio .af-future-icon-v8,
+#inicio .af-future-kitchen-icon,
+#inicio .af-apple-red{
+  display:none !important;
+  width:0 !important;
+  height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+}
+#inicio .hero-tagline.af-premium-tagline span{
+  display:inline-block !important;
+}
+
+#dicas-valiosas .section-content,
+#receitas-landing .section-content{
+  overflow:visible !important;
+}
+#dicas-valiosas .carousel-slider,
+#receitas-landing .carousel-slider{
+  position:relative !important;
+  width:min(1180px, 100%) !important;
+  margin:2rem auto 0 !important;
+  overflow-x:auto !important;
+  overflow-y:visible !important;
+  -webkit-overflow-scrolling:touch !important;
+  scroll-snap-type:x mandatory !important;
+  scroll-behavior:smooth !important;
+  scrollbar-width:none !important;
+  padding:.25rem 4.25rem 3.2rem !important;
+  mask-image:none !important;
+  -webkit-mask-image:none !important;
+  border-radius:32px !important;
+}
+#dicas-valiosas .carousel-slider::-webkit-scrollbar,
+#receitas-landing .carousel-slider::-webkit-scrollbar{display:none !important;}
+#dicas-valiosas .carousel-track,
+#receitas-landing .carousel-track{
+  width:max-content !important;
+  min-width:0 !important;
+  display:flex !important;
+  align-items:stretch !important;
+  justify-content:flex-start !important;
+  gap:1.15rem !important;
+  padding:.2rem 0 .35rem !important;
+  margin:0 !important;
+  animation:none !important;
+  transform:none !important;
+}
+#dicas-valiosas .content-card,
+#receitas-landing .content-card{
+  position:relative !important;
+  width:min(420px, calc(100vw - 7.4rem)) !important;
+  min-width:min(420px, calc(100vw - 7.4rem)) !important;
+  max-width:420px !important;
+  height:420px !important;
+  flex:0 0 min(420px, calc(100vw - 7.4rem)) !important;
+  display:grid !important;
+  grid-template-rows:1fr auto !important;
+  scroll-snap-align:center !important;
+  scroll-snap-stop:always !important;
+  border-radius:30px !important;
+  overflow:hidden !important;
+  background:linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.045)) !important;
+  border:1px solid rgba(255,255,255,.16) !important;
+  box-shadow:0 24px 68px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.10) !important;
+  backdrop-filter:blur(16px) saturate(130%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(130%) !important;
+  transition:transform .35s cubic-bezier(.22,1,.36,1), border-color .35s ease, box-shadow .35s ease, background .35s ease !important;
+}
+#dicas-valiosas .af-card-image-wrap,
+#receitas-landing .af-card-image-wrap{
+  position:relative !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+  background:rgba(0,0,0,.18) !important;
+}
+#dicas-valiosas .content-card img,
+#receitas-landing .content-card img{
+  width:100% !important;
+  height:100% !important;
+  min-height:245px !important;
+  aspect-ratio:auto !important;
+  object-fit:cover !important;
+  border-radius:0 !important;
+  display:block !important;
+  transform:scale(1.025) !important;
+  filter:saturate(1.08) contrast(1.02) brightness(.92) !important;
+  transition:transform .8s cubic-bezier(.22,1,.36,1), filter .45s ease !important;
+  animation:afCarouselImageFloat 8s ease-in-out infinite;
+}
+#dicas-valiosas .af-card-image-wrap::after,
+#receitas-landing .af-card-image-wrap::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg, transparent 45%, rgba(0,0,0,.24) 100%);
+}
+#dicas-valiosas .af-card-count,
+#receitas-landing .af-card-count{
+  position:absolute;
+  left:.9rem;
+  bottom:.85rem;
+  z-index:2;
+  min-width:42px;
+  height:28px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  background:rgba(8,10,14,.44);
+  border:1px solid rgba(255,255,255,.17);
+  color:rgba(255,255,255,.76);
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  font-weight:800;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+#dicas-valiosas .content-card-content,
+#receitas-landing .content-card-content{
+  padding:1.05rem 1.12rem 1.2rem !important;
+  text-align:left !important;
+  align-items:flex-start !important;
+  background:linear-gradient(180deg, rgba(9,11,15,.28), rgba(9,11,15,.46)) !important;
+}
+#dicas-valiosas .af-card-kicker,
+#receitas-landing .af-card-kicker{
+  display:inline-flex !important;
+  align-items:center !important;
+  width:max-content !important;
+  margin-bottom:.5rem !important;
+  padding:.28rem .58rem !important;
+  border-radius:999px !important;
+  background:rgba(0,242,234,.08) !important;
+  border:1px solid rgba(0,242,234,.18) !important;
+  color:rgba(161,255,250,.86) !important;
+  font-size:.66rem !important;
+  font-weight:900 !important;
+  letter-spacing:.12em !important;
+  text-transform:uppercase !important;
+}
+#dicas-valiosas .content-card-content h3,
+#receitas-landing .content-card-content h3{
+  margin:0 0 .42rem !important;
+  color:#fff !important;
+  font-size:1.08rem !important;
+  line-height:1.12 !important;
+  letter-spacing:-.02em !important;
+}
+#dicas-valiosas .content-card-content p,
+#receitas-landing .content-card-content p{
+  color:rgba(255,255,255,.70) !important;
+  font-size:.84rem !important;
+  line-height:1.42 !important;
+  max-width:42ch !important;
+  margin:0 !important;
+  display:-webkit-box !important;
+  -webkit-line-clamp:3 !important;
+  -webkit-box-orient:vertical !important;
+  overflow:hidden !important;
+}
+#dicas-valiosas .af-carousel-nav,
+#receitas-landing .af-carousel-nav{
+  position:sticky !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  z-index:20 !important;
+  width:46px !important;
+  height:46px !important;
+  min-width:46px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,.20) !important;
+  background:rgba(13,15,20,.46) !important;
+  color:#fff !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  cursor:pointer !important;
+  backdrop-filter:blur(14px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(140%) !important;
+  box-shadow:0 18px 34px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  transition:transform .25s ease, background .25s ease, border-color .25s ease, box-shadow .25s ease !important;
+}
+#dicas-valiosas .af-carousel-prev,
+#receitas-landing .af-carousel-prev{
+  left:0 !important;
+  margin-left:-3.55rem !important;
+  float:left;
+}
+#dicas-valiosas .af-carousel-next,
+#receitas-landing .af-carousel-next{
+  right:0 !important;
+  margin-right:-3.55rem !important;
+  float:right;
+}
+#dicas-valiosas .af-carousel-nav i,
+#receitas-landing .af-carousel-nav i{font-size:.92rem !important;}
+#dicas-valiosas .af-carousel-nav:hover,
+#receitas-landing .af-carousel-nav:hover{
+  transform:translateY(-50%) scale(1.06) !important;
+  background:rgba(0,242,234,.13) !important;
+  border-color:rgba(0,242,234,.42) !important;
+  box-shadow:0 22px 42px rgba(0,0,0,.28), 0 0 0 1px rgba(0,242,234,.10), inset 0 1px 0 rgba(255,255,255,.14) !important;
+}
+#dicas-valiosas .af-carousel-hint,
+#receitas-landing .af-carousel-hint{
+  position:absolute !important;
+  left:50% !important;
+  bottom:.55rem !important;
+  transform:translateX(-50%) !important;
+  z-index:3 !important;
+  padding:.43rem .78rem !important;
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  background:rgba(255,255,255,.045) !important;
+  color:rgba(255,255,255,.56) !important;
+  font-size:.72rem !important;
+  font-weight:800 !important;
+  letter-spacing:.01em !important;
+  pointer-events:none !important;
+}
+@keyframes afCarouselImageFloat{
+  0%,100%{transform:scale(1.025) translate3d(0,0,0);}
+  50%{transform:scale(1.07) translate3d(0,-3px,0);}
+}
+@media (hover:hover){
+  #dicas-valiosas .content-card:hover,
+  #receitas-landing .content-card:hover{
+    transform:translateY(-6px) scale(1.01) !important;
+    border-color:rgba(0,242,234,.28) !important;
+    box-shadow:0 30px 86px rgba(0,0,0,.32), 0 0 0 1px rgba(0,242,234,.08), inset 0 1px 0 rgba(255,255,255,.13) !important;
+  }
+  #dicas-valiosas .content-card:hover img,
+  #receitas-landing .content-card:hover img{
+    transform:scale(1.09) !important;
+    filter:saturate(1.14) contrast(1.04) brightness(1) !important;
+  }
+}
+@media (max-width:768px){
+  #dicas-valiosas .carousel-slider,
+  #receitas-landing .carousel-slider{
+    width:100vw !important;
+    max-width:100vw !important;
+    margin:1.25rem calc(50% - 50vw) 0 !important;
+    padding:.25rem 3.55rem 3.1rem !important;
+    border-radius:0 !important;
+    scroll-padding-inline:3.55rem !important;
+  }
+  #dicas-valiosas .carousel-track,
+  #receitas-landing .carousel-track{
+    gap:.9rem !important;
+  }
+  #dicas-valiosas .content-card,
+  #receitas-landing .content-card{
+    width:calc(100vw - 7.1rem) !important;
+    min-width:calc(100vw - 7.1rem) !important;
+    flex-basis:calc(100vw - 7.1rem) !important;
+    height:390px !important;
+    border-radius:26px !important;
+  }
+  #dicas-valiosas .content-card img,
+  #receitas-landing .content-card img{
+    min-height:225px !important;
+  }
+  #dicas-valiosas .af-carousel-nav,
+  #receitas-landing .af-carousel-nav{
+    position:absolute !important;
+    top:42% !important;
+    width:42px !important;
+    height:42px !important;
+    min-width:42px !important;
+    transform:translateY(-50%) !important;
+  }
+  #dicas-valiosas .af-carousel-prev,
+  #receitas-landing .af-carousel-prev{
+    left:1rem !important;
+    margin-left:0 !important;
+  }
+  #dicas-valiosas .af-carousel-next,
+  #receitas-landing .af-carousel-next{
+    right:1rem !important;
+    margin-right:0 !important;
+  }
+  #dicas-valiosas .content-card-content,
+  #receitas-landing .content-card-content{
+    padding:.95rem 1rem 1.05rem !important;
+  }
+  #dicas-valiosas .content-card-content h3,
+  #receitas-landing .content-card-content h3{
+    font-size:1.02rem !important;
+  }
+  #dicas-valiosas .content-card-content p,
+  #receitas-landing .content-card-content p{
+    font-size:.8rem !important;
+    -webkit-line-clamp:3 !important;
+  }
+}
+@media (max-width:390px){
+  #dicas-valiosas .carousel-slider,
+  #receitas-landing .carousel-slider{
+    padding-left:3.25rem !important;
+    padding-right:3.25rem !important;
+    scroll-padding-inline:3.25rem !important;
+  }
+  #dicas-valiosas .content-card,
+  #receitas-landing .content-card{
+    width:calc(100vw - 6.5rem) !important;
+    min-width:calc(100vw - 6.5rem) !important;
+    flex-basis:calc(100vw - 6.5rem) !important;
+    height:370px !important;
+  }
+}
+/* =========================================================
+   ANÁLISES — TEXTOS DO GRÁFICO EM BRANCO
+   Cole no FINAL do style.css
+========================================================= */
+
+#analises,
+#analises * {
+  color: #ffffff;
+}
+
+#analises canvas {
+  color: #ffffff !important;
+}
+
+/* Legendas customizadas abaixo do gráfico, caso existam fora do canvas */
+#analises .chart-legend,
+#analises .chart-legend *,
+#analises .chartjs-legend,
+#analises .chartjs-legend *,
+#analises .legend,
+#analises .legend *,
+#analises ul,
+#analises li,
+#analises span,
+#analises p {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+/* =========================================================
+   AF V9 — Rosca/Pizza com legenda branca real + carrossel imagem 100%
+   Ajuste final em cima dos arquivos atuais
+========================================================= */
+
+/* Legenda HTML branca para gráficos de Pizza/Rosca */
+#module-analises .analysis-v9-html-legend,
+#analises .analysis-v9-html-legend{
+  width:100% !important;
+  display:flex !important;
+  flex-wrap:wrap !important;
+  justify-content:center !important;
+  align-items:center !important;
+  gap:.55rem .95rem !important;
+  margin:.72rem auto 0 !important;
+  padding:0 .75rem .2rem !important;
+  color:#ffffff !important;
+  position:relative !important;
+  z-index:4 !important;
+}
+#module-analises .analysis-v9-legend-item,
+#analises .analysis-v9-legend-item{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:.42rem !important;
+  color:#ffffff !important;
+  font-size:.82rem !important;
+  line-height:1.15 !important;
+  white-space:nowrap !important;
+  text-shadow:0 1px 3px rgba(0,0,0,.42) !important;
+}
+#module-analises .analysis-v9-legend-item i,
+#analises .analysis-v9-legend-item i{
+  width:13px !important;
+  height:13px !important;
+  min-width:13px !important;
+  border-radius:999px !important;
+  box-shadow:0 0 10px rgba(0,242,234,.18) !important;
+}
+#module-analises .analysis-v9-legend-item b,
+#analises .analysis-v9-legend-item b{
+  color:#ffffff !important;
+  font-weight:800 !important;
+}
+#module-analises .analysis-v9-legend-item em,
+#analises .analysis-v9-legend-item em{
+  color:rgba(255,255,255,.78) !important;
+  font-style:normal !important;
+  font-weight:700 !important;
+}
+
+/* Carrosséis de Dicas e Receitas — imagem 100% com texto sobreposto */
+#dicas-valiosas .carousel-slider,
+#receitas-landing .carousel-slider{
+  position:relative !important;
+  width:100% !important;
+  max-width:1180px !important;
+  margin:2rem auto 0 !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  scroll-snap-type:x mandatory !important;
+  scroll-behavior:smooth !important;
+  -webkit-overflow-scrolling:touch !important;
+  mask-image:none !important;
+  -webkit-mask-image:none !important;
+  padding:0 4.2rem 2.4rem !important;
+  scrollbar-width:none !important;
+}
+#dicas-valiosas .carousel-slider::-webkit-scrollbar,
+#receitas-landing .carousel-slider::-webkit-scrollbar{display:none !important;}
+
+#dicas-valiosas .carousel-track,
+#receitas-landing .carousel-track{
+  width:max-content !important;
+  min-width:100% !important;
+  display:flex !important;
+  gap:1.25rem !important;
+  animation:none !important;
+  transform:none !important;
+  padding:.15rem 0 !important;
+}
+
+#dicas-valiosas .content-card,
+#receitas-landing .content-card{
+  position:relative !important;
+  flex:0 0 clamp(300px, 30vw, 390px) !important;
+  width:clamp(300px, 30vw, 390px) !important;
+  height:clamp(380px, 42vw, 500px) !important;
+  margin:0 !important;
+  border-radius:28px !important;
+  overflow:hidden !important;
+  scroll-snap-align:center !important;
+  background:#050609 !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  box-shadow:0 24px 70px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  isolation:isolate !important;
+  display:block !important;
+  transition:transform .35s cubic-bezier(.2,.8,.2,1), border-color .35s ease, box-shadow .35s ease !important;
+}
+
+#dicas-valiosas .content-card img,
+#receitas-landing .content-card img,
+#dicas-valiosas .content-card .af-carousel-full-img,
+#receitas-landing .content-card .af-carousel-full-img{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:100% !important;
+  min-height:100% !important;
+  max-width:none !important;
+  max-height:none !important;
+  display:block !important;
+  object-fit:cover !important;
+  object-position:center !important;
+  transform:scale(1.01) !important;
+  filter:saturate(1.08) contrast(1.02) brightness(.92) !important;
+  transition:transform 6s cubic-bezier(.2,.8,.2,1), filter .45s ease !important;
+  z-index:1 !important;
+}
+
+#dicas-valiosas .content-card::after,
+#receitas-landing .content-card::after,
+#dicas-valiosas .af-carousel-card-shade,
+#receitas-landing .af-carousel-card-shade{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  z-index:2 !important;
+  pointer-events:none !important;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.58) 0%, rgba(0,0,0,.18) 35%, rgba(0,0,0,.25) 57%, rgba(0,0,0,.72) 100%),
+    radial-gradient(circle at 15% 12%, rgba(0,242,234,.16), transparent 32%) !important;
+}
+
+#dicas-valiosas .content-card-content,
+#receitas-landing .content-card-content,
+#dicas-valiosas .af-carousel-overlay-content,
+#receitas-landing .af-carousel-overlay-content{
+  position:absolute !important;
+  inset:0 !important;
+  z-index:3 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:space-between !important;
+  padding:1.35rem !important;
+  background:transparent !important;
+  color:#fff !important;
+  text-align:left !important;
+}
+
+#dicas-valiosas .af-card-kicker,
+#receitas-landing .af-card-kicker{
+  align-self:flex-start !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  min-height:30px !important;
+  padding:.38rem .72rem !important;
+  border-radius:999px !important;
+  background:rgba(7,9,12,.48) !important;
+  border:1px solid rgba(255,255,255,.18) !important;
+  backdrop-filter:blur(12px) saturate(130%) !important;
+  -webkit-backdrop-filter:blur(12px) saturate(130%) !important;
+  color:rgba(255,255,255,.9) !important;
+  font-size:.72rem !important;
+  font-weight:900 !important;
+  letter-spacing:.08em !important;
+  text-transform:uppercase !important;
+  text-shadow:0 1px 3px rgba(0,0,0,.48) !important;
+}
+
+#dicas-valiosas .content-card-content h3,
+#receitas-landing .content-card-content h3{
+  margin:auto 0 .62rem !important;
+  color:#ffffff !important;
+  font-size:clamp(1.55rem, 2.4vw, 2.35rem) !important;
+  line-height:1.02 !important;
+  font-weight:900 !important;
+  letter-spacing:-.04em !important;
+  text-shadow:0 4px 24px rgba(0,0,0,.58) !important;
+  max-width:92% !important;
+}
+
+#dicas-valiosas .content-card-content p,
+#receitas-landing .content-card-content p{
+  color:rgba(255,255,255,.84) !important;
+  font-size:.94rem !important;
+  line-height:1.42 !important;
+  margin:0 !important;
+  max-width:94% !important;
+  display:-webkit-box !important;
+  -webkit-line-clamp:3 !important;
+  -webkit-box-orient:vertical !important;
+  overflow:hidden !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.55) !important;
+}
+
+#dicas-valiosas .content-card:hover,
+#receitas-landing .content-card:hover{
+  transform:translateY(-8px) scale(1.012) !important;
+  border-color:rgba(0,242,234,.38) !important;
+  box-shadow:0 34px 90px rgba(0,0,0,.42), 0 0 0 1px rgba(0,242,234,.08), inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+#dicas-valiosas .content-card:hover img,
+#receitas-landing .content-card:hover img{
+  transform:scale(1.075) !important;
+  filter:saturate(1.18) contrast(1.05) brightness(1) !important;
+}
+
+#dicas-valiosas .af-carousel-nav,
+#receitas-landing .af-carousel-nav{
+  position:absolute !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  width:48px !important;
+  height:48px !important;
+  border-radius:999px !important;
+  z-index:20 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  cursor:pointer !important;
+  color:#fff !important;
+  background:rgba(12,14,18,.54) !important;
+  border:1px solid rgba(255,255,255,.18) !important;
+  box-shadow:0 16px 34px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  backdrop-filter:blur(14px) saturate(130%) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(130%) !important;
+  transition:transform .24s ease, background .24s ease, border-color .24s ease, box-shadow .24s ease !important;
+}
+#dicas-valiosas .af-carousel-prev,
+#receitas-landing .af-carousel-prev{left:.9rem !important;}
+#dicas-valiosas .af-carousel-next,
+#receitas-landing .af-carousel-next{right:.9rem !important;}
+#dicas-valiosas .af-carousel-nav:hover,
+#receitas-landing .af-carousel-nav:hover{
+  transform:translateY(-50%) scale(1.06) !important;
+  background:rgba(0,242,234,.14) !important;
+  border-color:rgba(0,242,234,.42) !important;
+  box-shadow:0 18px 42px rgba(0,0,0,.34), 0 0 20px rgba(0,242,234,.12) !important;
+}
+#dicas-valiosas .af-carousel-nav i,
+#receitas-landing .af-carousel-nav i{font-size:.95rem !important;}
+#dicas-valiosas .af-carousel-hint,
+#receitas-landing .af-carousel-hint{
+  width:100% !important;
+  margin:.85rem auto 0 !important;
+  text-align:center !important;
+  color:rgba(255,255,255,.46) !important;
+  font-size:.72rem !important;
+  letter-spacing:.08em !important;
+  text-transform:uppercase !important;
+}
+
+@media (max-width: 768px){
+  #dicas-valiosas .carousel-slider,
+  #receitas-landing .carousel-slider{
+    max-width:100% !important;
+    margin-top:1.35rem !important;
+    padding:0 2.9rem 2rem !important;
+  }
+  #dicas-valiosas .carousel-track,
+  #receitas-landing .carousel-track{
+    gap:.95rem !important;
+  }
+  #dicas-valiosas .content-card,
+  #receitas-landing .content-card{
+    flex-basis:min(78vw, 340px) !important;
+    width:min(78vw, 340px) !important;
+    height:min(104vw, 430px) !important;
+    border-radius:24px !important;
+    scroll-snap-align:center !important;
+  }
+  #dicas-valiosas .content-card-content,
+  #receitas-landing .content-card-content{
+    padding:1.05rem !important;
+  }
+  #dicas-valiosas .content-card-content h3,
+  #receitas-landing .content-card-content h3{
+    font-size:1.58rem !important;
+  }
+  #dicas-valiosas .content-card-content p,
+  #receitas-landing .content-card-content p{
+    font-size:.84rem !important;
+    -webkit-line-clamp:3 !important;
+  }
+  #dicas-valiosas .af-carousel-nav,
+  #receitas-landing .af-carousel-nav{
+    width:40px !important;
+    height:40px !important;
+  }
+  #dicas-valiosas .af-carousel-prev,
+  #receitas-landing .af-carousel-prev{left:.45rem !important;}
+  #dicas-valiosas .af-carousel-next,
+  #receitas-landing .af-carousel-next{right:.45rem !important;}
+}
+
+@media (max-width: 420px){
+  #dicas-valiosas .content-card,
+  #receitas-landing .content-card{
+    flex-basis:78vw !important;
+    width:78vw !important;
+    height:108vw !important;
+    max-height:420px !important;
+  }
+}
