@@ -14152,308 +14152,300 @@ body:not(.app-mode) .page-section:not(#inicio)::before{
 }
 
 /* =========================================================
-   AF V9 — Rosca/Pizza com legenda branca real + carrossel imagem 100%
-   Ajuste final em cima dos arquivos atuais
+   V15 — CARROSSEL LIMPO E ESTÁTICO
+   Dicas Valiosas + Receitas Rápidas
+   Não depende do carrossel antigo do JS.
 ========================================================= */
 
-/* Legenda HTML branca para gráficos de Pizza/Rosca */
-#module-analises .analysis-v9-html-legend,
-#analises .analysis-v9-html-legend{
-  width:100% !important;
-  display:flex !important;
-  flex-wrap:wrap !important;
-  justify-content:center !important;
-  align-items:center !important;
-  gap:.55rem .95rem !important;
-  margin:.72rem auto 0 !important;
-  padding:0 .75rem .2rem !important;
-  color:#ffffff !important;
-  position:relative !important;
-  z-index:4 !important;
-}
-#module-analises .analysis-v9-legend-item,
-#analises .analysis-v9-legend-item{
-  display:inline-flex !important;
-  align-items:center !important;
-  gap:.42rem !important;
-  color:#ffffff !important;
-  font-size:.82rem !important;
-  line-height:1.15 !important;
-  white-space:nowrap !important;
-  text-shadow:0 1px 3px rgba(0,0,0,.42) !important;
-}
-#module-analises .analysis-v9-legend-item i,
-#analises .analysis-v9-legend-item i{
-  width:13px !important;
-  height:13px !important;
-  min-width:13px !important;
-  border-radius:999px !important;
-  box-shadow:0 0 10px rgba(0,242,234,.18) !important;
-}
-#module-analises .analysis-v9-legend-item b,
-#analises .analysis-v9-legend-item b{
-  color:#ffffff !important;
-  font-weight:800 !important;
-}
-#module-analises .analysis-v9-legend-item em,
-#analises .analysis-v9-legend-item em{
-  color:rgba(255,255,255,.78) !important;
-  font-style:normal !important;
-  font-weight:700 !important;
+#dicas-valiosas,
+#receitas-landing {
+  overflow-x: hidden !important;
 }
 
-/* Carrosséis de Dicas e Receitas — imagem 100% com texto sobreposto */
-#dicas-valiosas .carousel-slider,
-#receitas-landing .carousel-slider{
-  position:relative !important;
-  width:100% !important;
-  max-width:1180px !important;
-  margin:2rem auto 0 !important;
-  overflow-x:auto !important;
-  overflow-y:hidden !important;
-  scroll-snap-type:x mandatory !important;
-  scroll-behavior:smooth !important;
-  -webkit-overflow-scrolling:touch !important;
-  mask-image:none !important;
-  -webkit-mask-image:none !important;
-  padding:0 4.2rem 2.4rem !important;
-  scrollbar-width:none !important;
+#dicas-valiosas .section-content,
+#receitas-landing .section-content {
+  width: 100% !important;
+  max-width: 1180px !important;
+  overflow: hidden !important;
 }
-#dicas-valiosas .carousel-slider::-webkit-scrollbar,
-#receitas-landing .carousel-slider::-webkit-scrollbar{display:none !important;}
 
+/* Oculta qualquer resíduo de carrossel antigo caso ainda exista */
 #dicas-valiosas .carousel-track,
-#receitas-landing .carousel-track{
-  width:max-content !important;
-  min-width:100% !important;
-  display:flex !important;
-  gap:1.25rem !important;
-  animation:none !important;
-  transform:none !important;
-  padding:.15rem 0 !important;
+#receitas-landing .carousel-track {
+  animation: none !important;
+  transform: none !important;
 }
 
-#dicas-valiosas .content-card,
-#receitas-landing .content-card{
-  position:relative !important;
-  flex:0 0 clamp(300px, 30vw, 390px) !important;
-  width:clamp(300px, 30vw, 390px) !important;
-  height:clamp(380px, 42vw, 500px) !important;
-  margin:0 !important;
-  border-radius:28px !important;
-  overflow:hidden !important;
-  scroll-snap-align:center !important;
-  background:#050609 !important;
-  border:1px solid rgba(255,255,255,.12) !important;
-  box-shadow:0 24px 70px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08) !important;
-  isolation:isolate !important;
-  display:block !important;
-  transition:transform .35s cubic-bezier(.2,.8,.2,1), border-color .35s ease, box-shadow .35s ease !important;
+.af-static-carousel,
+.af-static-carousel * {
+  box-sizing: border-box !important;
 }
 
-#dicas-valiosas .content-card img,
-#receitas-landing .content-card img,
-#dicas-valiosas .content-card .af-carousel-full-img,
-#receitas-landing .content-card .af-carousel-full-img{
-  position:absolute !important;
-  inset:0 !important;
-  width:100% !important;
-  height:100% !important;
-  min-width:100% !important;
-  min-height:100% !important;
-  max-width:none !important;
-  max-height:none !important;
-  display:block !important;
-  object-fit:cover !important;
-  object-position:center !important;
-  transform:scale(1.01) !important;
-  filter:saturate(1.08) contrast(1.02) brightness(.92) !important;
-  transition:transform 6s cubic-bezier(.2,.8,.2,1), filter .45s ease !important;
-  z-index:1 !important;
+.af-static-carousel {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 1040px !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+  padding: 0 !important;
 }
 
-#dicas-valiosas .content-card::after,
-#receitas-landing .content-card::after,
-#dicas-valiosas .af-carousel-card-shade,
-#receitas-landing .af-carousel-card-shade{
-  content:"" !important;
-  position:absolute !important;
-  inset:0 !important;
-  z-index:2 !important;
-  pointer-events:none !important;
+.af-static-viewport {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x mandatory !important;
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-x: contain !important;
+  scrollbar-width: none !important;
+  border-radius: 30px !important;
+}
+
+.af-static-viewport::-webkit-scrollbar {
+  display: none !important;
+}
+
+.af-static-track {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  gap: 18px !important;
+  width: max-content !important;
+  min-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+.af-static-card {
+  position: relative !important;
+  flex: 0 0 clamp(320px, 32vw, 390px) !important;
+  width: clamp(320px, 32vw, 390px) !important;
+  height: clamp(420px, 60vh, 540px) !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  scroll-snap-align: center !important;
+  border-radius: 30px !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  background: #080a0e !important;
+  box-shadow:
+    0 22px 54px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+.af-static-card img {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  filter: brightness(.78) contrast(1.08) saturate(1.08) !important;
+  transform: scale(1.02) !important;
+  transition: transform .7s ease, filter .35s ease !important;
+}
+
+.af-static-card:hover img {
+  transform: scale(1.07) !important;
+  filter: brightness(.88) contrast(1.1) saturate(1.14) !important;
+}
+
+.af-static-shade {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
   background:
-    linear-gradient(180deg, rgba(0,0,0,.58) 0%, rgba(0,0,0,.18) 35%, rgba(0,0,0,.25) 57%, rgba(0,0,0,.72) 100%),
-    radial-gradient(circle at 15% 12%, rgba(0,242,234,.16), transparent 32%) !important;
+    linear-gradient(180deg, rgba(0,0,0,.10) 0%, rgba(0,0,0,.20) 42%, rgba(0,0,0,.88) 100%),
+    radial-gradient(circle at 50% 18%, rgba(0,242,234,.12), transparent 42%) !important;
 }
 
-#dicas-valiosas .content-card-content,
-#receitas-landing .content-card-content,
-#dicas-valiosas .af-carousel-overlay-content,
-#receitas-landing .af-carousel-overlay-content{
-  position:absolute !important;
-  inset:0 !important;
-  z-index:3 !important;
-  display:flex !important;
-  flex-direction:column !important;
-  justify-content:space-between !important;
-  padding:1.35rem !important;
-  background:transparent !important;
-  color:#fff !important;
-  text-align:left !important;
+.af-static-content {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 2 !important;
+  padding: 1.25rem !important;
+  text-align: left !important;
+  color: #fff !important;
 }
 
-#dicas-valiosas .af-card-kicker,
-#receitas-landing .af-card-kicker{
-  align-self:flex-start !important;
-  display:inline-flex !important;
-  align-items:center !important;
-  min-height:30px !important;
-  padding:.38rem .72rem !important;
-  border-radius:999px !important;
-  background:rgba(7,9,12,.48) !important;
-  border:1px solid rgba(255,255,255,.18) !important;
-  backdrop-filter:blur(12px) saturate(130%) !important;
-  -webkit-backdrop-filter:blur(12px) saturate(130%) !important;
-  color:rgba(255,255,255,.9) !important;
-  font-size:.72rem !important;
-  font-weight:900 !important;
-  letter-spacing:.08em !important;
-  text-transform:uppercase !important;
-  text-shadow:0 1px 3px rgba(0,0,0,.48) !important;
+.af-static-content span {
+  display: inline-flex !important;
+  width: fit-content !important;
+  margin-bottom: .75rem !important;
+  padding: .42rem .68rem !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  background: rgba(0,0,0,.32) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  color: rgba(255,255,255,.90) !important;
+  font-size: .68rem !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em !important;
+  text-transform: uppercase !important;
 }
 
-#dicas-valiosas .content-card-content h3,
-#receitas-landing .content-card-content h3{
-  margin:auto 0 .62rem !important;
-  color:#ffffff !important;
-  font-size:clamp(1.55rem, 2.4vw, 2.35rem) !important;
-  line-height:1.02 !important;
-  font-weight:900 !important;
-  letter-spacing:-.04em !important;
-  text-shadow:0 4px 24px rgba(0,0,0,.58) !important;
-  max-width:92% !important;
+.af-static-content h3 {
+  margin: 0 0 .45rem !important;
+  color: #fff !important;
+  font-size: clamp(1.7rem, 7vw, 2.45rem) !important;
+  line-height: .98 !important;
+  font-weight: 900 !important;
+  letter-spacing: -.04em !important;
+  text-shadow: 0 2px 18px rgba(0,0,0,.68) !important;
 }
 
-#dicas-valiosas .content-card-content p,
-#receitas-landing .content-card-content p{
-  color:rgba(255,255,255,.84) !important;
-  font-size:.94rem !important;
-  line-height:1.42 !important;
-  margin:0 !important;
-  max-width:94% !important;
-  display:-webkit-box !important;
-  -webkit-line-clamp:3 !important;
-  -webkit-box-orient:vertical !important;
-  overflow:hidden !important;
-  text-shadow:0 2px 10px rgba(0,0,0,.55) !important;
+.af-static-content p {
+  margin: 0 !important;
+  color: rgba(255,255,255,.92) !important;
+  font-size: .95rem !important;
+  line-height: 1.38 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  text-shadow: 0 2px 14px rgba(0,0,0,.68) !important;
 }
 
-#dicas-valiosas .content-card:hover,
-#receitas-landing .content-card:hover{
-  transform:translateY(-8px) scale(1.012) !important;
-  border-color:rgba(0,242,234,.38) !important;
-  box-shadow:0 34px 90px rgba(0,0,0,.42), 0 0 0 1px rgba(0,242,234,.08), inset 0 1px 0 rgba(255,255,255,.12) !important;
-}
-#dicas-valiosas .content-card:hover img,
-#receitas-landing .content-card:hover img{
-  transform:scale(1.075) !important;
-  filter:saturate(1.18) contrast(1.05) brightness(1) !important;
-}
-
-#dicas-valiosas .af-carousel-nav,
-#receitas-landing .af-carousel-nav{
-  position:absolute !important;
-  top:50% !important;
-  transform:translateY(-50%) !important;
-  width:48px !important;
-  height:48px !important;
-  border-radius:999px !important;
-  z-index:20 !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  cursor:pointer !important;
-  color:#fff !important;
-  background:rgba(12,14,18,.54) !important;
-  border:1px solid rgba(255,255,255,.18) !important;
-  box-shadow:0 16px 34px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.12) !important;
-  backdrop-filter:blur(14px) saturate(130%) !important;
-  -webkit-backdrop-filter:blur(14px) saturate(130%) !important;
-  transition:transform .24s ease, background .24s ease, border-color .24s ease, box-shadow .24s ease !important;
-}
-#dicas-valiosas .af-carousel-prev,
-#receitas-landing .af-carousel-prev{left:.9rem !important;}
-#dicas-valiosas .af-carousel-next,
-#receitas-landing .af-carousel-next{right:.9rem !important;}
-#dicas-valiosas .af-carousel-nav:hover,
-#receitas-landing .af-carousel-nav:hover{
-  transform:translateY(-50%) scale(1.06) !important;
-  background:rgba(0,242,234,.14) !important;
-  border-color:rgba(0,242,234,.42) !important;
-  box-shadow:0 18px 42px rgba(0,0,0,.34), 0 0 20px rgba(0,242,234,.12) !important;
-}
-#dicas-valiosas .af-carousel-nav i,
-#receitas-landing .af-carousel-nav i{font-size:.95rem !important;}
-#dicas-valiosas .af-carousel-hint,
-#receitas-landing .af-carousel-hint{
-  width:100% !important;
-  margin:.85rem auto 0 !important;
-  text-align:center !important;
-  color:rgba(255,255,255,.46) !important;
-  font-size:.72rem !important;
-  letter-spacing:.08em !important;
-  text-transform:uppercase !important;
+.af-static-arrow {
+  position: absolute !important;
+  top: 50% !important;
+  z-index: 6 !important;
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 999px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(0,242,234,.44) !important;
+  background: rgba(20,24,28,.58) !important;
+  color: #fff !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow:
+    0 12px 26px rgba(0,0,0,.32),
+    inset 0 1px 0 rgba(255,255,255,.10) !important;
+  transform: translateY(-50%) !important;
+  cursor: pointer !important;
 }
 
-@media (max-width: 768px){
-  #dicas-valiosas .carousel-slider,
-  #receitas-landing .carousel-slider{
-    max-width:100% !important;
-    margin-top:1.35rem !important;
-    padding:0 2.9rem 2rem !important;
+.af-static-prev { left: 14px !important; }
+.af-static-next { right: 14px !important; }
+
+.af-static-hint {
+  width: fit-content !important;
+  margin: 1rem auto 0 !important;
+  padding: .55rem .9rem !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  background: rgba(255,255,255,.055) !important;
+  color: rgba(255,255,255,.78) !important;
+  font-weight: 800 !important;
+  font-size: .82rem !important;
+}
+
+/* MOBILE: 1 card ocupando toda a largura útil */
+@media (max-width: 768px) {
+  html,
+  body,
+  .main-container {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
   }
-  #dicas-valiosas .carousel-track,
-  #receitas-landing .carousel-track{
-    gap:.95rem !important;
+
+  #dicas-valiosas,
+  #receitas-landing {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
   }
-  #dicas-valiosas .content-card,
-  #receitas-landing .content-card{
-    flex-basis:min(78vw, 340px) !important;
-    width:min(78vw, 340px) !important;
-    height:min(104vw, 430px) !important;
-    border-radius:24px !important;
-    scroll-snap-align:center !important;
+
+  #dicas-valiosas .section-content,
+  #receitas-landing .section-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    transform: none !important;
+    overflow: hidden !important;
+    align-items: stretch !important;
   }
-  #dicas-valiosas .content-card-content,
-  #receitas-landing .content-card-content{
-    padding:1.05rem !important;
+
+  #dicas-valiosas .page-title,
+  #receitas-landing .page-title,
+  #dicas-valiosas .page-subtitle,
+  #receitas-landing .page-subtitle,
+  #dicas-valiosas .af-section-proof-strip,
+  #receitas-landing .af-section-proof-strip {
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
-  #dicas-valiosas .content-card-content h3,
-  #receitas-landing .content-card-content h3{
-    font-size:1.58rem !important;
+
+  .af-static-carousel {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    padding: 0 !important;
   }
-  #dicas-valiosas .content-card-content p,
-  #receitas-landing .content-card-content p{
-    font-size:.84rem !important;
-    -webkit-line-clamp:3 !important;
+
+  .af-static-viewport {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 30px !important;
+    overflow-x: auto !important;
   }
-  #dicas-valiosas .af-carousel-nav,
-  #receitas-landing .af-carousel-nav{
-    width:40px !important;
-    height:40px !important;
+
+  .af-static-track {
+    width: 100% !important;
+    min-width: 100% !important;
+    gap: 0 !important;
   }
-  #dicas-valiosas .af-carousel-prev,
-  #receitas-landing .af-carousel-prev{left:.45rem !important;}
-  #dicas-valiosas .af-carousel-next,
-  #receitas-landing .af-carousel-next{right:.45rem !important;}
+
+  .af-static-card {
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: min(560px, 66vh) !important;
+    scroll-snap-align: start !important;
+    border-radius: 30px !important;
+  }
+
+  .af-static-arrow {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .af-static-prev { left: 12px !important; }
+  .af-static-next { right: 12px !important; }
 }
 
-@media (max-width: 420px){
-  #dicas-valiosas .content-card,
-  #receitas-landing .content-card{
-    flex-basis:78vw !important;
-    width:78vw !important;
-    height:108vw !important;
-    max-height:420px !important;
+/* Autocomplete mobile com rolagem interna */
+@media (max-width: 768px) {
+  .af-autocomplete-list,
+  .autocomplete-list,
+  .autocomplete-suggestions,
+  .suggestions-list,
+  [data-autocomplete-list],
+  .product-autocomplete,
+  .af-product-suggestions {
+    max-height: min(46vh, 340px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    touch-action: pan-y !important;
+    z-index: 999999 !important;
   }
 }

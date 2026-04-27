@@ -1268,13 +1268,15 @@ initNewHeaderLogic() {
             const contentData = this.getLandingContentData();
             const createCardHTML = (item, index) => {
                 const data = contentData[item.name] || {};
-                const description = data.short || data.description || data.prepMode || 'Uma opção simples e inteligente para sua rotina.';
+                const description = data.description || data.prepMode || 'Uma deliciosa opção para o seu dia a dia.';
                 return `
                     <article class="content-card af-luxury-carousel-card" data-name="${this.escapeHtml(item.name)}">
-                        <img class="af-carousel-full-img" src="${item.img}" alt="${this.escapeHtml(item.name)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='https://placehold.co/900x1200/101012/00f2ea?text=${placeholder}';">
-                        <div class="af-carousel-card-shade" aria-hidden="true"></div>
-                        <div class="content-card-content af-carousel-overlay-content">
-                            <span class="af-card-kicker">${placeholder} ${String(index + 1).padStart(2, '0')}</span>
+                        <div class="af-card-image-wrap">
+                            <img src="${item.img}" alt="${this.escapeHtml(item.name)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='https://placehold.co/900x600/101012/00f2ea?text=${placeholder}';">
+                            <span class="af-card-count">${String(index + 1).padStart(2, '0')}</span>
+                        </div>
+                        <div class="content-card-content">
+                            <span class="af-card-kicker">${placeholder}</span>
                             <h3>${this.escapeHtml(item.name)}</h3>
                             <p>${this.escapeHtml(description)}</p>
                         </div>
@@ -1286,7 +1288,7 @@ initNewHeaderLogic() {
                 <button type="button" class="af-carousel-nav af-carousel-prev" aria-label="Item anterior"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
                 <div class="carousel-track" style="--original-item-count: ${originalItemCount}">${cardsHTML}</div>
                 <button type="button" class="af-carousel-nav af-carousel-next" aria-label="Próximo item"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
-                <div class="af-carousel-hint" aria-hidden="true">Arraste para o lado</div>`;
+                <div class="af-carousel-hint" aria-hidden="true">Arraste ou toque nas setas</div>`;
         },
         getLandingContentData() {
              return { 'Salada de Manga': { prepMode: 'Corte a manga e a cebola em cubos. Pique o coentro. Misture tudo delicadamente e tempere com limão e pimenta.' }, 'Creme de Abóbora': { prepMode: 'Refogue cebola e alho, adicione a abóbora em cubos e caldo. Cozinhe até ficar macia, depois bata no liquidificador e tempere.' }, 'Bruschetta Clássica': { prepMode: 'Toste fatias de pão com alho. Cubra com uma mistura de tomates picados, manjericão fresco, azeite, sal e pimenta.' }, 'Salada de Frutas': { prepMode: 'Pique mamão, banana, maçã e uvas. Misture tudo em uma tigela grande e regue com suco de laranja para não escurecerem.' }, 'Sopa de Legumes': { prepMode: 'Pique batatas, cenoura e abobrinha. Refogue com cebola e alho, cubra com caldo e cozinhe até os legumes ficarem macios.' }, 'Omelete Simples': { prepMode: 'Bata 2 ovos com um pouco de leite, sal e pimenta. Despeje em uma frigideira quente, adicione queijo, dobre e sirva.' }, 'Compras Inteligentes': { description: 'Antes de sair de casa, faça um inventário rápido da sua despensa e geladeira. Crie uma lista detalhada e, no mercado, siga-a rigorosamente. Isso evita compras por impulso e garante que você compre apenas o necessário, economizando dinheiro e evitando acúmulo.'}, 'Aproveitamento Integral': { description: 'Muitas partes de vegetais que descartamos são nutritivas. Talos de brócolis e couve-flor podem virar sopas cremosas ou recheios. Folhas de cenoura rendem um ótimo pesto. Cascas de batata, bem lavadas, tornam-se chips crocantes e deliciosos.'}, 'Despensa Eficiente': { description: 'Organize sua despensa com a técnica "Primeiro que Entra, Primeiro que Sai". Ao guardar novas compras, posicione os itens mais antigos na frente, garantindo que eles sejam usados antes do vencimento. Potes transparentes ajudam a visualizar o que você tem.'}, 'Congele o Futuro': { description: 'O congelador é seu melhor amigo contra o desperdício. Sobrou comida? Congele em porções individuais para refeições rápidas. Frutas muito maduras podem ser picadas e congeladas para se tornarem a base de vitaminas, smoothies e sorvetes caseiros.'}, 'Etiquetas são Amigas': { description: 'Crie o hábito de etiquetar tudo que você guarda, seja na geladeira ou no congelador. Anote o nome do prato e a data de armazenamento. Isso acaba com o mistério dos potes "esquecidos" e ajuda a consumir tudo dentro da validade e com segurança.'}, 'Reinvente as Sobras': { description: 'As sobras de ontem podem ser o ingrediente principal de hoje. O frango assado vira recheio de uma torta ou salpicão. O arroz cozido se transforma em deliciosos bolinhos de arroz. Use a criatividade para dar uma nova vida aos alimentos e evitar que acabem no lixo.'}, 'Otimizar Compras': { description: 'Aprenda a criar listas de compras baseadas no que você já tem para evitar duplicatas e economizar.' }, 'Reduzir Desperdício': { description: 'Descubra como usar talos e folhas em receitas criativas e nutritivas, aproveitando 100% dos alimentos.' }, 'Planejamento Semanal': { description: 'Deixe a IA montar um cardápio semanal para você, otimizando ingredientes, tempo e seu orçamento.' } };
@@ -13054,142 +13056,28 @@ console.log('handleSignup chamada');
 })();
 
 
-/* ===== AF V9 - Chart.js legend branca para Pizza/Rosca + carrossel imagem 100% ===== */
-(() => {
-  const patch = () => {
-    const app = window.app;
-    if (!app || app.__afV9ChartWhiteLegendAndCarousel) return !!app;
-    app.__afV9ChartWhiteLegendAndCarousel = true;
+/* V15 — setas do carrossel estático. Não mexe em Análises. */
+(function(){
+  if (window.__afStaticCarouselArrowsV15) return;
+  window.__afStaticCarouselArrowsV15 = true;
 
-    if (window.Chart) {
-      Chart.defaults.color = '#ffffff';
-      if (Chart.defaults.plugins?.legend?.labels) {
-        Chart.defaults.plugins.legend.labels.color = '#ffffff';
-        Chart.defaults.plugins.legend.labels.font = { family: 'Roboto, sans-serif', size: 12, weight: '700' };
-      }
-    }
+  document.addEventListener('click', function(event){
+    const prev = event.target.closest && event.target.closest('[data-af-carousel-prev]');
+    const next = event.target.closest && event.target.closest('[data-af-carousel-next]');
+    if (!prev && !next) return;
 
-    app.renderAnalysisHtmlLegendV9 = function(canvas, labels, values, colors, total, type) {
-      const chartCard = canvas?.closest?.('.analysis-v3-chartcard');
-      if (!chartCard) return;
-      chartCard.querySelectorAll('.analysis-v9-html-legend').forEach(el => el.remove());
-      if (!['doughnut', 'pie'].includes(type)) return;
+    const root = event.target.closest('[data-af-static-carousel]');
+    if (!root) return;
 
-      const legend = document.createElement('div');
-      legend.className = 'analysis-v9-html-legend';
-      legend.setAttribute('aria-label', 'Legenda do gráfico');
-      legend.innerHTML = (labels || []).map((label, idx) => {
-        const value = Number(values?.[idx] || 0);
-        const percent = total > 0 ? Math.round((value / total) * 100) : 0;
-        const color = Array.isArray(colors) ? colors[idx % colors.length] : 'rgba(0,242,234,.92)';
-        return `
-          <span class="analysis-v9-legend-item">
-            <i style="background:${color}"></i>
-            <b>${this.escapeHtml(String(label))}</b>
-            <em>${value} (${percent}%)</em>
-          </span>`;
-      }).join('');
-      chartCard.appendChild(legend);
-    };
+    const viewport = root.querySelector('.af-static-viewport');
+    if (!viewport) return;
 
-    app.analysisV3DrawChart = function(payload){
-      if (this.charts && this.charts.analysisRebuiltChart) {
-        try { this.charts.analysisRebuiltChart.destroy(); } catch(e) {}
-      }
-      const canvas = document.getElementById('analysis-v3-chart');
-      if (!canvas || !window.Chart) return;
-      const ctx = canvas.getContext('2d');
-      const type = this.analysisV3State?.chartType || payload.preferredType || 'doughnut';
-      const colors = this.analysisV3Colors ? this.analysisV3Colors(0.92) : ['rgba(0,242,234,.92)', 'rgba(246,218,120,.92)', 'rgba(53,199,89,.92)', 'rgba(255,95,95,.92)'];
-      const lineColor = 'rgba(0,242,234,0.95)';
-      const total = (payload.values || []).reduce((sum, value) => sum + (Number(value) || 0), 0);
-      const isPieOrDoughnut = ['doughnut', 'pie'].includes(type);
+    event.preventDefault();
+    event.stopPropagation();
 
-      const dataset = {
-        label: payload.title,
-        data: payload.values,
-        backgroundColor: (type === 'line' || type === 'radar') ? colors.map(c => String(c).replace('0.92','0.22')) : colors,
-        borderColor: (type === 'line' || type === 'radar') ? lineColor : colors,
-        pointBackgroundColor: lineColor,
-        pointBorderColor: '#ffffff',
-        borderWidth: type === 'line' ? 3 : 2,
-        tension: 0.42,
-        fill: type === 'line' || type === 'radar',
-        pointRadius: type === 'line' ? 4 : 3,
-        hoverOffset: 8
-      };
-
-      const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        layout: { padding: isPieOrDoughnut ? 10 : 8 },
-        plugins: {
-          // Para pizza/rosca, a legenda nativa fica dentro do canvas e alguns temas forçam preto.
-          // Por isso ela é desligada e renderizada em HTML branco logo abaixo.
-          legend: {
-            display: !isPieOrDoughnut,
-            position: 'bottom',
-            labels: {
-              color: '#ffffff',
-              usePointStyle: true,
-              boxWidth: 10,
-              padding: 16,
-              font: { family: 'Roboto, sans-serif', size: 12, weight: '700' }
-            }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(8,12,20,.96)',
-            borderColor: 'rgba(255,255,255,.08)',
-            borderWidth: 1,
-            titleColor: '#ffffff',
-            bodyColor: '#ffffff',
-            displayColors: true,
-            callbacks: {
-              label: (context) => {
-                const value = Number(context.parsed?.y ?? context.parsed ?? 0);
-                const percent = total > 0 ? Math.round((value / total) * 100) : 0;
-                return isPieOrDoughnut
-                  ? `${context.label}: ${value} (${percent}%)`
-                  : `${context.label}: ${value}`;
-              }
-            }
-          }
-        },
-        scales: (type === 'bar' || type === 'line') ? {
-          x: { ticks: { color: '#ffffff', font: { weight: '700' } }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } },
-          y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.82)', precision: 0, font: { weight: '700' } }, grid: { color: 'rgba(255,255,255,.06)' }, border: { color: 'rgba(255,255,255,.08)' } }
-        } : (type === 'radar') ? {
-          r: {
-            angleLines: { color: 'rgba(255,255,255,.08)' },
-            grid: { color: 'rgba(255,255,255,.08)' },
-            pointLabels: { color: '#ffffff', font: { size: 12, weight: '700' } },
-            ticks: { display: false, backdropColor: 'transparent' },
-            suggestedMin: 0
-          }
-        } : {},
-        cutout: (type === 'doughnut') ? '68%' : undefined,
-        animation: { duration: 440, easing: 'easeOutCubic' }
-      };
-
-      this.charts.analysisRebuiltChart = new Chart(ctx, {
-        type,
-        data: { labels: payload.labels, datasets: [dataset] },
-        options
-      });
-
-      this.renderAnalysisHtmlLegendV9(canvas, payload.labels, payload.values, colors, total, type);
-      const typeLabel = document.getElementById('analysis-v3-type-label');
-      if (typeLabel && this.getFriendlyChartTypeLabel) typeLabel.textContent = this.getFriendlyChartTypeLabel(type);
-    };
-
-    return true;
-  };
-
-  if (!patch()) {
-    let tries = 0;
-    const timer = setInterval(() => {
-      tries += 1;
-      if (patch() || tries > 80) clearInterval(timer);
-    }, 100);
-  }
+    viewport.scrollBy({
+      left: next ? viewport.clientWidth : -viewport.clientWidth,
+      behavior: 'smooth'
+    });
+  }, true);
 })();
