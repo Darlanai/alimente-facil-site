@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -71,10 +72,7 @@
         <video class="background-video active" src="fundo.mp4" poster="fundo_poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
         <video class="background-video" src="fundo3.mp4" poster="fundo3_poster.jpg" autoplay muted loop playsinline preload="none"></video>
     </div>
-    <div id="panel-video-container" class="video-container">
-        <video class="background-video active" src="videopainel.mp4" poster="videopainel_poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
-    </div>
-
+    <!-- O painel não usa vídeo de fundo. Mantidos apenas fundo.mp4 e fundo3.mp4 na landing. -->
 <header class="header" id="landing-header">
   <div class="header-inner">
     <div class="brand">ALIMENTE FÁCIL</div>
@@ -938,7 +936,9 @@
 <div id="af-chatbot" class="af-chatbot" aria-hidden="true">
          <div class="af-chatbot-header">
             <div class="af-header-info">
-                <div class="af-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="af-avatar af-avatar-bee">
+                    <img src="publicmascoteabelha/abelha-assistente.png" alt="Abelha assistente" onerror="this.onerror=null;this.src='mascote/abelha/abelha-assistente.png';">
+                </div>
                 <div class="af-title-group">
                     <span class="af-bot-name">Assistente Alimente</span>
                     <span class="af-bot-status">Online</span>
@@ -957,9 +957,9 @@
         </div>
     </div>
 
-    <button id="af-chatbot-toggle" class="af-chatbot-toggle" aria-label="Ajuda">
-        <i class="fa-solid fa-comment-dots"></i>
-        <span class="af-notification-dot"></span>
+    <button id="af-chatbot-toggle" class="af-chatbot-toggle af-bee-toggle" aria-label="Abrir assistente Alimente Fácil">
+        <span class="af-bee-speech" aria-hidden="true">Eu te guio pelo site.</span>
+        <img class="af-bee-img" src="publicmascoteabelha/abelha-assistente.png" alt="Abelha assistente do Alimente Fácil" onerror="this.onerror=null;this.src='mascote/abelha/abelha-assistente.png';">
     </button>
 
     <div id="pwa-floating-banner" class="pwa-banner" style="display:none;">

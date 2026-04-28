@@ -13286,3 +13286,333 @@ console.log('handleSignup chamada');
     if (event.key === 'Escape') closeLightbox();
   });
 })();
+
+/* ABELHA ASSISTENTE — guia só na tela inicial + botão parar V5 */
+(function () {
+  if (window.__afBeeFlyingGuideV5) return;
+  window.__afBeeFlyingGuideV5 = true;
+
+  const HERO_STEPS = [
+    { selector: '#heroMonthlySpend', message: 'Digite aqui.', side: 'right' },
+    { selector: '#heroCalcBtn', message: 'Veja aqui.', side: 'left' },
+    { selector: '[data-af-start-trial], .af-start-trial-btn', message: 'Comece aqui.', side: 'left' },
+    { selector: '.hero-secondary-btn[href="#recursos"], a[href="#recursos"]', message: 'Veja o painel.', side: 'right' }
+  ];
+
+  let activeIndex = -1;
+  let activeTarget = null;
+  let lastMove = 0;
+  let intervalId = null;
+  let lastScrollY = -1;
+  let guidePaused = false;
+
+  function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+  }
+
+  function isUsableElement(el) {
+    if (!el) return false;
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+    const rect = el.getBoundingClientRect();
+    if (rect.width < 8 || rect.height < 8) return false;
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    return rect.bottom > 18 && rect.top < vh - 18 && rect.right > 0 && rect.left < vw;
+  }
+
+  function firstVisible(selector) {
+    const nodes = document.querySelectorAll(selector);
+    for (const node of nodes) if (isUsableElement(node)) return node;
+    return null;
+  }
+
+  function isHeroGuideActive() {
+    if (document.body.classList.contains('app-mode')) return false;
+
+    const hero = document.getElementById('inicio');
+    if (!hero) return false;
+
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    const heroRect = hero.getBoundingClientRect();
+
+    /* Guia só no topo real da landing. Ao rolar para outras seções, a abelha estaciona. */
+    const topLimit = Math.max(280, Math.min(640, vh * 0.72));
+    const stillInHero = heroRect.bottom > vh * 0.42;
+
+    return scrollY <= topLimit && stillInHero;
+  }
+
+  function getHeroSteps() {
+    if (!isHeroGuideActive()) return [];
+    return HERO_STEPS
+      .map((step) => ({ ...step, element: firstVisible(step.selector) }))
+      .filter((step) => step.element);
+  }
+
+  function clearFocus() {
+    if (activeTarget) {
+      activeTarget.classList.remove('af-bee-focus-target');
+      activeTarget = null;
+    }
+  }
+
+  function pulseBubble(bubble) {
+    if (!bubble) return;
+    bubble.style.animation = 'none';
+    void bubble.offsetWidth;
+    bubble.style.animation = 'afBeeBubbleIn .52s ease both';
+  }
+
+  function hardenBeeVisual(toggle) {
+    if (!toggle) return;
+    const importantStyles = {
+      background: 'transparent', backgroundColor: 'transparent', backgroundImage: 'none', border: '0', boxShadow: 'none',
+      backdropFilter: 'none', webkitBackdropFilter: 'none', borderRadius: '0', padding: '0', overflow: 'visible'
+    };
+    Object.entries(importantStyles).forEach(([prop, value]) => {
+      const cssProp = prop.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^webkit-/, '-webkit-');
+      toggle.style.setProperty(cssProp, value, 'important');
+    });
+  }
+
+  function getBeeBubble(toggle) {
+    let bubble = document.getElementById('af-bee-speech-floating') || toggle?.querySelector('.af-bee-speech') || document.querySelector('.af-bee-speech');
+    if (!bubble) return null;
+    if (bubble.parentElement !== document.body) {
+      bubble.id = 'af-bee-speech-floating';
+      document.body.appendChild(bubble);
+    }
+    return bubble;
+  }
+
+  function setBubbleVisible(bubble, visible) {
+    if (!bubble) return;
+    bubble.classList.toggle('af-bee-silent', !visible);
+    bubble.setAttribute('aria-hidden', visible ? 'false' : 'true');
+  }
+
+  function renderBubble(bubble, step) {
+    if (!bubble || !step) return;
+    setBubbleVisible(bubble, true);
+    const html = '<span>' + escapeHtml(step.message) + '</span>';
+    if (bubble.innerHTML !== html) {
+      bubble.innerHTML = html;
+      pulseBubble(bubble);
+    }
+  }
+
+  function renderPlainBubble(bubble, message) {
+    if (!bubble) return;
+    setBubbleVisible(bubble, true);
+    const html = '<span>' + escapeHtml(message) + '</span>';
+    if (bubble.innerHTML !== html) {
+      bubble.innerHTML = html;
+      pulseBubble(bubble);
+    }
+  }
+
+  function positionBubble(toggle, bubble, beeX, beeY, side) {
+    if (!bubble || bubble.classList.contains('af-bee-silent')) return;
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const isMobile = vw <= 768;
+    const pad = isMobile ? 8 : 14;
+    const beeSize = isMobile ? 78 : 104;
+    const maxWidth = Math.max(92, Math.min(isMobile ? 142 : 174, vw - (pad * 2)));
+
+    bubble.style.setProperty('--af-bee-bubble-max', maxWidth + 'px');
+
+    const bubbleRect = bubble.getBoundingClientRect();
+    const bubbleWidth = Math.min(bubbleRect.width || maxWidth, maxWidth);
+    const bubbleHeight = bubbleRect.height || (isMobile ? 34 : 40);
+    const spaceLeft = beeX - beeSize / 2 - pad;
+    const spaceRight = vw - (beeX + beeSize / 2) - pad;
+    let chosenSide = side || 'auto';
+
+    if (chosenSide === 'auto') chosenSide = spaceLeft > spaceRight ? 'left' : 'right';
+    if (chosenSide === 'left' && spaceLeft < Math.min(92, bubbleWidth * .65)) chosenSide = 'right';
+    if (chosenSide === 'right' && spaceRight < Math.min(92, bubbleWidth * .65)) chosenSide = 'left';
+    if (spaceLeft < 72 && spaceRight < 72) chosenSide = 'center';
+
+    let left;
+    if (chosenSide === 'left') left = beeX - beeSize / 2 - bubbleWidth + 6;
+    else if (chosenSide === 'right') left = beeX + beeSize / 2 - 6;
+    else left = beeX - bubbleWidth / 2;
+
+    let top = beeY - beeSize / 2 - bubbleHeight + 6;
+    if (top < pad) top = beeY + beeSize / 2 - 4;
+
+    left = clamp(left, pad, vw - bubbleWidth - pad);
+    top = clamp(top, pad, vh - bubbleHeight - pad);
+
+    toggle.dataset.beeSide = chosenSide;
+    bubble.style.setProperty('--af-bee-bubble-left', Math.round(left) + 'px');
+    bubble.style.setProperty('--af-bee-bubble-top', Math.round(top) + 'px');
+  }
+
+  function ensureStopControl() {
+    let control = document.getElementById('af-bee-stop-control');
+    if (control) return control;
+
+    control = document.createElement('button');
+    control.id = 'af-bee-stop-control';
+    control.className = 'af-bee-stop-control';
+    control.type = 'button';
+    control.setAttribute('aria-label', 'Parar guia da abelha');
+    control.title = 'Parar guia';
+    control.innerHTML = '<span aria-hidden="true">×</span>';
+    document.body.appendChild(control);
+
+    control.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      guidePaused = true;
+      const toggle = document.getElementById('af-chatbot-toggle');
+      const bubble = getBeeBubble(toggle);
+      parkBee(toggle, bubble, true);
+      control.classList.remove('is-visible');
+    });
+
+    return control;
+  }
+
+  function positionStopControl(beeX, beeY, visible) {
+    const control = ensureStopControl();
+    if (!control) return;
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const isMobile = vw <= 768;
+    const offsetX = isMobile ? 30 : 40;
+    const offsetY = isMobile ? 34 : 44;
+    const left = clamp(beeX + offsetX, 10, vw - 34);
+    const top = clamp(beeY - offsetY, 10, vh - 34);
+    control.style.setProperty('--af-bee-stop-left', Math.round(left) + 'px');
+    control.style.setProperty('--af-bee-stop-top', Math.round(top) + 'px');
+    control.classList.toggle('is-visible', !!visible && !guidePaused && isHeroGuideActive());
+  }
+
+  function moveBeeTo(toggle, bubble, step) {
+    const rect = step.element.getBoundingClientRect();
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const isMobile = vw <= 768;
+    const beeGap = isMobile ? 40 : 64;
+    const safeX = isMobile ? 44 : 64;
+    const safeY = isMobile ? 62 : 76;
+
+    let side = step.side || 'auto';
+    if (side === 'auto') side = rect.left > vw * 0.52 ? 'left' : 'right';
+
+    let x;
+    if (side === 'left') {
+      x = rect.left - beeGap;
+      if (x < safeX) { side = 'right'; x = rect.right + beeGap; }
+    } else if (side === 'right') {
+      x = rect.right + beeGap;
+      if (x > vw - safeX) { side = 'left'; x = rect.left - beeGap; }
+    } else {
+      side = 'center';
+      x = rect.left + rect.width / 2;
+    }
+
+    const y = rect.top + rect.height / 2;
+    const finalX = clamp(x, safeX, vw - safeX);
+    const finalY = clamp(y, safeY, vh - safeY);
+
+    hardenBeeVisual(toggle);
+    renderBubble(bubble, step);
+    toggle.style.setProperty('--af-bee-left', finalX + 'px');
+    toggle.style.setProperty('--af-bee-top', finalY + 'px');
+    positionBubble(toggle, bubble, finalX, finalY, side);
+    positionStopControl(finalX, finalY, true);
+
+    clearFocus();
+    activeTarget = step.element;
+    activeTarget.classList.add('af-bee-focus-target');
+    window.setTimeout(() => {
+      if (activeTarget === step.element) step.element.classList.remove('af-bee-focus-target');
+    }, 4200);
+  }
+
+  function parkBee(toggle, bubble, silent = true) {
+    if (!toggle) return;
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const isMobile = vw <= 768;
+    const x = isMobile ? vw - 50 : vw - 76;
+    const y = isMobile ? vh - 138 : vh - 96;
+    hardenBeeVisual(toggle);
+    toggle.style.setProperty('--af-bee-left', x + 'px');
+    toggle.style.setProperty('--af-bee-top', y + 'px');
+    toggle.dataset.beeSide = 'left';
+    if (silent) setBubbleVisible(bubble, false);
+    else {
+      renderPlainBubble(bubble, 'Posso ajudar.');
+      positionBubble(toggle, bubble, x, y, 'left');
+    }
+    positionStopControl(x, y, false);
+    clearFocus();
+  }
+
+  function updateBeePosition(force = false) {
+    const toggle = document.getElementById('af-chatbot-toggle');
+    const bubble = getBeeBubble(toggle);
+    if (!toggle || !bubble) return;
+    if (toggle.classList.contains('af-hidden')) return;
+    hardenBeeVisual(toggle);
+
+    if (guidePaused || !isHeroGuideActive()) {
+      activeIndex = -1;
+      parkBee(toggle, bubble, true);
+      return;
+    }
+
+    const now = Date.now();
+    const scrollY = Math.round(window.scrollY || document.documentElement.scrollTop || 0);
+    const scrolledFar = lastScrollY >= 0 && Math.abs(scrollY - lastScrollY) > 90;
+    lastScrollY = scrollY;
+
+    if (!force && now - lastMove < (scrolledFar ? 1200 : 3200)) return;
+    lastMove = now;
+
+    const steps = getHeroSteps();
+    if (!steps.length) {
+      activeIndex = -1;
+      parkBee(toggle, bubble, true);
+      return;
+    }
+
+    if (scrolledFar) activeIndex = -1;
+    activeIndex = (activeIndex + 1) % steps.length;
+    moveBeeTo(toggle, bubble, steps[activeIndex]);
+  }
+
+  function startBeeGuide() {
+    const toggle = document.getElementById('af-chatbot-toggle');
+    if (!toggle) return;
+    toggle.classList.add('af-bee-toggle');
+    toggle.dataset.beeSide = 'left';
+    hardenBeeVisual(toggle);
+    ensureStopControl();
+    updateBeePosition(true);
+    if (intervalId) window.clearInterval(intervalId);
+    intervalId = window.setInterval(() => updateBeePosition(true), 15500);
+    window.addEventListener('scroll', () => updateBeePosition(false), { passive: true });
+    window.addEventListener('resize', () => updateBeePosition(true));
+    toggle.addEventListener('click', () => {
+      clearFocus();
+      const bubble = getBeeBubble(toggle);
+      renderPlainBubble(bubble, 'Abrindo...');
+      const rect = toggle.getBoundingClientRect();
+      positionBubble(toggle, bubble, rect.left + rect.width / 2, rect.top + rect.height / 2, 'left');
+      positionStopControl(rect.left + rect.width / 2, rect.top + rect.height / 2, false);
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startBeeGuide);
+  else startBeeGuide();
+})();

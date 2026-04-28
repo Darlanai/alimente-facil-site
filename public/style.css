@@ -6964,7 +6964,7 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   font-size: 1rem !important;
 }
 .quick-actions-grid.quick-actions-grid--six .action-card small{
-  font-size: .78rem !important;
+  font-size: .72rem !important;
 }
 .quick-actions-grid.quick-actions-grid--six .action-card.analytics{
   background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0)) !important;
@@ -7744,7 +7744,7 @@ body.app-mode *::-webkit-scrollbar-thumb:hover{
   }
   .hero-clean-layout .hero-rotator-item{
     font-size: .9rem !important;
-    line-height: 1.16 !important;
+    line-height: 1.12 !important;
   }
   .hero-clean-layout .modern-start-btn{
     width: min(100%, 306px) !important;
@@ -14970,4 +14970,279 @@ body.af-showcase-lightbox-open {
   .af-estimated-price-note {
     max-width: 155px !important;
   }
+}
+
+/* =========================================================
+   ABELHA ASSISTENTE — GUIA SÓ NO TOPO + BOTÃO PARAR V5
+   - sem fundo no botão
+   - fala sempre dentro da tela
+   - movimento mais calmo
+   - balão com frases curtas
+   - para ao rolar para baixo
+   - botão pequeno para parar a guia
+========================================================= */
+
+html body #af-chatbot-toggle.af-bee-toggle,
+html body button#af-chatbot-toggle.af-chatbot-toggle.af-bee-toggle {
+  position: fixed !important;
+  left: var(--af-bee-left, calc(100vw - 78px)) !important;
+  top: var(--af-bee-top, calc(100vh - 90px)) !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 112px !important;
+  height: 112px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: inherit !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 16020 !important;
+  overflow: visible !important;
+  isolation: isolate !important;
+  transform: translate(-50%, -50%) !important;
+  transition: left 2.9s cubic-bezier(.16, 1, .3, 1), top 2.9s cubic-bezier(.16, 1, .3, 1), opacity .25s ease !important;
+  pointer-events: auto !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+
+html body #af-chatbot-toggle.af-bee-toggle::before,
+html body #af-chatbot-toggle.af-bee-toggle::after,
+html body #af-chatbot-toggle.af-bee-toggle .af-bee-glow,
+html body #af-chatbot-toggle.af-bee-toggle .af-notification-dot,
+html body #af-chatbot-toggle.af-bee-toggle i,
+html body #af-chatbot-toggle.af-bee-toggle svg {
+  display: none !important;
+  content: none !important;
+}
+
+html body #af-chatbot-toggle.af-bee-toggle:hover,
+html body #af-chatbot-toggle.af-bee-toggle:focus,
+html body #af-chatbot-toggle.af-bee-toggle:focus-visible,
+html body #af-chatbot-toggle.af-bee-toggle:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+html body #af-chatbot-toggle.af-bee-toggle.af-hidden { opacity: 0 !important; pointer-events: none !important; }
+
+.af-bee-img {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, .30)) !important;
+  transform-origin: center bottom !important;
+  animation: afBeeWingFlight 4.8s ease-in-out infinite !important;
+}
+
+.af-bee-speech {
+  position: fixed !important;
+  left: var(--af-bee-bubble-left, 12px) !important;
+  top: var(--af-bee-bubble-top, 12px) !important;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: 16025 !important;
+  width: auto !important;
+  max-width: var(--af-bee-bubble-max, min(190px, calc(100vw - 18px))) !important;
+  padding: 8px 10px !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, .86) !important;
+  border: 1px solid rgba(255, 255, 255, .74) !important;
+  color: #132018 !important;
+  font-family: var(--font-body, Arial, sans-serif) !important;
+  font-size: .78rem !important;
+  font-weight: 800 !important;
+  line-height: 1.16 !important;
+  letter-spacing: -.01em !important;
+  text-align: left !important;
+  white-space: normal !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .20) !important;
+  backdrop-filter: blur(14px) saturate(130%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
+  pointer-events: none !important;
+  transform: translateZ(0) !important;
+  transform-origin: center bottom !important;
+  animation: afBeeBubbleIn .62s ease both !important;
+  display: block !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+
+.af-bee-speech::after { display: none !important; content: none !important; }
+.af-bee-speech .af-bee-stat { display: none !important; }
+.af-bee-speech span { display: block !important; white-space: normal !important; }
+.af-bee-speech small { display: none !important; }
+.af-avatar.af-avatar-bee { overflow: hidden !important; background: transparent !important; background-color: transparent !important; box-shadow: none !important; }
+.af-avatar.af-avatar-bee img { width: 118% !important; height: 118% !important; object-fit: contain !important; transform: translateY(4px) scale(1.12) !important; filter: drop-shadow(0 5px 8px rgba(0,0,0,.24)) !important; background: transparent !important; }
+
+.af-bee-stop-control {
+  position: fixed !important;
+  left: var(--af-bee-stop-left, calc(100vw - 54px)) !important;
+  top: var(--af-bee-stop-top, calc(100vh - 132px)) !important;
+  z-index: 16032 !important;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, .62) !important;
+  background: rgba(12, 14, 16, .62) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.28) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font: 900 18px/1 Arial, sans-serif !important;
+  cursor: pointer !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transform: translate(-50%, -50%) scale(.92) !important;
+  transition: opacity .22s ease, transform .22s ease, visibility .22s ease, left 2.9s cubic-bezier(.16, 1, .3, 1), top 2.9s cubic-bezier(.16, 1, .3, 1) !important;
+}
+
+.af-bee-stop-control.is-visible {
+  opacity: .92 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+}
+
+.af-bee-stop-control:hover,
+.af-bee-stop-control:focus-visible {
+  opacity: 1 !important;
+  background: rgba(0, 0, 0, .76) !important;
+  outline: 2px solid rgba(0, 242, 234, .85) !important;
+  outline-offset: 2px !important;
+}
+
+.af-bee-stop-control span {
+  display: block !important;
+  transform: translateY(-1px) !important;
+}
+
+.af-bee-focus-target { position: relative !important; z-index: 5 !important; outline: 2px solid rgba(255, 213, 79, .78) !important; outline-offset: 5px !important; box-shadow: 0 0 0 7px rgba(255, 213, 79, .14), 0 0 28px rgba(255, 213, 79, .26) !important; transition: outline-color .25s ease, box-shadow .25s ease !important; }
+html body #af-chatbot.af-open { right: 22px !important; bottom: 24px !important; z-index: 16030 !important; }
+html body.app-mode #af-chatbot.af-open { display: none !important; }
+
+@keyframes afBeeWingFlight { 0%, 100% { transform: translateY(0) rotate(-1.8deg) scale(1); } 25% { transform: translateY(-5px) rotate(1.6deg) scale(1.01); } 50% { transform: translateY(-9px) rotate(-.8deg) scale(1.018); } 75% { transform: translateY(-4px) rotate(1.2deg) scale(1.008); } }
+@keyframes afBeeBubbleIn { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Dicas e receitas rápidas: hover mais leve, sem travar a rolagem */
+#dicas-valiosas .carousel-slider,
+#receitas-landing .carousel-slider { contain: layout paint !important; overscroll-behavior-x: contain !important; will-change: scroll-position !important; }
+#dicas-valiosas .carousel-slider:hover .carousel-track,
+#receitas-landing .carousel-slider:hover .carousel-track { animation-play-state: running !important; }
+#dicas-valiosas .carousel-track,
+#receitas-landing .carousel-track { transform: translateZ(0) !important; will-change: transform !important; }
+#dicas-valiosas .content-card,
+#receitas-landing .content-card { transform: translateZ(0) !important; will-change: transform !important; backface-visibility: hidden !important; contain: layout paint style !important; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background-color .18s ease !important; }
+#dicas-valiosas .content-card:hover,
+#receitas-landing .content-card:hover { transform: translate3d(0, -3px, 0) !important; border-color: rgba(0, 242, 234, .36) !important; box-shadow: 0 14px 30px rgba(0, 0, 0, .28), 0 0 16px rgba(0, 242, 234, .12) !important; }
+#dicas-valiosas .content-card img,
+#receitas-landing .content-card img,
+#dicas-valiosas .content-card:hover img,
+#receitas-landing .content-card:hover img { filter: none !important; transform: translateZ(0) !important; transition: opacity .18s ease !important; }
+
+@media (max-width: 768px) {
+  html body #af-chatbot-toggle.af-bee-toggle,
+  html body button#af-chatbot-toggle.af-chatbot-toggle.af-bee-toggle { width: 86px !important; height: 86px !important; left: var(--af-bee-left, calc(100vw - 52px)) !important; top: var(--af-bee-top, calc(100vh - 76px)) !important; }
+  .af-bee-speech { max-width: var(--af-bee-bubble-max, min(160px, calc(100vw - 16px))) !important; padding: 7px 8px !important; font-size: .64rem !important; border-radius: 12px !important; }
+  .af-bee-speech .af-bee-stat,
+  .af-bee-speech small { display: none !important; }
+  html body #af-chatbot.af-open { right: 10px !important; bottom: 10px !important; width: min(94vw, 380px) !important; }
+}
+@media (hover: none), (pointer: coarse) {
+  #dicas-valiosas .content-card:hover,
+  #receitas-landing .content-card:hover { transform: translateZ(0) !important; box-shadow: 0 10px 24px rgba(0, 0, 0, .22) !important; }
+}
+
+/* V5: ao sair do topo da landing, a abelha fica quietinha no canto */
+.af-bee-speech.af-bee-silent {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* V4: otimização real para os cards atuais de Dicas e Receitas rápidas */
+#dicas-valiosas .af-static-carousel,
+#receitas-landing .af-static-carousel,
+#dicas-valiosas .af-static-viewport,
+#receitas-landing .af-static-viewport {
+  contain: layout paint !important;
+  transform: translateZ(0) !important;
+  backface-visibility: hidden !important;
+  overscroll-behavior-x: contain !important;
+}
+
+#dicas-valiosas .af-static-track,
+#receitas-landing .af-static-track {
+  transform: translate3d(0,0,0) !important;
+  will-change: transform !important;
+}
+
+#dicas-valiosas .af-static-card,
+#receitas-landing .af-static-card {
+  transform: translateZ(0) !important;
+  backface-visibility: hidden !important;
+  contain: layout paint style !important;
+  will-change: transform !important;
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease !important;
+}
+
+#dicas-valiosas .af-static-card:hover,
+#receitas-landing .af-static-card:hover {
+  transform: translate3d(0, -2px, 0) !important;
+  box-shadow: 0 12px 26px rgba(0,0,0,.24), 0 0 12px rgba(0,242,234,.10) !important;
+}
+
+#dicas-valiosas .af-static-card img,
+#receitas-landing .af-static-card img,
+#dicas-valiosas .af-static-card:hover img,
+#receitas-landing .af-static-card:hover img {
+  filter: none !important;
+  transform: translateZ(0) !important;
+  transition: opacity .16s ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body #af-chatbot-toggle.af-bee-toggle,
+  .af-bee-img,
+  .af-bee-speech,
+  .af-bee-stop-control,
+  #dicas-valiosas .content-card,
+  #receitas-landing .content-card,
+  #dicas-valiosas .af-static-card,
+  #receitas-landing .af-static-card { animation: none !important; transition: none !important; }
 }
