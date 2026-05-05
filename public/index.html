@@ -78,7 +78,7 @@
     <div class="brand">ALIMENTE FÁCIL</div>
 
     <div class="actions">
-      <div class="icon-btn" id="landing-theme-toggle" title="Tema">
+      <div class="icon-btn" id="af-theme-toggle-minimal" title="Alternar tema" aria-label="Alternar tema" role="button" tabindex="0">
         <svg viewBox="0 0 24 24"><path d="M12 2a1 1 0 0 0 0 2 8 8 0 1 1-8 8 1 1 0 0 0-2 0 10 10 0 1 0 10-10z"/></svg>
       </div>
 
@@ -115,6 +115,7 @@
         <div class="hero-clean-shell refined-hero-shell af-hero-shell af-hero-conversion-shell">
             <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
 <h2 class="hero-tagline af-premium-tagline"><span>O futuro da sua cozinha, agora.</span></h2>
+<p class="af-hero-price-inline af-hero-price-under-tagline">R$ 9,90 por mês, preço de um cafezinho diário.</p>
 
                     <form class="af-lead-calculator af-lead-calculator-premium" id="heroSavingsCalculator" novalidate aria-label="Simulador rápido de economia no supermercado">
                         <div class="af-calc-entry-view">
@@ -129,8 +130,10 @@
 
                             <div class="af-calc-bar">
                                 <span class="af-calc-currency" aria-hidden="true">R$</span>
-                                <label class="sr-only" for="heroMonthlySpend">Gasto mensal com supermercado</label>
-                                <input type="text" id="heroMonthlySpend" name="heroMonthlySpend" placeholder="Digite o valor mensal com supermercado" inputmode="decimal" autocomplete="off" aria-describedby="heroCalcFeedback heroResult">
+                                <div class="af-calc-field">
+                                    <label for="heroMonthlySpend">Gasto mensal com supermercado</label>
+                                    <input type="text" id="heroMonthlySpend" name="heroMonthlySpend" placeholder="Digite o valor mensal com supermercado" inputmode="decimal" autocomplete="off" aria-describedby="heroCalcFeedback heroResult">
+                                </div>
                                 <button type="submit" id="heroCalcBtn" class="af-calc-submit">Ver economia</button>
                             </div>
 
@@ -153,18 +156,17 @@
                         </div>
                     </form>
 
-                    <div class="hero-cta-row refined-cta-row af-hero-cta-row">
-                        <a href="#" class="modern-start-btn af-start-trial-btn" data-af-start-trial aria-label="Começar cadastro no Alimente Fácil">
-                            <span class="btn-text">COMEÇAR TESTE</span><span class="af-cta-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
-                        </a>
-                        <a href="#recursos" class="hero-secondary-btn af-secondary-minimal-btn" aria-label="Explorar recursos do painel">
-                            <span class="btn-text">VER PAINEL</span><span class="af-cta-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
-                        </a>
-                    </div>
-
-                    <div class="af-trust-row" aria-label="Diferenciais do Alimente Fácil">
-                        <span><i class="fa-solid fa-shield-heart" aria-hidden="true"></i> Sem anúncios</span>
-                                                <span><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> PWA instalável</span>
+                    <div class="af-hero-side-stack af-hero-side-stack-clean">
+                        <div class="hero-cta-row refined-cta-row af-hero-cta-row af-hero-cta-single">
+                            <a href="#" class="modern-start-btn af-start-trial-btn af-start-cta-ultra" data-af-start-trial aria-label="Começar cadastro no Alimente Fácil">
+                                <span class="btn-text">COMEÇAR AGORA</span>
+                                <span class="af-cta-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
+                            </a>
+                        </div>
+                        <div class="af-trust-row" aria-label="Diferenciais do Alimente Fácil">
+                            <span><i class="fa-solid fa-shield-heart" aria-hidden="true"></i> Sem anúncios</span>
+                            <span><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> PWA instalável</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -933,11 +935,11 @@
         </nav>
     </div>
 
-<div id="af-chatbot" class="af-chatbot" aria-hidden="true">
-         <div class="af-chatbot-header">
+<div id="af-chatbot" class="af-chatbot af-chatbot-lite" aria-hidden="true">
+        <div class="af-chatbot-header">
             <div class="af-header-info">
-                <div class="af-avatar af-avatar-bee">
-                    <img src="publicmascoteabelha/abelha-assistente.png" alt="Abelha assistente" onerror="this.onerror=null;this.src='mascote/abelha/abelha-assistente.png';">
+                <div class="af-avatar af-avatar-lite" aria-hidden="true">
+                    <i class="fa-solid fa-comments"></i>
                 </div>
                 <div class="af-title-group">
                     <span class="af-bot-name">Assistente Alimente</span>
@@ -945,8 +947,8 @@
                 </div>
             </div>
             <div class="af-header-actions">
-                <button id="af-chatbot-home" class="af-header-btn" title="Menu Principal"><i class="fa-solid fa-house"></i></button>
-                <button id="af-chatbot-close" class="af-header-btn" title="Minimizar"><i class="fa-solid fa-chevron-down"></i></button>
+                <button id="af-chatbot-home" class="af-header-btn" type="button" title="Menu Principal" aria-label="Menu Principal"><i class="fa-solid fa-house"></i></button>
+                <button id="af-chatbot-close" class="af-header-btn" type="button" title="Minimizar" aria-label="Minimizar assistente"><i class="fa-solid fa-chevron-down"></i></button>
             </div>
         </div>
 
@@ -957,9 +959,9 @@
         </div>
     </div>
 
-    <button id="af-chatbot-toggle" class="af-chatbot-toggle af-bee-toggle" aria-label="Abrir assistente Alimente Fácil">
-        <span class="af-bee-speech" aria-hidden="true">Eu te guio pelo site.</span>
-        <img class="af-bee-img" src="publicmascoteabelha/abelha-assistente.png" alt="Abelha assistente do Alimente Fácil" onerror="this.onerror=null;this.src='mascote/abelha/abelha-assistente.png';">
+    <button id="af-chatbot-toggle" class="af-chatbot-toggle af-assistant-toggle" type="button" aria-label="Abrir assistente Alimente Fácil">
+        <i class="fa-solid fa-comments" aria-hidden="true"></i>
+        <span class="af-assistant-toggle-label">Ajuda</span>
     </button>
 
     <div id="pwa-floating-banner" class="pwa-banner" style="display:none;">

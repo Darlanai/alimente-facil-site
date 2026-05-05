@@ -3838,8 +3838,17 @@ async callGeminiAPI(userText) {
         executeClearPlannerWeek() { this.state.planejador = {}; },
 
         initRoboAssistant() {
+            const widget = document.getElementById('af-chatbot');
+            const toggleBtn = document.getElementById('af-chatbot-toggle');
+            const closeBtn = document.getElementById('af-chatbot-close');
+            const homeBtn = document.getElementById('af-chatbot-home');
+            const bodyEl = document.getElementById('af-chatbot-body');
+
+            // Assistente/abelhinha removido da landing: evita erro em cliques globais e elimina timers/animações pesadas.
+            if (!widget || !toggleBtn || !closeBtn || !homeBtn || !bodyEl) return;
+
             const chatbot = {
-                widget: document.getElementById('af-chatbot'), toggleBtn: document.getElementById('af-chatbot-toggle'), closeBtn: document.getElementById('af-chatbot-close'), homeBtn: document.getElementById('af-chatbot-home'), bodyEl: document.getElementById('af-chatbot-body'),
+                widget, toggleBtn, closeBtn, homeBtn, bodyEl,
                 menuTree: {
                     start: { text: "Olá! 👋 Sou o Assistente Virtual do Alimente Fácil. Como posso te ajudar hoje?", options: [ { label: "📝 Quero me Cadastrar", next: "guide_signup" }, { label: "💎 Planos e Preços", next: "guide_plans" }, { label: "🚀 Como funciona o Painel?", next: "guide_features" }, { label: "📞 Preciso de Suporte", next: "guide_support" } ] },
                     guide_signup: { text: "É muito simples! Você pode criar uma conta gratuita agora mesmo.", options: [ { label: "Abrir Cadastro Agora", action: "open_auth_signup", icon: "fa-user-plus" }, { label: "Já tenho conta (Login)", action: "open_auth_login", icon: "fa-sign-in-alt" }, { label: "Voltar ao Início", next: "start", icon: "fa-arrow-left" } ] },
@@ -13197,10 +13206,49 @@ console.log('handleSignup chamada');
 })();
 
 
-/* V15 — setas do carrossel estático. Não mexe em Análises. */
+/* V16 — setas do carrossel estático com loop infinito. Não mexe em Análises. */
 (function(){
-  if (window.__afStaticCarouselArrowsV15) return;
-  window.__afStaticCarouselArrowsV15 = true;
+  if (window.__afStaticCarouselArrowsV16) return;
+  window.__afStaticCarouselArrowsV16 = true;
+
+  function getGap(track) {
+    if (!track) return 0;
+    const styles = getComputedStyle(track);
+    return parseFloat(styles.columnGap || styles.gap || '0') || 0;
+  }
+
+  function getScrollAmount(viewport) {
+    const card = viewport.querySelector('.af-static-card');
+    const track = viewport.querySelector('.af-static-track');
+    if (!card) return Math.max(280, Math.round(viewport.clientWidth * 0.92));
+    return Math.max(1, Math.round(card.getBoundingClientRect().width + getGap(track)));
+  }
+
+  function moveStaticCarousel(root, direction) {
+    const viewport = root.querySelector('.af-static-viewport');
+    if (!viewport) return;
+
+    const maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+    if (maxScroll <= 2) {
+      viewport.scrollTo({ left: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const current = viewport.scrollLeft;
+    const tolerance = 6;
+    const amount = getScrollAmount(viewport);
+
+    let target;
+    if (direction > 0 && current >= maxScroll - tolerance) {
+      target = 0;
+    } else if (direction < 0 && current <= tolerance) {
+      target = maxScroll;
+    } else {
+      target = Math.min(maxScroll, Math.max(0, current + (direction * amount)));
+    }
+
+    viewport.scrollTo({ left: target, behavior: 'smooth' });
+  }
 
   document.addEventListener('click', function(event){
     const prev = event.target.closest && event.target.closest('[data-af-carousel-prev]');
@@ -13210,17 +13258,11 @@ console.log('handleSignup chamada');
     const root = event.target.closest('[data-af-static-carousel]');
     if (!root) return;
 
-    const viewport = root.querySelector('.af-static-viewport');
-    if (!viewport) return;
-
     event.preventDefault();
     event.stopPropagation();
+    event.stopImmediatePropagation();
 
-    const amount = Math.max(280, Math.round(viewport.clientWidth * 0.92));
-    viewport.scrollBy({
-      left: next ? amount : -amount,
-      behavior: 'smooth'
-    });
+    moveStaticCarousel(root, next ? 1 : -1);
   }, true);
 })();
 
@@ -13287,10 +13329,11 @@ console.log('handleSignup chamada');
   });
 })();
 
-/* ABELHA ASSISTENTE — guia só na tela inicial + botão parar V5 */
+/* ABELHA ASSISTENTE — DESATIVADA para deixar a landing leve */
 (function () {
   if (window.__afBeeFlyingGuideV5) return;
   window.__afBeeFlyingGuideV5 = true;
+  return;
 
   const HERO_STEPS = [
     { selector: '#heroMonthlySpend', message: 'Digite aqui.', side: 'right' },
@@ -13615,4 +13658,680 @@ console.log('handleSignup chamada');
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startBeeGuide);
   else startBeeGuide();
+})();
+
+
+/* =========================================================
+   AF V20 — Carrossel mobile premium para a seção de dores
+========================================================= */
+(function initAfPainMobileCarousel(){
+  const FLAG = '__afPainMobileCarouselV20';
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  function setup(){
+    const grid = document.querySelector('#economia-inteligente .af-pain-grid');
+    if (!grid) return;
+
+    const cards = Array.from(grid.querySelectorAll('.af-pain-card'));
+    if (!cards.length) return;
+
+    cards.forEach((card, idx) => {
+      if (!card.dataset.kicker) {
+        card.dataset.kicker = `ITEM ${String(idx + 1).padStart(2, '0')}`;
+      }
+    });
+
+    const mobile = window.matchMedia('(max-width: 991px)').matches;
+    const existingControls = document.querySelector('.af-mobile-pain-controls');
+
+    if (!mobile) {
+      grid.classList.remove('af-mobile-carousel');
+      existingControls?.remove();
+      return;
+    }
+
+    grid.classList.add('af-mobile-carousel');
+
+    if (existingControls) return;
+
+    const controls = document.createElement('div');
+    controls.className = 'af-mobile-pain-controls';
+    controls.innerHTML = `
+      <button type="button" class="af-mobile-pain-arrow af-mobile-pain-prev" aria-label="Item anterior">
+        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+      </button>
+      <div class="af-mobile-pain-dots" aria-label="Paginação da seção"></div>
+      <button type="button" class="af-mobile-pain-arrow af-mobile-pain-next" aria-label="Próximo item">
+        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+      </button>
+    `;
+    grid.insertAdjacentElement('afterend', controls);
+
+    const dotsWrap = controls.querySelector('.af-mobile-pain-dots');
+    dotsWrap.innerHTML = cards.map((_, idx) => `<button type="button" class="af-mobile-pain-dot${idx === 0 ? ' is-active' : ''}" aria-label="Ir para o item ${idx + 1}" data-index="${idx}"></button>`).join('');
+
+    const dots = Array.from(dotsWrap.querySelectorAll('.af-mobile-pain-dot'));
+
+    function getCardStep(){
+      const first = cards[0];
+      if (!first) return grid.clientWidth;
+      const styles = getComputedStyle(grid);
+      const gap = parseFloat(styles.columnGap || styles.gap || '0') || 0;
+      return Math.round(first.getBoundingClientRect().width + gap);
+    }
+
+    function activeIndex(){
+      const step = getCardStep();
+      if (!step) return 0;
+      return Math.max(0, Math.min(cards.length - 1, Math.round(grid.scrollLeft / step)));
+    }
+
+    function syncDots(){
+      const idx = activeIndex();
+      dots.forEach((dot, dotIndex) => dot.classList.toggle('is-active', dotIndex === idx));
+    }
+
+    function goTo(index){
+      const step = getCardStep();
+      const safe = (index + cards.length) % cards.length;
+      grid.scrollTo({ left: safe * step, behavior: 'smooth' });
+      window.setTimeout(syncDots, 240);
+      window.setTimeout(syncDots, 460);
+    }
+
+    controls.querySelector('.af-mobile-pain-prev')?.addEventListener('click', () => goTo(activeIndex() - 1));
+    controls.querySelector('.af-mobile-pain-next')?.addEventListener('click', () => goTo(activeIndex() + 1));
+    dots.forEach((dot) => dot.addEventListener('click', () => goTo(Number(dot.dataset.index || 0))));
+    grid.addEventListener('scroll', () => window.requestAnimationFrame(syncDots), { passive: true });
+    window.addEventListener('resize', syncDots, { passive: true });
+    syncDots();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup, { once: true });
+  } else {
+    setup();
+  }
+
+  window.addEventListener('resize', () => {
+    window.clearTimeout(window.__afPainResizeTimer);
+    window.__afPainResizeTimer = window.setTimeout(setup, 120);
+  }, { passive: true });
+})();
+
+
+/* =========================================================
+   AF V22 — Slider simples para os cards de economia no mobile
+   Evita scroll cortado e conflito com as versões antigas.
+========================================================= */
+(function initAfSimplePainCardsV22(){
+  if (window.__afSimplePainCardsV22) return;
+  window.__afSimplePainCardsV22 = true;
+
+  const mq = window.matchMedia('(max-width: 991px)');
+  let active = 0;
+
+  function getGrid(){
+    return document.querySelector('#economia-inteligente .af-pain-grid');
+  }
+
+  function getCards(){
+    const grid = getGrid();
+    return grid ? Array.from(grid.querySelectorAll('.af-pain-card')) : [];
+  }
+
+  function ensureControls(grid, cards){
+    let controls = document.querySelector('.af-mobile-pain-controls');
+    if (!controls) {
+      controls = document.createElement('div');
+      controls.className = 'af-mobile-pain-controls';
+      controls.innerHTML = `
+        <button type="button" class="af-mobile-pain-arrow af-mobile-pain-prev" aria-label="Item anterior">
+          <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+        </button>
+        <div class="af-mobile-pain-dots" aria-label="Paginação da seção"></div>
+        <button type="button" class="af-mobile-pain-arrow af-mobile-pain-next" aria-label="Próximo item">
+          <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+        </button>
+      `;
+      grid.insertAdjacentElement('afterend', controls);
+    }
+
+    const dotsWrap = controls.querySelector('.af-mobile-pain-dots');
+    if (dotsWrap && dotsWrap.children.length !== cards.length) {
+      dotsWrap.innerHTML = cards.map((_, index) => `<button type="button" class="af-mobile-pain-dot" aria-label="Ir para o item ${index + 1}" data-index="${index}"></button>`).join('');
+    }
+    return controls;
+  }
+
+  function render(index){
+    const grid = getGrid();
+    if (!grid) return;
+    const cards = getCards();
+    if (!cards.length) return;
+
+    cards.forEach((card, cardIndex) => {
+      if (!card.dataset.kicker) card.dataset.kicker = `ITEM ${String(cardIndex + 1).padStart(2, '0')}`;
+    });
+
+    if (!mq.matches) {
+      grid.classList.remove('af-simple-mobile-carousel');
+      grid.removeAttribute('data-af-simple-ready');
+      cards.forEach(card => card.classList.remove('is-active'));
+      return;
+    }
+
+    active = (index + cards.length) % cards.length;
+    grid.classList.add('af-mobile-carousel', 'af-simple-mobile-carousel');
+    grid.dataset.afSimpleReady = '1';
+    grid.scrollLeft = 0;
+
+    const controls = ensureControls(grid, cards);
+    cards.forEach((card, cardIndex) => {
+      card.classList.toggle('is-active', cardIndex === active);
+      card.setAttribute('aria-hidden', cardIndex === active ? 'false' : 'true');
+    });
+
+    const dots = Array.from(controls.querySelectorAll('.af-mobile-pain-dot'));
+    dots.forEach((dot, dotIndex) => {
+      dot.classList.toggle('is-active', dotIndex === active);
+      dot.setAttribute('aria-current', dotIndex === active ? 'true' : 'false');
+    });
+  }
+
+  function setup(){
+    render(active);
+  }
+
+  document.addEventListener('click', function(event){
+    if (!mq.matches) return;
+    const prev = event.target.closest && event.target.closest('.af-mobile-pain-prev');
+    const next = event.target.closest && event.target.closest('.af-mobile-pain-next');
+    const dot = event.target.closest && event.target.closest('.af-mobile-pain-dot');
+    if (!prev && !next && !dot) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    if (dot) {
+      render(Number(dot.dataset.index || 0));
+    } else {
+      render(active + (next ? 1 : -1));
+    }
+  }, true);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup, { once: true });
+  } else {
+    setup();
+  }
+
+  mq.addEventListener ? mq.addEventListener('change', setup) : mq.addListener(setup);
+  window.addEventListener('resize', function(){
+    window.clearTimeout(window.__afPainSimpleResizeV22);
+    window.__afPainSimpleResizeV22 = window.setTimeout(setup, 120);
+  }, { passive: true });
+})();
+
+
+/* =========================================================
+   AF V28 — Alternância suave entre CTA principal e card de preço
+========================================================= */
+(function initAfHeroRotatorV28(){
+  const FLAG = '__afHeroRotatorV28';
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function setup(){
+    const slot = document.querySelector('#inicio .af-hero-rotator-slot');
+    if (!slot) return;
+    const cards = Array.from(slot.querySelectorAll('.af-hero-rotator-card'));
+    if (cards.length < 2) return;
+
+    let active = Math.max(0, cards.findIndex(card => card.classList.contains('is-active')));
+    if (active < 0) active = 0;
+    let timer = null;
+
+    function render(index){
+      active = (index + cards.length) % cards.length;
+      cards.forEach((card, cardIndex) => {
+        const isActive = cardIndex === active;
+        card.classList.toggle('is-active', isActive);
+        card.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+      });
+    }
+
+    function start(){
+      if (reduceMotion) return;
+      stop();
+      timer = window.setInterval(() => render(active + 1), 6200);
+    }
+
+    function stop(){
+      if (timer) {
+        window.clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    render(active);
+    start();
+
+    slot.addEventListener('mouseenter', stop);
+    slot.addEventListener('mouseleave', start);
+    slot.addEventListener('focusin', stop);
+    slot.addEventListener('focusout', start);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+      else start();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup, { once: true });
+  } else {
+    setup();
+  }
+})();
+
+
+/* =========================================================
+   AF V34 — Reativa e sincroniza botão Sol/Lua da landing
+========================================================= */
+(function restoreLandingThemeToggleV34(){
+  const FLAG = '__afRestoreLandingThemeToggleV34';
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  function syncLandingThemeState(btn){
+    const isLua = document.body.classList.contains('lua-mode');
+    document.body.classList.toggle('landing-lua-mode', isLua);
+    const icon = btn?.querySelector('i');
+    if (icon) {
+      icon.className = isLua ? 'fa-regular fa-moon' : 'fa-regular fa-sun';
+    }
+  }
+
+  function bind(){
+    const existing = document.getElementById('landing-theme-toggle');
+    if (!existing || !existing.parentNode) return;
+
+    const btn = existing.cloneNode(true);
+    existing.parentNode.replaceChild(btn, existing);
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (window.app && typeof window.app.toggleTheme === 'function') {
+        window.app.toggleTheme();
+      } else {
+        document.body.classList.toggle('lua-mode');
+      }
+
+      try {
+        localStorage.setItem('themePreference', document.body.classList.contains('lua-mode') ? 'lua' : 'sol');
+      } catch (_) {}
+
+      syncLandingThemeState(btn);
+
+      if (window.app && typeof window.app.updateThemeIcons === 'function') {
+        window.app.updateThemeIcons();
+      }
+    });
+
+    syncLandingThemeState(btn);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(bind, 0), { once: true });
+  } else {
+    setTimeout(bind, 0);
+  }
+})();
+
+
+/* =========================================================
+   AF V35 — Botão Sol/Lua da landing funcionando de verdade
+========================================================= */
+(function forceLandingThemeToggleV35(){
+  if (window.__afForceLandingThemeToggleV35) return;
+  window.__afForceLandingThemeToggleV35 = true;
+
+  function apply(mode){
+    const lua = mode === 'lua';
+    document.body.classList.toggle('lua-mode', lua);
+    document.body.classList.toggle('landing-lua-mode', lua);
+    try { localStorage.setItem('themePreference', lua ? 'lua' : 'sol'); } catch (_) {}
+    const btn = document.getElementById('landing-theme-toggle');
+    if (btn) {
+      btn.classList.toggle('is-lua', lua);
+      btn.setAttribute('aria-label', lua ? 'Ativar modo claro' : 'Ativar modo escuro');
+      btn.setAttribute('title', lua ? 'Modo claro' : 'Modo escuro');
+    }
+  }
+
+  function currentMode(){
+    try {
+      const saved = localStorage.getItem('themePreference');
+      if (saved === 'lua' || saved === 'sol') return saved;
+    } catch (_) {}
+    return document.body.classList.contains('lua-mode') || document.body.classList.contains('landing-lua-mode') ? 'lua' : 'sol';
+  }
+
+  function toggle(){
+    apply(currentMode() === 'lua' ? 'sol' : 'lua');
+  }
+
+  document.addEventListener('click', function(event){
+    const btn = event.target.closest && event.target.closest('#landing-theme-toggle');
+    if (!btn) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    toggle();
+  }, true);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ apply(currentMode()); }, { once: true });
+  } else {
+    apply(currentMode());
+  }
+})();
+
+
+/* =========================================================
+   AF V36 — Sol/Lua: toggler final independente do app
+========================================================= */
+(function afLandingThemeFinalV36(){
+  if (window.__afLandingThemeFinalV36) return;
+  window.__afLandingThemeFinalV36 = true;
+
+  function getMode(){
+    try {
+      const saved = localStorage.getItem('themePreference');
+      if (saved === 'lua' || saved === 'sol') return saved;
+    } catch (_) {}
+    return (document.body.classList.contains('af-landing-dark') || document.body.classList.contains('landing-lua-mode') || document.body.classList.contains('lua-mode')) ? 'lua' : 'sol';
+  }
+
+  function setMode(mode){
+    const dark = mode === 'lua';
+    document.body.classList.toggle('af-landing-dark', dark);
+    document.body.classList.toggle('landing-lua-mode', dark);
+    document.body.classList.toggle('lua-mode', dark);
+    try { localStorage.setItem('themePreference', dark ? 'lua' : 'sol'); } catch (_) {}
+
+    const container = document.getElementById('landing-video-container');
+    const videos = document.querySelectorAll('.background-video, .background-video.active');
+    if (container) {
+      container.style.setProperty('filter', dark ? 'brightness(.52) saturate(.78) contrast(1.05)' : 'brightness(1.08) saturate(1.03) contrast(1.01)', 'important');
+    }
+    videos.forEach((video) => {
+      video.style.setProperty('filter', dark ? 'brightness(.62) saturate(.82) contrast(1.04)' : 'brightness(1.04) saturate(1.02) contrast(1.01)', 'important');
+    });
+
+    const btn = document.getElementById('landing-theme-toggle');
+    if (btn) {
+      btn.classList.toggle('is-lua', dark);
+      btn.classList.toggle('af-is-dark', dark);
+      btn.setAttribute('title', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+      btn.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+    }
+  }
+
+  document.addEventListener('click', function(event){
+    const btn = event.target.closest && event.target.closest('#landing-theme-toggle');
+    if (!btn) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    setMode(getMode() === 'lua' ? 'sol' : 'lua');
+  }, true);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setMode(getMode()), { once: true });
+  } else {
+    setMode(getMode());
+  }
+})();
+
+
+/* =========================================================
+   AF V37 — Sol/Lua com captura máxima, independente do app
+========================================================= */
+(function afLandingThemeToggleV37(){
+  if (window.__afLandingThemeToggleV37) return;
+  window.__afLandingThemeToggleV37 = true;
+
+  function setMode(mode){
+    const dark = mode === 'lua';
+    document.body.classList.toggle('lua-mode', dark);
+    document.body.classList.toggle('landing-lua-mode', dark);
+    document.body.classList.toggle('af-landing-dark', dark);
+    try { localStorage.setItem('themePreference', dark ? 'lua' : 'sol'); } catch(_) {}
+    const btn = document.getElementById('landing-theme-toggle');
+    if (btn) {
+      btn.classList.toggle('is-lua', dark);
+      btn.classList.toggle('af-is-dark', dark);
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.setAttribute('title', dark ? 'Modo claro' : 'Modo escuro');
+    }
+  }
+
+  function currentMode(){
+    if (document.body.classList.contains('af-landing-dark') || document.body.classList.contains('landing-lua-mode') || document.body.classList.contains('lua-mode')) return 'lua';
+    try { return localStorage.getItem('themePreference') === 'lua' ? 'lua' : 'sol'; } catch(_) { return 'sol'; }
+  }
+
+  function bind(){
+    setMode(currentMode());
+  }
+
+  document.addEventListener('click', function(event){
+    const btn = event.target.closest && event.target.closest('#landing-theme-toggle');
+    if (!btn) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    setMode(currentMode() === 'lua' ? 'sol' : 'lua');
+  }, true);
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once:true });
+  else bind();
+})();
+
+
+/* =========================================================
+   AF V38 — Sol/Lua final: evento direto + delegação + ícone SVG
+========================================================= */
+(function afThemeToggleFinalV38(){
+  if (window.__afThemeToggleFinalV38) return;
+  window.__afThemeToggleFinalV38 = true;
+
+  const SVG_SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Zm0 4a1 1 0 0 1-1-1v-1a1 1 0 1 1 2 0v1a1 1 0 0 1-1 1Zm0-18a1 1 0 0 1-1-1V2a1 1 0 1 1 2 0v1a1 1 0 0 1-1 1Zm10 8a1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1ZM4 12a1 1 0 0 1-1 1H2a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1Zm14.95 7.95a1 1 0 0 1-1.41 0l-.71-.71a1 1 0 1 1 1.41-1.41l.71.71a1 1 0 0 1 0 1.41ZM7.17 6.17a1 1 0 0 1-1.41 0l-.71-.71A1 1 0 1 1 6.46 4.05l.71.71a1 1 0 0 1 0 1.41Zm11.78-1.12a1 1 0 0 1 0 1.41l-.71.71a1 1 0 1 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0ZM7.17 17.83a1 1 0 0 1 0 1.41l-.71.71a1 1 0 0 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0Z"/></svg>';
+  const SVG_MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 14.2A8.5 8.5 0 0 1 9.8 3a1 1 0 0 0-1.13-1.47A10.5 10.5 0 1 0 22.47 15.33 1 1 0 0 0 21 14.2Z"/></svg>';
+
+  function getMode(){
+    try {
+      const saved = localStorage.getItem('themePreference');
+      if (saved === 'lua' || saved === 'sol') return saved;
+    } catch (_) {}
+    return document.body.classList.contains('lua-mode') || document.body.classList.contains('landing-lua-mode') || document.body.classList.contains('af-landing-dark') ? 'lua' : 'sol';
+  }
+
+  function setMode(mode){
+    const dark = mode === 'lua';
+    document.body.classList.toggle('lua-mode', dark);
+    document.body.classList.toggle('landing-lua-mode', dark);
+    document.body.classList.toggle('af-landing-dark', dark);
+    try { localStorage.setItem('themePreference', dark ? 'lua' : 'sol'); } catch (_) {}
+
+    const btn = document.getElementById('landing-theme-toggle');
+    if (btn) {
+      btn.classList.toggle('is-lua', dark);
+      btn.classList.toggle('af-is-dark', dark);
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+      btn.setAttribute('title', dark ? 'Modo claro' : 'Modo escuro');
+      btn.innerHTML = dark ? SVG_MOON : SVG_SUN;
+    }
+  }
+
+  function bind(){
+    const btn = document.getElementById('landing-theme-toggle');
+    if (!btn) return;
+    btn.onclick = function(event){
+      event.preventDefault();
+      event.stopPropagation();
+      setMode(getMode() === 'lua' ? 'sol' : 'lua');
+      return false;
+    };
+    setMode(getMode());
+  }
+
+  document.addEventListener('click', function(event){
+    const btn = event.target.closest && event.target.closest('#landing-theme-toggle');
+    if (!btn) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    setMode(getMode() === 'lua' ? 'sol' : 'lua');
+  }, true);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(bind, 50), { once: true });
+  } else {
+    setTimeout(bind, 50);
+  }
+  window.addEventListener('load', () => setTimeout(bind, 200), { once: true });
+})();
+
+
+/* =========================================================
+   AF V39 — Sol/Lua com captura no window antes dos toggles antigos
+========================================================= */
+(function afThemeToggleSingleSourceV39(){
+  if (window.__afThemeToggleSingleSourceV39) return;
+  window.__afThemeToggleSingleSourceV39 = true;
+
+  const SUN = '<i class="fa-regular fa-sun" aria-hidden="true"></i>';
+  const MOON = '<i class="fa-regular fa-moon" aria-hidden="true"></i>';
+
+  function isDark(){
+    try {
+      const saved = localStorage.getItem('themePreference');
+      if (saved === 'lua') return true;
+      if (saved === 'sol') return false;
+    } catch(_) {}
+    return document.body.classList.contains('lua-mode') || document.body.classList.contains('landing-lua-mode') || document.body.classList.contains('af-landing-dark');
+  }
+
+  function apply(dark){
+    document.body.classList.toggle('lua-mode', dark);
+    document.body.classList.toggle('landing-lua-mode', dark);
+    document.body.classList.toggle('af-landing-dark', dark);
+    try { localStorage.setItem('themePreference', dark ? 'lua' : 'sol'); } catch(_) {}
+
+    const btn = document.getElementById('landing-theme-toggle');
+    if (btn) {
+      btn.classList.toggle('is-lua', dark);
+      btn.classList.toggle('af-is-dark', dark);
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+      btn.setAttribute('title', dark ? 'Modo claro' : 'Modo escuro');
+      btn.innerHTML = dark ? MOON : SUN;
+    }
+  }
+
+  function handle(event){
+    const btn = event.target && event.target.closest && event.target.closest('#landing-theme-toggle');
+    if (!btn) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    apply(!isDark());
+    return false;
+  }
+
+  window.addEventListener('click', handle, true);
+  window.addEventListener('pointerdown', function(event){
+    const btn = event.target && event.target.closest && event.target.closest('#landing-theme-toggle');
+    if (!btn) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+  }, true);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => apply(isDark()), { once:true });
+  } else {
+    apply(isDark());
+  }
+})();
+
+
+/* =========================================================
+   AF V40 — Sol/Lua minimalista, sem conflito com handlers antigos
+   Usa #af-theme-toggle-minimal para evitar os listeners duplicados antigos.
+========================================================= */
+(function afThemeToggleMinimalV40(){
+  if (window.__afThemeToggleMinimalV40) return;
+  window.__afThemeToggleMinimalV40 = true;
+
+  const SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Zm0 4a1 1 0 0 1-1-1v-1a1 1 0 1 1 2 0v1a1 1 0 0 1-1 1Zm0-18a1 1 0 0 1-1-1V2a1 1 0 1 1 2 0v1a1 1 0 0 1-1 1Zm10 8a1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1ZM4 12a1 1 0 0 1-1 1H2a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1Zm14.95 7.95a1 1 0 0 1-1.41 0l-.71-.71a1 1 0 1 1 1.41-1.41l.71.71a1 1 0 0 1 0 1.41ZM7.17 6.17a1 1 0 0 1-1.41 0l-.71-.71A1 1 0 1 1 6.46 4.05l.71.71a1 1 0 0 1 0 1.41Zm11.78-1.12a1 1 0 0 1 0 1.41l-.71.71a1 1 0 1 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0ZM7.17 17.83a1 1 0 0 1 0 1.41l-.71.71a1 1 0 0 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0Z"/></svg>';
+  const MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 14.2A8.5 8.5 0 0 1 9.8 3a1 1 0 0 0-1.13-1.47A10.5 10.5 0 1 0 22.47 15.33 1 1 0 0 0 21 14.2Z"/></svg>';
+
+  function getSavedMode(){
+    try {
+      const saved = localStorage.getItem('themePreference');
+      if (saved === 'lua' || saved === 'sol') return saved;
+    } catch (_) {}
+    return document.body.classList.contains('lua-mode') || document.body.classList.contains('landing-lua-mode') || document.body.classList.contains('af-landing-dark') ? 'lua' : 'sol';
+  }
+
+  function applyMode(mode){
+    const dark = mode === 'lua';
+    document.body.classList.toggle('lua-mode', dark);
+    document.body.classList.toggle('landing-lua-mode', dark);
+    document.body.classList.toggle('af-landing-dark', dark);
+    try { localStorage.setItem('themePreference', dark ? 'lua' : 'sol'); } catch (_) {}
+
+    const btn = document.getElementById('af-theme-toggle-minimal');
+    if (btn) {
+      btn.innerHTML = dark ? MOON : SUN;
+      btn.classList.toggle('is-lua', dark);
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+      btn.setAttribute('title', dark ? 'Modo claro' : 'Modo escuro');
+    }
+  }
+
+  function bind(){
+    const btn = document.getElementById('af-theme-toggle-minimal');
+    if (!btn) return;
+    btn.addEventListener('click', function(event){
+      event.preventDefault();
+      event.stopPropagation();
+      const current = getSavedMode();
+      applyMode(current === 'lua' ? 'sol' : 'lua');
+    });
+    btn.addEventListener('keydown', function(event){
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      const current = getSavedMode();
+      applyMode(current === 'lua' ? 'sol' : 'lua');
+    });
+    applyMode(getSavedMode());
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bind, { once: true });
+  } else {
+    bind();
+  }
 })();
