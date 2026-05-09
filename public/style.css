@@ -24443,3 +24443,278 @@ html body:not(.app-mode) #inicio .af-trust-row-desktop-copy{
     --af-desktop-action-width: 470px !important;
   }
 }
+
+/* =========================================================
+   AF V51 — Ajuste fino SOMENTE MOBILE
+   - Topo menor para redes não encostarem na marca.
+   - Ícones coloridos, sem fundo pesado.
+   - Simulador um pouco mais baixo.
+   - Desktop intocado.
+========================================================= */
+@media (max-width: 991px){
+  html body:not(.app-mode) #landing-header .header-inner{
+    min-height: 58px !important;
+    padding: 8px 11px !important;
+    gap: .34rem !important;
+    justify-content: flex-start !important;
+  }
+
+  html body:not(.app-mode) #landing-header .brand{
+    flex: 0 0 auto !important;
+    margin-right: 0 !important;
+    max-width: 146px !important;
+    white-space: nowrap !important;
+    font-size: clamp(8px, 2.2vw, 10px) !important;
+    letter-spacing: .30em !important;
+    line-height: 1 !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-links{
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    margin-left: .1rem !important;
+    margin-right: .12rem !important;
+    gap: .34rem !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-link{
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    opacity: .96 !important;
+    filter: drop-shadow(0 1px 4px rgba(0,0,0,.28)) !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-link i{
+    font-size: .86rem !important;
+    line-height: 1 !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-link:nth-child(1){ color: #ff5fa2 !important; }
+  html body:not(.app-mode) #landing-header .af-header-social-link:nth-child(2){ color: #00f2ea !important; }
+  html body:not(.app-mode) #landing-header .af-header-social-link:nth-child(3){ color: #ff4b4b !important; }
+  html body:not(.app-mode) #landing-header .af-header-social-link:nth-child(4){ color: #f3cb68 !important; }
+
+  html body:not(.app-mode) #landing-header .actions{
+    margin-left: auto !important;
+    flex: 0 0 auto !important;
+    gap: .32rem !important;
+  }
+
+  html body:not(.app-mode) #landing-theme-toggle,
+  html body:not(.app-mode) #landing-auth-btn,
+  html body:not(.app-mode) #hamburger{
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    max-width: 36px !important;
+    max-height: 36px !important;
+    flex: 0 0 36px !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,.30)) !important;
+  }
+
+  html body:not(.app-mode) #landing-theme-toggle{ color: #ffd66b !important; }
+  html body:not(.app-mode) #landing-auth-btn{ color: #00f2ea !important; }
+  html body:not(.app-mode) #hamburger{ color: #ffffff !important; }
+
+  html body:not(.app-mode) #landing-theme-toggle:hover,
+  html body:not(.app-mode) #landing-auth-btn:hover,
+  html body:not(.app-mode) #hamburger:hover,
+  html body:not(.app-mode) #landing-theme-toggle:focus-visible,
+  html body:not(.app-mode) #landing-auth-btn:focus-visible,
+  html body:not(.app-mode) #hamburger:focus-visible{
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    transform: translateY(-1px) scale(1.03) !important;
+    outline: none !important;
+  }
+
+  html body:not(.app-mode) #landing-theme-toggle:active,
+  html body:not(.app-mode) #landing-auth-btn:active,
+  html body:not(.app-mode) #hamburger:active{
+    transform: scale(.94) !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  html body:not(.app-mode) #landing-theme-toggle svg,
+  html body:not(.app-mode) #landing-auth-btn svg{
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  html body:not(.app-mode) #hamburger{
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+  }
+
+  html body:not(.app-mode) #hamburger span,
+  html body:not(.app-mode) #hamburger span + span{
+    width: 20px !important;
+    height: 2.2px !important;
+    margin: 0 !important;
+    border-radius: 999px !important;
+    background: currentColor !important;
+  }
+
+  html body:not(.app-mode) #hamburger.active span:nth-child(1){
+    transform: translateY(3.6px) rotate(45deg) !important;
+  }
+  html body:not(.app-mode) #hamburger.active span:nth-child(2){
+    transform: translateY(-3.6px) rotate(-45deg) !important;
+  }
+
+  html body:not(.app-mode) #inicio .af-lead-calculator,
+  html body:not(.app-mode) #inicio .af-lead-calculator.af-lead-calculator-premium{
+    margin-top: .72rem !important;
+  }
+}
+
+@media (max-width: 430px){
+  html body:not(.app-mode) #landing-header .header-inner{
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    gap: .28rem !important;
+  }
+  html body:not(.app-mode) #landing-header .brand{
+    max-width: 138px !important;
+    font-size: 8.4px !important;
+    letter-spacing: .29em !important;
+  }
+  html body:not(.app-mode) #landing-header .af-header-social-links{
+    gap: .28rem !important;
+    margin-left: .06rem !important;
+    margin-right: .08rem !important;
+  }
+  html body:not(.app-mode) #landing-header .af-header-social-link{
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+  }
+  html body:not(.app-mode) #landing-header .af-header-social-link i{
+    font-size: .78rem !important;
+  }
+  html body:not(.app-mode) #landing-header .actions{
+    gap: .24rem !important;
+  }
+  html body:not(.app-mode) #landing-theme-toggle,
+  html body:not(.app-mode) #landing-auth-btn,
+  html body:not(.app-mode) #hamburger{
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    max-width: 34px !important;
+    max-height: 34px !important;
+    flex-basis: 34px !important;
+  }
+  html body:not(.app-mode) #landing-theme-toggle svg,
+  html body:not(.app-mode) #landing-auth-btn svg{
+    width: 19px !important;
+    height: 19px !important;
+  }
+  html body:not(.app-mode) #hamburger span,
+  html body:not(.app-mode) #hamburger span + span{
+    width: 19px !important;
+  }
+}
+
+/* =========================================================
+   AF V52 — Ajuste fino SOMENTE MOBILE
+   - Tarja superior escurece suavemente no hover/toque.
+   - Redes sociais um pouco mais afastadas da marca.
+   - Controles menores para respirar melhor no topo.
+   - Desktop intocado.
+========================================================= */
+@media (max-width: 991px){
+  html body:not(.app-mode) #landing-header{
+    transition: background .22s ease, box-shadow .22s ease, backdrop-filter .22s ease, -webkit-backdrop-filter .22s ease !important;
+  }
+
+  html body:not(.app-mode) #landing-header:hover,
+  html body:not(.app-mode) #landing-header:focus-within,
+  html body:not(.app-mode) #landing-header:active{
+    background: linear-gradient(180deg, rgba(22,18,18,.76), rgba(22,18,18,.48)) !important;
+    box-shadow: 0 10px 28px rgba(0,0,0,.18), inset 0 -1px 0 rgba(0,242,234,.18) !important;
+    backdrop-filter: blur(20px) saturate(118%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(118%) !important;
+  }
+
+  html body:not(.app-mode) #landing-header .brand{
+    margin-right: .46rem !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-links{
+    margin-left: .18rem !important;
+    margin-right: .18rem !important;
+    gap: .36rem !important;
+  }
+
+  html body:not(.app-mode) #landing-theme-toggle,
+  html body:not(.app-mode) #landing-auth-btn,
+  html body:not(.app-mode) #hamburger{
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    flex-basis: 32px !important;
+    border-radius: 10px !important;
+  }
+
+  html body:not(.app-mode) #landing-theme-toggle svg,
+  html body:not(.app-mode) #landing-auth-btn svg{
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  html body:not(.app-mode) #hamburger span,
+  html body:not(.app-mode) #hamburger span + span{
+    width: 18px !important;
+    height: 2px !important;
+  }
+}
+
+@media (max-width: 430px){
+  html body:not(.app-mode) #landing-header .brand{
+    margin-right: .34rem !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-links{
+    margin-left: .12rem !important;
+    margin-right: .12rem !important;
+    gap: .30rem !important;
+  }
+
+  html body:not(.app-mode) #landing-theme-toggle,
+  html body:not(.app-mode) #landing-auth-btn,
+  html body:not(.app-mode) #hamburger{
+    width: 31px !important;
+    height: 31px !important;
+    min-width: 31px !important;
+    min-height: 31px !important;
+    max-width: 31px !important;
+    max-height: 31px !important;
+    flex-basis: 31px !important;
+  }
+}
