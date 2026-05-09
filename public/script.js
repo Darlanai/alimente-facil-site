@@ -14055,3 +14055,77 @@ console.log('handleSignup chamada');
     focusHeroSpend();
   }, true);
 })();
+
+/* =========================================================
+   AF V53 — Social dock mobile confortável
+   - Um botão abre Instagram, TikTok, YouTube e e-mail.
+   - Fecha ao clicar fora, ao rolar, ao apertar ESC ou ao escolher um link.
+========================================================= */
+(function afMobileSocialDockV53(){
+  if (window.__afMobileSocialDockV53) return;
+  window.__afMobileSocialDockV53 = true;
+
+  const mobileQuery = window.matchMedia ? window.matchMedia('(max-width: 991px)') : null;
+
+  function isMobileLanding(){
+    return (!mobileQuery || mobileQuery.matches) && !document.body.classList.contains('app-mode');
+  }
+
+  function getParts(){
+    return {
+      header: document.getElementById('landing-header'),
+      toggle: document.getElementById('afSocialToggle'),
+      links: document.getElementById('afHeaderSocialLinks')
+    };
+  }
+
+  function setOpen(open){
+    const { header, toggle, links } = getParts();
+    if (!header || !toggle || !links) return;
+    header.classList.toggle('af-social-open', !!open);
+    toggle.classList.toggle('is-open', !!open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    links.setAttribute('aria-hidden', open ? 'false' : 'true');
+  }
+
+  function close(){ setOpen(false); }
+
+  function toggleDock(event){
+    const btn = event.target && event.target.closest && event.target.closest('#afSocialToggle');
+    if (!btn || !isMobileLanding()) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const { header } = getParts();
+    setOpen(!header?.classList.contains('af-social-open'));
+  }
+
+  function handleOutside(event){
+    if (!isMobileLanding()) return;
+    const { header } = getParts();
+    if (!header || !header.classList.contains('af-social-open')) return;
+    if (event.target.closest('#afSocialToggle, #afHeaderSocialLinks')) return;
+    close();
+  }
+
+  function setup(){
+    const { links } = getParts();
+    if (links) links.setAttribute('aria-hidden', 'true');
+  }
+
+  document.addEventListener('click', toggleDock, true);
+  document.addEventListener('click', handleOutside, true);
+  document.addEventListener('click', function(event){
+    if (event.target.closest('#afHeaderSocialLinks a')) close();
+  }, true);
+  document.addEventListener('keydown', function(event){
+    if (event.key === 'Escape') close();
+  });
+  window.addEventListener('scroll', close, { passive: true });
+  window.addEventListener('resize', close, { passive: true });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup, { once: true });
+  } else {
+    setup();
+  }
+})();

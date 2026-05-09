@@ -24718,3 +24718,206 @@ html body:not(.app-mode) #inicio .af-trust-row-desktop-copy{
     flex-basis: 31px !important;
   }
 }
+
+/* =========================================================
+   AF V53 — Redes sociais mobile: botão único + dock confortável
+   - Mobile somente: troca 4 ícones apertados por um botão social.
+   - Ao tocar, abre uma cápsula com áreas de clique grandes.
+   - Desktop intocado.
+========================================================= */
+html body:not(.app-mode) #landing-header .af-social-toggle{
+  display: none;
+}
+
+@media (max-width: 991px){
+  html body:not(.app-mode) #landing-header .header-inner{
+    position: relative !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-social-toggle{
+    display: inline-grid !important;
+    place-items: center !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    flex: 0 0 34px !important;
+    margin-left: .18rem !important;
+    margin-right: .24rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+    color: #f3cb68 !important;
+    cursor: pointer !important;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,.30)) !important;
+    transition: transform .2s ease, color .2s ease, opacity .2s ease !important;
+    z-index: 1003 !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-social-toggle i{
+    font-size: .98rem !important;
+    line-height: 1 !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-social-toggle:hover,
+  html body:not(.app-mode) #landing-header .af-social-toggle:focus-visible,
+  html body:not(.app-mode) #landing-header.af-social-open .af-social-toggle{
+    color: #00f2ea !important;
+    transform: translateY(-1px) scale(1.04) !important;
+    outline: none !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-social-toggle:active{
+    transform: scale(.94) !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-links{
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    left: 12px !important;
+    right: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: .32rem !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: .36rem .42rem !important;
+    border-radius: 999px !important;
+    background: linear-gradient(135deg, rgba(14,16,24,.46), rgba(255,255,255,.10)) !important;
+    border: 1px solid rgba(255,255,255,.16) !important;
+    box-shadow: 0 14px 34px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.10) !important;
+    backdrop-filter: blur(18px) saturate(122%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(122%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translate3d(0,-7px,0) scale(.96) !important;
+    transform-origin: 28px -8px !important;
+    transition: opacity .2s ease, transform .2s ease, box-shadow .2s ease !important;
+    z-index: 1002 !important;
+  }
+
+  html body:not(.app-mode) #landing-header.af-social-open .af-header-social-links{
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translate3d(0,0,0) scale(1) !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-links::before{
+    content: "" !important;
+    position: absolute !important;
+    top: -5px !important;
+    left: 68px !important;
+    width: 10px !important;
+    height: 10px !important;
+    transform: rotate(45deg) !important;
+    border-left: 1px solid rgba(255,255,255,.16) !important;
+    border-top: 1px solid rgba(255,255,255,.16) !important;
+    background: rgba(18,19,25,.42) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-link{
+    position: relative !important;
+    display: grid !important;
+    place-items: center !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    text-decoration: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    transition: transform .18s ease, color .18s ease, text-shadow .18s ease !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-link i{
+    font-size: 1.18rem !important;
+    line-height: 1 !important;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,.22)) !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-link:nth-child(1){ color: #ff5fa2 !important; }
+  html body:not(.app-mode) #landing-header .af-header-social-link:nth-child(2){ color: #00f2ea !important; }
+  html body:not(.app-mode) #landing-header .af-header-social-link:nth-child(3){ color: #ff4b4b !important; }
+  html body:not(.app-mode) #landing-header .af-header-social-link:nth-child(4){ color: #f3cb68 !important; }
+
+  html body:not(.app-mode) #landing-header .af-header-social-link:hover,
+  html body:not(.app-mode) #landing-header .af-header-social-link:focus-visible{
+    transform: translateY(-2px) scale(1.08) !important;
+    outline: none !important;
+    text-shadow: 0 0 18px currentColor !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-link:active{
+    transform: scale(.9) !important;
+  }
+}
+
+@media (max-width: 430px){
+  html body:not(.app-mode) #landing-header .af-social-toggle{
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    flex-basis: 32px !important;
+    margin-left: .14rem !important;
+    margin-right: .18rem !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-social-toggle i{
+    font-size: .92rem !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-links{
+    left: 10px !important;
+    padding: .32rem .38rem !important;
+    gap: .26rem !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-link{
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+
+  html body:not(.app-mode) #landing-header .af-header-social-link i{
+    font-size: 1.1rem !important;
+  }
+}
+
+/* =========================================================
+   AF V55 — Tarja superior mobile um pouco mais escura
+   - Alteração somente no CSS/mobile.
+   - Mantém desktop e demais estilos intocados.
+========================================================= */
+@media (max-width: 991px){
+  html body:not(.app-mode) #landing-header{
+    background: linear-gradient(180deg, rgba(18,15,14,.62), rgba(18,15,14,.44)) !important;
+    border-bottom: 1px solid rgba(0,242,234,.13) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,.14), inset 0 -1px 0 rgba(255,255,255,.04) !important;
+    backdrop-filter: blur(18px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
+  }
+
+  html body:not(.app-mode) #landing-header:hover,
+  html body:not(.app-mode) #landing-header:focus-within,
+  html body:not(.app-mode) #landing-header:active{
+    background: linear-gradient(180deg, rgba(14,12,12,.82), rgba(14,12,12,.60)) !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.22), inset 0 -1px 0 rgba(0,242,234,.20) !important;
+    backdrop-filter: blur(20px) saturate(122%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(122%) !important;
+  }
+}
+
