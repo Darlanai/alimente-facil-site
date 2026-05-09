@@ -77,8 +77,15 @@
   <div class="header-inner">
     <div class="brand">ALIMENTE FÁCIL</div>
 
+    <nav class="af-header-social-links" aria-label="Canais oficiais do Alimente Fácil">
+      <a class="af-header-social-link" href="/instagram" target="_blank" rel="noopener" aria-label="Instagram do Alimente Fácil"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
+      <a class="af-header-social-link" href="/tiktok" target="_blank" rel="noopener" aria-label="TikTok do Alimente Fácil"><i class="fa-brands fa-tiktok" aria-hidden="true"></i></a>
+      <a class="af-header-social-link" href="/youtube" target="_blank" rel="noopener" aria-label="YouTube do Alimente Fácil"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
+      <a class="af-header-social-link" href="/e-mail" target="_blank" rel="noopener" aria-label="Enviar e-mail para o Alimente Fácil"><i class="fa-regular fa-envelope" aria-hidden="true"></i></a>
+    </nav>
+
     <div class="actions">
-      <div class="icon-btn" id="af-theme-toggle-minimal" title="Alternar tema" aria-label="Alternar tema" role="button" tabindex="0">
+      <div class="icon-btn" id="landing-theme-toggle" title="Tema">
         <svg viewBox="0 0 24 24"><path d="M12 2a1 1 0 0 0 0 2 8 8 0 1 1-8 8 1 1 0 0 0-2 0 10 10 0 1 0 10-10z"/></svg>
       </div>
 
@@ -113,10 +120,17 @@
 <section id="inicio" class="page-section landing-hero-refined af-hero-marketing">
     <div class="identity-container hero-clean-layout">
         <div class="hero-clean-shell refined-hero-shell af-hero-shell af-hero-conversion-shell">
-            <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
-<h2 class="hero-tagline af-premium-tagline"><span>O futuro da sua cozinha, agora.</span></h2>
-<p class="af-hero-price-inline af-hero-price-under-tagline">R$ 9,90 por mês, preço de um cafezinho diário.</p>
+            <div class="af-hero-desktop-copy" aria-label="Apresentação do Alimente Fácil">
+                <h1 class="hero-brand">ALIMENTE <span class="highlight">FÁCIL</span></h1>
+                <h2 class="hero-tagline af-premium-tagline"><span>O futuro da sua cozinha, agora.</span></h2>
+                <p class="af-hero-price-inline af-hero-price-under-tagline">R$ 9,90 por mês, preço de um cafezinho.</p>
+                <div class="af-trust-row af-trust-row-desktop-copy" aria-label="Diferenciais do Alimente Fácil no desktop">
+                    <span><i class="fa-solid fa-shield-heart" aria-hidden="true"></i> Sem anúncios</span>
+                    <span><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> PWA instalável</span>
+                </div>
+            </div>
 
+            <div class="af-hero-desktop-left" aria-label="Ações principais do Alimente Fácil">
                     <form class="af-lead-calculator af-lead-calculator-premium" id="heroSavingsCalculator" novalidate aria-label="Simulador rápido de economia no supermercado">
                         <div class="af-calc-entry-view">
                             <div class="af-calc-headline-row">
@@ -131,7 +145,7 @@
                             <div class="af-calc-bar">
                                 <span class="af-calc-currency" aria-hidden="true">R$</span>
                                 <div class="af-calc-field">
-                                    <label for="heroMonthlySpend">Gasto mensal com supermercado</label>
+                                    <label for="heroMonthlySpend" class="sr-only">Valor mensal com supermercado</label>
                                     <input type="text" id="heroMonthlySpend" name="heroMonthlySpend" placeholder="Digite o valor mensal com supermercado" inputmode="decimal" autocomplete="off" aria-describedby="heroCalcFeedback heroResult">
                                 </div>
                                 <button type="submit" id="heroCalcBtn" class="af-calc-submit">Ver economia</button>
@@ -167,6 +181,8 @@
                             <span><i class="fa-solid fa-shield-heart" aria-hidden="true"></i> Sem anúncios</span>
                             <span><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> PWA instalável</span>
                         </div>
+
+            </div>
                     </div>
                 </div>
             </div>
@@ -310,42 +326,102 @@
                     <div class="af-static-viewport">
                         <div class="af-static-track">
                             <article class="af-static-card">
-                                <img src="geladeira1.jpg" alt="Compras Inteligentes" loading="lazy" decoding="async">
+                                <img src="geladeira1.jpg" alt="Compras inteligentes" loading="lazy" decoding="async">
                                 <div class="af-static-shade"></div>
                                 <div class="af-static-content">
                                     <span>Dica 01</span>
                                     <h3>Compras Inteligentes</h3>
-                                    <p>Antes de sair de casa, confira sua despensa e monte uma lista clara para comprar melhor.</p>
+                                    <p>Confira a despensa antes de sair e compre só o que realmente falta.</p>
                                 </div>
                             </article>
 
                             <article class="af-static-card">
-                                <img src="cozinha1.jpg" alt="Aproveitamento Integral" loading="lazy" decoding="async">
+                                <img src="cozinha1.jpg" alt="Aproveitamento integral" loading="lazy" decoding="async">
                                 <div class="af-static-shade"></div>
                                 <div class="af-static-content">
                                     <span>Dica 02</span>
                                     <h3>Aproveitamento Integral</h3>
-                                    <p>Use talos, folhas e sobras em novas preparações para reduzir desperdício no dia a dia.</p>
+                                    <p>Use talos, folhas e sobras em preparos simples para evitar desperdício.</p>
                                 </div>
                             </article>
 
                             <article class="af-static-card">
-                                <img src="geladeira2.jpg" alt="Despensa Eficiente" loading="lazy" decoding="async">
+                                <img src="geladeira2.jpg" alt="Despensa eficiente" loading="lazy" decoding="async">
                                 <div class="af-static-shade"></div>
                                 <div class="af-static-content">
                                     <span>Dica 03</span>
                                     <h3>Despensa Eficiente</h3>
-                                    <p>Organize os itens mais antigos na frente para consumir antes do vencimento.</p>
+                                    <p>Deixe os itens mais antigos na frente para consumir antes do vencimento.</p>
                                 </div>
                             </article>
 
                             <article class="af-static-card">
-                                <img src="geladeira.jpg" alt="Congele o Futuro" loading="lazy" decoding="async">
+                                <img src="geladeira.jpg" alt="Congelamento inteligente" loading="lazy" decoding="async">
                                 <div class="af-static-shade"></div>
                                 <div class="af-static-content">
                                     <span>Dica 04</span>
                                     <h3>Congele o Futuro</h3>
-                                    <p>Congele porções prontas e frutas maduras para ganhar tempo e evitar perdas.</p>
+                                    <p>Congele porções prontas e frutas maduras para ganhar tempo na semana.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="dica_05_lista_semana.jpg" alt="Lista semanal organizada" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Dica 05</span>
+                                    <h3>Lista da Semana</h3>
+                                    <p>Monte uma lista por categoria e reduza compras por impulso no mercado.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="dica_06_frutas_maduras.jpg" alt="Frutas maduras aproveitadas" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Dica 06</span>
+                                    <h3>Frutas no Ponto</h3>
+                                    <p>Transforme frutas maduras em vitaminas, geleias, bolos ou porções congeladas.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="dica_07_potes_transparentes.jpg" alt="Potes transparentes organizados" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Dica 07</span>
+                                    <h3>Potes Transparentes</h3>
+                                    <p>Guardar em potes visíveis ajuda a lembrar o que já existe em casa.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="dica_08_freezer_organizado.jpg" alt="Freezer organizado" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Dica 08</span>
+                                    <h3>Freezer Inteligente</h3>
+                                    <p>Identifique porções com data para evitar perdas e facilitar refeições rápidas.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="dica_09_validade_primeiro.jpg" alt="Validade primeiro" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Dica 09</span>
+                                    <h3>Validade Primeiro</h3>
+                                    <p>Separe uma área para alimentos que precisam ser consumidos nos próximos dias.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="dica_10_compra_consciente.jpg" alt="Compra consciente" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Dica 10</span>
+                                    <h3>Compra Consciente</h3>
+                                    <p>Compare sua lista com sua rotina real antes de colocar tudo no carrinho.</p>
                                 </div>
                             </article>
                         </div>
@@ -354,8 +430,6 @@
                     <button type="button" class="af-static-arrow af-static-next" data-af-carousel-next aria-label="Próxima dica">
                         <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
                     </button>
-
-                    <div class="af-static-hint" aria-hidden="true">Arraste para ver mais</div>
                 </div>
 
             </div>
@@ -377,27 +451,27 @@
                     <div class="af-static-viewport">
                         <div class="af-static-track">
                             <article class="af-static-card">
-                                <img src="salada_manga.jpg" alt="Salada de Manga" loading="lazy" decoding="async">
+                                <img src="salada_manga.jpg" alt="Salada de manga" loading="lazy" decoding="async">
                                 <div class="af-static-shade"></div>
                                 <div class="af-static-content">
                                     <span>Receita 01</span>
                                     <h3>Salada de Manga</h3>
-                                    <p>Manga em cubos, cebola, coentro e limão para uma receita rápida e refrescante.</p>
+                                    <p>Manga, cebola, coentro e limão para uma receita rápida e refrescante.</p>
                                 </div>
                             </article>
 
                             <article class="af-static-card">
-                                <img src="pure_abobora.jpg" alt="Creme de Abóbora" loading="lazy" decoding="async">
+                                <img src="pure_abobora.jpg" alt="Creme de abóbora" loading="lazy" decoding="async">
                                 <div class="af-static-shade"></div>
                                 <div class="af-static-content">
                                     <span>Receita 02</span>
                                     <h3>Creme de Abóbora</h3>
-                                    <p>Refogue, cozinhe, bata e finalize com temperos simples para uma refeição econômica.</p>
+                                    <p>Cozinhe, bata e finalize com temperos simples para uma refeição econômica.</p>
                                 </div>
                             </article>
 
                             <article class="af-static-card">
-                                <img src="bruscheta.jpg" alt="Bruschetta Clássica" loading="lazy" decoding="async">
+                                <img src="bruscheta.jpg" alt="Bruschetta clássica" loading="lazy" decoding="async">
                                 <div class="af-static-shade"></div>
                                 <div class="af-static-content">
                                     <span>Receita 03</span>
@@ -407,12 +481,72 @@
                             </article>
 
                             <article class="af-static-card">
-                                <img src="omelete.jpg" alt="Omelete Simples" loading="lazy" decoding="async">
+                                <img src="omelete.jpg" alt="Omelete simples" loading="lazy" decoding="async">
                                 <div class="af-static-shade"></div>
                                 <div class="af-static-content">
                                     <span>Receita 04</span>
                                     <h3>Omelete Simples</h3>
-                                    <p>Ovos, sal, pimenta e o que tiver na geladeira para resolver uma refeição rápida.</p>
+                                    <p>Ovos e o que tiver na geladeira resolvem uma refeição rápida.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="receita_05_arroz_colorido.jpg" alt="Arroz colorido" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Receita 05</span>
+                                    <h3>Arroz Colorido</h3>
+                                    <p>Aproveite legumes picados e sobras para transformar o arroz do dia anterior.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="receita_06_macarrao_alho_oleo.jpg" alt="Macarrão alho e óleo" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Receita 06</span>
+                                    <h3>Macarrão Rápido</h3>
+                                    <p>Alho, azeite e temperos simples criam uma refeição em poucos minutos.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="receita_07_frango_desfiado.jpg" alt="Frango desfiado" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Receita 07</span>
+                                    <h3>Frango Desfiado</h3>
+                                    <p>Use frango pronto em wraps, saladas, omeletes ou recheios durante a semana.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="receita_08_panela_legumes.jpg" alt="Panela de legumes" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Receita 08</span>
+                                    <h3>Panela de Legumes</h3>
+                                    <p>Junte legumes próximos do vencimento com temperos e uma proteína simples.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="receita_09_tapioca_recheada.jpg" alt="Tapioca recheada" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Receita 09</span>
+                                    <h3>Tapioca Recheada</h3>
+                                    <p>Uma base rápida para usar queijo, ovos, frango, tomate ou sobras da geladeira.</p>
+                                </div>
+                            </article>
+
+                            <article class="af-static-card">
+                                <img src="receita_10_sopa_rapida.jpg" alt="Sopa rápida" loading="lazy" decoding="async">
+                                <div class="af-static-shade"></div>
+                                <div class="af-static-content">
+                                    <span>Receita 10</span>
+                                    <h3>Sopa Rápida</h3>
+                                    <p>Legumes, caldo e temperos viram uma opção leve para aproveitar alimentos.</p>
                                 </div>
                             </article>
                         </div>
@@ -421,8 +555,6 @@
                     <button type="button" class="af-static-arrow af-static-next" data-af-carousel-next aria-label="Próxima receita">
                         <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
                     </button>
-
-                    <div class="af-static-hint" aria-hidden="true">Arraste para ver mais</div>
                 </div>
 
             </div>

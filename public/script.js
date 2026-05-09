@@ -13940,398 +13940,118 @@ console.log('handleSignup chamada');
 
 
 /* =========================================================
-   AF V34 — Reativa e sincroniza botão Sol/Lua da landing
+   AF V41 — Sol/Lua landing estável
+   - O modo lua NÃO fica salvo para a próxima visita.
+   - Ao recarregar/voltar ao site, a landing abre clara/normal.
+   - Usa captura no window para impedir handlers antigos duplicados.
 ========================================================= */
-(function restoreLandingThemeToggleV34(){
-  const FLAG = '__afRestoreLandingThemeToggleV34';
-  if (window[FLAG]) return;
-  window[FLAG] = true;
+(function afLandingThemeStableV41(){
+  if (window.__afLandingThemeStableV41) return;
+  window.__afLandingThemeStableV41 = true;
 
-  function syncLandingThemeState(btn){
-    const isLua = document.body.classList.contains('lua-mode');
-    document.body.classList.toggle('landing-lua-mode', isLua);
-    const icon = btn?.querySelector('i');
-    if (icon) {
-      icon.className = isLua ? 'fa-regular fa-moon' : 'fa-regular fa-sun';
-    }
+  const SVG_SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18.2a6.2 6.2 0 1 0 0-12.4 6.2 6.2 0 0 0 0 12.4Zm0-14.7a1 1 0 0 0 1-1V1.4a1 1 0 1 0-2 0v1.1a1 1 0 0 0 1 1Zm0 17a1 1 0 0 0-1 1v1.1a1 1 0 1 0 2 0v-1.1a1 1 0 0 0-1-1ZM3.5 12a1 1 0 0 0-1-1H1.4a1 1 0 1 0 0 2h1.1a1 1 0 0 0 1-1Zm19.1-1h-1.1a1 1 0 1 0 0 2h1.1a1 1 0 1 0 0-2ZM5.6 7a1 1 0 0 0 1.4-1.4l-.8-.8a1 1 0 1 0-1.4 1.4l.8.8Zm12.8 10a1 1 0 0 0-1.4 1.4l.8.8a1 1 0 0 0 1.4-1.4l-.8-.8Zm.8-10.8a1 1 0 1 0-1.4-1.4l-.8.8A1 1 0 1 0 18.4 7l.8-.8ZM7 18.4A1 1 0 1 0 5.6 17l-.8.8a1 1 0 0 0 1.4 1.4l.8-.8Z"/></svg>';
+  const SVG_MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.2 14.5A8.1 8.1 0 0 1 9.5 2.8a1 1 0 0 0-1.08-1.63A10.1 10.1 0 1 0 22.83 15.58a1 1 0 0 0-1.63-1.08Z"/></svg>';
+
+  function isLandingContext(){
+    return !!document.getElementById('landing-theme-toggle') && !document.body.classList.contains('app-mode');
   }
 
-  function bind(){
-    const existing = document.getElementById('landing-theme-toggle');
-    if (!existing || !existing.parentNode) return;
-
-    const btn = existing.cloneNode(true);
-    existing.parentNode.replaceChild(btn, existing);
-
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      if (window.app && typeof window.app.toggleTheme === 'function') {
-        window.app.toggleTheme();
-      } else {
-        document.body.classList.toggle('lua-mode');
-      }
-
-      try {
-        localStorage.setItem('themePreference', document.body.classList.contains('lua-mode') ? 'lua' : 'sol');
-      } catch (_) {}
-
-      syncLandingThemeState(btn);
-
-      if (window.app && typeof window.app.updateThemeIcons === 'function') {
-        window.app.updateThemeIcons();
-      }
-    });
-
-    syncLandingThemeState(btn);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(bind, 0), { once: true });
-  } else {
-    setTimeout(bind, 0);
-  }
-})();
-
-
-/* =========================================================
-   AF V35 — Botão Sol/Lua da landing funcionando de verdade
-========================================================= */
-(function forceLandingThemeToggleV35(){
-  if (window.__afForceLandingThemeToggleV35) return;
-  window.__afForceLandingThemeToggleV35 = true;
-
-  function apply(mode){
-    const lua = mode === 'lua';
-    document.body.classList.toggle('lua-mode', lua);
-    document.body.classList.toggle('landing-lua-mode', lua);
-    try { localStorage.setItem('themePreference', lua ? 'lua' : 'sol'); } catch (_) {}
-    const btn = document.getElementById('landing-theme-toggle');
-    if (btn) {
-      btn.classList.toggle('is-lua', lua);
-      btn.setAttribute('aria-label', lua ? 'Ativar modo claro' : 'Ativar modo escuro');
-      btn.setAttribute('title', lua ? 'Modo claro' : 'Modo escuro');
-    }
-  }
-
-  function currentMode(){
-    try {
-      const saved = localStorage.getItem('themePreference');
-      if (saved === 'lua' || saved === 'sol') return saved;
-    } catch (_) {}
-    return document.body.classList.contains('lua-mode') || document.body.classList.contains('landing-lua-mode') ? 'lua' : 'sol';
-  }
-
-  function toggle(){
-    apply(currentMode() === 'lua' ? 'sol' : 'lua');
-  }
-
-  document.addEventListener('click', function(event){
-    const btn = event.target.closest && event.target.closest('#landing-theme-toggle');
+  function setButton(btn, dark){
     if (!btn) return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    toggle();
-  }, true);
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){ apply(currentMode()); }, { once: true });
-  } else {
-    apply(currentMode());
-  }
-})();
-
-
-/* =========================================================
-   AF V36 — Sol/Lua: toggler final independente do app
-========================================================= */
-(function afLandingThemeFinalV36(){
-  if (window.__afLandingThemeFinalV36) return;
-  window.__afLandingThemeFinalV36 = true;
-
-  function getMode(){
-    try {
-      const saved = localStorage.getItem('themePreference');
-      if (saved === 'lua' || saved === 'sol') return saved;
-    } catch (_) {}
-    return (document.body.classList.contains('af-landing-dark') || document.body.classList.contains('landing-lua-mode') || document.body.classList.contains('lua-mode')) ? 'lua' : 'sol';
+    btn.classList.toggle('is-lua', dark);
+    btn.classList.toggle('af-is-dark', dark);
+    btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    btn.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+    btn.setAttribute('title', dark ? 'Modo claro' : 'Modo escuro');
+    btn.innerHTML = dark ? SVG_MOON : SVG_SUN;
   }
 
-  function setMode(mode){
+  function applyLandingMode(mode){
+    if (!isLandingContext()) return;
     const dark = mode === 'lua';
-    document.body.classList.toggle('af-landing-dark', dark);
-    document.body.classList.toggle('landing-lua-mode', dark);
-    document.body.classList.toggle('lua-mode', dark);
-    try { localStorage.setItem('themePreference', dark ? 'lua' : 'sol'); } catch (_) {}
 
-    const container = document.getElementById('landing-video-container');
-    const videos = document.querySelectorAll('.background-video, .background-video.active');
-    if (container) {
-      container.style.setProperty('filter', dark ? 'brightness(.52) saturate(.78) contrast(1.05)' : 'brightness(1.08) saturate(1.03) contrast(1.01)', 'important');
-    }
-    videos.forEach((video) => {
-      video.style.setProperty('filter', dark ? 'brightness(.62) saturate(.82) contrast(1.04)' : 'brightness(1.04) saturate(1.02) contrast(1.01)', 'important');
-    });
-
-    const btn = document.getElementById('landing-theme-toggle');
-    if (btn) {
-      btn.classList.toggle('is-lua', dark);
-      btn.classList.toggle('af-is-dark', dark);
-      btn.setAttribute('title', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
-      btn.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
-    }
-  }
-
-  document.addEventListener('click', function(event){
-    const btn = event.target.closest && event.target.closest('#landing-theme-toggle');
-    if (!btn) return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    setMode(getMode() === 'lua' ? 'sol' : 'lua');
-  }, true);
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setMode(getMode()), { once: true });
-  } else {
-    setMode(getMode());
-  }
-})();
-
-
-/* =========================================================
-   AF V37 — Sol/Lua com captura máxima, independente do app
-========================================================= */
-(function afLandingThemeToggleV37(){
-  if (window.__afLandingThemeToggleV37) return;
-  window.__afLandingThemeToggleV37 = true;
-
-  function setMode(mode){
-    const dark = mode === 'lua';
-    document.body.classList.toggle('lua-mode', dark);
     document.body.classList.toggle('landing-lua-mode', dark);
     document.body.classList.toggle('af-landing-dark', dark);
-    try { localStorage.setItem('themePreference', dark ? 'lua' : 'sol'); } catch(_) {}
-    const btn = document.getElementById('landing-theme-toggle');
-    if (btn) {
-      btn.classList.toggle('is-lua', dark);
-      btn.classList.toggle('af-is-dark', dark);
-      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
-      btn.setAttribute('title', dark ? 'Modo claro' : 'Modo escuro');
-    }
-  }
+    document.body.classList.remove('lua-mode');
 
-  function currentMode(){
-    if (document.body.classList.contains('af-landing-dark') || document.body.classList.contains('landing-lua-mode') || document.body.classList.contains('lua-mode')) return 'lua';
-    try { return localStorage.getItem('themePreference') === 'lua' ? 'lua' : 'sol'; } catch(_) { return 'sol'; }
-  }
-
-  function bind(){
-    setMode(currentMode());
-  }
-
-  document.addEventListener('click', function(event){
-    const btn = event.target.closest && event.target.closest('#landing-theme-toggle');
-    if (!btn) return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    setMode(currentMode() === 'lua' ? 'sol' : 'lua');
-  }, true);
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once:true });
-  else bind();
-})();
-
-
-/* =========================================================
-   AF V38 — Sol/Lua final: evento direto + delegação + ícone SVG
-========================================================= */
-(function afThemeToggleFinalV38(){
-  if (window.__afThemeToggleFinalV38) return;
-  window.__afThemeToggleFinalV38 = true;
-
-  const SVG_SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Zm0 4a1 1 0 0 1-1-1v-1a1 1 0 1 1 2 0v1a1 1 0 0 1-1 1Zm0-18a1 1 0 0 1-1-1V2a1 1 0 1 1 2 0v1a1 1 0 0 1-1 1Zm10 8a1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1ZM4 12a1 1 0 0 1-1 1H2a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1Zm14.95 7.95a1 1 0 0 1-1.41 0l-.71-.71a1 1 0 1 1 1.41-1.41l.71.71a1 1 0 0 1 0 1.41ZM7.17 6.17a1 1 0 0 1-1.41 0l-.71-.71A1 1 0 1 1 6.46 4.05l.71.71a1 1 0 0 1 0 1.41Zm11.78-1.12a1 1 0 0 1 0 1.41l-.71.71a1 1 0 1 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0ZM7.17 17.83a1 1 0 0 1 0 1.41l-.71.71a1 1 0 0 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0Z"/></svg>';
-  const SVG_MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 14.2A8.5 8.5 0 0 1 9.8 3a1 1 0 0 0-1.13-1.47A10.5 10.5 0 1 0 22.47 15.33 1 1 0 0 0 21 14.2Z"/></svg>';
-
-  function getMode(){
-    try {
-      const saved = localStorage.getItem('themePreference');
-      if (saved === 'lua' || saved === 'sol') return saved;
-    } catch (_) {}
-    return document.body.classList.contains('lua-mode') || document.body.classList.contains('landing-lua-mode') || document.body.classList.contains('af-landing-dark') ? 'lua' : 'sol';
-  }
-
-  function setMode(mode){
-    const dark = mode === 'lua';
-    document.body.classList.toggle('lua-mode', dark);
-    document.body.classList.toggle('landing-lua-mode', dark);
-    document.body.classList.toggle('af-landing-dark', dark);
-    try { localStorage.setItem('themePreference', dark ? 'lua' : 'sol'); } catch (_) {}
+    // Importante: a landing sempre deve voltar clara na próxima visita.
+    try { localStorage.setItem('themePreference', 'sol'); } catch (_) {}
 
     const btn = document.getElementById('landing-theme-toggle');
-    if (btn) {
-      btn.classList.toggle('is-lua', dark);
-      btn.classList.toggle('af-is-dark', dark);
-      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
-      btn.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
-      btn.setAttribute('title', dark ? 'Modo claro' : 'Modo escuro');
-      btn.innerHTML = dark ? SVG_MOON : SVG_SUN;
-    }
+    setButton(btn, dark);
   }
 
-  function bind(){
-    const btn = document.getElementById('landing-theme-toggle');
-    if (!btn) return;
-    btn.onclick = function(event){
-      event.preventDefault();
-      event.stopPropagation();
-      setMode(getMode() === 'lua' ? 'sol' : 'lua');
-      return false;
-    };
-    setMode(getMode());
+  function forceLandingDefault(){
+    applyLandingMode('sol');
   }
 
-  document.addEventListener('click', function(event){
-    const btn = event.target.closest && event.target.closest('#landing-theme-toggle');
-    if (!btn) return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    setMode(getMode() === 'lua' ? 'sol' : 'lua');
-  }, true);
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(bind, 50), { once: true });
-  } else {
-    setTimeout(bind, 50);
-  }
-  window.addEventListener('load', () => setTimeout(bind, 200), { once: true });
-})();
-
-
-/* =========================================================
-   AF V39 — Sol/Lua com captura no window antes dos toggles antigos
-========================================================= */
-(function afThemeToggleSingleSourceV39(){
-  if (window.__afThemeToggleSingleSourceV39) return;
-  window.__afThemeToggleSingleSourceV39 = true;
-
-  const SUN = '<i class="fa-regular fa-sun" aria-hidden="true"></i>';
-  const MOON = '<i class="fa-regular fa-moon" aria-hidden="true"></i>';
-
-  function isDark(){
-    try {
-      const saved = localStorage.getItem('themePreference');
-      if (saved === 'lua') return true;
-      if (saved === 'sol') return false;
-    } catch(_) {}
-    return document.body.classList.contains('lua-mode') || document.body.classList.contains('landing-lua-mode') || document.body.classList.contains('af-landing-dark');
+  function isDarkNow(){
+    return document.body.classList.contains('landing-lua-mode') || document.body.classList.contains('af-landing-dark');
   }
 
-  function apply(dark){
-    document.body.classList.toggle('lua-mode', dark);
-    document.body.classList.toggle('landing-lua-mode', dark);
-    document.body.classList.toggle('af-landing-dark', dark);
-    try { localStorage.setItem('themePreference', dark ? 'lua' : 'sol'); } catch(_) {}
-
-    const btn = document.getElementById('landing-theme-toggle');
-    if (btn) {
-      btn.classList.toggle('is-lua', dark);
-      btn.classList.toggle('af-is-dark', dark);
-      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
-      btn.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
-      btn.setAttribute('title', dark ? 'Modo claro' : 'Modo escuro');
-      btn.innerHTML = dark ? MOON : SUN;
-    }
-  }
-
-  function handle(event){
+  function handleToggle(event){
     const btn = event.target && event.target.closest && event.target.closest('#landing-theme-toggle');
-    if (!btn) return;
+    if (!btn || !isLandingContext()) return;
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    apply(!isDark());
+    applyLandingMode(isDarkNow() ? 'sol' : 'lua');
     return false;
   }
 
-  window.addEventListener('click', handle, true);
   window.addEventListener('pointerdown', function(event){
     const btn = event.target && event.target.closest && event.target.closest('#landing-theme-toggle');
-    if (!btn) return;
+    if (!btn || !isLandingContext()) return;
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
   }, true);
 
+  window.addEventListener('click', handleToggle, true);
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => apply(isDark()), { once:true });
+    document.addEventListener('DOMContentLoaded', forceLandingDefault, { once: true });
   } else {
-    apply(isDark());
+    forceLandingDefault();
   }
+
+  window.addEventListener('pageshow', forceLandingDefault);
+  window.addEventListener('load', function(){
+    forceLandingDefault();
+    window.setTimeout(forceLandingDefault, 120);
+    window.setTimeout(forceLandingDefault, 520);
+  }, { once: true });
 })();
 
 
 /* =========================================================
-   AF V40 — Sol/Lua minimalista, sem conflito com handlers antigos
-   Usa #af-theme-toggle-minimal para evitar os listeners duplicados antigos.
+   AF V42 — Mobile: campo do simulador focável por toda a barra
+   - Clique na frase/área do campo foca o input.
+   - Não interfere no botão "Ver economia".
 ========================================================= */
-(function afThemeToggleMinimalV40(){
-  if (window.__afThemeToggleMinimalV40) return;
-  window.__afThemeToggleMinimalV40 = true;
+(function afMobileCalculatorFocusV42(){
+  if (window.__afMobileCalculatorFocusV42) return;
+  window.__afMobileCalculatorFocusV42 = true;
 
-  const SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Zm0 4a1 1 0 0 1-1-1v-1a1 1 0 1 1 2 0v1a1 1 0 0 1-1 1Zm0-18a1 1 0 0 1-1-1V2a1 1 0 1 1 2 0v1a1 1 0 0 1-1 1Zm10 8a1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1ZM4 12a1 1 0 0 1-1 1H2a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1Zm14.95 7.95a1 1 0 0 1-1.41 0l-.71-.71a1 1 0 1 1 1.41-1.41l.71.71a1 1 0 0 1 0 1.41ZM7.17 6.17a1 1 0 0 1-1.41 0l-.71-.71A1 1 0 1 1 6.46 4.05l.71.71a1 1 0 0 1 0 1.41Zm11.78-1.12a1 1 0 0 1 0 1.41l-.71.71a1 1 0 1 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0ZM7.17 17.83a1 1 0 0 1 0 1.41l-.71.71a1 1 0 0 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0Z"/></svg>';
-  const MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 14.2A8.5 8.5 0 0 1 9.8 3a1 1 0 0 0-1.13-1.47A10.5 10.5 0 1 0 22.47 15.33 1 1 0 0 0 21 14.2Z"/></svg>';
+  function isMobileLanding(){
+    return window.matchMedia && window.matchMedia('(max-width: 768px)').matches && !document.body.classList.contains('app-mode');
+  }
 
-  function getSavedMode(){
+  function focusHeroSpend(){
+    const input = document.getElementById('heroMonthlySpend');
+    if (!input) return;
+    input.focus({ preventScroll: true });
     try {
-      const saved = localStorage.getItem('themePreference');
-      if (saved === 'lua' || saved === 'sol') return saved;
+      const len = input.value.length;
+      input.setSelectionRange(len, len);
     } catch (_) {}
-    return document.body.classList.contains('lua-mode') || document.body.classList.contains('landing-lua-mode') || document.body.classList.contains('af-landing-dark') ? 'lua' : 'sol';
   }
 
-  function applyMode(mode){
-    const dark = mode === 'lua';
-    document.body.classList.toggle('lua-mode', dark);
-    document.body.classList.toggle('landing-lua-mode', dark);
-    document.body.classList.toggle('af-landing-dark', dark);
-    try { localStorage.setItem('themePreference', dark ? 'lua' : 'sol'); } catch (_) {}
-
-    const btn = document.getElementById('af-theme-toggle-minimal');
-    if (btn) {
-      btn.innerHTML = dark ? MOON : SUN;
-      btn.classList.toggle('is-lua', dark);
-      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
-      btn.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
-      btn.setAttribute('title', dark ? 'Modo claro' : 'Modo escuro');
-    }
-  }
-
-  function bind(){
-    const btn = document.getElementById('af-theme-toggle-minimal');
-    if (!btn) return;
-    btn.addEventListener('click', function(event){
-      event.preventDefault();
-      event.stopPropagation();
-      const current = getSavedMode();
-      applyMode(current === 'lua' ? 'sol' : 'lua');
-    });
-    btn.addEventListener('keydown', function(event){
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      const current = getSavedMode();
-      applyMode(current === 'lua' ? 'sol' : 'lua');
-    });
-    applyMode(getSavedMode());
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bind, { once: true });
-  } else {
-    bind();
-  }
+  document.addEventListener('click', function(event){
+    if (!isMobileLanding()) return;
+    if (event.target.closest('#heroCalcBtn, .af-calc-submit, button, a')) return;
+    const hit = event.target.closest('#inicio .af-calc-field, #inicio .af-calc-bar');
+    if (!hit) return;
+    focusHeroSpend();
+  }, true);
 })();
