@@ -11,11 +11,11 @@ const checkPremium = async (req, res, next) => {
         }
         
         // Verifica se o período de teste acabou
-        if (user.subscriptionTier === 'premium' && user.trialEndDate && user.trialEndDate < new Date()) {
+        if (user.subscriptionTier === 'premium' && user.trialEndDate && user.trialEndDate <= new Date()) {
             // Reverte o usuário para o plano 'basic'
             user.subscriptionTier = 'basic';
             await user.save();
-            return res.status(403).json({ message: 'Seu período de teste premium expirou. Faça upgrade para continuar usando este recurso.' });
+            return res.status(403).json({ message: 'Seus 7 dias completos terminaram. A assinatura passa a ser solicitada agora, no 8º dia.' });
         }
 
         if (user.subscriptionTier === 'premium') {

@@ -18,7 +18,7 @@
     "productivity",
     "lifestyle"
   ],
-  "description": "Organize, planeje e economize com IA: listas, despensa e cardápio em um app rápido e offline-first.",
+  "description": "Organize compras, despensa, receitas e refeições. Teste grátis por 7 dias sem cartão.",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -31,12 +31,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ],
   "shortcuts": [
@@ -47,7 +41,8 @@
       "icons": [
         {
           "src": "/icons/icon-192x192.png",
-          "sizes": "192x192"
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     },
@@ -58,7 +53,8 @@
       "icons": [
         {
           "src": "/icons/icon-192x192.png",
-          "sizes": "192x192"
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     }

@@ -29,7 +29,9 @@
 
   const state = {
     refreshing: false,
-    lastRefreshAt: 0
+    lastRefreshAt: 0,
+    sessionPayload: null,
+    trialWatchTimer: null
   };
 
   function getToken() {
@@ -70,11 +72,26 @@
     return payload?.subscription?.checkoutUrl || payload?.checkoutUrl || app.checkoutLinks?.premium || '';
   }
 
-  function isPremiumPayload(payload) {
-    if (payload?.access?.canPerformActions === true) return true;
+  function isTrialActivePayload(payload) {
     const plan = String(payload?.subscription?.plan || '').toLowerCase();
     const status = String(payload?.subscription?.status || '').toLowerCase();
-    return plan === PREMIUM_PLAN && (status === 'active' || status === 'trialing');
+    if (plan !== PREMIUM_PLAN || status !== 'trialing') return false;
+    const rawEnd = payload?.subscription?.trialEnd;
+    if (!rawEnd) return payload?.access?.canPerformActions === true;
+    const trialEnd = new Date(rawEnd).getTime();
+    return Number.isFinite(trialEnd) && Date.now() < trialEnd;
+  }
+  function isPremiumPayload(payload) {
+    const plan = String(payload?.subscription?.plan || '').toLowerCase();
+    const status = String(payload?.subscription?.status || '').toLowerCase();
+    if (plan === PREMIUM_PLAN && status === 'active') return true;
+    if (isTrialActivePayload(payload)) return true;
+    return payload?.access?.canPerformActions === true && status !== 'trial_expired';
+  }
+  function trialStatusMessage(payload) {
+    const remaining = Number(payload?.subscription?.trialDaysRemaining || 0);
+    const dayText = remaining === 1 ? '1 dia completo' : `${Math.max(remaining, 1)} dias completos`;
+    return `Seu teste grátis está ativo por mais ${dayText}. O pagamento só será solicitado a partir do 8º dia.`;
   }
 
   function clearInlineErrors() {
@@ -107,28 +124,43 @@
     if (existing && typeof existing.remove === 'function') existing.remove();
   }
 
+  function isTrialExpiredPayload(payload) {
+    const status = String(payload?.subscription?.status || '').toLowerCase();
+    const reason = String(payload?.access?.reason || '').toLowerCase();
+    const rawEnd = payload?.subscription?.trialEnd;
+    const endReached = status === 'trialing' && rawEnd && Date.now() >= new Date(rawEnd).getTime();
+    return Boolean(payload?.subscription?.trialExpired || status === 'trial_expired' || reason === 'trial_expired' || endReached);
+  }
+
   function showPaymentGateModal(payload) {
     closePaymentGateModal();
-    const checkoutUrl = getCheckoutUrl(payload || {});
+    const source = payload && Object.keys(payload).length ? payload : (state.sessionPayload || payload || {});
+    if (isTrialActivePayload(source)) return false;
+    const expired = isTrialExpiredPayload(source);
+    const checkoutUrl = getCheckoutUrl(source);
+    const title = source?.title || (expired ? 'Seus 7 dias grátis terminaram' : 'Ative seu Premium');
+    const message = source?.message || (expired
+      ? 'Seu teste sem cartão chegou ao fim. Seus dados continuam salvos: assine por R$ 9,90 por mês para voltar ao painel completo.'
+      : 'Assine o Premium por R$ 9,90 por mês para liberar o painel completo. Cancele quando quiser.');
+    const primaryLabel = expired ? 'ASSINAR POR R$ 9,90/MÊS' : 'ASSINAR PREMIUM';
+
     const overlay = documentRef.createElement('div');
     overlay.id = 'payment-gate-modal';
     overlay.className = 'modal-overlay is-visible';
     overlay.style.zIndex = '30000';
     overlay.innerHTML = [
-      '<div class="modal-box" style="max-width:560px; width:min(92vw,560px);">',
+      '<div class="modal-box af-payment-gate-box" style="max-width:560px; width:min(92vw,560px);">',
       '  <button type="button" class="close-modal-btn" data-action="close-payment-gate" aria-label="Fechar">×</button>',
-      '  <div class="modal-header"><h3 style="margin:0;">' + ((payload && payload.title) || 'Ative seu Premium') + '</h3></div>',
+      '  <div class="modal-header"><h3 style="margin:0;">' + title + '</h3></div>',
       '  <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">',
-      '    <p style="margin:0; color:var(--glass-text-primary); line-height:1.55;">',
-      (payload && payload.message) || 'Seu cadastro básico pode visualizar a tela inicial e as configurações da conta. Para liberar listas, despensa, receitas, planejador e análises, ative agora 7 dias grátis e depois pague R$ 9,90 por mês. Cancele quando quiser.',
-      '    </p>',
-      '    <div style="display:grid; gap:8px; padding:12px; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:rgba(255,255,255,.04);">',
-      '      <div style="font-weight:700; color:#fff;">7 dias grátis</div>',
-      '      <div style="color:#fff; opacity:.92;">Depois, R$ 9,90/mês</div>',
+      '    <p style="margin:0; color:var(--glass-text-primary); line-height:1.55;">' + message + '</p>',
+      '    <div class="af-payment-gate-points" style="display:grid; gap:8px; padding:12px; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:rgba(255,255,255,.04);">',
+      '      <div style="font-weight:700; color:#fff;">' + (expired ? 'Seus dados permanecem salvos' : 'Painel completo') + '</div>',
+      '      <div style="color:#fff; opacity:.92;">R$ 9,90 por mês</div>',
       '      <div style="color:#fff; opacity:.92;">Cancele quando quiser</div>',
       '    </div>',
       '    <div style="display:flex; gap:10px; flex-wrap:wrap;">',
-      '      <button type="button" class="btn btn-primary" data-action="go-checkout" style="flex:1; min-width:180px;">Começar teste grátis</button>',
+      '      <button type="button" class="btn btn-primary" data-action="go-checkout" style="flex:1; min-width:190px;">' + primaryLabel + '</button>',
       '      <button type="button" class="btn btn-secondary" data-action="close-payment-gate" style="flex:1; min-width:140px;">Agora não</button>',
       '    </div>',
       '  </div>',
@@ -201,6 +233,8 @@
   }
 
   function applySessionPayload(payload) {
+    state.sessionPayload = payload || null;
+    app.backendSessionPayload = payload || null;
     const user = payload?.user || {};
     app.state = app.state || JSON.parse(JSON.stringify(app.defaultState || {}));
     app.state.user = app.state.user || {};
@@ -259,6 +293,9 @@
       const plan = applySessionPayload(payload);
       if (plan === PREMIUM_PLAN) {
         closePaymentGateModal();
+      } else if (isTrialExpiredPayload(payload)) {
+        if (app.isAppMode) rawExitToLanding();
+        windowRef.setTimeout(function () { showPaymentGateModal(payload); }, 40);
       }
       return payload;
     } catch (error) {
@@ -340,6 +377,23 @@
   app.refreshAccessFromServer = refreshAccessFromServer;
   app.handleMercadoPagoReturn = handleMercadoPagoReturn;
   app.forceLoggedOutLanding = forceLogoutToLanding;
+  app.isTrialActiveSession = function () { return isTrialActivePayload(state.sessionPayload); };
+  app.getBackendSessionPayload = function () { return state.sessionPayload; };
+  const originalShowPlansModal = typeof app.showPlansModal === 'function' ? app.showPlansModal.bind(app) : null;
+  app.showPlansModal = function showPlansModalDuringTrial(customMessage) {
+    if (isTrialActivePayload(state.sessionPayload)) { originalShowNotification(trialStatusMessage(state.sessionPayload), 'success'); return; }
+    if (originalShowPlansModal) return originalShowPlansModal(customMessage);
+    if (typeof app.openModal === 'function') return app.openModal('plans-modal');
+  };
+  app.handleRealSubscription = function handleRealSubscriptionAfterTrial(planId) {
+    if (planId !== PREMIUM_PLAN) return;
+    if (!getToken()) { if (typeof app.showAuthModal === 'function') app.showAuthModal(); return; }
+    if (isTrialActivePayload(state.sessionPayload)) {
+      closePaymentGateModal(); if (typeof app.closeModal === 'function') app.closeModal('plans-modal');
+      originalShowNotification(trialStatusMessage(state.sessionPayload), 'success'); return;
+    }
+    showPaymentGateModal(state.sessionPayload || {});
+  };
 
   app.handleLogin = async function handleLogin() {
     clearInlineErrors();
@@ -361,15 +415,9 @@
         rawEnterPanelHome();
         originalShowNotification('Login premium realizado com sucesso.', 'success');
       } else {
-        rawEnterPanelHome();
-        windowRef.setTimeout(function () {
-          showPaymentGateModal({
-            title: 'Ative seu Premium',
-            message: 'Sua conta está ativa, mas o painel completo só é liberado após a assinatura premium. Ative agora 7 dias grátis e depois pague R$ 9,90 por mês. Cancele quando quiser.',
-            checkoutUrl: getCheckoutUrl(payload)
-          });
-        }, 60);
-        originalShowNotification('Conta básica conectada. O painel completo é liberado no Premium.', 'info');
+        rawExitToLanding();
+        windowRef.setTimeout(function () { showPaymentGateModal(payload); }, 60);
+        originalShowNotification(isTrialExpiredPayload(payload) ? 'Seu teste grátis terminou.' : 'O acesso completo exige Premium.', 'info');
       }
     } catch (error) {
       showInlineError('login-form', error?.payload?.message || error.message || 'Não foi possível fazer login.', 'error');
@@ -396,17 +444,15 @@
         body: JSON.stringify({ name, email, password, acceptedTerms })
       });
       setSession(payload.token, payload.user);
-      applySessionPayload(payload);
+      const plan = applySessionPayload(payload);
       originalCloseAllModals();
-      rawEnterPanelHome();
-      windowRef.setTimeout(function () {
-        showPaymentGateModal({
-          title: 'Cadastro concluído',
-          message: 'Sua conta foi criada com sucesso. Para liberar o painel completo, ative agora seu Premium com 7 dias grátis. Depois, R$ 9,90 por mês. Cancele quando quiser.',
-          checkoutUrl: getCheckoutUrl(payload)
-        });
-      }, 60);
-      originalShowNotification('Cadastro concluído. Conta básica criada com sucesso.', 'success');
+      if (plan === PREMIUM_PLAN) {
+        rawEnterPanelHome();
+        originalShowNotification('Cadastro concluído: painel completo liberado por 7 dias sem cartão. O pagamento só aparece no 8º dia. ✨', 'success');
+      } else {
+        rawExitToLanding();
+        windowRef.setTimeout(function () { showPaymentGateModal(payload); }, 60);
+      }
     } catch (error) {
       showInlineError('signup-form', error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.', 'error');
     }
@@ -473,10 +519,9 @@
       }
       if (isPremiumPayload(payload)) {
         rawEnterPanelHome();
-      } else {
-        rawEnterPanelHome();
-        windowRef.setTimeout(function () { showPaymentGateModal({ checkoutUrl: getCheckoutUrl(payload) }); }, 40);
-      }
+      } else if (isTrialExpiredPayload(payload) || payload?.subscription?.paymentRequired) {
+        rawEnterPanelHome(); windowRef.setTimeout(function () { showPaymentGateModal(payload); }, 40);
+      } else { rawEnterPanelHome(); }
     } catch (_error) {
       if (typeof app.showAuthModal === 'function') app.showAuthModal();
     }
@@ -575,6 +620,11 @@
           refreshAccessFromServer(false).catch(function () { return null; });
         }
       });
+    }
+    if (windowRef && typeof windowRef.setInterval === 'function' && !state.trialWatchTimer) {
+      state.trialWatchTimer = windowRef.setInterval(function () {
+        if (app.isLoggedIn) refreshAccessFromServer(true).catch(function () { return null; });
+      }, 10 * 60 * 1000);
     }
   }
 

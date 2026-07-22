@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.05.09.13';
+const VERSION = '2026.07.22.showcase-restored-v66';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -16,6 +16,8 @@ const APP_SHELL = [
   '/reset-password.html',
   '/manifest.webmanifest',
   '/offline.html',
+  '/fundo_poster.jpg',
+  '/fundo3_poster.jpg',
   '/instagram/',
   '/tiktok/',
   '/youtube/',
@@ -23,6 +25,8 @@ const APP_SHELL = [
   '/email/',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
+  '/icons/apple-touch-icon.png',
+  '/icons/favicon-64.png',
 ];
 
 self.addEventListener('install', (event) => {

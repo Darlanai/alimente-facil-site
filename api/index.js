@@ -29,6 +29,7 @@ const PREMIUM_CHECKOUT_URL =
   'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=ae9349b69ef94a27ad19786352488fa5';
 
 const TRIAL_DAYS = 7;
+const TRIAL_DURATION_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
 let nodemailer = null;
 try { nodemailer = require('nodemailer'); } catch (_error) { nodemailer = null; }
 
@@ -227,6 +228,7 @@ function addDays(date, days) {
   d.setUTCDate(d.getUTCDate() + days);
   return d;
 }
+function getTrialEnd(date = now()) { return new Date(new Date(date).getTime() + TRIAL_DURATION_MS); }
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -269,7 +271,7 @@ function signAuthToken(user) {
   return jwt.sign(
     { sub: String(user._id), email: user.email, typ: 'auth' },
     JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: '30d' }
   );
 }
 
@@ -284,16 +286,19 @@ function signPendingToken(user) {
 
 function publicSubscription(subscription) {
   if (!subscription) return null;
+  const currentDate = now();
+  const trialEnd = subscription.trialEnd ? new Date(subscription.trialEnd) : null;
+  const remainingMs = trialEnd ? Math.max(0, trialEnd.getTime() - currentDate.getTime()) : 0;
+  const trialDaysRemaining = trialEnd ? Math.ceil(remainingMs / (24 * 60 * 60 * 1000)) : 0;
+  const status = String(subscription.status || 'basic').toLowerCase();
+  const trialActive = status === 'trialing' && Boolean(trialEnd) && currentDate < trialEnd;
+  const trialExpired = status === 'trial_expired' || (status === 'trialing' && Boolean(trialEnd) && currentDate >= trialEnd);
   return {
-    id: String(subscription._id),
-    userId: String(subscription.userId),
-    plan: subscription.plan,
-    status: subscription.status,
-    trialStart: subscription.trialStart || null,
-    trialEnd: subscription.trialEnd || null,
-    lastPaymentAt: subscription.lastPaymentAt || null,
-    blockedAt: subscription.blockedAt || null,
-    checkoutUrl: PREMIUM_CHECKOUT_URL
+    id:String(subscription._id), userId:String(subscription.userId), plan:subscription.plan, status:subscription.status,
+    trialStart:subscription.trialStart || null, trialEnd:subscription.trialEnd || null, paymentAvailableAt:subscription.trialEnd || null,
+    trialDaysRemaining, trialActive, trialExpired,
+    paymentRequired:trialExpired || ['standby','canceled'].includes(status),
+    lastPaymentAt:subscription.lastPaymentAt || null, blockedAt:subscription.blockedAt || null, checkoutUrl:PREMIUM_CHECKOUT_URL
   };
 }
 
@@ -320,15 +325,36 @@ async function refreshSubscriptionState(userId) {
   if (!subscription) return null;
 
   const currentDate = now();
-  const plan = String(subscription.plan || '').toLowerCase();
-  const status = String(subscription.status || '').toLowerCase();
+  const plan = String(subscription.plan || 'basic').toLowerCase();
+  const status = String(subscription.status || 'basic').toLowerCase();
   const hasMercadoPagoProof = Boolean(
     subscription.mercadopagoSubscriptionId ||
     subscription.billingReadyAt ||
     subscription.lastPaymentAt
   );
 
-  if (plan === 'premium' && !hasMercadoPagoProof && (status === 'trialing' || status === 'active')) {
+  if (plan === 'premium' && status === 'trialing') {
+    if (subscription.trialEnd && currentDate >= new Date(subscription.trialEnd)) {
+      await subscriptionsCollection().updateOne(
+        { _id: subscription._id },
+        {
+          $set: {
+            plan: 'basic',
+            status: 'trial_expired',
+            blockedAt: currentDate,
+            updatedAt: currentDate
+          }
+        }
+      );
+      subscription.plan = 'basic';
+      subscription.status = 'trial_expired';
+      subscription.blockedAt = currentDate;
+      subscription.updatedAt = currentDate;
+    }
+    return subscription;
+  }
+
+  if (plan === 'premium' && !hasMercadoPagoProof && status === 'active') {
     await subscriptionsCollection().updateOne(
       { _id: subscription._id },
       {
@@ -347,29 +373,6 @@ async function refreshSubscriptionState(userId) {
     subscription.trialStart = null;
     subscription.trialEnd = null;
     subscription.blockedAt = null;
-    subscription.updatedAt = currentDate;
-    return subscription;
-  }
-
-  if (
-    subscription.status === 'trialing' &&
-    subscription.trialEnd &&
-    currentDate > new Date(subscription.trialEnd)
-  ) {
-    await subscriptionsCollection().updateOne(
-      { _id: subscription._id },
-      {
-        $set: {
-          plan: 'basic',
-          status: 'basic',
-          blockedAt: currentDate,
-          updatedAt: currentDate
-        }
-      }
-    );
-    subscription.plan = 'basic';
-    subscription.status = 'basic';
-    subscription.blockedAt = currentDate;
     subscription.updatedAt = currentDate;
   }
 
@@ -390,24 +393,23 @@ function getAccessDecision(subscription) {
   const plan = String(subscription.plan || 'basic').toLowerCase();
   const status = String(subscription.status || 'basic').toLowerCase();
 
-  if (plan === 'premium' && (status === 'active' || status === 'trialing')) {
-    return {
-      allowed: true,
-      canPerformActions: true,
-      tier: 'premium',
-      reason: status,
-      message: status === 'trialing'
-        ? 'Premium liberado com 7 dias grátis ativos.'
-        : 'Premium liberado.'
-    };
+  const currentDate = now();
+  const trialEnd = subscription.trialEnd ? new Date(subscription.trialEnd) : null;
+  const trialActive = plan === 'premium' && status === 'trialing' && Boolean(trialEnd) && currentDate < trialEnd;
+  if ((plan === 'premium' && status === 'active') || trialActive) {
+    return { allowed:true, canPerformActions:true, tier:'premium', reason:trialActive?'trialing':'active',
+      message:trialActive ? 'Painel completo liberado durante 7 dias completos. O pagamento só será solicitado a partir do 8º dia.' : 'Premium liberado.' };
   }
 
+  const trialExpired = status === 'trial_expired';
   return {
     allowed: false,
     canPerformActions: false,
     tier: 'basic',
-    reason: plan === 'basic' ? 'basic' : status || 'basic',
-    message: 'Seu cadastro foi criado, mas o painel completo só é liberado no Premium. Ative agora 7 dias grátis e depois pague R$ 9,90/mês. Cancele quando quiser.'
+    reason: trialExpired ? 'trial_expired' : (status || 'basic'),
+    message: trialExpired
+      ? 'Seus 7 dias completos terminaram. A partir de agora, no 8º dia, assine por R$ 9,90/mês para continuar usando o painel.'
+      : 'Assine o Premium por R$ 9,90/mês para liberar o painel completo.'
   };
 }
 
@@ -527,10 +529,10 @@ app.post('/api/auth/register', async (req, res) => {
 
     await subscriptionsCollection().insertOne({
       userId,
-      plan: 'basic',
-      status: 'basic',
-      trialStart: null,
-      trialEnd: null,
+      plan: 'premium',
+      status: 'trialing',
+      trialStart: createdAt,
+      trialEnd: getTrialEnd(createdAt),
       mercadopagoPreapprovalPlanId: 'ae9349b69ef94a27ad19786352488fa5',
       mercadopagoSubscriptionId: null,
       mercadopagoStatus: null,
@@ -547,7 +549,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     return res.status(201).json({
       ok: true,
-      message: 'Cadastro realizado com sucesso. Ative agora seu Premium com 7 dias grátis e depois R$ 9,90/mês.',
+      message: 'Cadastro realizado com sucesso. O painel completo está liberado por 7 dias sem cartão. A assinatura só será solicitada a partir do 8º dia.',
       token: signAuthToken(user),
       checkoutUrl: PREMIUM_CHECKOUT_URL,
       ...session

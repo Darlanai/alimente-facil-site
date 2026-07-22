@@ -279,7 +279,7 @@ initPWA() {
                     e.preventDefault(); e.stopPropagation();
                     document.getElementById('menuItems')?.classList.remove('open');
                     document.getElementById('hamburger')?.classList.remove('open');
-                    this.openModal('plans-modal');
+                    this.showPlansModal();
                 });
             });
         },
@@ -1448,7 +1448,7 @@ initNewHeaderLogic() {
              const plansModal = document.getElementById('plans-modal');
              if(plansModal){
                  const subtitleEl = plansModal.querySelector('p.page-subtitle');
-                 if(subtitleEl) { subtitleEl.innerHTML = customMessage || 'Assine o plano do Alimente Fácil e organize sua rotina alimentar com simplicidade.'; }
+                 if(subtitleEl) { subtitleEl.innerHTML = customMessage || 'Crie sua conta sem cartão, use o painel completo por 7 dias e só depois escolha se deseja assinar.'; }
                  this.updatePlanButtonsState();
              }
              this.openModal('plans-modal');
@@ -1462,7 +1462,7 @@ initNewHeaderLogic() {
                 const cancelLink = card.querySelector('.cancel-link');
                 if (button) {
                      button.disabled = (planId === this.userPlan);
-                     button.textContent = (planId === this.userPlan) ? 'Seu Plano Atual' : `Assinar ${planId.replace('_', ' ').replace('ai', 'IA')}`;
+                     button.textContent = (planId === this.userPlan) ? 'Seu Plano Atual' : (this.isLoggedIn ? 'Assinar Premium' : 'Começar 7 dias grátis');
                 }
                 if (cancelLink) {
                     cancelLink.style.display = (planId === this.userPlan && planId !== 'free') ? 'block' : 'none';
@@ -11282,24 +11282,31 @@ app.apiFetchJson = async function(url, options = {}) {
   app.showPaymentGateModal = function(payload = {}) {
     this.closePaymentGateModal?.();
     const checkoutUrl = payload.checkoutUrl || this.getCheckoutUrl(payload) || '';
+    const status = String(payload?.subscription?.status || '').toLowerCase();
+    const reason = String(payload?.access?.reason || '').toLowerCase();
+    const expired = Boolean(payload?.subscription?.trialExpired || status === 'trial_expired' || reason === 'trial_expired');
+    const title = payload.title || (expired ? 'Seus 7 dias grátis terminaram' : 'Ative o Premium');
+    const message = payload.message || (expired
+      ? 'Seu teste sem cartão chegou ao fim. Seus dados continuam salvos: assine por R$ 9,90 por mês para voltar ao painel completo.'
+      : 'Assine o Premium por R$ 9,90 por mês para liberar o painel completo. Cancele quando quiser.');
     const overlay = document.createElement('div');
     overlay.id = 'payment-gate-modal';
     overlay.className = 'modal-overlay is-visible';
     overlay.style.zIndex = '7000';
 
     overlay.innerHTML = `
-      <div class="modal-box" style="max-width:520px; width:min(92vw,520px);">
+      <div class="modal-box af-payment-gate-box" style="max-width:520px; width:min(92vw,520px);">
         <button type="button" class="close-modal-btn" data-action="close-payment-gate" aria-label="Fechar">×</button>
-        <div class="modal-header"><h3 style="margin:0;">${payload.title || 'Ative o Premium'}</h3></div>
+        <div class="modal-header"><h3 style="margin:0;">${title}</h3></div>
         <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
-          <p style="margin:0; color:var(--glass-text-primary); line-height:1.55;">${payload.message || 'Ative agora seu Premium com 7 dias grátis. Depois, R$ 9,90 por mês. Cancele quando quiser.'}</p>
+          <p style="margin:0; color:var(--glass-text-primary); line-height:1.55;">${message}</p>
           <div style="display:grid; gap:8px; padding:12px; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:rgba(255,255,255,.04);">
-            <div style="font-weight:700; color:#fff;">7 dias grátis</div>
-            <div style="color:#fff; opacity:.92;">Depois, R$ 9,90/mês</div>
+            <div style="font-weight:700; color:#fff;">${expired ? 'Seus dados permanecem salvos' : 'Painel completo'}</div>
+            <div style="color:#fff; opacity:.92;">R$ 9,90 por mês</div>
             <div style="color:#fff; opacity:.92;">Cancele quando quiser</div>
           </div>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button type="button" class="btn btn-primary" data-action="go-checkout" style="flex:1; min-width:180px;">Começar teste grátis</button>
+            <button type="button" class="btn btn-primary" data-action="go-checkout" style="flex:1; min-width:190px;">${expired ? 'ASSINAR POR R$ 9,90/MÊS' : 'ASSINAR PREMIUM'}</button>
             <button type="button" class="btn btn-secondary" data-action="close-payment-gate" style="flex:1; min-width:140px;">Agora não</button>
           </div>
         </div>
@@ -11495,13 +11502,19 @@ console.log('handleSignup chamada');
     this.setStoredAuthSession?.(data.token, data.user);
     this.applyAuthenticatedUser?.(data);
     this.closeAllModals?.();
-    this.exitAppMode?.();
-    this.showPaymentGateModal?.({
-      title: 'Cadastro concluído',
-      message: 'Sua conta foi criada com sucesso. Para liberar o painel completo, ative agora seu Premium com 7 dias grátis. Depois, R$ 9,90 por mês. Cancele quando quiser.',
-      checkoutUrl: this.getCheckoutUrl(data)
-    });
-    this.showNotification?.('Cadastro concluído com sucesso.', 'success');
+
+    if (this.isPremiumSession?.(data)) {
+      this.enterAppMode?.();
+      this.showNotification?.('Teste grátis ativado por 7 dias. Aproveite sem cartão! ✨', 'success');
+    } else {
+      this.exitAppMode?.();
+      this.showPaymentGateModal?.({
+        title: 'Cadastro concluído',
+        message: 'Sua conta foi criada. O teste completo de 7 dias é liberado sem cartão; ao final, você decide se quer continuar por R$ 9,90 por mês.',
+        checkoutUrl: this.getCheckoutUrl(data)
+      });
+      this.showNotification?.('Cadastro concluído com sucesso.', 'success');
+    }
     setTimeout(() => this.syncRealUserInfoInDOM?.(), 80);
   } catch (error) {
     const msg = error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.';
@@ -11536,12 +11549,12 @@ console.log('handleSignup chamada');
 
       if (this.isPremiumSession(data)) {
         this.enterAppMode?.();
-        this.showNotification?.('Login premium realizado com sucesso.', 'success');
+        this.showNotification?.('Login realizado com sucesso. Seu acesso está liberado.', 'success');
       } else {
         this.exitAppMode?.();
         this.showPaymentGateModal?.({
           title: 'Ative seu Premium',
-          message: 'Sua conta está ativa, mas o painel completo só é liberado após a assinatura premium. Ative agora 7 dias grátis e depois pague R$ 9,90 por mês. Cancele quando quiser.',
+          message: data?.access?.message || 'Seus 7 dias grátis terminaram. Assine por R$ 9,90/mês para continuar usando o painel.',
           checkoutUrl: this.getCheckoutUrl(data)
         });
         this.showNotification?.('Sua conta foi encontrada, mas o acesso completo exige Premium.', 'info');
@@ -11576,7 +11589,7 @@ console.log('handleSignup chamada');
         this.exitAppMode?.();
         this.showPaymentGateModal?.({
           title: 'Ative seu Premium',
-          message: 'O painel completo do Alimente Fácil é liberado somente no Premium. Ative agora 7 dias grátis e depois pague R$ 9,90 por mês. Cancele quando quiser.',
+          message: 'O painel completo do Alimente Fácil é liberado no Premium. Se o seu teste terminou, ative agora e continue usando tudo por R$ 9,90 por mês. Cancele quando quiser.',
           checkoutUrl: this.getCheckoutUrl(me)
         });
       }
@@ -11673,7 +11686,7 @@ console.log('handleSignup chamada');
     event.stopImmediatePropagation?.();
     appRef.showPaymentGateModal?.({
       title: 'Ative seu Premium',
-      message: 'Para usar o painel do Alimente Fácil, ative agora seu Premium com 7 dias grátis. Depois, R$ 9,90 por mês. Cancele quando quiser.',
+      message: message || 'Assine por R$ 9,90/mês para continuar usando o painel do Alimente Fácil.',
       checkoutUrl: appRef.checkoutLinks?.premium || ''
     });
   };
@@ -11740,7 +11753,7 @@ console.log('handleSignup chamada');
   app.showPremiumRequiredCard = function(message) {
     this.showPaymentGateModal?.({
       title: 'Ative seu Premium',
-      message: message || 'Para acessar o painel do Alimente Fácil, ative agora seu Premium com 7 dias grátis. Depois, R$ 9,90 por mês. Cancele quando quiser.',
+      message: message || 'Seu teste grátis terminou. Ative o Premium para continuar usando o painel completo por R$ 9,90 por mês. Cancele quando quiser.',
       checkoutUrl: this.checkoutLinks?.premium || ''
     });
   };
@@ -14128,4 +14141,452 @@ console.log('handleSignup chamada');
   } else {
     setup();
   }
+})();
+
+/* =========================================================
+   AF V56 — header de rolagem confiável + vídeo de fundo resiliente
+========================================================= */
+(function afLandingMediaAndHeaderV56(){
+  if (window.__afLandingMediaAndHeaderV56) return;
+  window.__afLandingMediaAndHeaderV56 = true;
+
+  function getScrollTop(){
+    return Math.max(
+      window.scrollY || 0,
+      document.documentElement ? document.documentElement.scrollTop || 0 : 0,
+      document.body ? document.body.scrollTop || 0 : 0
+    );
+  }
+
+  function setupHeader(){
+    const header = document.getElementById('landing-header');
+    if (!header) return;
+
+    let ticking = false;
+    const sync = () => {
+      ticking = false;
+      header.classList.toggle('is-scrolled', getScrollTop() > 20);
+    };
+    const requestSync = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(sync);
+    };
+
+    sync();
+    window.addEventListener('scroll', requestSync, { passive: true });
+    document.addEventListener('scroll', requestSync, { passive: true, capture: true });
+    window.addEventListener('resize', requestSync, { passive: true });
+    window.addEventListener('pageshow', requestSync);
+  }
+
+  function setupVideo(){
+    const container = document.getElementById('landing-video-container');
+    if (!container) return;
+
+    const videos = Array.from(container.querySelectorAll('video.background-video'));
+    if (!videos.length) return;
+
+    const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const active = container.querySelector('video.background-video.active') || videos[0];
+
+    videos.forEach((video, index) => {
+      video.muted = true;
+      video.playsInline = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+
+      video.addEventListener('error', () => {
+        if (!video.classList.contains('active')) return;
+        const fallback = videos.find(candidate => candidate !== video);
+        if (!fallback) return;
+        video.classList.remove('active');
+        fallback.classList.add('active');
+        if (!reducedMotion) fallback.play().catch(() => {});
+      }, { passive: true });
+
+      if (index === 0) video.preload = 'auto';
+    });
+
+    if (reducedMotion) {
+      videos.forEach(video => {
+        try { video.pause(); } catch (_) {}
+      });
+      return;
+    }
+
+    const ensurePlayback = () => {
+      const current = container.querySelector('video.background-video.active') || active;
+      if (!current) return;
+      current.play().catch(() => {});
+    };
+
+    ensurePlayback();
+    window.addEventListener('load', ensurePlayback, { once: true });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) ensurePlayback();
+    });
+  }
+
+  function init(){
+    setupHeader();
+    setupVideo();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+})();
+
+/* =========================================================
+   AF V57 — Resumo "Hoje na cozinha" sincronizado com o painel
+========================================================= */
+(function afLiveKitchenSummaryV57(){
+  if (window.__afLiveKitchenSummaryV57) return;
+  window.__afLiveKitchenSummaryV57 = true;
+
+  const ptMoney = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 2
+  });
+
+  function parseValidity(value){
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return null;
+    const [year, month, day] = String(value).split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function startOfToday(){
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  function plural(value, singular, pluralText){
+    return `${value} ${value === 1 ? singular : pluralText}`;
+  }
+
+  function getTodayPlannerKey(){
+    return ['dom','seg','ter','qua','qui','sex','sab'][new Date().getDay()];
+  }
+
+  function cleanName(value){
+    return String(value || '').trim();
+  }
+
+  function getSummary(){
+    const app = window.app;
+    if (!app?.isLoggedIn) {
+      return {
+        pantryValue: 38.5, pantryCount: 2,
+        pantryNames: ['Arroz', 'Tomates'],
+        expiringSoon: 0, expired: 2,
+        expiringNames: ['Arroz', 'Tomates'],
+        listName: 'Lista da semana', listCount: 3,
+        listNames: ['Arroz', 'Tomates', 'Cebola'],
+        recipeCount: 3, plannedMeals: 0,
+        todayPlan: 'Nada planejado para hoje',
+        todayPlanNote: 'Abra o planejador e escolha uma refeição'
+      };
+    }
+    const state = app?.state || {};
+    const pantry = Array.isArray(state.despensa) ? state.despensa : [];
+    const lists = state.listas && typeof state.listas === 'object' ? state.listas : {};
+    const recipes = state.receitas && typeof state.receitas === 'object' ? state.receitas : {};
+    const planner = state.planejador && typeof state.planejador === 'object' ? state.planejador : {};
+    const pantryValue = pantry.reduce((total, item) => total + ((Number.parseFloat(item?.valor) || 0) * (Number.parseFloat(item?.qtd) || 0)), 0);
+    const pantryNames = pantry.map(item => cleanName(item?.name)).filter(Boolean).slice(0, 4);
+    const today = startOfToday();
+    const expiringSoonItems = [], expiredItems = [];
+    pantry.forEach(item => {
+      const date = parseValidity(item?.validade); if (!date) return;
+      const diffDays = Math.ceil((date - today) / 86400000);
+      const entry = { name: cleanName(item?.name) || 'Item', diffDays };
+      if (diffDays < 0) expiredItems.push(entry); else if (diffDays <= 7) expiringSoonItems.push(entry);
+    });
+    expiringSoonItems.sort((a,b)=>a.diffDays-b.diffDays); expiredItems.sort((a,b)=>b.diffDays-a.diffDays);
+    const listEntries = Object.entries(lists);
+    const activeListId = app?.activeListId && lists[app.activeListId] ? app.activeListId : listEntries[0]?.[0];
+    const activeList = activeListId ? lists[activeListId] : null;
+    const listItems = Array.isArray(activeList?.items) ? activeList.items : [];
+    const listNames = listItems.slice(0,4).map(item=>cleanName(item?.name)).filter(Boolean);
+    let plannedMeals = 0;
+    Object.values(planner).forEach(day => {
+      if (!day || typeof day !== 'object') return;
+      Object.entries(day).forEach(([key,meal]) => { if (key==='extras') { if (Array.isArray(meal)) plannedMeals += meal.length; } else if (meal && typeof meal==='object') plannedMeals += 1; });
+    });
+    const mealLabels={cafe:'Café',almoco:'Almoço',jantar:'Jantar'};
+    const todayState=planner[getTodayPlannerKey()] || {}; const todayMeals=[];
+    ['cafe','almoco','jantar'].forEach(key=>{ const meal=todayState?.[key]; if(meal && cleanName(meal.name)) todayMeals.push(`${mealLabels[key]} • ${cleanName(meal.name)}`); });
+    if(Array.isArray(todayState?.extras)) todayState.extras.forEach(extra=>{ const name=cleanName(extra?.name); if(name) todayMeals.push(`${cleanName(extra?.mealLabel)||'Refeição'} • ${name}`); });
+    const attentionItems=expiringSoonItems.length?expiringSoonItems:expiredItems;
+    return {
+      pantryValue, pantryCount:pantry.length, pantryNames,
+      expiringSoon:expiringSoonItems.length, expired:expiredItems.length,
+      expiringNames:attentionItems.slice(0,3).map(item=>item.name),
+      listName:activeList?.nome || 'Lista do mercado', listCount:listItems.length, listNames,
+      recipeCount:Object.keys(recipes).length, plannedMeals,
+      todayPlan:todayMeals[0] || 'Nada planejado para hoje',
+      todayPlanNote:todayMeals.slice(1,3).join(' • ') || (todayMeals.length?'Seu dia já está organizado':'Abra o planejador e escolha uma refeição')
+    };
+  }
+
+  function setAll(selector, value){
+    document.querySelectorAll(selector).forEach(element => {
+      element.textContent = value;
+    });
+  }
+
+  function update(){
+    const summary = getSummary();
+    setAll('[data-af-kitchen-value]', ptMoney.format(summary.pantryValue));
+    setAll('[data-af-pantry-count]', plural(summary.pantryCount, 'item guardado', 'itens guardados'));
+    setAll('[data-af-pantry-items]', summary.pantryNames.length ? summary.pantryNames.join(' • ') : 'Sua despensa ainda está vazia');
+    let expiryTitle = plural(summary.expiringSoon, 'item vence em breve', 'itens vencem em breve');
+    let expiryNote = summary.expiringNames.length ? summary.expiringNames.join(' • ') : 'Use primeiro e evite desperdício';
+    if (summary.expiringSoon === 0 && summary.expired > 0) {
+      expiryTitle = plural(summary.expired, 'item vencido pede atenção', 'itens vencidos pedem atenção');
+      expiryNote = summary.expiringNames.length ? summary.expiringNames.join(' • ') : 'Revise a despensa antes da próxima compra';
+    } else if (summary.expiringSoon === 0) { expiryTitle = 'Nenhum item vence em breve'; expiryNote = 'Sua despensa está em dia'; }
+    setAll('[data-af-expiring-count]', expiryTitle);
+    setAll('[data-af-expiring-note]', expiryNote);
+    setAll('[data-af-expiring-items]', summary.expiringNames.length ? summary.expiringNames.join(' • ') : 'Tudo em dia');
+    let expiryShort = `${summary.expiringSoon} próximo${summary.expiringSoon === 1 ? '' : 's'}`;
+    if (summary.expiringSoon === 0 && summary.expired > 0) expiryShort = `${summary.expired} vencido${summary.expired === 1 ? '' : 's'}`;
+    else if (summary.expiringSoon === 0) expiryShort = 'Tudo em dia';
+    setAll('[data-af-expiring-short]', expiryShort);
+    setAll('[data-af-today-plan]', summary.todayPlan);
+    setAll('[data-af-today-plan-note]', summary.todayPlanNote);
+    const isAuthenticated = Boolean(window.app?.isLoggedIn);
+    setAll('[data-af-preview-status]', isAuthenticated ? 'Sua despensa' : 'Demonstração realista');
+    setAll('[data-af-kitchen-cue]', isAuthenticated ? 'Acessar painel' : 'Ver demonstração');
+    document.querySelectorAll('[data-af-kitchen-card]').forEach(card => {
+      card.classList.toggle('is-authenticated', isAuthenticated); card.classList.toggle('is-guest', !isAuthenticated);
+      card.setAttribute('aria-label', isAuthenticated ? 'Acessar seu painel Alimente Fácil' : 'Ver demonstração e escolher entre cadastro ou login');
+    });
+    setAll('[data-af-list-name]', summary.listName);
+    setAll('[data-af-list-count]', plural(summary.listCount, 'item', 'itens'));
+    setAll('[data-af-list-items]', summary.listNames.length ? summary.listNames.join(' • ') : 'Adicione itens à sua lista');
+    setAll('[data-af-recipe-count]', plural(summary.recipeCount, 'ideia', 'ideias'));
+    setAll('[data-af-planner-count]', plural(summary.plannedMeals, 'refeição', 'refeições'));
+  }
+
+  function install(){
+    const app = window.app;
+    if (app && !app.__afLiveKitchenSummaryInstalled) {
+      app.__afLiveKitchenSummaryInstalled = true;
+      app.updateLandingKitchenSummary = update;
+
+      if (typeof app.saveState === 'function') {
+        const originalSaveState = app.saveState.bind(app);
+        app.saveState = function(...args){
+          const result = originalSaveState(...args);
+          queueMicrotask(update);
+          return result;
+        };
+      }
+
+      ['exitAppMode', 'initLandingPage', 'renderInicio', 'renderOrcamento'].forEach(methodName => {
+        if (typeof app[methodName] !== 'function') return;
+        const originalMethod = app[methodName].bind(app);
+        app[methodName] = function(...args){
+          const result = originalMethod(...args);
+          queueMicrotask(update);
+          return result;
+        };
+      });
+    }
+    update();
+  }
+
+  function waitForApp(){
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      if (window.app || attempts >= 100) {
+        window.clearInterval(timer);
+        install();
+      }
+    }, 50);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', waitForApp, { once: true });
+  } else {
+    waitForApp();
+  }
+
+  window.addEventListener('pageshow', update);
+  window.addEventListener('storage', event => {
+    if (!event.key || event.key === 'alimenteFacilState_vFinal') update();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) update();
+  });
+})();
+
+/* =========================================================
+   AF V61 — marcas clicáveis voltam para a landing page
+========================================================= */
+(function afBrandHomeLinksV61(){
+  if (window.__afBrandHomeLinksV61) return;
+  window.__afBrandHomeLinksV61 = true;
+  document.addEventListener('click', event => {
+    const trigger = event.target.closest?.('[data-af-go-landing]'); if (!trigger) return;
+    event.preventDefault(); const app = window.app;
+    document.getElementById('menuItems')?.classList.remove('open'); document.getElementById('hamburger')?.classList.remove('open');
+    if (app?.isAppMode && typeof app.exitAppMode === 'function') {
+      app.exitAppMode(); window.setTimeout(() => document.getElementById('inicio')?.scrollIntoView({ behavior:'smooth', block:'start' }), 80); return;
+    }
+    document.getElementById('inicio')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    if (history?.replaceState) history.replaceState(null, '', '#inicio');
+  });
+})();
+
+/* =========================================================
+   AF V58 — Card "Hoje na cozinha" como portal para o painel
+   - Hover/foco mostra a prévia viva.
+   - Logado: clique abre o painel.
+   - Visitante: clique revela cadastro e login sobre a prévia.
+========================================================= */
+(function afInteractiveKitchenCardV58(){
+  if (window.__afInteractiveKitchenCardV58) return;
+  window.__afInteractiveKitchenCardV58 = true;
+
+  const finePointer = window.matchMedia ? window.matchMedia('(hover:hover) and (pointer:fine)') : null;
+
+  function getApp(){ return window.app || null; }
+
+  function setPreview(card, open, pinned){
+    if (!card) return;
+    if (typeof pinned === 'boolean') card.classList.toggle('is-preview-pinned', pinned);
+    card.classList.toggle('is-preview-open', Boolean(open));
+    card.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+    const preview = card.querySelector('.af-kitchen-preview');
+    if (preview) {
+      preview.setAttribute('aria-hidden', open ? 'false' : 'true');
+      try { preview.inert = !open; } catch (_) {}
+    }
+  }
+
+  function closeAll(except){
+    document.querySelectorAll('[data-af-kitchen-card].is-preview-open').forEach(card => {
+      if (card !== except) setPreview(card, false, false);
+    });
+  }
+
+  function selectAuthView(viewId){
+    const apply = () => {
+      const modal = document.getElementById('auth-modal');
+      if (!modal) return;
+      modal.querySelectorAll('.auth-form-container').forEach(view => view.classList.remove('active'));
+      document.getElementById(viewId)?.classList.add('active');
+    };
+
+    const app = getApp();
+    if (typeof app?.showAuthModal === 'function') {
+      app.showAuthModal();
+      window.setTimeout(apply, 70);
+    } else {
+      document.getElementById('auth-modal')?.classList.add('active');
+      apply();
+    }
+  }
+
+  function openPanel(){
+    const app = getApp();
+    if (app?.isLoggedIn && typeof app.enterAppMode === 'function') {
+      app.enterAppMode();
+      return true;
+    }
+    return false;
+  }
+
+  function initCard(card){
+    if (!card || card.dataset.afKitchenInteractiveReady === '1') return;
+    card.dataset.afKitchenInteractiveReady = '1';
+    const preview = card.querySelector('.af-kitchen-preview');
+    if (preview) {
+      preview.setAttribute('aria-hidden', 'true');
+      try { preview.inert = true; } catch (_) {}
+    }
+
+    card.addEventListener('pointerenter', () => {
+      if (!finePointer?.matches) return;
+      setPreview(card, true, false);
+    });
+
+    card.addEventListener('pointerleave', () => {
+      if (!finePointer?.matches || card.classList.contains('is-preview-pinned')) return;
+      setPreview(card, false, false);
+    });
+
+    card.addEventListener('focusin', () => setPreview(card, true));
+    card.addEventListener('focusout', event => {
+      if (card.classList.contains('is-preview-pinned')) return;
+      if (event.relatedTarget && card.contains(event.relatedTarget)) return;
+      setPreview(card, false, false);
+    });
+  }
+
+  function init(){
+    document.querySelectorAll('[data-af-kitchen-card]').forEach(initCard);
+    getApp()?.updateLandingKitchenSummary?.();
+  }
+
+  document.addEventListener('click', event => {
+    const signup = event.target.closest?.('[data-af-kitchen-signup]');
+    if (signup) {
+      event.preventDefault();
+      event.stopPropagation();
+      selectAuthView('signup-view');
+      return;
+    }
+
+    const login = event.target.closest?.('[data-af-kitchen-login]');
+    if (login) {
+      event.preventDefault();
+      event.stopPropagation();
+      selectAuthView('login-view');
+      return;
+    }
+
+    const card = event.target.closest?.('[data-af-kitchen-card]');
+    if (card) {
+      event.preventDefault();
+      if (openPanel()) return;
+      const shouldOpen = !card.classList.contains('is-preview-open') || !card.classList.contains('is-preview-pinned');
+      closeAll(card);
+      setPreview(card, shouldOpen, shouldOpen);
+      return;
+    }
+
+    closeAll();
+  }, true);
+
+  document.addEventListener('keydown', event => {
+    const card = event.target.closest?.('[data-af-kitchen-card]');
+    if (event.key === 'Escape') {
+      closeAll();
+      card?.focus?.({ preventScroll:true });
+      return;
+    }
+    if (!card || event.target.closest('button,a,input,select,textarea')) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    if (openPanel()) return;
+    const shouldOpen = !card.classList.contains('is-preview-open');
+    closeAll(card);
+    setPreview(card, shouldOpen, shouldOpen);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once:true });
+  else init();
+
+  window.addEventListener('pageshow', init);
+  window.setTimeout(init, 180);
 })();

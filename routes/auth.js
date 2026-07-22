@@ -23,17 +23,18 @@ router.post('/register', async (req, res) => {
         // Cria um novo usuário (a senha será criptografada pelo middleware do Schema)
         const newUser = new User({ name, email, password });
         
-        // Define um período de teste de 7 dias para novos usuários
+        // Libera o painel completo por 7 dias inteiros; pagamento só no 8º dia.
         const trialDays = 7;
-        newUser.subscriptionTier = 'premium'; // Começa como premium
-        newUser.trialEndDate = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
+        const trialDurationMs = trialDays * 24 * 60 * 60 * 1000;
+        newUser.subscriptionTier = 'premium';
+        newUser.trialEndDate = new Date(Date.now() + trialDurationMs);
 
         await newUser.save();
 
         // Cria o token JWT
-        const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
-        res.status(201).json({ message: "Usuário criado com sucesso!", token });
+        res.status(201).json({ message: "Conta criada. O painel completo está liberado por 7 dias sem cartão; o pagamento só será solicitado no 8º dia.", token, trialEndDate: newUser.trialEndDate, trialActive: true, paymentRequired: false });
 
     } catch (error) {
         console.error("Erro no registro:", error);
@@ -63,7 +64,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Cria o token JWT
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
         res.status(200).json({ message: "Login bem-sucedido!", token });
 
