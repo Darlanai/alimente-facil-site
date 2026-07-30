@@ -593,3 +593,651 @@ body.lua-mode .af-video-shade{
   .af-theme-icon .af-theme-glyph::before{inset:-4px}
   .af-theme-icon .af-theme-glyph::after{width:12px;height:12px}
 }
+
+/* V15 — navegação por swipe suave e alça apenas informativa */
+.af-landing-stage,
+.af-reveal-divider{
+  transition:clip-path .58s cubic-bezier(.22,.78,.2,1),left .58s cubic-bezier(.22,.78,.2,1)!important;
+}
+body.af-reveal-dragging .af-landing-stage,
+body.af-reveal-dragging .af-reveal-divider{
+  transition:none!important;
+}
+.af-reveal-divider{
+  z-index:1000000!important;
+  pointer-events:none!important;
+}
+.af-reveal-divider span{
+  pointer-events:auto!important;
+  width:24px!important;
+  height:54px!important;
+  border-radius:15px 0 0 15px!important;
+  border-right:0!important;
+  background:linear-gradient(180deg,rgba(9,28,20,.84),rgba(5,17,12,.94))!important;
+  box-shadow:-8px 10px 24px rgba(0,0,0,.22),inset 1px 0 0 rgba(185,255,211,.22)!important;
+  backdrop-filter:blur(14px) saturate(1.15)!important;
+  transform:translate(-100%,-50%)!important;
+  cursor:pointer!important;
+  overflow:hidden;
+}
+.af-reveal-divider.at-left span{
+  border-radius:0 15px 15px 0!important;
+  border-left:0!important;
+  border-right:1px solid rgba(185,255,211,.22)!important;
+  transform:translate(0,-50%)!important;
+  box-shadow:8px 10px 24px rgba(0,0,0,.22),inset -1px 0 0 rgba(185,255,211,.22)!important;
+}
+.af-reveal-divider span::after{
+  content:"";
+  position:absolute;
+  width:7px;height:7px;
+  top:50%;left:50%;
+  border-top:2px solid rgba(182,255,210,.92);
+  border-right:2px solid rgba(182,255,210,.92);
+  transform:translate(-35%,-50%) rotate(225deg);
+  filter:drop-shadow(0 0 5px rgba(105,255,176,.45));
+  animation:afEdgeArrow 2.4s ease-in-out infinite;
+}
+.af-reveal-divider.at-left span::after{
+  transform:translate(-65%,-50%) rotate(45deg);
+  animation-name:afEdgeArrowBack;
+}
+.af-reveal-divider span i{display:none!important}
+.af-reveal-divider::before{display:none!important}
+.af-reveal-hint{
+  display:none!important;
+}
+@keyframes afEdgeArrow{
+  0%,58%,100%{opacity:.45;translate:2px 0}
+  72%{opacity:1;translate:-2px 0}
+}
+@keyframes afEdgeArrowBack{
+  0%,58%,100%{opacity:.45;translate:-2px 0}
+  72%{opacity:1;translate:2px 0}
+}
+@media(max-width:760px){
+  .af-reveal-divider span{width:22px!important;height:50px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .af-reveal-divider span::after{animation:none!important}
+}
+
+
+/* V16 — indicação discreta e clara de acesso ao painel */
+.af-reveal-divider span::before{
+  content:"Painel"!important;
+  position:absolute!important;
+  top:50%!important;
+  right:calc(100% + 7px)!important;
+  left:auto!important;
+  width:auto!important;
+  height:auto!important;
+  inset-inline-start:auto!important;
+  padding:5px 8px!important;
+  border-radius:999px!important;
+  background:rgba(7,24,16,.78)!important;
+  border:1px solid rgba(174,255,205,.18)!important;
+  color:rgba(238,255,244,.94)!important;
+  font:700 9px/1 system-ui,-apple-system,"Segoe UI",sans-serif!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+  white-space:nowrap!important;
+  transform:translateY(-50%)!important;
+  opacity:.82!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.18)!important;
+  backdrop-filter:blur(10px)!important;
+  pointer-events:none!important;
+  animation:afPanelHint 3.2s ease-in-out infinite!important;
+}
+.af-reveal-divider.at-left span::before{
+  content:"Início"!important;
+  right:auto!important;
+  left:calc(100% + 7px)!important;
+}
+@keyframes afPanelHint{
+  0%,58%,100%{opacity:.58;transform:translateY(-50%) translateX(0)}
+  72%{opacity:1;transform:translateY(-50%) translateX(-3px)}
+}
+.af-reveal-divider.at-left span::before{animation-name:afHomeHint!important}
+@keyframes afHomeHint{
+  0%,58%,100%{opacity:.58;transform:translateY(-50%) translateX(0)}
+  72%{opacity:1;transform:translateY(-50%) translateX(3px)}
+}
+@media(max-width:760px){
+  .af-reveal-divider span::before{
+    font-size:8px!important;
+    padding:4px 6px!important;
+    right:calc(100% + 5px)!important;
+  }
+  .af-reveal-divider.at-left span::before{left:calc(100% + 5px)!important;right:auto!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .af-reveal-divider span::before{animation:none!important;opacity:.8!important}
+}
+
+/* V17 — alça alta, área inteira interativa e indicação luminosa */
+.af-reveal-divider{
+  top:50%!important;
+  bottom:auto!important;
+  width:48px!important;
+  height:138px!important;
+  transform:translate(-50%,-50%)!important;
+  background:transparent!important;
+  filter:none!important;
+  pointer-events:auto!important;
+  cursor:ew-resize!important;
+  touch-action:none!important;
+  overflow:visible!important;
+}
+.af-reveal-divider span{
+  top:50%!important;
+  left:50%!important;
+  width:34px!important;
+  height:118px!important;
+  transform:translate(-100%,-50%)!important;
+  border-radius:19px 0 0 19px!important;
+  background:linear-gradient(180deg,rgba(17,46,32,.90),rgba(5,20,13,.97))!important;
+  border:1px solid rgba(190,255,211,.34)!important;
+  border-right:0!important;
+  box-shadow:-10px 16px 34px rgba(0,0,0,.30),inset 1px 0 0 rgba(230,255,238,.16),0 0 22px rgba(80,235,157,.11)!important;
+  backdrop-filter:blur(18px) saturate(1.22)!important;
+  opacity:.98!important;
+  pointer-events:none!important;
+  overflow:visible!important;
+  transition:width .24s ease,background .24s ease,box-shadow .24s ease,opacity .24s ease!important;
+}
+.af-reveal-divider.at-left span{
+  transform:translate(0,-50%)!important;
+  border-radius:0 19px 19px 0!important;
+  border-left:0!important;
+  border-right:1px solid rgba(190,255,211,.34)!important;
+  box-shadow:10px 16px 34px rgba(0,0,0,.30),inset -1px 0 0 rgba(230,255,238,.16),0 0 22px rgba(80,235,157,.11)!important;
+}
+.af-reveal-divider:hover span,
+.af-reveal-divider:focus-visible span,
+.af-reveal-divider.is-active span{
+  width:39px!important;
+  background:linear-gradient(180deg,rgba(26,67,46,.96),rgba(7,28,18,.99))!important;
+  box-shadow:-12px 18px 42px rgba(0,0,0,.34),inset 1px 0 0 rgba(235,255,241,.22),0 0 30px rgba(91,255,172,.22)!important;
+}
+.af-reveal-divider.at-left:hover span,
+.af-reveal-divider.at-left:focus-visible span,
+.af-reveal-divider.at-left.is-active span{
+  box-shadow:12px 18px 42px rgba(0,0,0,.34),inset -1px 0 0 rgba(235,255,241,.22),0 0 30px rgba(91,255,172,.22)!important;
+}
+.af-reveal-divider span::after{
+  content:""!important;
+  position:absolute!important;
+  top:50%!important;
+  left:50%!important;
+  width:13px!important;
+  height:13px!important;
+  border-top:2.5px solid #baffd0!important;
+  border-right:2.5px solid #baffd0!important;
+  transform:translate(-30%,-50%) rotate(225deg)!important;
+  filter:drop-shadow(0 0 7px rgba(112,255,174,.95))!important;
+  animation:afHandlePulseRight 1.75s ease-in-out infinite!important;
+}
+.af-reveal-divider.at-left span::after{
+  transform:translate(-70%,-50%) rotate(45deg)!important;
+  animation-name:afHandlePulseLeft!important;
+}
+.af-reveal-divider span::before{
+  right:calc(100% + 9px)!important;
+  padding:6px 9px!important;
+  font-size:9px!important;
+  opacity:.9!important;
+  background:rgba(5,24,15,.86)!important;
+  border-color:rgba(174,255,205,.25)!important;
+  box-shadow:0 10px 26px rgba(0,0,0,.24),0 0 16px rgba(83,238,153,.08)!important;
+}
+.af-reveal-divider.at-left span::before{
+  right:auto!important;
+  left:calc(100% + 9px)!important;
+}
+@keyframes afHandlePulseRight{
+  0%,100%{opacity:.48;translate:4px 0;scale:.86}
+  45%{opacity:1;translate:-2px 0;scale:1.08}
+  70%{opacity:.72;translate:1px 0;scale:.96}
+}
+@keyframes afHandlePulseLeft{
+  0%,100%{opacity:.48;translate:-4px 0;scale:.86}
+  45%{opacity:1;translate:2px 0;scale:1.08}
+  70%{opacity:.72;translate:-1px 0;scale:.96}
+}
+@media(max-width:760px){
+  .af-reveal-divider{width:44px!important;height:126px!important}
+  .af-reveal-divider span{width:31px!important;height:106px!important}
+  .af-reveal-divider:hover span,.af-reveal-divider:focus-visible span,.af-reveal-divider.is-active span{width:35px!important}
+  .af-reveal-divider span::before{font-size:8px!important;padding:5px 7px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .af-reveal-divider span::after{animation:none!important;opacity:.9!important}
+}
+
+/* V18 — aba lateral minimalista, rente à borda e com guia temporário */
+.af-reveal-divider{
+  top:50%!important;
+  bottom:auto!important;
+  width:44px!important;
+  height:112px!important;
+  margin:0!important;
+  background:transparent!important;
+  border:0!important;
+  filter:none!important;
+  transform:translateY(-50%)!important;
+  pointer-events:auto!important;
+  cursor:ew-resize!important;
+  touch-action:none!important;
+  overflow:visible!important;
+}
+.af-reveal-divider.at-right{
+  left:auto!important;
+  right:0!important;
+}
+.af-reveal-divider.at-left{
+  left:0!important;
+  right:auto!important;
+}
+.af-reveal-divider span,
+.af-reveal-divider:hover span,
+.af-reveal-divider:focus-visible span,
+.af-reveal-divider.is-active span{
+  position:absolute!important;
+  top:50%!important;
+  right:0!important;
+  left:auto!important;
+  width:19px!important;
+  height:70px!important;
+  transform:translateY(-50%)!important;
+  border-radius:13px 0 0 13px!important;
+  border:1px solid rgba(255,255,255,.22)!important;
+  border-right:0!important;
+  background:linear-gradient(180deg,rgba(18,31,25,.76),rgba(6,17,12,.88))!important;
+  box-shadow:-5px 8px 18px rgba(0,0,0,.22),inset 1px 0 0 rgba(213,255,226,.14)!important;
+  backdrop-filter:blur(16px) saturate(1.15)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.15)!important;
+  opacity:.92!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+  transition:width .2s ease,opacity .2s ease,background .2s ease,box-shadow .2s ease!important;
+}
+.af-reveal-divider.at-left span,
+.af-reveal-divider.at-left:hover span,
+.af-reveal-divider.at-left:focus-visible span,
+.af-reveal-divider.at-left.is-active span{
+  left:0!important;
+  right:auto!important;
+  border-radius:0 13px 13px 0!important;
+  border-left:0!important;
+  border-right:1px solid rgba(255,255,255,.22)!important;
+  box-shadow:5px 8px 18px rgba(0,0,0,.22),inset -1px 0 0 rgba(213,255,226,.14)!important;
+}
+.af-reveal-divider:hover span,
+.af-reveal-divider:focus-visible span,
+.af-reveal-divider.is-active span{
+  width:23px!important;
+  opacity:1!important;
+  background:linear-gradient(180deg,rgba(24,45,34,.88),rgba(7,22,14,.96))!important;
+  box-shadow:-7px 10px 24px rgba(0,0,0,.28),0 0 18px rgba(107,241,164,.12),inset 1px 0 0 rgba(225,255,235,.2)!important;
+  outline:none!important;
+}
+.af-reveal-divider.at-left:hover span,
+.af-reveal-divider.at-left:focus-visible span,
+.af-reveal-divider.at-left.is-active span{
+  box-shadow:7px 10px 24px rgba(0,0,0,.28),0 0 18px rgba(107,241,164,.12),inset -1px 0 0 rgba(225,255,235,.2)!important;
+}
+/* Remove o selo externo “Painel/Início” das versões anteriores. */
+.af-reveal-divider span::before{display:none!important;content:none!important}
+/* Chevron duplo fino, semelhante a abas laterais de apps modernos. */
+.af-reveal-divider span::after{
+  content:""!important;
+  position:absolute!important;
+  top:50%!important;
+  left:50%!important;
+  width:7px!important;
+  height:7px!important;
+  border-top:1.7px solid rgba(211,255,225,.94)!important;
+  border-right:1.7px solid rgba(211,255,225,.94)!important;
+  transform:translate(-35%,-50%) rotate(225deg)!important;
+  filter:drop-shadow(0 0 4px rgba(103,255,164,.42))!important;
+  animation:afMinimalChevron 2.35s cubic-bezier(.4,0,.2,1) infinite!important;
+}
+.af-reveal-divider span i{
+  display:block!important;
+  position:absolute!important;
+  top:50%!important;
+  left:50%!important;
+  width:7px!important;
+  height:7px!important;
+  margin:0!important;
+  font-size:0!important;
+  border-top:1.7px solid rgba(211,255,225,.48)!important;
+  border-right:1.7px solid rgba(211,255,225,.48)!important;
+  transform:translate(35%,-50%) rotate(225deg)!important;
+  filter:none!important;
+  opacity:.7!important;
+}
+.af-reveal-divider span i:nth-child(n+2){display:none!important}
+.af-reveal-divider.at-left span::after{
+  transform:translate(-65%,-50%) rotate(45deg)!important;
+  animation-name:afMinimalChevronBack!important;
+}
+.af-reveal-divider.at-left span i:first-child{
+  transform:translate(-135%,-50%) rotate(45deg)!important;
+}
+/* Filete de luz passa ocasionalmente pela aba, sem fazê-la sair da borda. */
+.af-reveal-divider span{isolation:isolate!important}
+.af-reveal-divider span > *{z-index:2!important}
+.af-reveal-divider span::selection{background:transparent}
+@keyframes afMinimalChevron{
+  0%,62%,100%{opacity:.55;translate:1px 0}
+  76%{opacity:1;translate:-1px 0}
+}
+@keyframes afMinimalChevronBack{
+  0%,62%,100%{opacity:.55;translate:-1px 0}
+  76%{opacity:1;translate:1px 0}
+}
+/* Guia curto só no carregamento; depois sobra apenas a aba. */
+.af-reveal-divider.show-guide::after{
+  content:"Deslize para o painel";
+  position:absolute;
+  top:50%;
+  right:27px;
+  transform:translateY(-50%);
+  padding:7px 10px;
+  border-radius:999px;
+  color:rgba(247,255,249,.94);
+  background:rgba(8,19,13,.82);
+  border:1px solid rgba(209,255,224,.16);
+  box-shadow:0 9px 24px rgba(0,0,0,.2);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  font:600 10px/1 system-ui,-apple-system,"Segoe UI",sans-serif;
+  letter-spacing:.01em;
+  white-space:nowrap;
+  pointer-events:none;
+  animation:afGuideInOut 4s ease both;
+}
+.af-reveal-divider.at-left.show-guide::after{
+  content:"Deslize para o início";
+  right:auto;
+  left:27px;
+}
+@keyframes afGuideInOut{
+  0%{opacity:0;transform:translateY(-50%) translateX(6px)}
+  12%,72%{opacity:1;transform:translateY(-50%) translateX(0)}
+  100%{opacity:0;transform:translateY(-50%) translateX(4px)}
+}
+.af-reveal-divider.at-left.show-guide::after{animation-name:afGuideInOutLeft}
+@keyframes afGuideInOutLeft{
+  0%{opacity:0;transform:translateY(-50%) translateX(-6px)}
+  12%,72%{opacity:1;transform:translateY(-50%) translateX(0)}
+  100%{opacity:0;transform:translateY(-50%) translateX(-4px)}
+}
+@media(max-width:760px){
+  .af-reveal-divider{width:42px!important;height:104px!important}
+  .af-reveal-divider span,
+  .af-reveal-divider:hover span,
+  .af-reveal-divider:focus-visible span,
+  .af-reveal-divider.is-active span{width:18px!important;height:66px!important}
+  .af-reveal-divider:hover span,.af-reveal-divider:focus-visible span,.af-reveal-divider.is-active span{width:21px!important}
+  .af-reveal-divider.show-guide::after{right:25px;font-size:9px;padding:6px 9px}
+  .af-reveal-divider.at-left.show-guide::after{left:25px;right:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  .af-reveal-divider span::after,.af-reveal-divider.show-guide::after{animation:none!important}
+  .af-reveal-divider.show-guide::after{opacity:1!important}
+}
+
+/* V19 — alça alta, minimalista e totalmente colada à lateral */
+.af-reveal-divider{
+  top:50%!important;
+  width:46px!important;
+  height:190px!important;
+  transform:translateY(-50%)!important;
+}
+.af-reveal-divider.at-right{right:0!important;left:auto!important}
+.af-reveal-divider.at-left{left:0!important;right:auto!important}
+.af-reveal-divider span,
+.af-reveal-divider:hover span,
+.af-reveal-divider:focus-visible span,
+.af-reveal-divider.is-active span{
+  top:50%!important;
+  right:0!important;
+  left:auto!important;
+  width:22px!important;
+  height:156px!important;
+  transform:translateY(-50%)!important;
+  border-radius:16px 0 0 16px!important;
+  border-right:0!important;
+  background:linear-gradient(180deg,rgba(11,31,21,.76),rgba(5,18,12,.92))!important;
+  box-shadow:-5px 8px 22px rgba(0,0,0,.28),inset 1px 0 rgba(255,255,255,.16)!important;
+  opacity:.96!important;
+}
+.af-reveal-divider.at-left span,
+.af-reveal-divider.at-left:hover span,
+.af-reveal-divider.at-left:focus-visible span,
+.af-reveal-divider.at-left.is-active span{
+  left:0!important;
+  right:auto!important;
+  border-radius:0 16px 16px 0!important;
+  border-left:0!important;
+  border-right:1px solid rgba(255,255,255,.2)!important;
+  box-shadow:5px 8px 22px rgba(0,0,0,.28),inset -1px 0 rgba(255,255,255,.16)!important;
+}
+.af-reveal-divider:hover span,
+.af-reveal-divider:focus-visible span,
+.af-reveal-divider.is-active span{
+  width:25px!important;
+  height:164px!important;
+  background:linear-gradient(180deg,rgba(15,42,28,.88),rgba(5,21,13,.98))!important;
+}
+.af-reveal-divider span::after{
+  width:10px!important;
+  height:10px!important;
+  border-top-width:2px!important;
+  border-right-width:2px!important;
+  filter:drop-shadow(0 0 6px rgba(106,255,166,.62))!important;
+  animation:afTallHandleArrow 1.8s ease-in-out infinite!important;
+}
+.af-reveal-divider span i:first-child{
+  width:10px!important;
+  height:10px!important;
+  border-top-width:2px!important;
+  border-right-width:2px!important;
+  opacity:.45!important;
+}
+.af-reveal-divider.at-left span::after{animation-name:afTallHandleArrowBack!important}
+@keyframes afTallHandleArrow{
+  0%,100%{opacity:.62;translate:1px 0}
+  50%{opacity:1;translate:-2px 0}
+}
+@keyframes afTallHandleArrowBack{
+  0%,100%{opacity:.62;translate:-1px 0}
+  50%{opacity:1;translate:2px 0}
+}
+/* Mantém a explicação temporária discreta, mas a alça permanece sempre visível. */
+.af-reveal-divider.show-guide::after{right:31px!important}
+.af-reveal-divider.at-left.show-guide::after{left:31px!important;right:auto!important}
+@media(max-width:760px){
+  .af-reveal-divider{width:44px!important;height:184px!important}
+  .af-reveal-divider span,
+  .af-reveal-divider:hover span,
+  .af-reveal-divider:focus-visible span,
+  .af-reveal-divider.is-active span{
+    width:21px!important;
+    height:148px!important;
+  }
+  .af-reveal-divider:hover span,
+  .af-reveal-divider:focus-visible span,
+  .af-reveal-divider.is-active span{width:24px!important;height:156px!important}
+  .af-reveal-divider.show-guide::after{right:29px!important}
+  .af-reveal-divider.at-left.show-guide::after{left:29px!important;right:auto!important}
+}
+
+/* V20 — aba visual realmente presa à borda da viewport */
+.af-reveal-divider{
+  position:fixed!important;
+  top:50%!important;
+  bottom:auto!important;
+  width:38px!important;
+  height:180px!important;
+  transform:translateY(-50%)!important;
+  background:transparent!important;
+  pointer-events:auto!important;
+  overflow:visible!important;
+}
+.af-reveal-divider.at-right{
+  left:auto!important;
+  right:0!important;
+}
+.af-reveal-divider.at-left{
+  left:0!important;
+  right:auto!important;
+}
+.af-reveal-divider span,
+.af-reveal-divider:hover span,
+.af-reveal-divider:focus-visible span,
+.af-reveal-divider.is-active span{
+  position:fixed!important;
+  top:50%!important;
+  bottom:auto!important;
+  left:auto!important;
+  right:0!important;
+  width:14px!important;
+  height:138px!important;
+  transform:translateY(-50%)!important;
+  margin:0!important;
+  border:0!important;
+  border-left:1px solid rgba(207,255,224,.22)!important;
+  border-radius:12px 0 0 12px!important;
+  background:linear-gradient(180deg,rgba(15,43,29,.72),rgba(5,20,13,.91))!important;
+  box-shadow:-3px 8px 18px rgba(0,0,0,.24),inset 1px 0 rgba(237,255,243,.14)!important;
+  backdrop-filter:blur(14px) saturate(1.12)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.12)!important;
+  opacity:.94!important;
+  pointer-events:none!important;
+}
+.af-reveal-divider.at-left span,
+.af-reveal-divider.at-left:hover span,
+.af-reveal-divider.at-left:focus-visible span,
+.af-reveal-divider.at-left.is-active span{
+  left:0!important;
+  right:auto!important;
+  border-left:0!important;
+  border-right:1px solid rgba(207,255,224,.22)!important;
+  border-radius:0 12px 12px 0!important;
+  box-shadow:3px 8px 18px rgba(0,0,0,.24),inset -1px 0 rgba(237,255,243,.14)!important;
+}
+.af-reveal-divider:hover span,
+.af-reveal-divider:focus-visible span,
+.af-reveal-divider.is-active span{
+  width:17px!important;
+  background:linear-gradient(180deg,rgba(22,58,39,.82),rgba(6,26,17,.96))!important;
+  opacity:1!important;
+}
+.af-reveal-divider span::before{display:none!important;content:none!important}
+.af-reveal-divider.show-guide::after{display:none!important;content:none!important}
+.af-reveal-divider span i{display:none!important}
+.af-reveal-divider span::after{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  top:50%!important;
+  left:50%!important;
+  width:8px!important;
+  height:8px!important;
+  border:0!important;
+  border-left:2px solid rgba(220,255,231,.96)!important;
+  border-bottom:2px solid rgba(220,255,231,.96)!important;
+  transform:translate(-35%,-50%) rotate(45deg)!important;
+  filter:drop-shadow(0 0 5px rgba(112,255,170,.5))!important;
+  animation:afV20Arrow 1.85s ease-in-out infinite!important;
+}
+.af-reveal-divider.at-left span::after{
+  transform:translate(-65%,-50%) rotate(225deg)!important;
+  animation-name:afV20ArrowBack!important;
+}
+@keyframes afV20Arrow{
+  0%,100%{opacity:.55;translate:1px 0}
+  50%{opacity:1;translate:-1px 0}
+}
+@keyframes afV20ArrowBack{
+  0%,100%{opacity:.55;translate:-1px 0}
+  50%{opacity:1;translate:1px 0}
+}
+@media(max-width:760px){
+  .af-reveal-divider{width:36px!important;height:176px!important}
+  .af-reveal-divider span,
+  .af-reveal-divider:hover span,
+  .af-reveal-divider:focus-visible span,
+  .af-reveal-divider.is-active span{
+    width:13px!important;
+    height:142px!important;
+  }
+  .af-reveal-divider:hover span,
+  .af-reveal-divider:focus-visible span,
+  .af-reveal-divider.is-active span{width:16px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .af-reveal-divider span::after{animation:none!important;opacity:.9!important}
+}
+
+
+/* V21 — a aba é filha direta do body e usa a viewport como referência real */
+body > #afRevealDivider.af-reveal-divider{
+  position:fixed!important;
+  top:50%!important;
+  bottom:auto!important;
+  margin:0!important;
+  transform:translateY(-50%)!important;
+  z-index:2147483000!important;
+  width:34px!important;
+  height:170px!important;
+  overflow:visible!important;
+}
+body > #afRevealDivider.af-reveal-divider.at-right{
+  right:0!important;
+  left:auto!important;
+}
+body > #afRevealDivider.af-reveal-divider.at-left{
+  left:0!important;
+  right:auto!important;
+}
+body > #afRevealDivider.af-reveal-divider span,
+body > #afRevealDivider.af-reveal-divider:hover span,
+body > #afRevealDivider.af-reveal-divider:focus-visible span,
+body > #afRevealDivider.af-reveal-divider.is-active span{
+  position:absolute!important;
+  top:50%!important;
+  right:0!important;
+  left:auto!important;
+  bottom:auto!important;
+  transform:translateY(-50%)!important;
+  width:14px!important;
+  height:144px!important;
+  margin:0!important;
+  border-radius:12px 0 0 12px!important;
+}
+body > #afRevealDivider.af-reveal-divider.at-left span,
+body > #afRevealDivider.af-reveal-divider.at-left:hover span,
+body > #afRevealDivider.af-reveal-divider.at-left:focus-visible span,
+body > #afRevealDivider.af-reveal-divider.at-left.is-active span{
+  left:0!important;
+  right:auto!important;
+  border-radius:0 12px 12px 0!important;
+}
+@media(max-width:760px){
+  body > #afRevealDivider.af-reveal-divider{
+    width:32px!important;
+    height:178px!important;
+  }
+  body > #afRevealDivider.af-reveal-divider span,
+  body > #afRevealDivider.af-reveal-divider:hover span,
+  body > #afRevealDivider.af-reveal-divider:focus-visible span,
+  body > #afRevealDivider.af-reveal-divider.is-active span{
+    width:13px!important;
+    height:150px!important;
+  }
+}

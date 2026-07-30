@@ -22,73 +22,96 @@
   const calc=()=>{const spend=Number($('#afSpendRange')?.value||1200),waste=Number($('#afWasteRange')?.value||12),monthly=spend*waste/100,annual=monthly*12;const brl=n=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});$('#afSpendValue')&&($('#afSpendValue').textContent=brl(spend));$('#afWasteValue')&&($('#afWasteValue').textContent=`${waste}%`);$('#afAnnualSaving')&&($('#afAnnualSaving').textContent=brl(annual));$('#afMonthlySaving')&&($('#afMonthlySaving').textContent=`aproximadamente ${brl(monthly)} por mês`)};
   document.addEventListener('DOMContentLoaded',()=>{
     const range=$('#afRevealRange'),hint=$('#afRevealHint'),divider=$('#afRevealDivider'),handle=$('#afRevealDivider span');
-    let interacted=false,idleTimer,dragging=false,activePointer=null;
-    const edgePercent=()=>Math.max(4,Math.min(8,window.innerWidth*.008))/window.innerWidth*100;
+
+    // A aba precisa ficar fora do contêiner animado. Caso contrário, até position:fixed
+    // pode usar o contêiner transformado como referência e aparecer para dentro da tela.
+    if(divider && divider.parentElement !== document.body){
+      document.body.appendChild(divider);
+    }
+
+    let dragging=false,activePointer=null,startX=0,startY=0,startValue=0,lastX=0,gestureAxis=null;
+    const edgePercent=()=>Math.max(3,Math.min(6,window.innerWidth*.006))/window.innerWidth*100;
     const homeEdge=()=>100-edgePercent();
     const panelEdge=()=>edgePercent();
+    const currentValue=()=>Number(range?.value||homeEdge());
+    const isPanelOpen=()=>currentValue()<50;
+    const showPanel=()=>{document.body.classList.add('af-snap-moving');setReveal(panelEdge());setTimeout(()=>document.body.classList.remove('af-snap-moving'),620)};
+    const showHome=()=>{document.body.classList.add('af-snap-moving');setReveal(homeEdge());setTimeout(()=>document.body.classList.remove('af-snap-moving'),620)};
+    const toggleSide=()=>isPanelOpen()?showHome():showPanel();
     setReveal(range?.value||homeEdge());
-    const clearIdle=()=>{clearTimeout(idleTimer);divider?.classList.remove('is-peeking','is-tucked')};
-    const stopHint=()=>{interacted=true;hint?.classList.add('hidden');clearIdle()};
-    const schedulePeek=(delay=3800)=>{
-      clearTimeout(idleTimer);
-      if(interacted||!range)return;
-      idleTimer=setTimeout(()=>{
-        if(interacted||dragging)return;
-        const current=Number(range.value||homeEdge());
-        const onPanel=current<50;
-        const edge=onPanel?panelEdge():homeEdge();
-        const inwardPx=window.innerWidth<=760?34:46;
-        const inward=edge+(onPanel?1:-1)*(inwardPx/window.innerWidth*100);
-        divider?.classList.remove('is-tucked');
-        divider?.classList.add('is-peeking');
-        setReveal(inward);
-        setTimeout(()=>{
-          if(interacted||dragging)return;
-          setReveal(edge);
-          divider?.classList.remove('is-peeking');
-          setTimeout(()=>{if(!interacted&&!dragging)divider?.classList.add('is-tucked')},360);
-        },720);
-        schedulePeek(7200);
-      },delay);
+
+    // A alça é somente uma indicação discreta; clicar nela também alterna as telas.
+    hint?.classList.remove('hidden');
+    divider?.addEventListener('click',e=>{if(dragging)return;e.preventDefault();e.stopPropagation();toggleSide()});
+    divider?.addEventListener('keydown',e=>{
+      if(e.key==='Enter'||e.key===' '){toggleSide();e.preventDefault()}
+      if(e.key==='ArrowLeft'){showPanel();e.preventDefault()}
+      if(e.key==='ArrowRight'){showHome();e.preventDefault()}
+    });
+    if(divider){
+      divider.removeAttribute('aria-hidden');
+      divider.tabIndex=0;divider.setAttribute('role','button');
+      divider.setAttribute('aria-label','Deslize a tela ou toque na aba lateral para alternar entre a apresentação e o painel');
+      divider.classList.add('show-guide');
+      const hideGuide=()=>divider.classList.remove('show-guide');
+      setTimeout(hideGuide,4100);
+      divider.addEventListener('pointerdown',hideGuide,{once:true});
+      document.addEventListener('touchstart',hideGuide,{once:true,passive:true});
+    }
+
+    const beginGesture=(x,y,pointerId=null)=>{
+      dragging=true;activePointer=pointerId;startX=lastX=x;startY=y;startValue=currentValue();gestureAxis=null;
     };
-    const moveTo=x=>setReveal((x/window.innerWidth)*100);
-    const finishDrag=e=>{
+    const updateGesture=(x,y,event)=>{
       if(!dragging)return;
-      dragging=false;activePointer=null;
-      document.body.classList.remove('af-reveal-dragging');
-      try{handle?.releasePointerCapture?.(e?.pointerId)}catch{}
-      const current=Number(range?.value||homeEdge());
-      if(current<8)setReveal(panelEdge());
-      else if(current>92)setReveal(homeEdge());
-    };
-    handle?.addEventListener('pointerdown',e=>{
-      dragging=true;activePointer=e.pointerId;
+      const dx=x-startX,dy=y-startY;
+      if(!gestureAxis){
+        if(Math.abs(dx)<10&&Math.abs(dy)<10)return;
+        gestureAxis=Math.abs(dx)>Math.abs(dy)*1.15?'x':'y';
+      }
+      if(gestureAxis!=='x')return;
       document.body.classList.add('af-reveal-dragging');
-      stopHint();
-      handle.setPointerCapture?.(e.pointerId);
+      lastX=x;
+      const next=startValue+(dx/window.innerWidth*100);
+      setReveal(next);
+      event?.preventDefault?.();
+    };
+    const endGesture=()=>{
+      if(!dragging)return;
+      const dx=lastX-startX,wasHorizontal=gestureAxis==='x';
+      dragging=false;activePointer=null;gestureAxis=null;
+      document.body.classList.remove('af-reveal-dragging');
+      if(!wasHorizontal){setReveal(startValue);return}
+      const threshold=Math.min(72,window.innerWidth*.16);
+      if(dx<=-threshold)showPanel();
+      else if(dx>=threshold)showHome();
+      else currentValue()<50?showPanel():showHome();
+    };
+
+    // Mouse/caneta: arraste pela alça.
+    divider?.addEventListener('pointerdown',e=>{
+      beginGesture(e.clientX,e.clientY,e.pointerId);
+      divider.classList.add('is-active');
+      divider.setPointerCapture?.(e.pointerId);
       e.preventDefault();e.stopPropagation();
     });
-    document.addEventListener('pointermove',e=>{if(dragging&&e.pointerId===activePointer){moveTo(e.clientX);e.preventDefault()}},{passive:false});
-    document.addEventListener('pointerup',finishDrag);
-    document.addEventListener('pointercancel',finishDrag);
-    window.addEventListener('blur',()=>finishDrag());
-    handle?.addEventListener('keydown',e=>{
-      if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){
-        stopHint();
-        const current=Number(range?.value||homeEdge());
-        if(e.key==='Home')setReveal(panelEdge());
-        else if(e.key==='End')setReveal(homeEdge());
-        else setReveal(current+(e.key==='ArrowRight'?5:-5));
-        e.preventDefault();
-      }
-    });
-    if(handle){
-      handle.tabIndex=0;handle.setAttribute('role','slider');
-      handle.setAttribute('aria-label','Arraste para alternar entre a apresentação e o painel');
-      handle.setAttribute('aria-valuemin','0');handle.setAttribute('aria-valuemax','100');
-    }
-    window.addEventListener('resize',()=>setReveal(Number(range?.value||homeEdge())));
-    schedulePeek();
+    document.addEventListener('pointermove',e=>{if(dragging&&activePointer===e.pointerId)updateGesture(e.clientX,e.clientY,e)},{passive:false});
+    document.addEventListener('pointerup',e=>{if(activePointer===e.pointerId){divider?.classList.remove('is-active');endGesture()}});
+    document.addEventListener('pointercancel',e=>{if(activePointer===e.pointerId){divider?.classList.remove('is-active');endGesture()}});
+
+    // Celular: gesto em qualquer ponto da landing ou do painel.
+    document.addEventListener('touchstart',e=>{
+      if(e.touches.length!==1||document.querySelector('.modal-overlay.active,.af-info-modal.open'))return;
+      const t=e.touches[0];beginGesture(t.clientX,t.clientY,'touch');
+    },{passive:true});
+    document.addEventListener('touchmove',e=>{
+      if(!dragging||activePointer!=='touch'||e.touches.length!==1)return;
+      const t=e.touches[0];updateGesture(t.clientX,t.clientY,e);
+    },{passive:false});
+    document.addEventListener('touchend',()=>{if(activePointer==='touch')endGesture()},{passive:true});
+    document.addEventListener('touchcancel',()=>{if(activePointer==='touch')endGesture()},{passive:true});
+    window.addEventListener('blur',endGesture);
+    window.addEventListener('resize',()=>isPanelOpen()?setReveal(panelEdge()):setReveal(homeEdge()));
     const how=$('#afHowModal'),contact=$('#afContactModal');$('#afHowWorks')?.addEventListener('click',()=>{how?.classList.add('open');how?.setAttribute('aria-hidden','false');calc()});
     const openContact=()=>{contact?.classList.add('open');contact?.setAttribute('aria-hidden','false')};$('#afContactOpen')?.addEventListener('click',openContact);$('#afFooterContact')?.addEventListener('click',openContact);
     $$('[data-af-close-info]').forEach(b=>b.addEventListener('click',()=>{const m=b.closest('.af-info-modal');m?.classList.remove('open');m?.setAttribute('aria-hidden','true')}));$$('.af-info-modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m){m.classList.remove('open');m.setAttribute('aria-hidden','true')}}));
