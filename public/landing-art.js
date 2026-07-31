@@ -160,32 +160,10 @@
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 
   function installEdgeBars(){
-    const divider=document.getElementById('afRevealDivider');
-    if(!divider) return;
-
-    // Remove qualquer indicador antigo que tenha sido colocado dentro da alça.
-    divider.querySelectorAll('.af-edge-waves').forEach(element=>element.remove());
-
-    let bars=document.querySelector('body > .af-edge-waves');
-    if(!bars){
-      bars=document.createElement('div');
-      bars.className='af-edge-waves';
-      bars.setAttribute('aria-hidden','true');
-      bars.innerHTML='<span></span><span></span><span></span><span></span><span></span><span></span>';
-      document.body.appendChild(bars);
-    }
-
-    const syncVisibility=()=>{
-      const landingOpen=divider.classList.contains('at-right') &&
-        !document.body.classList.contains('app-mode') &&
-        !document.body.classList.contains('af-reveal-dragging');
-      bars.classList.toggle('is-visible',landingOpen);
-    };
-
-    syncVisibility();
-    new MutationObserver(syncVisibility).observe(divider,{attributes:true,attributeFilter:['class']});
-    new MutationObserver(syncVisibility).observe(document.body,{attributes:true,attributeFilter:['class']});
-    window.addEventListener('resize',syncVisibility,{passive:true});
+    // O indicador antigo criava spans dentro da alça. Como regras antigas estilizam
+    // qualquer span descendente, isso podia gerar uma segunda aba/seta visual.
+    // Mantemos somente a alça original do HTML.
+    document.querySelectorAll('#afRevealDivider .af-edge-waves').forEach(element=>element.remove());
   }
 
   function installDraggableHelp(){
@@ -205,10 +183,30 @@
     let startLeft=0;
     let startTop=0;
 
-    const dimensions=()=>{
-      const rect=help.getBoundingClientRect();
-      return {width:rect.width||108,height:rect.height||52};
-    };
+    const initialRect=help.getBoundingClientRect();
+    const initialStyles=getComputedStyle(help);
+    const fixedWidth=Math.round(initialRect.width||108);
+    const fixedHeight=Math.round(initialRect.height||46);
+
+    help.style.setProperty('--af-help-fixed-w',`${fixedWidth}px`);
+    help.style.setProperty('--af-help-fixed-h',`${fixedHeight}px`);
+    help.style.setProperty('--af-help-fixed-padding',initialStyles.padding);
+    help.style.setProperty('--af-help-fixed-radius',initialStyles.borderRadius);
+
+    // Congela as dimensões reais do botão. Durante o arraste só left/top mudam.
+    Object.assign(help.style,{
+      width:`${fixedWidth}px`,
+      minWidth:`${fixedWidth}px`,
+      maxWidth:`${fixedWidth}px`,
+      height:`${fixedHeight}px`,
+      minHeight:`${fixedHeight}px`,
+      maxHeight:`${fixedHeight}px`,
+      boxSizing:'border-box',
+      flex:'none',
+      whiteSpace:'nowrap'
+    });
+
+    const dimensions=()=>({width:fixedWidth,height:fixedHeight});
 
     const setPosition=(left,top,save=false)=>{
       const {width,height}=dimensions();
@@ -241,12 +239,8 @@
       if(event.button!==undefined && event.button!==0) return;
 
       const rect=help.getBoundingClientRect();
-      const styles=getComputedStyle(help);
 
-      help.style.setProperty('--af-help-drag-w',`${rect.width}px`);
-      help.style.setProperty('--af-help-drag-h',`${rect.height}px`);
-      help.style.setProperty('--af-help-drag-padding',styles.padding);
-      help.style.setProperty('--af-help-drag-radius',styles.borderRadius);
+      /* As dimensões foram congeladas na inicialização. O arraste altera apenas left/top. */
 
       dragging=true;
       moved=false;

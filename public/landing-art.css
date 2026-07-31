@@ -1486,28 +1486,12 @@ body.af-reveal-dragging #afRevealDivider .af-edge-waves{
     transform .22s cubic-bezier(.2,.8,.2,1)!important;
 }
 
-/* Tracinho azul-claro de UX abaixo de todos os controles. */
+/* Sem tracinho decorativo abaixo dos controles. */
 .af-top-icon::after,
 .af-power-button::after,
 .af-theme-icon::after{
-  content:"";
-  position:absolute;
-  left:50%;
-  bottom:-4px;
-  width:11px;
-  height:1px;
-  border-radius:0;
-  background:linear-gradient(90deg,
-    rgba(153,225,255,0),
-    rgba(153,225,255,.78),
-    rgba(153,225,255,0)
-  );
-  opacity:.42;
-  transform:translateX(-50%) scaleX(.72);
-  transform-origin:center;
-  box-shadow:0 0 5px rgba(153,225,255,.16);
-  pointer-events:none;
-  transition:opacity .22s ease,transform .22s ease,box-shadow .22s ease;
+  content:none!important;
+  display:none!important;
 }
 
 .af-top-icon:hover,
@@ -1520,17 +1504,6 @@ body.af-reveal-dragging #afRevealDivider .af-edge-waves{
   border:0!important;
   box-shadow:none!important;
   transform:translateY(-1px)!important;
-}
-
-.af-top-icon:hover::after,
-.af-power-button:hover::after,
-.af-theme-icon:hover::after,
-.af-top-icon:focus-visible::after,
-.af-power-button:focus-visible::after,
-.af-theme-icon:focus-visible::after{
-  opacity:.95;
-  transform:translateX(-50%) scaleX(1.35);
-  box-shadow:0 0 8px rgba(153,225,255,.28);
 }
 
 .af-top-icon:active,
@@ -1576,10 +1549,284 @@ body.lua-mode .af-theme-icon .af-theme-glyph{
   .af-power-button i{font-size:14px!important}
   .af-theme-icon .af-theme-glyph,
   body.lua-mode .af-theme-icon .af-theme-glyph{transform:scale(.76)!important}
-  .af-top-icon::after,
-  .af-power-button::after,
-  .af-theme-icon::after{
-    bottom:-3px;
-    width:9px;
+}
+
+
+/* V28 — botão Ajuda arrastável sem deformar.
+   Mantém exatamente as dimensões medidas ao carregar; o arraste muda apenas a posição. */
+html body #af-chatbot-toggle.af-help-draggable,
+html body #af-chatbot-toggle.af-help-draggable:hover,
+html body #af-chatbot-toggle.af-help-draggable:active,
+html body #af-chatbot-toggle.af-help-draggable:focus,
+html body #af-chatbot-toggle.af-help-draggable:focus-visible,
+html body #af-chatbot-toggle.af-help-draggable.is-dragging{
+  width:var(--af-help-fixed-w,108px)!important;
+  min-width:var(--af-help-fixed-w,108px)!important;
+  max-width:var(--af-help-fixed-w,108px)!important;
+  height:var(--af-help-fixed-h,46px)!important;
+  min-height:var(--af-help-fixed-h,46px)!important;
+  max-height:var(--af-help-fixed-h,46px)!important;
+  padding:var(--af-help-fixed-padding,0 15px)!important;
+  border-radius:var(--af-help-fixed-radius,999px)!important;
+  box-sizing:border-box!important;
+  flex:none!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  transform:none!important;
+  scale:1!important;
+}
+html body #af-chatbot-toggle.af-help-draggable.is-dragging{
+  transition:none!important;
+  animation:none!important;
+}
+
+/* =========================================================
+   V29 — CORREÇÃO FINAL: UMA ÚNICA ALÇA + CONTROLES PREMIUM
+========================================================= */
+
+/* Remove todos os indicadores adicionais. A lateral terá somente
+   a alça original com a seta que já existe no HTML. */
+body > #afRevealDivider.af-reveal-divider::before,
+body > #afRevealDivider.af-reveal-divider::after,
+body > #afRevealDivider .af-edge-waves{
+  content:none!important;
+  display:none!important;
+  animation:none!important;
+}
+
+/* Garante que apenas o span FILHO DIRETO seja tratado como alça. */
+body > #afRevealDivider.af-reveal-divider > span,
+body > #afRevealDivider.af-reveal-divider:hover > span,
+body > #afRevealDivider.af-reveal-divider:focus-visible > span,
+body > #afRevealDivider.af-reveal-divider.is-active > span{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+
+/* Controles superiores: todos iguais, menores, com vidro muito leve,
+   sem tracinho inferior e sem fundos diferentes entre si. */
+.af-top-controls{
+  gap:6px!important;
+}
+
+.af-top-controls .af-top-icon,
+.af-top-controls .af-power-button,
+.af-top-controls .af-theme-icon{
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  min-height:30px!important;
+  max-width:30px!important;
+  max-height:30px!important;
+  padding:0!important;
+  border-radius:9px!important;
+  border:1px solid rgba(255,255,255,.075)!important;
+  background:rgba(255,255,255,.055)!important;
+  box-shadow:0 3px 12px rgba(0,0,0,.08)!important;
+  backdrop-filter:blur(8px)!important;
+  -webkit-backdrop-filter:blur(8px)!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+
+.af-top-controls .af-top-icon::before,
+.af-top-controls .af-top-icon::after,
+.af-top-controls .af-power-button::before,
+.af-top-controls .af-power-button::after,
+.af-top-controls .af-theme-icon::before,
+.af-top-controls .af-theme-icon::after{
+  content:none!important;
+  display:none!important;
+}
+
+.af-top-controls .af-top-icon:hover,
+.af-top-controls .af-power-button:hover,
+.af-top-controls .af-theme-icon:hover,
+.af-top-controls .af-top-icon:focus-visible,
+.af-top-controls .af-power-button:focus-visible,
+.af-top-controls .af-theme-icon:focus-visible{
+  background:rgba(255,255,255,.085)!important;
+  border-color:rgba(255,255,255,.12)!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.10)!important;
+  transform:translateY(-1px)!important;
+}
+
+.af-top-controls .af-top-icon:active,
+.af-top-controls .af-power-button:active,
+.af-top-controls .af-theme-icon:active{
+  transform:scale(.95)!important;
+}
+
+.af-top-controls .af-top-icon i,
+.af-top-controls .af-power-button i{
+  font-size:14px!important;
+}
+
+.af-top-controls .af-theme-icon .af-theme-glyph,
+body.lua-mode .af-top-controls .af-theme-icon .af-theme-glyph{
+  transform:scale(.74)!important;
+}
+
+/* Botão Ajuda: tamanho absolutamente fixo durante todo o arraste.
+   Somente left e top podem mudar. */
+html body #af-chatbot-toggle.af-help-draggable,
+html body #af-chatbot-toggle.af-help-draggable:hover,
+html body #af-chatbot-toggle.af-help-draggable:active,
+html body #af-chatbot-toggle.af-help-draggable:focus,
+html body #af-chatbot-toggle.af-help-draggable:focus-visible,
+html body #af-chatbot-toggle.af-help-draggable.is-dragging{
+  width:var(--af-help-fixed-w,108px)!important;
+  min-width:var(--af-help-fixed-w,108px)!important;
+  max-width:var(--af-help-fixed-w,108px)!important;
+  height:var(--af-help-fixed-h,46px)!important;
+  min-height:var(--af-help-fixed-h,46px)!important;
+  max-height:var(--af-help-fixed-h,46px)!important;
+  flex-basis:var(--af-help-fixed-w,108px)!important;
+  padding:var(--af-help-fixed-padding,0 15px)!important;
+  transform:none!important;
+  scale:1!important;
+  white-space:nowrap!important;
+  box-sizing:border-box!important;
+}
+
+@media(max-width:760px){
+  .af-top-controls{gap:5px!important}
+  .af-top-controls .af-top-icon,
+  .af-top-controls .af-power-button,
+  .af-top-controls .af-theme-icon{
+    width:28px!important;
+    height:28px!important;
+    min-width:28px!important;
+    min-height:28px!important;
+    max-width:28px!important;
+    max-height:28px!important;
+    border-radius:8px!important;
+  }
+  .af-top-controls .af-top-icon i,
+  .af-top-controls .af-power-button i{
+    font-size:13px!important;
+  }
+  .af-top-controls .af-theme-icon .af-theme-glyph,
+  body.lua-mode .af-top-controls .af-theme-icon .af-theme-glyph{
+    transform:scale(.68)!important;
+  }
+}
+
+/* =========================================================
+   V30 — SOMENTE CONTROLES SUPERIORES
+   Todos padronizados, circulares e extremamente minimalistas.
+========================================================= */
+.af-top-controls{
+  gap:6px!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+.af-top-controls .af-top-icon,
+.af-top-controls .af-power-button,
+.af-top-controls .af-theme-icon{
+  position:relative!important;
+  display:grid!important;
+  place-items:center!important;
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  min-height:30px!important;
+  max-width:30px!important;
+  max-height:30px!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:rgba(255,255,255,.055)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    0 3px 10px rgba(0,0,0,.055)!important;
+  backdrop-filter:blur(10px) saturate(115%)!important;
+  -webkit-backdrop-filter:blur(10px) saturate(115%)!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+  transition:
+    transform .22s cubic-bezier(.2,.8,.2,1),
+    background-color .22s ease,
+    box-shadow .22s ease,
+    filter .22s ease!important;
+}
+
+/* Nenhum traço, moldura quadrada ou decoração diferente entre eles. */
+.af-top-controls .af-top-icon::before,
+.af-top-controls .af-top-icon::after,
+.af-top-controls .af-power-button::before,
+.af-top-controls .af-power-button::after,
+.af-top-controls .af-theme-icon::before,
+.af-top-controls .af-theme-icon::after{
+  content:none!important;
+  display:none!important;
+}
+
+.af-top-controls .af-top-icon:hover,
+.af-top-controls .af-power-button:hover,
+.af-top-controls .af-theme-icon:hover,
+.af-top-controls .af-top-icon:focus-visible,
+.af-top-controls .af-power-button:focus-visible,
+.af-top-controls .af-theme-icon:focus-visible{
+  border:0!important;
+  background:rgba(255,255,255,.09)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    0 5px 14px rgba(0,0,0,.075),
+    0 0 12px rgba(255,255,255,.035)!important;
+  transform:translateY(-1px) scale(1.035)!important;
+  filter:brightness(1.08)!important;
+  outline:none!important;
+}
+
+.af-top-controls .af-top-icon:active,
+.af-top-controls .af-power-button:active,
+.af-top-controls .af-theme-icon:active{
+  transform:translateY(0) scale(.94)!important;
+  background:rgba(255,255,255,.07)!important;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.08)!important;
+}
+
+.af-top-controls .af-top-icon i,
+.af-top-controls .af-power-button i{
+  font-size:14px!important;
+  line-height:1!important;
+}
+
+.af-top-controls .af-theme-icon .af-theme-glyph,
+body.lua-mode .af-top-controls .af-theme-icon .af-theme-glyph{
+  transform:scale(.73)!important;
+  transform-origin:center!important;
+}
+
+@media(max-width:760px){
+  .af-top-controls{gap:5px!important}
+
+  .af-top-controls .af-top-icon,
+  .af-top-controls .af-power-button,
+  .af-top-controls .af-theme-icon{
+    width:29px!important;
+    height:29px!important;
+    min-width:29px!important;
+    min-height:29px!important;
+    max-width:29px!important;
+    max-height:29px!important;
+  }
+
+  .af-top-controls .af-top-icon i,
+  .af-top-controls .af-power-button i{
+    font-size:13px!important;
+  }
+
+  .af-top-controls .af-theme-icon .af-theme-glyph,
+  body.lua-mode .af-top-controls .af-theme-icon .af-theme-glyph{
+    transform:scale(.69)!important;
   }
 }
