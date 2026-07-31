@@ -1241,3 +1241,345 @@ body > #afRevealDivider.af-reveal-divider.at-left.is-active span{
     height:150px!important;
   }
 }
+
+/* V22 — ondas minimalistas somente na landing, indicando acesso ao painel */
+body > #afRevealDivider.af-reveal-divider.at-right::before,
+body > #afRevealDivider.af-reveal-divider.at-right::after{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  top:50%!important;
+  right:7px!important;
+  left:auto!important;
+  pointer-events:none!important;
+  border:1px solid rgba(255,255,255,.42)!important;
+  border-right:0!important;
+  border-radius:100% 0 0 100%!important;
+  transform-origin:right center!important;
+  opacity:0!important;
+  z-index:-1!important;
+}
+body > #afRevealDivider.af-reveal-divider.at-right::before{
+  width:29px!important;
+  height:68px!important;
+  animation:afLandingRipple 3.1s cubic-bezier(.2,.7,.25,1) infinite!important;
+}
+body > #afRevealDivider.af-reveal-divider.at-right::after{
+  width:44px!important;
+  height:104px!important;
+  animation:afLandingRipple 3.1s cubic-bezier(.2,.7,.25,1) .52s infinite!important;
+}
+body > #afRevealDivider.af-reveal-divider.at-left::before,
+body > #afRevealDivider.af-reveal-divider.at-left::after,
+body.af-reveal-dragging > #afRevealDivider.af-reveal-divider::before,
+body.af-reveal-dragging > #afRevealDivider.af-reveal-divider::after{
+  display:none!important;
+  animation:none!important;
+}
+@keyframes afLandingRipple{
+  0%,18%{opacity:0;transform:translateY(-50%) translateX(2px) scaleX(.45) scaleY(.72)}
+  28%{opacity:.34}
+  58%{opacity:.16}
+  78%,100%{opacity:0;transform:translateY(-50%) translateX(-13px) scaleX(1.18) scaleY(1.08)}
+}
+@media(max-width:760px){
+  body > #afRevealDivider.af-reveal-divider.at-right::before{
+    width:25px!important;
+    height:62px!important;
+  }
+  body > #afRevealDivider.af-reveal-divider.at-right::after{
+    width:38px!important;
+    height:94px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  body > #afRevealDivider.af-reveal-divider.at-right::before,
+  body > #afRevealDivider.af-reveal-divider.at-right::after{
+    animation:none!important;
+    opacity:.16!important;
+    transform:translateY(-50%) translateX(-4px)!important;
+  }
+}
+
+/* Indicador lateral: linhas verticais minimalistas, somente na landing */
+#afRevealDivider,
+#afRevealDivider > span{
+  overflow:visible!important;
+}
+
+#afRevealDivider .af-edge-waves{
+  position:absolute;
+  top:50%;
+  right:100%;
+  width:38px;
+  height:150px;
+  margin-right:4px;
+  transform:translateY(-50%);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:5px;
+  pointer-events:none;
+  z-index:2;
+}
+
+#afRevealDivider .af-edge-waves span{
+  display:block;
+  flex:0 0 1px;
+  width:1px;
+  border-radius:0;
+  background:linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255,255,255,.08) 18%,
+    rgba(255,255,255,.54) 50%,
+    rgba(255,255,255,.08) 82%,
+    transparent 100%
+  );
+  box-shadow:none;
+  filter:none;
+  opacity:0;
+  transform-origin:center;
+  animation:afEdgeBars 3.15s cubic-bezier(.22,.65,.24,1) infinite;
+  will-change:opacity,transform;
+}
+
+#afRevealDivider .af-edge-waves span:nth-child(1){height:38px;animation-delay:0s}
+#afRevealDivider .af-edge-waves span:nth-child(2){height:58px;animation-delay:.14s}
+#afRevealDivider .af-edge-waves span:nth-child(3){height:82px;animation-delay:.28s}
+#afRevealDivider .af-edge-waves span:nth-child(4){height:108px;animation-delay:.42s}
+#afRevealDivider .af-edge-waves span:nth-child(5){height:78px;animation-delay:.56s}
+#afRevealDivider .af-edge-waves span:nth-child(6){height:52px;animation-delay:.70s}
+
+@keyframes afEdgeBars{
+  0%,14%{
+    opacity:0;
+    transform:translateX(7px) scaleY(.18);
+  }
+  34%{
+    opacity:.10;
+    transform:translateX(5px) scaleY(.42);
+  }
+  56%{
+    opacity:.34;
+    transform:translateX(1px) scaleY(.82);
+  }
+  68%{
+    opacity:.58;
+    transform:translateX(-1px) scaleY(1);
+  }
+  84%{
+    opacity:.16;
+    transform:translateX(-5px) scaleY(.72);
+  }
+  100%{
+    opacity:0;
+    transform:translateX(-9px) scaleY(.24);
+  }
+}
+
+/* As linhas aparecem apenas quando a landing está totalmente aberta. */
+#afRevealDivider:not(.at-right) .af-edge-waves,
+body.app-mode #afRevealDivider .af-edge-waves,
+body.af-reveal-dragging #afRevealDivider .af-edge-waves{
+  display:none!important;
+}
+
+/* Botão Ajuda continua arrastável sem alterar tamanho. */
+#af-chatbot-toggle.af-help-draggable{
+  position:fixed!important;
+  left:var(--af-help-x,auto)!important;
+  top:var(--af-help-y,auto)!important;
+  right:auto!important;
+  bottom:auto!important;
+  margin:0!important;
+  touch-action:none!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+  cursor:grab!important;
+  will-change:left,top;
+  z-index:2147482000!important;
+}
+
+#af-chatbot-toggle.af-help-draggable,
+#af-chatbot-toggle.af-help-draggable:hover,
+#af-chatbot-toggle.af-help-draggable:active,
+#af-chatbot-toggle.af-help-draggable:focus,
+#af-chatbot-toggle.af-help-draggable.is-dragging{
+  transform:none!important;
+  scale:1!important;
+  animation:none!important;
+}
+
+#af-chatbot-toggle.af-help-draggable.is-dragging{
+  cursor:grabbing!important;
+  transition:none!important;
+  width:var(--af-help-drag-w)!important;
+  min-width:var(--af-help-drag-w)!important;
+  max-width:var(--af-help-drag-w)!important;
+  height:var(--af-help-drag-h)!important;
+  min-height:var(--af-help-drag-h)!important;
+  max-height:var(--af-help-drag-h)!important;
+  padding:var(--af-help-drag-padding)!important;
+  border-radius:var(--af-help-drag-radius)!important;
+}
+
+@media(max-width:700px){
+  #afRevealDivider .af-edge-waves{
+    width:32px;
+    height:126px;
+    margin-right:3px;
+    gap:4px;
+  }
+  #afRevealDivider .af-edge-waves span:nth-child(1){height:30px}
+  #afRevealDivider .af-edge-waves span:nth-child(2){height:46px}
+  #afRevealDivider .af-edge-waves span:nth-child(3){height:64px}
+  #afRevealDivider .af-edge-waves span:nth-child(4){height:88px}
+  #afRevealDivider .af-edge-waves span:nth-child(5){height:62px}
+  #afRevealDivider .af-edge-waves span:nth-child(6){height:40px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  #afRevealDivider .af-edge-waves span{
+    animation:none!important;
+    opacity:.18;
+    transform:none;
+  }
+}
+
+/* =========================================================
+   V26 — CONTROLES SUPERIORES MINIMALISTAS E PADRONIZADOS
+   Instagram, TikTok, e-mail, tema e power com o mesmo padrão.
+========================================================= */
+.af-top-controls{
+  gap:7px!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+.af-top-icon,
+.af-power-button,
+.af-theme-icon{
+  position:relative!important;
+  width:32px!important;
+  height:32px!important;
+  min-width:32px!important;
+  min-height:32px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:10px!important;
+  background:rgba(255,255,255,.025)!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  display:grid!important;
+  place-items:center!important;
+  overflow:visible!important;
+  transform:none!important;
+  transition:
+    background-color .22s ease,
+    opacity .22s ease,
+    transform .22s cubic-bezier(.2,.8,.2,1)!important;
+}
+
+/* Tracinho azul-claro de UX abaixo de todos os controles. */
+.af-top-icon::after,
+.af-power-button::after,
+.af-theme-icon::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-4px;
+  width:11px;
+  height:1px;
+  border-radius:0;
+  background:linear-gradient(90deg,
+    rgba(153,225,255,0),
+    rgba(153,225,255,.78),
+    rgba(153,225,255,0)
+  );
+  opacity:.42;
+  transform:translateX(-50%) scaleX(.72);
+  transform-origin:center;
+  box-shadow:0 0 5px rgba(153,225,255,.16);
+  pointer-events:none;
+  transition:opacity .22s ease,transform .22s ease,box-shadow .22s ease;
+}
+
+.af-top-icon:hover,
+.af-power-button:hover,
+.af-theme-icon:hover,
+.af-top-icon:focus-visible,
+.af-power-button:focus-visible,
+.af-theme-icon:focus-visible{
+  background:rgba(255,255,255,.055)!important;
+  border:0!important;
+  box-shadow:none!important;
+  transform:translateY(-1px)!important;
+}
+
+.af-top-icon:hover::after,
+.af-power-button:hover::after,
+.af-theme-icon:hover::after,
+.af-top-icon:focus-visible::after,
+.af-power-button:focus-visible::after,
+.af-theme-icon:focus-visible::after{
+  opacity:.95;
+  transform:translateX(-50%) scaleX(1.35);
+  box-shadow:0 0 8px rgba(153,225,255,.28);
+}
+
+.af-top-icon:active,
+.af-power-button:active,
+.af-theme-icon:active{
+  transform:translateY(0) scale(.94)!important;
+}
+
+.af-top-icon i,
+.af-power-button i{
+  font-size:15px!important;
+  line-height:1!important;
+}
+
+/* Mantém as cores próprias dos ícones sem fundos diferentes. */
+.af-instagram i{color:#ff6798!important;text-shadow:0 0 8px rgba(255,103,152,.18)!important}
+.af-tiktok i{color:#f8fbff!important;text-shadow:-1px 0 #31dce8,1px 0 #ff4d82!important}
+.af-email i{color:#80e2ad!important;text-shadow:0 0 8px rgba(128,226,173,.16)!important}
+.af-power-button,
+.af-power-button i{color:#55e6d4!important;text-shadow:0 0 8px rgba(85,230,212,.18)!important}
+
+/* Sol/lua também segue exatamente o mesmo tamanho do grupo. */
+.af-theme-icon .af-theme-glyph{
+  transform:scale(.84)!important;
+  transform-origin:center!important;
+}
+body.lua-mode .af-theme-icon .af-theme-glyph{
+  transform:scale(.84)!important;
+}
+
+@media(max-width:760px){
+  .af-top-controls{gap:5px!important}
+  .af-top-icon,
+  .af-power-button,
+  .af-theme-icon{
+    width:29px!important;
+    height:29px!important;
+    min-width:29px!important;
+    min-height:29px!important;
+    border-radius:9px!important;
+  }
+  .af-top-icon i,
+  .af-power-button i{font-size:14px!important}
+  .af-theme-icon .af-theme-glyph,
+  body.lua-mode .af-theme-icon .af-theme-glyph{transform:scale(.76)!important}
+  .af-top-icon::after,
+  .af-power-button::after,
+  .af-theme-icon::after{
+    bottom:-3px;
+    width:9px;
+  }
+}
