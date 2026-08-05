@@ -3843,46 +3843,87 @@ async callGeminiAPI(userText) {
             const closeBtn = document.getElementById('af-chatbot-close');
             const homeBtn = document.getElementById('af-chatbot-home');
             const bodyEl = document.getElementById('af-chatbot-body');
+            const form = document.getElementById('af-ai-form');
+            const input = document.getElementById('af-ai-input');
+            if (!widget || !toggleBtn || !closeBtn || !homeBtn || !bodyEl || !form || !input) return;
 
-            // Assistente/abelhinha removido da landing: evita erro em cliques globais e elimina timers/animações pesadas.
-            if (!widget || !toggleBtn || !closeBtn || !homeBtn || !bodyEl) return;
-
-            const chatbot = {
-                widget, toggleBtn, closeBtn, homeBtn, bodyEl,
-                menuTree: {
-                    start: { text: "Olá! 👋 Sou o Assistente Virtual do Alimente Fácil. Como posso te ajudar hoje?", options: [ { label: "📝 Quero me Cadastrar", next: "guide_signup" }, { label: "💎 Planos e Preços", next: "guide_plans" }, { label: "🚀 Como funciona o Painel?", next: "guide_features" }, { label: "📞 Preciso de Suporte", next: "guide_support" } ] },
-                    guide_signup: { text: "É muito simples! Você pode criar uma conta gratuita agora mesmo.", options: [ { label: "Abrir Cadastro Agora", action: "open_auth_signup", icon: "fa-user-plus" }, { label: "Já tenho conta (Login)", action: "open_auth_login", icon: "fa-sign-in-alt" }, { label: "Voltar ao Início", next: "start", icon: "fa-arrow-left" } ] },
-                    guide_plans: { text: "Temos um plano simples e direto para organizar sua rotina alimentar.", options: [ { label: "Ver Tabela de Planos", action: "open_plans_modal", icon: "fa-table" }, { label: "Voltar ao Início", next: "start", icon: "fa-arrow-left" } ] },
-                    guide_features: { text: "O Alimente Fácil tem 4 pilares principais.", options: [ { label: "🛒 Listas de Compras", next: "feat_lists" }, { label: "📦 Gestão de Despensa", next: "feat_pantry" }, { label: "🍳 Receitas", next: "feat_recipes" }, { label: "📅 Planejador Semanal", next: "feat_planner" }, { label: "Voltar ao Início", next: "start", icon: "fa-arrow-left" } ] },
-                    feat_lists: { text: "Crie listas inteligentes que calculam o total automaticamente.", options: [ { label: "Ir para Listas", action: "nav_lista", icon: "fa-external-link-alt" }, { label: "Voltar", next: "guide_features", icon: "fa-arrow-left" } ] },
-                    feat_pantry: { text: "Controle a validade e estoque da sua despensa.", options: [ { label: "Ir para Despensa", action: "nav_despensa", icon: "fa-external-link-alt" }, { label: "Voltar", next: "guide_features", icon: "fa-arrow-left" } ] },
-                    feat_recipes: { text: "Salve receitas e calcule custos.", options: [ { label: "Ir para Receitas", action: "nav_receitas", icon: "fa-external-link-alt" }, { label: "Voltar", next: "guide_features", icon: "fa-arrow-left" } ] },
-                    feat_planner: { text: "Organize o cardápio da semana inteira.", options: [ { label: "Ir para Planejador", action: "nav_planejador", icon: "fa-external-link-alt" }, { label: "Voltar", next: "guide_features", icon: "fa-arrow-left" } ] },
-                    guide_support: { text: "Use nosso formulário de contato na página inicial.", options: [ { label: "Ir para Contato", action: "scroll_contact", icon: "fa-envelope" }, { label: "Voltar ao Início", next: "start", icon: "fa-arrow-left" } ] }
+            const safe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+            const assistant = {
+                widget, toggleBtn, closeBtn, homeBtn, bodyEl, input,
+                shortcuts: [
+                    ['✨ O que o aplicativo faz?','O que o Alimente Fácil faz?'],
+                    ['🛒 Como funcionam as listas?','Como funcionam as listas de compras?'],
+                    ['📦 Despensa e validades','Como funciona a despensa e o controle de validades?'],
+                    ['🍳 Receitas e planejador','Como funcionam as receitas e o planejador?'],
+                    ['💰 Preço e teste grátis','Quanto custa e como funciona o teste grátis?']
+                ],
+                renderMessage(html, sender='bot'){
+                    const item=document.createElement('div'); item.className=`af-msg ${sender}`;
+                    item.innerHTML=sender==='bot'?html:safe(html); this.bodyEl.appendChild(item); this.scroll(); return item;
                 },
-                renderMessage(text, sender = 'bot') { const msgDiv = document.createElement('div'); msgDiv.className = `af-msg ${sender}`; msgDiv.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); this.bodyEl.appendChild(msgDiv); this.scrollToBottom(); },
-                renderOptions(options) { const optionsDiv = document.createElement('div'); optionsDiv.className = 'af-options-container'; options.forEach(opt => { const btn = document.createElement('button'); btn.className = 'af-option-btn'; const iconHtml = opt.icon ? `<i class="fa-solid ${opt.icon}"></i>` : `<i class="fa-solid fa-chevron-right"></i>`; btn.innerHTML = `${iconHtml} ${opt.label}`; btn.onclick = () => { this.renderMessage(opt.label, 'user'); setTimeout(() => { if (opt.next) { this.navigateMenu(opt.next); } else if (opt.action) { this.executeAction(opt.action); } }, 600); }; optionsDiv.appendChild(btn); }); this.bodyEl.appendChild(optionsDiv); this.scrollToBottom(); },
-                navigateMenu(menuKey) { const menu = this.menuTree[menuKey]; if (menu) { this.renderMessage(menu.text, 'bot'); this.renderOptions(menu.options); } },
-                executeAction(action) {
-                    switch(action) {
-                        case 'open_auth_signup': this.renderMessage("Abrindo cadastro...", 'bot'); app.showAuthModal(); setTimeout(() => document.querySelector('.auth-toggle-link[data-view="signup-view"]')?.click(), 100); break;
-                        case 'open_auth_login': this.renderMessage("Abrindo login...", 'bot'); app.showAuthModal(); break;
-                        case 'open_plans_modal': this.renderMessage("Mostrando planos...", 'bot'); app.showPlansModal(); break;
-                        case 'scroll_contact': this.renderMessage("Indo para contato...", 'bot'); document.getElementById('sobre')?.scrollIntoView({ behavior: 'smooth' }); app.elements.nodeCluster?.classList.remove('is-open'); break;
-                        case 'nav_lista': case 'nav_despensa': case 'nav_receitas': case 'nav_planejador':
-                            const module = action.split('_')[1];
-                            if (app.isAppMode) { this.renderMessage(`Navegando para ${module}...`, 'bot'); app.activateModuleAndRender(module); }
-                            else { this.renderMessage("Faça login primeiro.", 'bot'); this.renderOptions([{ label: "Login", action: "open_auth_login" }]); } break;
+                renderActions(actions=[]){
+                    if(!actions.length) return;
+                    const wrap=document.createElement('div'); wrap.className='af-ai-actions';
+                    actions.forEach(([label,action])=>{
+                        const button=document.createElement('button'); button.type='button'; button.className='af-ai-action';
+                        button.innerHTML=`<span>${safe(label)}</span><i class="fa-solid fa-arrow-right"></i>`;
+                        button.addEventListener('click',()=>this.execute(action,label)); wrap.appendChild(button);
+                    });
+                    this.bodyEl.appendChild(wrap); this.scroll();
+                },
+                renderShortcuts(){
+                    const wrap=document.createElement('div'); wrap.className='af-ai-shortcuts';
+                    this.shortcuts.forEach(([label,question])=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>this.ask(question));wrap.appendChild(b)});
+                    this.bodyEl.appendChild(wrap); this.scroll();
+                },
+                welcome(){
+                    this.bodyEl.innerHTML='';
+                    this.renderMessage('<strong>Olá! Sou o especialista do Alimente Fácil.</strong><br>Pergunte com suas próprias palavras sobre o aplicativo, compras, despensa, validades, receitas, planejamento ou economia.');
+                    this.renderShortcuts();
+                },
+                context(){return {loggedIn:!!app.isLoggedIn,state:app.state||{},plan:app.userPlan||'free'}},
+                ask(raw){
+                    const question=String(raw||'').trim(); if(!question)return;
+                    this.renderMessage(question,'user'); this.input.value='';
+                    const thinking=this.renderMessage('<span class="af-ai-thinking"><i></i><i></i><i></i></span>');
+                    setTimeout(()=>{
+                        thinking.remove();
+                        const result=window.AF_ASSISTANT_ENGINE?.resolve(question,this.context()) || {html:'Não consegui carregar minha base de conhecimento agora. Tente novamente.',actions:[]};
+                        this.renderMessage(result.html,'bot'); this.renderActions(result.actions);
+                    },260);
+                },
+                execute(action,label){
+                    if(['overview','features','lists','pantry','recipes_planner','planner','expiry','meal_ideas','savings','price'].includes(action)){
+                        const map={overview:'O que o Alimente Fácil faz?',features:'Quais são os recursos?',lists:'Como funcionam as listas de compras?',pantry:'Como funciona a despensa?',recipes_planner:'Como funcionam receitas e planejador?',planner:'Como funciona o planejador?',expiry:'Como funciona o controle de validades?',meal_ideas:'O que posso cozinhar com o que tenho?',savings:'Como economizar e reduzir desperdício?',price:'Quanto custa?'};
+                        this.ask(map[action]); return;
+                    }
+                    if(action==='signup'){ this.renderMessage(label,'user'); app.showAuthModal(); setTimeout(()=>document.querySelector('.auth-toggle-link[data-view="signup-view"]')?.click(),100); return; }
+                    if(action==='login'){ this.renderMessage(label,'user'); app.showAuthModal(); return; }
+                    if(action==='forgot_password'){ app.showAuthModal(); setTimeout(()=>document.querySelector('[data-view="forgot-password-view"]')?.click(),100); return; }
+                    if(action==='plans'){ app.showPlansModal(); return; }
+                    if(action==='contact'){ document.getElementById('afContactOpen')?.click(); return; }
+                    if(action==='privacy'){ location.href='/politica-de-privacidade.html'; return; }
+                    if(action==='terms'){ location.href='/termos.html'; return; }
+                    if(action==='mobile'){ this.ask('Como instalar o aplicativo no celular?'); return; }
+                    if(action==='list_to_pantry'){ this.ask('Como mandar os itens comprados para a despensa?'); return; }
+                    if(action==='planner_to_list'){ this.ask('Como gerar uma lista a partir do planejador?'); return; }
+                    const modules={nav_lista:'lista',nav_despensa:'despensa',nav_receitas:'receitas',nav_planejador:'planejador',nav_analises:'analises'};
+                    if(modules[action]){
+                        if(!app.isLoggedIn){ this.renderMessage('Para abrir seus dados reais, entre ou crie uma conta.','bot'); this.renderActions([['Criar conta grátis','signup'],['Entrar','login']]); return; }
+                        app.enterAppMode?.(); app.activateModuleAndRender?.(modules[action]); this.close();
                     }
                 },
-                scrollToBottom() { this.bodyEl.scrollTop = this.bodyEl.scrollHeight; },
-                toggle() { const isOpen = this.widget.classList.contains('af-open'); if (isOpen) { this.widget.classList.remove('af-open'); this.widget.setAttribute('aria-hidden', 'true'); this.toggleBtn.classList.remove('af-hidden'); } else { this.widget.classList.add('af-open'); this.widget.setAttribute('aria-hidden', 'false'); this.toggleBtn.classList.add('af-hidden'); if (this.bodyEl.children.length === 0) { this.navigateMenu('start'); } } },
-                restart() { this.bodyEl.innerHTML = ''; this.navigateMenu('start'); }
+                scroll(){this.bodyEl.scrollTop=this.bodyEl.scrollHeight},
+                open(){this.widget.classList.add('af-open');this.widget.setAttribute('aria-hidden','false');if(!this.bodyEl.children.length)this.welcome();setTimeout(()=>this.input.focus(),120)},
+                close(){this.widget.classList.remove('af-open');this.widget.setAttribute('aria-hidden','true')},
+                toggle(){this.widget.classList.contains('af-open')?this.close():this.open()},
+                restart(){this.welcome()}
             };
-            if(chatbot.toggleBtn) chatbot.toggleBtn.addEventListener('click', () => chatbot.toggle());
-            if(chatbot.closeBtn) chatbot.closeBtn.addEventListener('click', () => chatbot.toggle());
-            if(chatbot.homeBtn) chatbot.homeBtn.addEventListener('click', () => chatbot.restart());
-            document.addEventListener('click', (e) => { const isOpen = chatbot.widget.classList.contains('af-open'); const clickedInside = chatbot.widget.contains(e.target); const clickedToggle = chatbot.toggleBtn.contains(e.target); if (isOpen && !clickedInside && !clickedToggle) { chatbot.toggle(); } });
+            toggleBtn.addEventListener('click',e=>{if(toggleBtn.classList.contains('is-dragging'))return;e.preventDefault();assistant.toggle()});
+            closeBtn.addEventListener('click',()=>assistant.close());
+            homeBtn.addEventListener('click',()=>assistant.restart());
+            form.addEventListener('submit',e=>{e.preventDefault();assistant.ask(input.value)});
+            document.addEventListener('click',e=>{if(assistant.widget.classList.contains('af-open')&&!assistant.widget.contains(e.target)&&!assistant.toggleBtn.contains(e.target))assistant.close()});
         }
     };
 

@@ -1301,91 +1301,49 @@ body.af-reveal-dragging > #afRevealDivider.af-reveal-divider::after{
   }
 }
 
-/* Indicador lateral: linhas verticais minimalistas, somente na landing */
-#afRevealDivider,
-#afRevealDivider > span{
-  overflow:visible!important;
-}
-
-#afRevealDivider .af-edge-waves{
+/* V23 — indicador real em ondas, elegante e visível somente na landing */
+#afRevealDivider .af-edge-ripples{
   position:absolute;
   top:50%;
-  right:100%;
-  width:38px;
-  height:150px;
-  margin-right:4px;
+  right:7px;
+  width:62px;
+  height:154px;
   transform:translateY(-50%);
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap:5px;
   pointer-events:none;
-  z-index:2;
+  overflow:visible;
+  z-index:-1;
 }
-
-#afRevealDivider .af-edge-waves span{
-  display:block;
-  flex:0 0 1px;
-  width:1px;
-  border-radius:0;
-  background:linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(255,255,255,.08) 18%,
-    rgba(255,255,255,.54) 50%,
-    rgba(255,255,255,.08) 82%,
-    transparent 100%
-  );
-  box-shadow:none;
-  filter:none;
-  opacity:0;
-  transform-origin:center;
-  animation:afEdgeBars 3.15s cubic-bezier(.22,.65,.24,1) infinite;
-  will-change:opacity,transform;
-}
-
-#afRevealDivider .af-edge-waves span:nth-child(1){height:38px;animation-delay:0s}
-#afRevealDivider .af-edge-waves span:nth-child(2){height:58px;animation-delay:.14s}
-#afRevealDivider .af-edge-waves span:nth-child(3){height:82px;animation-delay:.28s}
-#afRevealDivider .af-edge-waves span:nth-child(4){height:108px;animation-delay:.42s}
-#afRevealDivider .af-edge-waves span:nth-child(5){height:78px;animation-delay:.56s}
-#afRevealDivider .af-edge-waves span:nth-child(6){height:52px;animation-delay:.70s}
-
-@keyframes afEdgeBars{
-  0%,14%{
-    opacity:0;
-    transform:translateX(7px) scaleY(.18);
-  }
-  34%{
-    opacity:.10;
-    transform:translateX(5px) scaleY(.42);
-  }
-  56%{
-    opacity:.34;
-    transform:translateX(1px) scaleY(.82);
-  }
-  68%{
-    opacity:.58;
-    transform:translateX(-1px) scaleY(1);
-  }
-  84%{
-    opacity:.16;
-    transform:translateX(-5px) scaleY(.72);
-  }
-  100%{
-    opacity:0;
-    transform:translateX(-9px) scaleY(.24);
-  }
-}
-
-/* As linhas aparecem apenas quando a landing está totalmente aberta. */
-#afRevealDivider:not(.at-right) .af-edge-waves,
-body.app-mode #afRevealDivider .af-edge-waves,
-body.af-reveal-dragging #afRevealDivider .af-edge-waves{
+#afRevealDivider.at-left .af-edge-ripples,
+body.af-reveal-dragging #afRevealDivider .af-edge-ripples{
   display:none!important;
 }
+#afRevealDivider .af-edge-ripple{
+  position:absolute;
+  top:50%;
+  right:0;
+  width:18px;
+  height:68px;
+  border:1.25px solid rgba(255,255,255,.72);
+  border-right:0;
+  border-radius:999px 0 0 999px;
+  opacity:0;
+  transform:translateY(-50%) scale(.56,.72);
+  filter:drop-shadow(0 0 7px rgba(255,255,255,.28));
+  animation:afEdgeRippleReal 3.2s cubic-bezier(.16,.72,.24,1) infinite;
+}
+#afRevealDivider .af-edge-ripple:nth-child(2){animation-delay:.48s}
+#afRevealDivider .af-edge-ripple:nth-child(3){animation-delay:.96s}
+@keyframes afEdgeRippleReal{
+  0%,17%{opacity:0;transform:translateY(-50%) translateX(2px) scale(.5,.7)}
+  27%{opacity:.68}
+  52%{opacity:.32}
+  78%,100%{opacity:0;transform:translateY(-50%) translateX(-34px) scale(1.38,1.18)}
+}
+/* desativa as ondas antigas para evitar duplicidade */
+body > #afRevealDivider.af-reveal-divider::before,
+body > #afRevealDivider.af-reveal-divider::after{display:none!important}
 
-/* Botão Ajuda continua arrastável sem alterar tamanho. */
+/* V23 — botão Ajuda livre para arrastar */
 #af-chatbot-toggle.af-help-draggable{
   position:fixed!important;
   left:var(--af-help-x,auto)!important;
@@ -1397,10 +1355,128 @@ body.af-reveal-dragging #afRevealDivider .af-edge-waves{
   user-select:none!important;
   -webkit-user-select:none!important;
   cursor:grab!important;
-  will-change:left,top;
+  will-change:left,top,transform;
   z-index:2147482000!important;
 }
+#af-chatbot-toggle.af-help-draggable.is-dragging{
+  cursor:grabbing!important;
+  transition:none!important;
+  transform:scale(1.035)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  #afRevealDivider .af-edge-ripple{animation:none!important;opacity:.25!important}
+}
 
+/* V24 — ondas garantidamente visíveis e Ajuda sem mudar de tamanho */
+#afRevealDivider,
+#afRevealDivider span{overflow:visible!important}
+
+#afRevealDivider .af-edge-ripples{
+  position:fixed!important;
+  top:var(--af-ripple-top,50vh)!important;
+  right:8px!important;
+  left:auto!important;
+  width:78px!important;
+  height:170px!important;
+  transform:translateY(-50%)!important;
+  z-index:2147481900!important;
+  pointer-events:none!important;
+  overflow:visible!important;
+  display:block!important;
+  opacity:1!important;
+}
+#afRevealDivider.at-left .af-edge-ripples,
+body.af-reveal-dragging #afRevealDivider .af-edge-ripples{
+  display:none!important;
+}
+#afRevealDivider .af-edge-ripple{
+  position:absolute!important;
+  top:50%!important;
+  right:0!important;
+  width:24px!important;
+  height:82px!important;
+  border:1.35px solid rgba(255,255,255,.82)!important;
+  border-right:0!important;
+  border-radius:999px 0 0 999px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:drop-shadow(0 0 6px rgba(255,255,255,.32))!important;
+  opacity:0;
+  transform:translateY(-50%) translateX(0) scale(.58,.76)!important;
+  animation:afEdgeRippleV24 3s cubic-bezier(.18,.68,.24,1) infinite!important;
+  will-change:transform,opacity;
+}
+#afRevealDivider .af-edge-ripple:nth-child(2){animation-delay:.42s!important}
+#afRevealDivider .af-edge-ripple:nth-child(3){animation-delay:.84s!important}
+@keyframes afEdgeRippleV24{
+  0%,12%{opacity:0;transform:translateY(-50%) translateX(0) scale(.56,.72)}
+  23%{opacity:.76}
+  48%{opacity:.46}
+  78%,100%{opacity:0;transform:translateY(-50%) translateX(-48px) scale(1.52,1.25)}
+}
+
+#af-chatbot-toggle.af-help-draggable,
+#af-chatbot-toggle.af-help-draggable.is-dragging{
+  transform:none!important;
+  scale:1!important;
+}
+#af-chatbot-toggle.af-help-draggable.is-dragging{
+  width:var(--af-help-drag-w)!important;
+  min-width:var(--af-help-drag-w)!important;
+  max-width:var(--af-help-drag-w)!important;
+  height:var(--af-help-drag-h)!important;
+  min-height:var(--af-help-drag-h)!important;
+  max-height:var(--af-help-drag-h)!important;
+  padding:var(--af-help-drag-padding)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  #afRevealDivider .af-edge-ripple{animation:afEdgeRippleV24 4.8s ease-in-out infinite!important}
+}
+
+/* V25 — ondas verticais reais na borda da landing */
+#afLandingEdgeWaves{
+  position:fixed!important;
+  right:14px!important;
+  top:50%!important;
+  width:92px!important;
+  height:230px!important;
+  transform:translateY(-50%)!important;
+  pointer-events:none!important;
+  z-index:2147482500!important;
+  overflow:visible!important;
+  display:block!important;
+  opacity:1!important;
+}
+#afLandingEdgeWaves[hidden]{display:none!important}
+#afLandingEdgeWaves .af-vertical-wave{
+  position:absolute!important;
+  top:50%!important;
+  right:-10px!important;
+  border:1px solid rgba(255,255,255,.62)!important;
+  border-right-color:transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:drop-shadow(0 0 4px rgba(255,255,255,.16))!important;
+  border-radius:999px 0 0 999px!important;
+  transform:translateY(-50%) translateX(0)!important;
+  opacity:0;
+  will-change:transform,opacity;
+  animation:afVerticalEdgeWave 3.4s cubic-bezier(.22,.66,.2,1) infinite!important;
+}
+#afLandingEdgeWaves .af-vertical-wave:nth-child(1){width:24px!important;height:116px!important;animation-delay:0s!important}
+#afLandingEdgeWaves .af-vertical-wave:nth-child(2){width:40px!important;height:150px!important;animation-delay:.36s!important}
+#afLandingEdgeWaves .af-vertical-wave:nth-child(3){width:58px!important;height:184px!important;animation-delay:.72s!important}
+#afLandingEdgeWaves .af-vertical-wave:nth-child(4){width:76px!important;height:218px!important;animation-delay:1.08s!important}
+@keyframes afVerticalEdgeWave{
+  0%,16%{opacity:0;transform:translateY(-50%) translateX(8px) scaleX(.96)}
+  28%{opacity:.58}
+  52%{opacity:.34}
+  78%,100%{opacity:0;transform:translateY(-50%) translateX(-18px) scaleX(1.035)}
+}
+body.af-reveal-dragging #afLandingEdgeWaves,
+body.app-mode #afLandingEdgeWaves{display:none!important}
+
+/* Ajuda: arrastável, mas sempre exatamente do mesmo tamanho */
 #af-chatbot-toggle.af-help-draggable,
 #af-chatbot-toggle.af-help-draggable:hover,
 #af-chatbot-toggle.af-help-draggable:active,
@@ -1410,10 +1486,7 @@ body.af-reveal-dragging #afRevealDivider .af-edge-waves{
   scale:1!important;
   animation:none!important;
 }
-
 #af-chatbot-toggle.af-help-draggable.is-dragging{
-  cursor:grabbing!important;
-  transition:none!important;
   width:var(--af-help-drag-w)!important;
   min-width:var(--af-help-drag-w)!important;
   max-width:var(--af-help-drag-w)!important;
@@ -1425,408 +1498,110 @@ body.af-reveal-dragging #afRevealDivider .af-edge-waves{
 }
 
 @media(max-width:700px){
-  #afRevealDivider .af-edge-waves{
-    width:32px;
-    height:126px;
-    margin-right:3px;
-    gap:4px;
+  #afLandingEdgeWaves{
+    right:10px!important;
+    width:74px!important;
+    height:190px!important;
   }
-  #afRevealDivider .af-edge-waves span:nth-child(1){height:30px}
-  #afRevealDivider .af-edge-waves span:nth-child(2){height:46px}
-  #afRevealDivider .af-edge-waves span:nth-child(3){height:64px}
-  #afRevealDivider .af-edge-waves span:nth-child(4){height:88px}
-  #afRevealDivider .af-edge-waves span:nth-child(5){height:62px}
-  #afRevealDivider .af-edge-waves span:nth-child(6){height:40px}
+  #afLandingEdgeWaves .af-vertical-wave:nth-child(1){width:20px!important;height:96px!important}
+  #afLandingEdgeWaves .af-vertical-wave:nth-child(2){width:32px!important;height:124px!important}
+  #afLandingEdgeWaves .af-vertical-wave:nth-child(3){width:46px!important;height:152px!important}
+  #afLandingEdgeWaves .af-vertical-wave:nth-child(4){width:62px!important;height:182px!important}
 }
-
 @media(prefers-reduced-motion:reduce){
-  #afRevealDivider .af-edge-waves span{
-    animation:none!important;
-    opacity:.18;
-    transform:none;
+  #afLandingEdgeWaves .af-vertical-wave{
+    animation:afVerticalEdgeWave 5.6s ease-in-out infinite!important;
   }
 }
 
-/* =========================================================
-   V26 — CONTROLES SUPERIORES MINIMALISTAS E PADRONIZADOS
-   Instagram, TikTok, e-mail, tema e power com o mesmo padrão.
-========================================================= */
-.af-top-controls{
-  gap:7px!important;
-  padding:0!important;
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-  backdrop-filter:none!important;
-  -webkit-backdrop-filter:none!important;
-}
 
-.af-top-icon,
-.af-power-button,
-.af-theme-icon{
-  position:relative!important;
-  width:32px!important;
-  height:32px!important;
-  min-width:32px!important;
-  min-height:32px!important;
-  padding:0!important;
-  border:0!important;
-  border-radius:10px!important;
-  background:rgba(255,255,255,.025)!important;
-  box-shadow:none!important;
-  backdrop-filter:none!important;
-  -webkit-backdrop-filter:none!important;
-  display:grid!important;
-  place-items:center!important;
-  overflow:visible!important;
-  transform:none!important;
-  transition:
-    background-color .22s ease,
-    opacity .22s ease,
-    transform .22s cubic-bezier(.2,.8,.2,1)!important;
+/* AF IA local — destaque leve de valor e assistente sem poluir a landing */
+.af-hero-value-note{
+  width:min(100%,520px); margin:16px 0 18px; padding:10px 12px;
+  display:flex; align-items:center; gap:11px; border-radius:18px;
+  background:rgba(7,17,12,.34); border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 12px 34px rgba(0,0,0,.16); backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px); text-shadow:none;
 }
+.af-value-price{flex:0 0 auto;padding:7px 10px;border-radius:999px;background:rgba(169,239,139,.13);border:1px solid rgba(169,239,139,.3);color:#efffe8;font:800 12px/1 Sora,sans-serif;white-space:nowrap}
+.af-hero-value-note>span:last-child{color:rgba(255,255,255,.76);font-size:11px;line-height:1.25}
+.af-hero-value-note strong{display:block;color:#fff;font:700 12px/1.2 Sora,sans-serif;margin-bottom:2px}
 
-/* Sem tracinho decorativo abaixo dos controles. */
-.af-top-icon::after,
-.af-power-button::after,
-.af-theme-icon::after{
-  content:none!important;
-  display:none!important;
-}
+html body #af-chatbot.af-chatbot-lite{width:min(390px,calc(100vw - 24px))!important;height:min(560px,calc(100dvh - 110px))!important;border-radius:24px!important;background:rgba(8,14,11,.94)!important;border:1px solid rgba(169,239,139,.2)!important;box-shadow:0 28px 90px rgba(0,0,0,.55)!important;backdrop-filter:blur(22px)!important;-webkit-backdrop-filter:blur(22px)!important}
+html body #af-chatbot.af-chatbot-lite .af-chatbot-header{background:linear-gradient(180deg,rgba(22,38,29,.98),rgba(10,18,13,.96))!important}
+html body #af-chatbot.af-chatbot-lite .af-chatbot-body{background:transparent!important;padding:16px!important}
+html body #af-chatbot.af-chatbot-lite .af-bot-name{font-family:Sora,sans-serif;font-weight:800}
+html body #af-chatbot.af-chatbot-lite .af-bot-status{color:#a9ef8b}
+html body #af-chatbot.af-chatbot-lite .af-msg.bot{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:#f5f7f3}
+html body #af-chatbot.af-chatbot-lite .af-msg.user{background:#dfffd1;color:#102219;box-shadow:none}
+html body #af-chatbot.af-chatbot-lite .af-option-btn{border-color:rgba(169,239,139,.24);color:#dfffd1;border-radius:12px;background:rgba(169,239,139,.04)}
+html body #af-chatbot.af-chatbot-lite .af-option-btn:hover{background:rgba(169,239,139,.1);border-color:rgba(169,239,139,.45)}
+.af-ai-composer{display:flex!important;align-items:center;gap:8px;padding:11px!important;background:rgba(8,14,11,.98)!important}
+.af-ai-composer input{min-width:0;flex:1;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;padding:0 13px;font:500 13px/1 Manrope,sans-serif;outline:none}
+.af-ai-composer input::placeholder{color:rgba(255,255,255,.45)}
+.af-ai-composer input:focus{border-color:rgba(169,239,139,.55);box-shadow:0 0 0 3px rgba(169,239,139,.08)}
+.af-ai-composer button{width:42px;height:42px;border:0;border-radius:14px;background:#a9ef8b;color:#0b1b10;display:grid;place-items:center;cursor:pointer;transition:transform .18s ease,filter .18s ease}
+.af-ai-composer button:hover{transform:translateY(-1px);filter:brightness(1.04)}
+html body #af-chatbot-toggle.af-assistant-toggle,html body button#af-chatbot-toggle.af-chatbot-toggle.af-assistant-toggle{min-width:118px!important;height:46px!important;padding:0 15px!important;border-radius:999px!important;background:rgba(8,18,12,.78)!important;border:1px solid rgba(169,239,139,.34)!important;color:#fff!important;box-shadow:0 14px 36px rgba(0,0,0,.32),inset 0 0 0 1px rgba(255,255,255,.04)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important}
+html body #af-chatbot-toggle.af-assistant-toggle i{color:#a9ef8b}
+html body #af-chatbot-toggle.af-assistant-toggle:hover{background:rgba(20,42,28,.86)!important;border-color:rgba(169,239,139,.58)!important}
+.af-ai-thinking{display:inline-flex;gap:4px;align-items:center;padding:3px 0}
+.af-ai-thinking i{width:5px;height:5px;border-radius:50%;background:#a9ef8b;animation:afAiDot 1s infinite ease-in-out}
+.af-ai-thinking i:nth-child(2){animation-delay:.14s}.af-ai-thinking i:nth-child(3){animation-delay:.28s}
+@keyframes afAiDot{0%,70%,100%{opacity:.25;transform:translateY(0)}35%{opacity:1;transform:translateY(-3px)}}
+@media(max-width:760px){.af-hero-value-note{width:min(100%,350px);margin:13px auto 15px;padding:9px 10px}.af-value-price{font-size:11px}.af-hero-value-note strong{font-size:11px}.af-hero-value-note>span:last-child{font-size:10px}html body #af-chatbot-toggle.af-assistant-toggle,html body button#af-chatbot-toggle.af-chatbot-toggle.af-assistant-toggle{min-width:106px!important;height:44px!important;font-size:12px!important}}
 
-.af-top-icon:hover,
-.af-power-button:hover,
-.af-theme-icon:hover,
-.af-top-icon:focus-visible,
-.af-power-button:focus-visible,
-.af-theme-icon:focus-visible{
-  background:rgba(255,255,255,.055)!important;
-  border:0!important;
-  box-shadow:none!important;
-  transform:translateY(-1px)!important;
-}
+/* Assistente especialista V2 — organização limpa da landing */
+.af-hero-value-note{display:none!important}
+.af-home-actions{display:flex!important;align-items:center!important;gap:14px!important;flex-wrap:wrap!important}
+.af-price-compact{display:flex;align-items:center;gap:10px;min-height:46px;padding:0 3px;color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.28)}
+.af-price-compact strong{font:800 18px/1 Sora,sans-serif;color:#fff;white-space:nowrap}
+.af-price-compact strong small{font:600 10px/1 Manrope,sans-serif;color:rgba(255,255,255,.7)}
+.af-price-compact span{font:600 11px/1.25 Manrope,sans-serif;color:rgba(255,255,255,.72);white-space:nowrap}
 
-.af-top-icon:active,
-.af-power-button:active,
-.af-theme-icon:active{
-  transform:translateY(0) scale(.94)!important;
+html body #af-chatbot.af-chatbot-lite{
+  position:fixed!important;right:20px!important;bottom:84px!important;left:auto!important;top:auto!important;
+  width:min(400px,calc(100vw - 24px))!important;height:min(590px,calc(100dvh - 110px))!important;
+  transform:translateY(12px) scale(.985)!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+  transition:opacity .2s ease,transform .24s cubic-bezier(.2,.8,.2,1),visibility .2s!important;
 }
+html body #af-chatbot.af-chatbot-lite.af-open{transform:none!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+html body #af-chatbot.af-chatbot-lite .af-bot-status{max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body #af-chatbot.af-chatbot-lite .af-chatbot-body{display:flex!important;flex-direction:column!important;gap:10px!important;overflow:auto!important}
 
-.af-top-icon i,
-.af-power-button i{
-  font-size:15px!important;
-  line-height:1!important;
-}
+.af-ai-shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px}
+.af-ai-shortcuts button{border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.045);color:rgba(255,255,255,.86);border-radius:13px;padding:10px;text-align:left;font:650 11px/1.3 Manrope,sans-serif;cursor:pointer;transition:.18s ease}
+.af-ai-shortcuts button:hover{background:rgba(169,239,139,.09);border-color:rgba(169,239,139,.25);transform:translateY(-1px)}
+.af-ai-actions{display:flex;flex-wrap:wrap;gap:7px;margin:-2px 0 4px}
+.af-ai-action{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(169,239,139,.25);background:rgba(169,239,139,.065);color:#e8ffde;border-radius:999px;padding:8px 11px;font:700 11px/1 Manrope,sans-serif;cursor:pointer;transition:.18s ease}
+.af-ai-action i{font-size:9px;opacity:.72}.af-ai-action:hover{background:rgba(169,239,139,.13);border-color:rgba(169,239,139,.42)}
 
-/* Mantém as cores próprias dos ícones sem fundos diferentes. */
-.af-instagram i{color:#ff6798!important;text-shadow:0 0 8px rgba(255,103,152,.18)!important}
-.af-tiktok i{color:#f8fbff!important;text-shadow:-1px 0 #31dce8,1px 0 #ff4d82!important}
-.af-email i{color:#80e2ad!important;text-shadow:0 0 8px rgba(128,226,173,.16)!important}
-.af-power-button,
-.af-power-button i{color:#55e6d4!important;text-shadow:0 0 8px rgba(85,230,212,.18)!important}
-
-/* Sol/lua também segue exatamente o mesmo tamanho do grupo. */
-.af-theme-icon .af-theme-glyph{
-  transform:scale(.84)!important;
-  transform-origin:center!important;
+/* O botão nunca expande nem deforma: apenas muda de posição */
+html body #af-chatbot-toggle.af-assistant-toggle,
+html body #af-chatbot-toggle.af-assistant-toggle:hover,
+html body #af-chatbot-toggle.af-assistant-toggle:active,
+html body #af-chatbot-toggle.af-assistant-toggle:focus,
+html body #af-chatbot-toggle.af-assistant-toggle.is-dragging,
+html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable{
+  width:132px!important;min-width:132px!important;max-width:132px!important;
+  height:44px!important;min-height:44px!important;max-height:44px!important;
+  padding:0 13px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;
+  transform:none!important;scale:1!important;animation:none!important;white-space:nowrap!important;overflow:hidden!important;
+  box-sizing:border-box!important;flex:none!important;
 }
-body.lua-mode .af-theme-icon .af-theme-glyph{
-  transform:scale(.84)!important;
-}
+html body #af-chatbot-toggle.af-assistant-toggle .af-assistant-toggle-label{display:block!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body #af-chatbot-toggle.af-assistant-toggle.af-hidden{opacity:1!important;visibility:visible!important;pointer-events:auto!important}
 
 @media(max-width:760px){
-  .af-top-controls{gap:5px!important}
-  .af-top-icon,
-  .af-power-button,
-  .af-theme-icon{
-    width:29px!important;
-    height:29px!important;
-    min-width:29px!important;
-    min-height:29px!important;
-    border-radius:9px!important;
-  }
-  .af-top-icon i,
-  .af-power-button i{font-size:14px!important}
-  .af-theme-icon .af-theme-glyph,
-  body.lua-mode .af-theme-icon .af-theme-glyph{transform:scale(.76)!important}
-}
-
-
-/* V28 — botão Ajuda arrastável sem deformar.
-   Mantém exatamente as dimensões medidas ao carregar; o arraste muda apenas a posição. */
-html body #af-chatbot-toggle.af-help-draggable,
-html body #af-chatbot-toggle.af-help-draggable:hover,
-html body #af-chatbot-toggle.af-help-draggable:active,
-html body #af-chatbot-toggle.af-help-draggable:focus,
-html body #af-chatbot-toggle.af-help-draggable:focus-visible,
-html body #af-chatbot-toggle.af-help-draggable.is-dragging{
-  width:var(--af-help-fixed-w,108px)!important;
-  min-width:var(--af-help-fixed-w,108px)!important;
-  max-width:var(--af-help-fixed-w,108px)!important;
-  height:var(--af-help-fixed-h,46px)!important;
-  min-height:var(--af-help-fixed-h,46px)!important;
-  max-height:var(--af-help-fixed-h,46px)!important;
-  padding:var(--af-help-fixed-padding,0 15px)!important;
-  border-radius:var(--af-help-fixed-radius,999px)!important;
-  box-sizing:border-box!important;
-  flex:none!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  transform:none!important;
-  scale:1!important;
-}
-html body #af-chatbot-toggle.af-help-draggable.is-dragging{
-  transition:none!important;
-  animation:none!important;
-}
-
-/* =========================================================
-   V29 — CORREÇÃO FINAL: UMA ÚNICA ALÇA + CONTROLES PREMIUM
-========================================================= */
-
-/* Remove todos os indicadores adicionais. A lateral terá somente
-   a alça original com a seta que já existe no HTML. */
-body > #afRevealDivider.af-reveal-divider::before,
-body > #afRevealDivider.af-reveal-divider::after,
-body > #afRevealDivider .af-edge-waves{
-  content:none!important;
-  display:none!important;
-  animation:none!important;
-}
-
-/* Garante que apenas o span FILHO DIRETO seja tratado como alça. */
-body > #afRevealDivider.af-reveal-divider > span,
-body > #afRevealDivider.af-reveal-divider:hover > span,
-body > #afRevealDivider.af-reveal-divider:focus-visible > span,
-body > #afRevealDivider.af-reveal-divider.is-active > span{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-
-/* Controles superiores: todos iguais, menores, com vidro muito leve,
-   sem tracinho inferior e sem fundos diferentes entre si. */
-.af-top-controls{
-  gap:6px!important;
-}
-
-.af-top-controls .af-top-icon,
-.af-top-controls .af-power-button,
-.af-top-controls .af-theme-icon{
-  width:30px!important;
-  height:30px!important;
-  min-width:30px!important;
-  min-height:30px!important;
-  max-width:30px!important;
-  max-height:30px!important;
-  padding:0!important;
-  border-radius:9px!important;
-  border:1px solid rgba(255,255,255,.075)!important;
-  background:rgba(255,255,255,.055)!important;
-  box-shadow:0 3px 12px rgba(0,0,0,.08)!important;
-  backdrop-filter:blur(8px)!important;
-  -webkit-backdrop-filter:blur(8px)!important;
-  overflow:hidden!important;
-  box-sizing:border-box!important;
-}
-
-.af-top-controls .af-top-icon::before,
-.af-top-controls .af-top-icon::after,
-.af-top-controls .af-power-button::before,
-.af-top-controls .af-power-button::after,
-.af-top-controls .af-theme-icon::before,
-.af-top-controls .af-theme-icon::after{
-  content:none!important;
-  display:none!important;
-}
-
-.af-top-controls .af-top-icon:hover,
-.af-top-controls .af-power-button:hover,
-.af-top-controls .af-theme-icon:hover,
-.af-top-controls .af-top-icon:focus-visible,
-.af-top-controls .af-power-button:focus-visible,
-.af-top-controls .af-theme-icon:focus-visible{
-  background:rgba(255,255,255,.085)!important;
-  border-color:rgba(255,255,255,.12)!important;
-  box-shadow:0 5px 16px rgba(0,0,0,.10)!important;
-  transform:translateY(-1px)!important;
-}
-
-.af-top-controls .af-top-icon:active,
-.af-top-controls .af-power-button:active,
-.af-top-controls .af-theme-icon:active{
-  transform:scale(.95)!important;
-}
-
-.af-top-controls .af-top-icon i,
-.af-top-controls .af-power-button i{
-  font-size:14px!important;
-}
-
-.af-top-controls .af-theme-icon .af-theme-glyph,
-body.lua-mode .af-top-controls .af-theme-icon .af-theme-glyph{
-  transform:scale(.74)!important;
-}
-
-/* Botão Ajuda: tamanho absolutamente fixo durante todo o arraste.
-   Somente left e top podem mudar. */
-html body #af-chatbot-toggle.af-help-draggable,
-html body #af-chatbot-toggle.af-help-draggable:hover,
-html body #af-chatbot-toggle.af-help-draggable:active,
-html body #af-chatbot-toggle.af-help-draggable:focus,
-html body #af-chatbot-toggle.af-help-draggable:focus-visible,
-html body #af-chatbot-toggle.af-help-draggable.is-dragging{
-  width:var(--af-help-fixed-w,108px)!important;
-  min-width:var(--af-help-fixed-w,108px)!important;
-  max-width:var(--af-help-fixed-w,108px)!important;
-  height:var(--af-help-fixed-h,46px)!important;
-  min-height:var(--af-help-fixed-h,46px)!important;
-  max-height:var(--af-help-fixed-h,46px)!important;
-  flex-basis:var(--af-help-fixed-w,108px)!important;
-  padding:var(--af-help-fixed-padding,0 15px)!important;
-  transform:none!important;
-  scale:1!important;
-  white-space:nowrap!important;
-  box-sizing:border-box!important;
-}
-
-@media(max-width:760px){
-  .af-top-controls{gap:5px!important}
-  .af-top-controls .af-top-icon,
-  .af-top-controls .af-power-button,
-  .af-top-controls .af-theme-icon{
-    width:28px!important;
-    height:28px!important;
-    min-width:28px!important;
-    min-height:28px!important;
-    max-width:28px!important;
-    max-height:28px!important;
-    border-radius:8px!important;
-  }
-  .af-top-controls .af-top-icon i,
-  .af-top-controls .af-power-button i{
-    font-size:13px!important;
-  }
-  .af-top-controls .af-theme-icon .af-theme-glyph,
-  body.lua-mode .af-top-controls .af-theme-icon .af-theme-glyph{
-    transform:scale(.68)!important;
-  }
-}
-
-/* =========================================================
-   V30 — SOMENTE CONTROLES SUPERIORES
-   Todos padronizados, circulares e extremamente minimalistas.
-========================================================= */
-.af-top-controls{
-  gap:6px!important;
-  padding:0!important;
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-  backdrop-filter:none!important;
-  -webkit-backdrop-filter:none!important;
-}
-
-.af-top-controls .af-top-icon,
-.af-top-controls .af-power-button,
-.af-top-controls .af-theme-icon{
-  position:relative!important;
-  display:grid!important;
-  place-items:center!important;
-  width:30px!important;
-  height:30px!important;
-  min-width:30px!important;
-  min-height:30px!important;
-  max-width:30px!important;
-  max-height:30px!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  border-radius:50%!important;
-  background:rgba(255,255,255,.055)!important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.10),
-    0 3px 10px rgba(0,0,0,.055)!important;
-  backdrop-filter:blur(10px) saturate(115%)!important;
-  -webkit-backdrop-filter:blur(10px) saturate(115%)!important;
-  box-sizing:border-box!important;
-  overflow:visible!important;
-  transition:
-    transform .22s cubic-bezier(.2,.8,.2,1),
-    background-color .22s ease,
-    box-shadow .22s ease,
-    filter .22s ease!important;
-}
-
-/* Nenhum traço, moldura quadrada ou decoração diferente entre eles. */
-.af-top-controls .af-top-icon::before,
-.af-top-controls .af-top-icon::after,
-.af-top-controls .af-power-button::before,
-.af-top-controls .af-power-button::after,
-.af-top-controls .af-theme-icon::before,
-.af-top-controls .af-theme-icon::after{
-  content:none!important;
-  display:none!important;
-}
-
-.af-top-controls .af-top-icon:hover,
-.af-top-controls .af-power-button:hover,
-.af-top-controls .af-theme-icon:hover,
-.af-top-controls .af-top-icon:focus-visible,
-.af-top-controls .af-power-button:focus-visible,
-.af-top-controls .af-theme-icon:focus-visible{
-  border:0!important;
-  background:rgba(255,255,255,.09)!important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.16),
-    0 5px 14px rgba(0,0,0,.075),
-    0 0 12px rgba(255,255,255,.035)!important;
-  transform:translateY(-1px) scale(1.035)!important;
-  filter:brightness(1.08)!important;
-  outline:none!important;
-}
-
-.af-top-controls .af-top-icon:active,
-.af-top-controls .af-power-button:active,
-.af-top-controls .af-theme-icon:active{
-  transform:translateY(0) scale(.94)!important;
-  background:rgba(255,255,255,.07)!important;
-  box-shadow:inset 0 1px 3px rgba(0,0,0,.08)!important;
-}
-
-.af-top-controls .af-top-icon i,
-.af-top-controls .af-power-button i{
-  font-size:14px!important;
-  line-height:1!important;
-}
-
-.af-top-controls .af-theme-icon .af-theme-glyph,
-body.lua-mode .af-top-controls .af-theme-icon .af-theme-glyph{
-  transform:scale(.73)!important;
-  transform-origin:center!important;
-}
-
-@media(max-width:760px){
-  .af-top-controls{gap:5px!important}
-
-  .af-top-controls .af-top-icon,
-  .af-top-controls .af-power-button,
-  .af-top-controls .af-theme-icon{
-    width:29px!important;
-    height:29px!important;
-    min-width:29px!important;
-    min-height:29px!important;
-    max-width:29px!important;
-    max-height:29px!important;
-  }
-
-  .af-top-controls .af-top-icon i,
-  .af-top-controls .af-power-button i{
-    font-size:13px!important;
-  }
-
-  .af-top-controls .af-theme-icon .af-theme-glyph,
-  body.lua-mode .af-top-controls .af-theme-icon .af-theme-glyph{
-    transform:scale(.69)!important;
-  }
+  .af-home-actions{justify-content:center!important;gap:9px!important}
+  .af-price-compact{width:100%;justify-content:center;min-height:auto;padding-top:1px}
+  .af-price-compact strong{font-size:15px}.af-price-compact span{font-size:10px}
+  html body #af-chatbot.af-chatbot-lite{right:12px!important;bottom:72px!important;height:min(570px,calc(100dvh - 88px))!important}
+  .af-ai-shortcuts{grid-template-columns:1fr}
+  html body #af-chatbot-toggle.af-assistant-toggle,
+  html body #af-chatbot-toggle.af-assistant-toggle:hover,
+  html body #af-chatbot-toggle.af-assistant-toggle:active,
+  html body #af-chatbot-toggle.af-assistant-toggle:focus,
+  html body #af-chatbot-toggle.af-assistant-toggle.is-dragging,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable{width:126px!important;min-width:126px!important;max-width:126px!important;height:42px!important;min-height:42px!important;max-height:42px!important;font-size:11px!important}
 }

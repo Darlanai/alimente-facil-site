@@ -85,7 +85,7 @@
 <p class="af-home-subtitle">Lista de compras, receitas, planejador, análises e despensa — tudo conectado para sua cozinha funcionar melhor.</p>
 <div class="af-home-actions">
 <button class="af-primary-cta" data-af-start-trial="" type="button">Começar agora <i class="fa-solid fa-arrow-right"></i></button>
-<span>7 dias grátis · sem cartão</span>
+<div class="af-price-compact" aria-label="Plano por R$ 9,90 ao mês, com 7 dias grátis e sem cartão"><strong>R$ 9,90<small>/mês</small></strong><span>7 dias grátis · sem cartão</span></div>
 </div>
 </section>
 </main>
@@ -575,8 +575,8 @@
 <i class="fa-solid fa-comments"></i>
 </div>
 <div class="af-title-group">
-<span class="af-bot-name">Assistente Alimente</span>
-<span class="af-bot-status">Online</span>
+<span class="af-bot-name">Especialista Alimente</span>
+<span class="af-bot-status">Conhece o app e sua cozinha</span>
 </div>
 </div>
 <div class="af-header-actions">
@@ -585,13 +585,15 @@
 </div>
 </div>
 <div aria-live="polite" class="af-chatbot-body" id="af-chatbot-body" role="log"></div>
-<div class="af-chatbot-footer">
-<span class="af-footer-hint">Selecione uma opção acima</span>
+<form class="af-chatbot-footer af-ai-composer" id="af-ai-form">
+<label class="sr-only" for="af-ai-input">Pergunte sobre o Alimente Fácil</label>
+<input id="af-ai-input" type="text" maxlength="240" autocomplete="off" placeholder="Pergunte sobre listas, despensa, receitas..."/>
+<button aria-label="Enviar pergunta" id="af-ai-send" type="submit"><i class="fa-solid fa-arrow-up"></i></button>
+</form>
 </div>
-</div>
-<button aria-label="Abrir assistente Alimente Fácil" class="af-chatbot-toggle af-assistant-toggle" id="af-chatbot-toggle" type="button">
-<i aria-hidden="true" class="fa-solid fa-comments"></i>
-<span class="af-assistant-toggle-label">Ajuda</span>
+<button aria-label="Abrir Assistente do Alimente Fácil" class="af-chatbot-toggle af-assistant-toggle" id="af-chatbot-toggle" type="button">
+<i aria-hidden="true" class="fa-solid fa-wand-magic-sparkles"></i>
+<span class="af-assistant-toggle-label">Assistente</span>
 </button>
 <div class="pwa-banner" id="pwa-floating-banner" style="display:none;">
 <div class="pwa-banner-content">
@@ -606,6 +608,7 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script src="assistant-knowledge.js"></script>
 <script src="script.js"></script>
 <script src="landing-art.js"></script>
 <script src="auth-premium-gate-fix.js"></script>
