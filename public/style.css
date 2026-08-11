@@ -27583,3 +27583,26 @@ html body:not(.app-mode) #inicio .af-real-panel-shot .af-kitchen-card-cue{
     filter:drop-shadow(0 18px 24px rgba(0,0,0,.26));
   }
 }
+
+
+/* =========================================================
+   ANÁLISES — contraste definitivo das legendas no tema escuro
+   Mantém todos os nomes/legendas visíveis em branco.
+========================================================= */
+#module-analises {
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.84);
+}
+
+#module-analises .analysis-v3-breakdown-head span,
+#module-analises .analysis-v3-row span,
+#module-analises .analysis-v3-row strong,
+#module-analises .analysis-v3-overlaycard span,
+#module-analises .analysis-v3-overlaycard strong,
+#module-analises .analysis-v3-overlaycard small,
+#module-analises .analysis-v3-kpi span,
+#module-analises .analysis-v3-kpi strong,
+#module-analises .analysis-v3-summarycard strong,
+#module-analises .analysis-v3-summarycard p {
+  color: #ffffff !important;
+}

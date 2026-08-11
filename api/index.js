@@ -219,6 +219,10 @@ function subscriptionsCollection() {
   return db.collection('subscriptions');
 }
 
+function appStatesCollection() {
+  return db.collection('app_states');
+}
+
 function now() {
   return new Date();
 }
@@ -305,6 +309,7 @@ function publicSubscription(subscription) {
 async function ensureIndexes() {
   await usersCollection().createIndex({ email: 1 }, { unique: true });
   await subscriptionsCollection().createIndex({ userId: 1 }, { unique: true });
+  await appStatesCollection().createIndex({ userId: 1 }, { unique: true });
 }
 
 async function connectToMongo() {
@@ -645,6 +650,60 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: 'Não foi possível carregar os dados do usuário.',
+      error: error.message
+    });
+  }
+});
+
+// Estado persistente do painel, separado por usuário.
+// Esta é a fonte de verdade para listas, despensa, receitas, planejador e demais dados do app.
+app.get('/api/app-state', authMiddleware, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.auth.sub);
+    const saved = await appStatesCollection().findOne({ userId });
+    return res.json({
+      ok: true,
+      state: saved?.state || null,
+      updatedAt: saved?.updatedAt || null
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: 'Não foi possível carregar os dados salvos do painel.',
+      error: error.message
+    });
+  }
+});
+
+app.put('/api/app-state', authMiddleware, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.auth.sub);
+    const panelState = req.body?.state;
+
+    if (!panelState || typeof panelState !== 'object' || Array.isArray(panelState)) {
+      return res.status(400).json({ ok: false, message: 'Estado do painel inválido.' });
+    }
+
+    const serialized = JSON.stringify(panelState);
+    if (Buffer.byteLength(serialized, 'utf8') > 1_500_000) {
+      return res.status(413).json({ ok: false, message: 'Os dados do painel excederam o limite permitido.' });
+    }
+
+    const updatedAt = now();
+    await appStatesCollection().updateOne(
+      { userId },
+      {
+        $set: { state: panelState, updatedAt },
+        $setOnInsert: { userId, createdAt: updatedAt }
+      },
+      { upsert: true }
+    );
+
+    return res.json({ ok: true, updatedAt });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: 'Não foi possível salvar os dados do painel.',
       error: error.message
     });
   }

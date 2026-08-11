@@ -26,12 +26,19 @@
 
   const originalShowNotification = typeof app.showNotification === 'function' ? app.showNotification.bind(app) : function () {};
   const originalCloseAllModals = typeof app.closeAllModals === 'function' ? app.closeAllModals.bind(app) : function () {};
+  const originalSaveState = typeof app.saveState === 'function' ? app.saveState.bind(app) : function () {};
 
   const state = {
     refreshing: false,
     lastRefreshAt: 0,
     sessionPayload: null,
-    trialWatchTimer: null
+    trialWatchTimer: null,
+    appStateReadyUserId: '',
+    appStateLoadingUserId: '',
+    appStateLoadPromise: null,
+    appStateSaveTimer: null,
+    appStateSavePromise: null,
+    pendingAppStateSnapshot: null
   };
 
   function getToken() {
@@ -67,6 +74,201 @@
     }
     return data;
   }
+
+  function cloneJson(value, fallback) {
+    try { return JSON.parse(JSON.stringify(value)); } catch (_error) { return fallback; }
+  }
+
+  function currentUserId() {
+    return String(app.state?.user?.id || state.sessionPayload?.user?.id || '').trim();
+  }
+
+  function normalizePanelData(data, user) {
+    const base = cloneJson(app.defaultState || {}, {});
+    const incoming = data && typeof data === 'object' && !Array.isArray(data) ? cloneJson(data, {}) : {};
+    const merged = Object.assign(base, incoming);
+
+    merged.listas = incoming.listas && typeof incoming.listas === 'object' ? incoming.listas : (base.listas || {});
+    merged.despensa = Array.isArray(incoming.despensa) ? incoming.despensa : (base.despensa || []);
+    merged.essenciais = Array.isArray(incoming.essenciais) ? incoming.essenciais : (base.essenciais || []);
+    merged.orcamento = incoming.orcamento && typeof incoming.orcamento === 'object' ? incoming.orcamento : (base.orcamento || { total: 500 });
+    merged.receitas = incoming.receitas && typeof incoming.receitas === 'object' ? incoming.receitas : (base.receitas || {});
+    merged.planejador = incoming.planejador && typeof incoming.planejador === 'object' ? incoming.planejador : (base.planejador || {});
+    merged.aiUsage = incoming.aiUsage && typeof incoming.aiUsage === 'object' ? incoming.aiUsage : (base.aiUsage || {});
+
+    if (!merged.listas.listaDaSemana && app.defaultState?.listas?.listaDaSemana) {
+      merged.listas.listaDaSemana = cloneJson(app.defaultState.listas.listaDaSemana, {});
+    }
+
+    const authUser = user || state.sessionPayload?.user || {};
+    merged.user = {
+      nome: authUser.name || authUser.nome || incoming.user?.nome || 'Usuário',
+      email: authUser.email || incoming.user?.email || '',
+      id: authUser.id || incoming.user?.id || ''
+    };
+    return merged;
+  }
+
+  function buildPortableAppState() {
+    const data = cloneJson(app.state || {}, {});
+    if (data && typeof data === 'object') delete data.user;
+    return {
+      schemaVersion: 1,
+      activeModule: app.activeModule || 'inicio',
+      activeListId: app.activeListId || 'listaDaSemana',
+      listSortMode: app.listSortMode || 'date_desc',
+      data
+    };
+  }
+
+  function saveLocalStateOnly() {
+    try { originalSaveState(); } catch (error) { console.error('Erro ao salvar estado local:', error); }
+  }
+
+  function canSaveRemoteAppState() {
+    const userId = currentUserId();
+    return Boolean(
+      userId &&
+      getToken() &&
+      app.isLoggedIn &&
+      state.appStateReadyUserId === userId &&
+      state.appStateLoadingUserId !== userId
+    );
+  }
+
+  async function startRemoteAppStateSave(snapshot, keepalive) {
+    const token = getToken();
+    if (!token || !snapshot || !canSaveRemoteAppState()) return null;
+    return apiFetchJson('/api/app-state', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ state: snapshot }),
+      keepalive: Boolean(keepalive)
+    });
+  }
+
+  async function drainRemoteAppStateSaves(keepalive) {
+    if (state.appStateSavePromise) {
+      try { await state.appStateSavePromise; } catch (_error) {}
+    }
+
+    while (state.pendingAppStateSnapshot && canSaveRemoteAppState()) {
+      const snapshot = state.pendingAppStateSnapshot;
+      state.pendingAppStateSnapshot = null;
+      state.appStateSavePromise = startRemoteAppStateSave(snapshot, keepalive);
+      try {
+        await state.appStateSavePromise;
+      } catch (error) {
+        state.pendingAppStateSnapshot = snapshot;
+        console.error('Erro ao sincronizar dados do painel:', error);
+        throw error;
+      } finally {
+        state.appStateSavePromise = null;
+      }
+    }
+    return true;
+  }
+
+  function scheduleRemoteAppStateSave() {
+    if (!canSaveRemoteAppState()) return;
+    state.pendingAppStateSnapshot = buildPortableAppState();
+    if (state.appStateSaveTimer && windowRef?.clearTimeout) windowRef.clearTimeout(state.appStateSaveTimer);
+    if (!windowRef?.setTimeout) return;
+    state.appStateSaveTimer = windowRef.setTimeout(function () {
+      state.appStateSaveTimer = null;
+      drainRemoteAppStateSaves(false).catch(function () { return null; });
+    }, 350);
+  }
+
+  async function flushRemoteAppState(keepalive) {
+    if (!canSaveRemoteAppState()) return true;
+    if (state.appStateSaveTimer && windowRef?.clearTimeout) {
+      windowRef.clearTimeout(state.appStateSaveTimer);
+      state.appStateSaveTimer = null;
+    }
+    state.pendingAppStateSnapshot = buildPortableAppState();
+    try {
+      await drainRemoteAppStateSaves(keepalive);
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function renderRestoredPanelState() {
+    if (!app.isAppMode) return;
+    try {
+      if (typeof app.activateModuleUI === 'function') app.activateModuleUI(app.activeModule || 'inicio');
+      if (typeof app.renderAllPanelContent === 'function') app.renderAllPanelContent();
+    } catch (error) {
+      console.error('Erro ao renderizar estado restaurado:', error);
+    }
+  }
+
+  async function syncAppStateFromServer(user) {
+    const authUser = user || state.sessionPayload?.user || {};
+    const userId = String(authUser.id || '').trim();
+    const token = getToken();
+    if (!userId || !token) return null;
+    if (state.appStateReadyUserId === userId) return app.state;
+    if (state.appStateLoadingUserId === userId && state.appStateLoadPromise) return state.appStateLoadPromise;
+
+    state.appStateLoadingUserId = userId;
+    state.appStateLoadPromise = (async function () {
+      try {
+        const response = await apiFetchJson('/api/app-state', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (response?.state?.data && typeof response.state.data === 'object') {
+          app.state = normalizePanelData(response.state.data, authUser);
+          app.activeModule = response.state.activeModule || 'inicio';
+          app.activeListId = response.state.activeListId || 'listaDaSemana';
+          app.listSortMode = response.state.listSortMode || app.listSortMode || 'date_desc';
+          if (!app.state.listas?.[app.activeListId]) app.activeListId = 'listaDaSemana';
+        } else {
+          // Primeira sincronização desta conta: migra o estado local atual para o perfil.
+          app.state = normalizePanelData(app.state, authUser);
+        }
+
+        state.appStateReadyUserId = userId;
+        saveLocalStateOnly();
+        saveLegacyVisualState();
+
+        if (!response?.state) {
+          // Libera o primeiro PUT da migração sem esperar o finally do carregamento.
+          state.appStateLoadingUserId = '';
+          await flushRemoteAppState(false);
+        }
+
+        renderRestoredPanelState();
+        return app.state;
+      } catch (error) {
+        console.error('Erro ao carregar dados persistentes do painel:', error);
+        // Mantém a experiência local em caso de indisponibilidade temporária do banco,
+        // mas não marca a conta como pronta para evitar sobrescrever dados remotos às cegas.
+        app.state = normalizePanelData(app.state, authUser);
+        saveLocalStateOnly();
+        return app.state;
+      } finally {
+        state.appStateLoadingUserId = '';
+        state.appStateLoadPromise = null;
+      }
+    })();
+
+    return state.appStateLoadPromise;
+  }
+
+  app.saveState = function saveStateWithAccountSync() {
+    saveLocalStateOnly();
+    scheduleRemoteAppStateSave();
+  };
+
+  app.syncAppStateFromServer = syncAppStateFromServer;
+  app.flushRemoteAppState = flushRemoteAppState;
 
   function getCheckoutUrl(payload) {
     return payload?.subscription?.checkoutUrl || payload?.checkoutUrl || app.checkoutLinks?.premium || '';
@@ -233,10 +435,19 @@
   }
 
   function applySessionPayload(payload) {
+    const previousUserId = String(app.state?.user?.id || '').trim();
+    const nextUserId = String(payload?.user?.id || '').trim();
+
+    if (previousUserId && nextUserId && previousUserId !== nextUserId) {
+      app.state = cloneJson(app.defaultState || {}, {});
+      state.appStateReadyUserId = '';
+      state.pendingAppStateSnapshot = null;
+    }
+
     state.sessionPayload = payload || null;
     app.backendSessionPayload = payload || null;
     const user = payload?.user || {};
-    app.state = app.state || JSON.parse(JSON.stringify(app.defaultState || {}));
+    app.state = app.state || cloneJson(app.defaultState || {}, {});
     app.state.user = app.state.user || {};
     app.state.user.nome = user.name || user.nome || app.state.user.nome || 'Usuário';
     app.state.user.email = user.email || app.state.user.email || '';
@@ -251,6 +462,11 @@
 
   function forceLogoutToLanding() {
     clearSession();
+    if (state.appStateSaveTimer && windowRef?.clearTimeout) windowRef.clearTimeout(state.appStateSaveTimer);
+    state.appStateSaveTimer = null;
+    state.pendingAppStateSnapshot = null;
+    state.appStateReadyUserId = '';
+    state.appStateLoadingUserId = '';
     app.isLoggedIn = false;
     app.userPlan = 'free';
     app.isAppMode = false;
@@ -291,6 +507,7 @@
         headers: { Authorization: `Bearer ${token}` }
       });
       const plan = applySessionPayload(payload);
+      await syncAppStateFromServer(payload?.user);
       if (plan === PREMIUM_PLAN) {
         closePaymentGateModal();
       } else if (isTrialExpiredPayload(payload)) {
@@ -322,6 +539,7 @@
         });
         setSession(payload.token || getToken(), payload.user);
         const plan = applySessionPayload(payload);
+        await syncAppStateFromServer(payload?.user);
         if (plan === PREMIUM_PLAN) {
           closePaymentGateModal();
           rawEnterPanelHome();
@@ -410,6 +628,7 @@
       });
       setSession(payload.token, payload.user);
       const plan = applySessionPayload(payload);
+      await syncAppStateFromServer(payload?.user);
       originalCloseAllModals();
       if (plan === PREMIUM_PLAN) {
         rawEnterPanelHome();
@@ -445,6 +664,7 @@
       });
       setSession(payload.token, payload.user);
       const plan = applySessionPayload(payload);
+      await syncAppStateFromServer(payload?.user);
       originalCloseAllModals();
       if (plan === PREMIUM_PLAN) {
         rawEnterPanelHome();
@@ -458,7 +678,8 @@
     }
   };
 
-  app.handleLogout = function handleLogout() {
+  app.handleLogout = async function handleLogout() {
+    await flushRemoteAppState(false);
     forceLogoutToLanding();
     originalShowNotification('Você saiu da sua conta.', 'info');
   };
@@ -625,6 +846,11 @@
       state.trialWatchTimer = windowRef.setInterval(function () {
         if (app.isLoggedIn) refreshAccessFromServer(true).catch(function () { return null; });
       }, 10 * 60 * 1000);
+    }
+    if (windowRef && typeof windowRef.addEventListener === 'function') {
+      windowRef.addEventListener('pagehide', function () {
+        if (app.isLoggedIn) flushRemoteAppState(true).catch(function () { return null; });
+      });
     }
   }
 
