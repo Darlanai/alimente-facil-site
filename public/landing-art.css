@@ -126,6 +126,23 @@ body:not(.app-mode) .app-panel-container-standalone{display:flex!important;posit
   .af-reveal-divider::before{height:72px}
 }
 
+/* V2.3 — fundo neutro e controles sem brilho, inclusive quando logado. */
+html body .af-landing-video,html body.lua-mode .af-landing-video,html body.landing-lua-mode .af-landing-video{
+  filter:saturate(.88) contrast(1.01) brightness(.86)!important;
+}
+html body .af-video-shade,html body.lua-mode .af-video-shade,html body.landing-lua-mode .af-video-shade{
+  background:linear-gradient(90deg,rgba(0,0,0,.5) 0%,rgba(0,0,0,.3) 48%,rgba(0,0,0,.1) 100%),linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.05) 55%,rgba(0,0,0,.38))!important;
+}
+html body #landing-auth-btn,html body #landing-auth-btn.power-on,html body #landing-auth-btn.active,
+html body #landing-auth-btn:hover,html body #landing-auth-btn.power-on:hover,html body #landing-auth-btn.active:hover{
+  border:0!important;background:transparent!important;box-shadow:none!important;filter:none!important;backdrop-filter:none!important;
+  transform:none!important;color:#78f1df!important;
+}
+html body .af-top-icon,html body .af-theme-icon,html body .af-power-button,
+html body .af-top-icon:hover,html body .af-theme-icon:hover,html body .af-power-button:hover{
+  box-shadow:none!important;filter:none!important;text-shadow:none!important;
+}
+
 /* V2.2 — marca em duas linhas, ícones sem contorno e tipografia digital. */
 html body .af-minimal-brand{align-items:center!important}
 html body .af-brand-copy{display:flex!important;align-items:center!important;height:42px!important;gap:0!important}
@@ -1815,4 +1832,21 @@ html body .af-landing-moment>em{font-weight:500!important;letter-spacing:.015em!
   html body .af-brand-copy{height:34px!important;gap:0!important}
   html body .af-brand-copy>strong{font-size:9px!important;gap:1px!important;letter-spacing:.11em!important}
   html body .af-brand-copy>small{display:none!important}
+}
+
+/* V2.3 final — neutralidade idêntica nos estados logado e deslogado. */
+html body:not(.app-mode) .af-landing-stage .af-landing-video,
+html body:not(.app-mode).lua-mode .af-landing-stage .af-landing-video,
+html body:not(.app-mode).landing-lua-mode .af-landing-stage .af-landing-video{
+  filter:saturate(.88) contrast(1.01) brightness(.86)!important;
+}
+html body:not(.app-mode) .af-landing-stage .af-video-shade,
+html body:not(.app-mode).lua-mode .af-landing-stage .af-video-shade,
+html body:not(.app-mode).landing-lua-mode .af-landing-stage .af-video-shade{
+  background:linear-gradient(90deg,rgba(0,0,0,.5) 0%,rgba(0,0,0,.3) 48%,rgba(0,0,0,.1) 100%),linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.05) 55%,rgba(0,0,0,.38))!important;
+}
+html body #landing-auth-btn,html body #landing-auth-btn.power-on,html body #landing-auth-btn.active,
+html body #landing-auth-btn:hover,html body #landing-auth-btn.power-on:hover,html body #landing-auth-btn.active:hover{
+  border:0!important;background:transparent!important;box-shadow:none!important;filter:none!important;backdrop-filter:none!important;
+  transform:none!important;color:#78f1df!important;
 }

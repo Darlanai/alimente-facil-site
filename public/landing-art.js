@@ -165,7 +165,8 @@
       const sync=()=>{const name=app.state?.user?.nome?.trim(),g=$('#afLandingGreeting');if(g)g.textContent=app.isLoggedIn&&name?`Olá, ${name}.`:'Olá, vamos começar?'};sync();
       const original=app.updateStartButton?.bind(app);if(original)app.updateStartButton=function(){const out=original();sync();return out};
       document.addEventListener('click',e=>{const start=e.target.closest('[data-af-start-trial]');if(!start)return;e.preventDefault();e.stopPropagation();startNow(app)},true);
-      $('#landing-auth-btn')?.addEventListener('click',e=>{e.preventDefault();app.isLoggedIn?app.enterAppMode?.():openSignup(app,'login')});
+      // O botão de energia já é controlado pelo aplicativo. Não duplicar o clique
+      // aqui evita abrir o painel ao mesmo tempo em que o usuário confirma o logout.
       document.addEventListener('click',e=>{if(app.isLoggedIn||document.body.classList.contains('app-mode'))return;const insidePanel=e.target.closest('.app-panel-container-standalone');if(!insidePanel)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();openSignup(app,'signup')},true);
       document.addEventListener('click',e=>{const signup=e.target.closest('#plans-modal [data-action="signup"],#plans-modal .signup-btn,#plans-modal button');if(signup&&!app.isLoggedIn){e.preventDefault();e.stopPropagation();setTimeout(()=>openSignup(app,'signup'),20)}},true);
     });

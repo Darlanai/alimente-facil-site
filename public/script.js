@@ -12128,13 +12128,14 @@ console.log('handleSignup chamada');
   }
 
   if (originalHandleLogout) {
-    app.handleLogout = async function() {
+    app.handleLogout = function() {
       clearTimeout(this._remoteStateTimer);
       try {
-        if (this.isLoggedIn && this._remoteStateReady) await this.pushRemoteAppState();
-      } catch (_error) {
-        try { localStorage.setItem(this.getAccountStateKey(), JSON.stringify(this.getPanelStatePayload())); } catch (_ignored) {}
-      }
+        localStorage.setItem(this.getAccountStateKey(), JSON.stringify(this.getPanelStatePayload()));
+      } catch (_error) {}
+      // A sincronização online é uma tentativa em segundo plano: nunca bloqueia
+      // o logout nem mostra erro, pois a cópia local já foi concluída.
+      if (this.isLoggedIn && this._remoteStateReady) this.pushRemoteAppState().catch(() => {});
       return originalHandleLogout();
     };
   }
