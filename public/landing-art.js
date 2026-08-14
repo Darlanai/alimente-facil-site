@@ -14,7 +14,8 @@
     d?.setAttribute('aria-valuenow',String(Math.round(v)));
     return v;
   };
-  const hideInfo=()=>$$('.af-info-modal.open').forEach(m=>{m.classList.remove('open');m.setAttribute('aria-hidden','true')});
+  const syncInfoState=()=>document.body.classList.toggle('af-info-open',Boolean($('.af-info-modal.open')));
+  const hideInfo=()=>{$$('.af-info-modal.open').forEach(m=>{m.classList.remove('open');m.setAttribute('aria-hidden','true')});syncInfoState()};
   const closeBlockingOverlays=()=>{$$('.modal-overlay.active,.modal-overlay.is-visible').forEach(m=>{if(m.id!=='auth-modal'){m.classList.remove('active','is-visible');m.setAttribute('aria-hidden','true')}});hideInfo()};
   const setAuthView=(view)=>{const auth=$('#auth-modal');if(!auth)return;$$('#auth-modal .auth-form-container').forEach(x=>x.classList.remove('active'));$(`#${view}-view`)?.classList.add('active');auth.classList.add('af-auth-force-front');auth.style.zIndex='999999'};
   const openSignup=(app,view='signup')=>{closeBlockingOverlays();try{app.showAuthModal()}catch(e){app.openModal?.('auth-modal')}setTimeout(()=>setAuthView(view),40);setTimeout(()=>setAuthView(view),160)};
@@ -22,6 +23,22 @@
   const calc=()=>{const spend=Number($('#afSpendRange')?.value||1200),waste=Number($('#afWasteRange')?.value||12),monthly=spend*waste/100,annual=monthly*12;const brl=n=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});$('#afSpendValue')&&($('#afSpendValue').textContent=brl(spend));$('#afWasteValue')&&($('#afWasteValue').textContent=`${waste}%`);$('#afAnnualSaving')&&($('#afAnnualSaving').textContent=brl(annual));$('#afMonthlySaving')&&($('#afMonthlySaving').textContent=`aproximadamente ${brl(monthly)} por mês`)};
   document.addEventListener('DOMContentLoaded',()=>{
     const range=$('#afRevealRange'),hint=$('#afRevealHint'),divider=$('#afRevealDivider'),handle=$('#afRevealDivider span');
+
+    const verses=[
+      '“O Senhor é bom.” — Salmos 100:5','“Deus é amor.” — 1 João 4:8','“Tudo posso naquele que me fortalece.” — Filipenses 4:13','“O Senhor é meu pastor.” — Salmos 23:1','“Alegrai-vos sempre.” — 1 Tessalonicenses 5:16','“Orai sem cessar.” — 1 Tessalonicenses 5:17','“A fé move o coração.” — Hebreus 11:1','“A minha graça te basta.” — 2 Coríntios 12:9','“Não temas, eu sou contigo.” — Isaías 41:10','“Entrega o teu caminho ao Senhor.” — Salmos 37:5','“O amor nunca falha.” — 1 Coríntios 13:8','“Sede fortes e corajosos.” — Josué 1:9','“A verdade vos libertará.” — João 8:32','“Bem-aventurados os pacificadores.” — Mateus 5:9','“O choro pode durar uma noite.” — Salmos 30:5','“A alegria vem pela manhã.” — Salmos 30:5','“Em tudo, dai graças.” — 1 Tessalonicenses 5:18','“Buscai e achareis.” — Mateus 7:7','“O justo viverá pela fé.” — Romanos 1:17','“Minha paz vos dou.” — João 14:27'
+    ];
+    let verseIndex=Math.floor(Date.now()/10000)%verses.length;
+    const updateMoment=()=>{
+      const now=new Date(),hour=now.getHours();
+      const greeting=hour<12?'Bom dia':hour<18?'Boa tarde':'Boa noite';
+      const isDay=hour>=6&&hour<18;
+      const greetingEl=$('#afMomentGreeting'),clockEl=$('#afMomentClock'),iconEl=$('#afMomentIcon');
+      if(greetingEl)greetingEl.textContent=greeting;
+      if(clockEl)clockEl.textContent=now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      if(iconEl)iconEl.className=isDay?'fa-solid fa-sun':'fa-solid fa-moon';
+    };
+    const rotateVerse=()=>{const verseEl=$('#afMomentVerse');if(verseEl){verseEl.classList.add('is-changing');setTimeout(()=>{verseEl.textContent=verses[verseIndex++%verses.length];verseEl.classList.remove('is-changing')},180)}};
+    updateMoment();rotateVerse();setInterval(updateMoment,30000);setInterval(rotateVerse,10000);
 
     // A aba precisa ficar fora do contêiner animado. Caso contrário, até position:fixed
     // pode usar o contêiner transformado como referência e aparecer para dentro da tela.
@@ -112,9 +129,9 @@
     document.addEventListener('touchcancel',()=>{if(activePointer==='touch')endGesture()},{passive:true});
     window.addEventListener('blur',endGesture);
     window.addEventListener('resize',()=>isPanelOpen()?setReveal(panelEdge()):setReveal(homeEdge()));
-    const how=$('#afHowModal'),contact=$('#afContactModal');$('#afHowWorks')?.addEventListener('click',()=>{how?.classList.add('open');how?.setAttribute('aria-hidden','false');calc()});
-    const openContact=()=>{contact?.classList.add('open');contact?.setAttribute('aria-hidden','false')};$('#afContactOpen')?.addEventListener('click',openContact);$('#afFooterContact')?.addEventListener('click',openContact);
-    $$('[data-af-close-info]').forEach(b=>b.addEventListener('click',()=>{const m=b.closest('.af-info-modal');m?.classList.remove('open');m?.setAttribute('aria-hidden','true')}));$$('.af-info-modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m){m.classList.remove('open');m.setAttribute('aria-hidden','true')}}));
+    const how=$('#afHowModal'),contact=$('#afContactModal');$('#afHowWorks')?.addEventListener('click',()=>{how?.classList.add('open');how?.setAttribute('aria-hidden','false');syncInfoState();calc()});
+    const openContact=()=>{contact?.classList.add('open');contact?.setAttribute('aria-hidden','false');syncInfoState()};$('#afContactOpen')?.addEventListener('click',openContact);$('#afFooterContact')?.addEventListener('click',openContact);
+    $$('[data-af-close-info]').forEach(b=>b.addEventListener('click',()=>{const m=b.closest('.af-info-modal');m?.classList.remove('open');m?.setAttribute('aria-hidden','true');syncInfoState()}));$$('.af-info-modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m){m.classList.remove('open');m.setAttribute('aria-hidden','true');syncInfoState()}}));
     $('#afContactForm')?.addEventListener('submit',async e=>{
       e.preventDefault();
       const form=e.currentTarget,status=$('#afContactStatus'),button=form.querySelector('.af-contact-submit');

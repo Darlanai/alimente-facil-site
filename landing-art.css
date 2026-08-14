@@ -126,30 +126,6 @@ body:not(.app-mode) .app-panel-container-standalone{display:flex!important;posit
   .af-reveal-divider::before{height:72px}
 }
 
-/* V2.2 — marca em duas linhas, ícones sem contorno e tipografia digital. */
-html body .af-minimal-brand{align-items:center!important}
-html body .af-brand-copy{display:flex!important;align-items:center!important;height:42px!important;gap:0!important}
-html body .af-brand-copy>strong{display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:2px!important;font-size:12px!important;line-height:.95!important;letter-spacing:.14em!important}
-html body .af-brand-copy>strong>span{display:block!important}
-html body .af-brand-copy>small{display:none!important}
-html body .af-top-icon,html body .af-power-button,html body .af-theme-icon,
-html body .af-top-icon:hover,html body .af-power-button:hover,html body .af-theme-icon:hover,
-html body .af-top-icon:focus-visible,html body .af-power-button:focus-visible,html body .af-theme-icon:focus-visible{
-  border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;
-}
-html body .af-top-icon:hover,html body .af-power-button:hover,html body .af-theme-icon:hover{background:rgba(255,255,255,.07)!important}
-html body .af-landing-moment .af-brand-moment,
-html body .af-landing-moment .af-brand-moment b,
-html body .af-landing-moment>em{font-family:'Orbitron','Roboto Mono',monospace!important}
-html body .af-landing-moment .af-brand-moment{font-weight:600!important;letter-spacing:.035em!important}
-html body .af-landing-moment .af-brand-moment b{font-weight:700!important;letter-spacing:.055em!important}
-html body .af-landing-moment>em{font-weight:500!important;letter-spacing:.015em!important}
-
-@media(max-width:760px){
-  html body .af-brand-copy{height:34px!important}
-  html body .af-brand-copy>strong{font-size:9px!important;gap:1px!important;letter-spacing:.11em!important}
-}
-
 /* Ajuste final: marca original, controles circulares sem tarja e mensagem na landing. */
 .af-brand-copy{display:grid!important;grid-template-columns:1fr!important;gap:3px!important;max-width:none!important}
 .af-brand-copy>strong{grid-column:auto!important;font-size:13px!important;letter-spacing:.15em!important}
@@ -1790,29 +1766,4 @@ html body .af-power-button.power-on{background:transparent!important}
   html body .af-top-icon:focus-visible,html body .af-power-button:focus-visible,html body .af-theme-icon:focus-visible{
     display:grid!important;width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;
   }
-}
-
-/* V2.2 final — prevalece sobre todas as versões anteriores do cabeçalho. */
-html body .af-minimal-brand{align-items:center!important}
-html body .af-brand-copy{display:flex!important;align-items:center!important;height:42px!important;gap:0!important;max-width:none!important}
-html body .af-brand-copy>strong{display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:2px!important;font-size:12px!important;line-height:.95!important;letter-spacing:.14em!important}
-html body .af-brand-copy>strong>span{display:block!important}
-html body .af-brand-copy>small{display:none!important}
-html body .af-top-icon,html body .af-power-button,html body .af-theme-icon,
-html body .af-top-icon:hover,html body .af-power-button:hover,html body .af-theme-icon:hover,
-html body .af-top-icon:focus-visible,html body .af-power-button:focus-visible,html body .af-theme-icon:focus-visible{
-  border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;
-}
-html body .af-top-icon:hover,html body .af-power-button:hover,html body .af-theme-icon:hover{background:rgba(255,255,255,.07)!important}
-html body .af-landing-moment .af-brand-moment,
-html body .af-landing-moment .af-brand-moment b,
-html body .af-landing-moment>em{font-family:'Orbitron','Roboto Mono',monospace!important}
-html body .af-landing-moment .af-brand-moment{font-weight:600!important;letter-spacing:.035em!important}
-html body .af-landing-moment .af-brand-moment b{font-weight:700!important;letter-spacing:.055em!important}
-html body .af-landing-moment>em{font-weight:500!important;letter-spacing:.015em!important}
-
-@media(max-width:760px){
-  html body .af-brand-copy{height:34px!important;gap:0!important}
-  html body .af-brand-copy>strong{font-size:9px!important;gap:1px!important;letter-spacing:.11em!important}
-  html body .af-brand-copy>small{display:none!important}
 }

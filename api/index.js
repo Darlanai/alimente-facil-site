@@ -219,10 +219,6 @@ function subscriptionsCollection() {
   return db.collection('subscriptions');
 }
 
-function userDataCollection() {
-  return db.collection('user_data');
-}
-
 function now() {
   return new Date();
 }
@@ -309,7 +305,6 @@ function publicSubscription(subscription) {
 async function ensureIndexes() {
   await usersCollection().createIndex({ email: 1 }, { unique: true });
   await subscriptionsCollection().createIndex({ userId: 1 }, { unique: true });
-  await userDataCollection().createIndex({ userId: 1 }, { unique: true });
 }
 
 async function connectToMongo() {
@@ -655,52 +650,39 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   }
 });
 
-// Estado persistente do painel, sempre vinculado ao usuário autenticado.
-// O cliente não escolhe o userId: ele vem do token JWT validado acima.
-app.get('/api/user-data', authMiddleware, async (req, res) => {
+// Estado funcional do painel, associado à conta autenticada.
+app.get('/api/app-state', authMiddleware, async (req, res) => {
   try {
-    const userId = new ObjectId(String(req.auth.sub));
-    const record = await userDataCollection().findOne({ userId });
-
-    if (!record) {
-      return res.json({ ok: true, exists: false, data: null, updatedAt: null });
-    }
-
-    return res.json({
-      ok: true,
-      exists: true,
-      data: record.data || null,
-      updatedAt: record.updatedAt || null
-    });
+    const user = await usersCollection().findOne(
+      { _id: new ObjectId(req.auth.sub) },
+      { projection: { appState: 1, appStateUpdatedAt: 1 } }
+    );
+    if (!user) return res.status(404).json({ ok: false, message: 'Usuário não encontrado.' });
+    return res.json({ ok: true, state: user.appState || null, updatedAt: user.appStateUpdatedAt || null });
   } catch (error) {
-    console.error('Erro ao carregar dados do usuário:', error);
-    return res.status(500).json({ ok: false, message: 'Não foi possível carregar os dados da sua conta.' });
+    return res.status(500).json({ ok: false, message: 'Não foi possível carregar os dados do painel.', error: error.message });
   }
 });
 
-app.put('/api/user-data', authMiddleware, async (req, res) => {
+app.put('/api/app-state', authMiddleware, async (req, res) => {
   try {
-    const userId = new ObjectId(String(req.auth.sub));
-    const incoming = req.body?.data;
-
-    if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
-      return res.status(400).json({ ok: false, message: 'Dados do painel inválidos.' });
+    const state = req.body?.state;
+    if (!state || typeof state !== 'object' || Array.isArray(state)) {
+      return res.status(400).json({ ok: false, message: 'Estado do painel inválido.' });
     }
-
-    const updatedAt = now();
-    await userDataCollection().updateOne(
-      { userId },
-      {
-        $set: { data: incoming, updatedAt },
-        $setOnInsert: { userId, createdAt: updatedAt }
-      },
-      { upsert: true }
+    const serialized = JSON.stringify(state);
+    if (Buffer.byteLength(serialized, 'utf8') > 1_500_000) {
+      return res.status(413).json({ ok: false, message: 'Os dados do painel excederam o limite permitido.' });
+    }
+    const updatedAt = new Date();
+    const result = await usersCollection().updateOne(
+      { _id: new ObjectId(req.auth.sub) },
+      { $set: { appState: state, appStateUpdatedAt: updatedAt, updatedAt } }
     );
-
+    if (!result.matchedCount) return res.status(404).json({ ok: false, message: 'Usuário não encontrado.' });
     return res.json({ ok: true, updatedAt });
   } catch (error) {
-    console.error('Erro ao salvar dados do usuário:', error);
-    return res.status(500).json({ ok: false, message: 'Não foi possível salvar os dados da sua conta.' });
+    return res.status(500).json({ ok: false, message: 'Não foi possível salvar os dados do painel.', error: error.message });
   }
 });
 

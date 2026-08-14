@@ -27522,6 +27522,33 @@ html body:not(.app-mode) #inicio .af-real-panel-shot .af-kitchen-card-cue{
   backdrop-filter:blur(10px);
 }
 
+/* Correções de usabilidade e responsividade validadas no fluxo mobile. */
+.card__validade--today{color:#ffd166!important;font-weight:800}
+.welcome-section.is-demo{border-color:rgba(255,209,102,.22)}
+.welcome-section.is-demo .welcome-subtitle{color:var(--glass-text-secondary)}
+.header-budget-values{display:flex;align-items:center;gap:.32rem;white-space:nowrap}
+.header-budget-values strong{font-weight:800;color:var(--glass-text-primary)}
+#module-analises canvas{color:#fff!important}
+#module-analises .analysis-v3-chartcard,
+#module-analises .analysis-v3-chartcard *{--chart-label-color:#fff}
+.recipe-editor-modal .modal-footer{gap:.65rem;justify-content:flex-end}
+.recipe-editor-modal .recipe-editor-delete-action,
+.recipe-editor-modal .recipe-editor-save-action{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:44px}
+
+@media(max-width:767px){
+  #auth-modal{padding:12px!important;align-items:center!important;justify-content:center!important}
+  #auth-modal .auth-modal-content{position:relative!important;inset:auto!important;transform:none!important;margin:auto!important;width:min(100%,440px)!important;max-width:100%!important;max-height:calc(100dvh - 24px)!important;overflow:auto!important}
+  .recipe-editor-modal #recipe-ing-form .add-item-form{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 48px!important;gap:.6rem!important;align-items:end!important}
+  .recipe-editor-modal #recipe-ing-form .form-group-flex{grid-column:1/-1!important;width:100%!important;min-width:0!important}
+  .recipe-editor-modal #recipe-ing-form .form-group-small{width:auto!important;min-width:0!important}
+  .recipe-editor-modal #recipe-ing-form input,
+  .recipe-editor-modal #recipe-ing-form select{width:100%!important;min-width:0!important;box-sizing:border-box!important}
+  .recipe-editor-modal .autocomplete-results{left:0!important;right:0!important;width:100%!important;min-width:0!important;max-width:100%!important}
+  .recipe-editor-modal .modal-footer{flex-wrap:wrap}
+  .recipe-editor-modal .recipe-editor-save-action{flex:1 1 170px}
+  .header-budget-values{font-size:.72rem;gap:.2rem}
+}
+
 @media(max-width:640px){
   html body:not(.app-mode) #inicio .af-mobile-device-card{
     width:min(100%,330px)!important;
@@ -27582,27 +27609,4 @@ html body:not(.app-mode) #inicio .af-real-panel-shot .af-kitchen-card-cue{
     max-height:none!important;
     filter:drop-shadow(0 18px 24px rgba(0,0,0,.26));
   }
-}
-
-
-/* =========================================================
-   ANÁLISES — contraste definitivo das legendas no tema escuro
-   Mantém todos os nomes/legendas visíveis em branco.
-========================================================= */
-#module-analises {
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.84);
-}
-
-#module-analises .analysis-v3-breakdown-head span,
-#module-analises .analysis-v3-row span,
-#module-analises .analysis-v3-row strong,
-#module-analises .analysis-v3-overlaycard span,
-#module-analises .analysis-v3-overlaycard strong,
-#module-analises .analysis-v3-overlaycard small,
-#module-analises .analysis-v3-kpi span,
-#module-analises .analysis-v3-kpi strong,
-#module-analises .analysis-v3-summarycard strong,
-#module-analises .analysis-v3-summarycard p {
-  color: #ffffff !important;
 }

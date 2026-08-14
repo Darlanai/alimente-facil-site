@@ -405,6 +405,7 @@ generateId: () => Date.now().toString(36) + Math.random().toString(36).substring
             if (data.validade) {
                 const hoje = new Date().toISOString().split('T')[0];
                 if (data.validade < hoje) { validadeDisplay = "Vencido"; validadeClass = "card__validade--expired"; }
+                else if (data.validade === hoje) { validadeDisplay = "Vence hoje"; validadeClass = "card__validade--today"; }
                 else { validadeDisplay = data.validade.split('-').reverse().join('/'); }
             }
 
@@ -2284,11 +2285,12 @@ renderPlanejador(container) {
             const hour = new Date().getHours();
             const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
             const userName = this.state.user.nome || 'Usuário';
+            const isDemo = !this.isLoggedIn;
             container.innerHTML = `
-                <div class="welcome-section">
+                <div class="welcome-section${isDemo ? ' is-demo' : ''}">
                     <div class="welcome-header">
-                        <h2>${greeting}, <strong>${this.escapeHtml(userName)}</strong>.</h2>
-                        <p class="welcome-subtitle">Painel de Controle</p>
+                        <h2>${isDemo ? 'Demonstração do painel' : `${greeting}, <strong>${this.escapeHtml(userName)}</strong>.`}</h2>
+                        <p class="welcome-subtitle">${isDemo ? 'Crie sua conta para visualizar e salvar seus dados reais.' : 'Painel de Controle'}</p>
                     </div>
                 </div>
                 <div class="quick-actions-grid quick-actions-grid--six">
@@ -3205,7 +3207,7 @@ handleSaveRecipe() {
                  const id = form.querySelector('#recipe-edit-id').value;
                  const name = form.querySelector('#recipe-edit-name').value.trim();
                  const desc = form.querySelector('#recipe-edit-desc').value.trim();
-                 const contentText = form.querySelector('#recipe-edit-content').value;
+                 const contentText = form.querySelector('#recipe-edit-content').value.trim();
 
                  if (!name) {
                      this.showNotification("O nome da receita é obrigatório.", "error");
@@ -3214,7 +3216,17 @@ handleSaveRecipe() {
                  }
 
                  const ingredients = this.tempRecipeIngredients;
-                 const contentHTML = `<h4>Ingredientes</h4><ul>${ingredients.map(ing => `<li>${this.escapeHtml(ing.qty)} ${this.escapeHtml(ing.unit)} ${this.escapeHtml(ing.name)}</li>`).join('')}</ul><h4>Preparo</h4><p>${contentText.replace(/\n/g, '<br>')}</p>`;
+                 if (!ingredients.length) {
+                     this.showNotification("Adicione pelo menos um ingrediente.", "error");
+                     if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
+                     return;
+                 }
+                 if (!contentText) {
+                     this.showNotification("Descreva o modo de preparo da receita.", "error");
+                     if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
+                     return;
+                 }
+                 const contentHTML = `<h4>Ingredientes</h4><ul>${ingredients.map(ing => `<li>${this.escapeHtml(ing.qty)} ${this.escapeHtml(ing.unit)} ${this.escapeHtml(ing.name)}</li>`).join('')}</ul><h4>Preparo</h4><p>${this.escapeHtml(contentText).replace(/\n/g, '<br>')}</p>`;
                  const recipeData = { name, desc, content: contentHTML, ingredients };
 
                  if (id) {
@@ -3897,11 +3909,11 @@ async callGeminiAPI(userText) {
                         const map={overview:'O que o Alimente Fácil faz?',features:'Quais são os recursos?',lists:'Como funcionam as listas de compras?',pantry:'Como funciona a despensa?',recipes_planner:'Como funcionam receitas e planejador?',planner:'Como funciona o planejador?',expiry:'Como funciona o controle de validades?',meal_ideas:'O que posso cozinhar com o que tenho?',savings:'Como economizar e reduzir desperdício?',price:'Quanto custa?'};
                         this.ask(map[action]); return;
                     }
-                    if(action==='signup'){ this.renderMessage(label,'user'); app.showAuthModal(); setTimeout(()=>document.querySelector('.auth-toggle-link[data-view="signup-view"]')?.click(),100); return; }
-                    if(action==='login'){ this.renderMessage(label,'user'); app.showAuthModal(); return; }
+                    if(action==='signup'){ this.renderMessage(label,'user'); this.close(); app.showAuthModal(); setTimeout(()=>document.querySelector('.auth-toggle-link[data-view="signup-view"]')?.click(),100); return; }
+                    if(action==='login'){ this.renderMessage(label,'user'); this.close(); app.showAuthModal(); return; }
                     if(action==='forgot_password'){ app.showAuthModal(); setTimeout(()=>document.querySelector('[data-view="forgot-password-view"]')?.click(),100); return; }
-                    if(action==='plans'){ app.showPlansModal(); return; }
-                    if(action==='contact'){ document.getElementById('afContactOpen')?.click(); return; }
+                    if(action==='plans'){ this.close(); app.showPlansModal(); return; }
+                    if(action==='contact'){ this.close(); document.getElementById('afContactOpen')?.click(); return; }
                     if(action==='privacy'){ location.href='/politica-de-privacidade.html'; return; }
                     if(action==='terms'){ location.href='/termos.html'; return; }
                     if(action==='mobile'){ this.ask('Como instalar o aplicativo no celular?'); return; }
@@ -3914,8 +3926,8 @@ async callGeminiAPI(userText) {
                     }
                 },
                 scroll(){this.bodyEl.scrollTop=this.bodyEl.scrollHeight},
-                open(){this.widget.classList.add('af-open');this.widget.setAttribute('aria-hidden','false');if(!this.bodyEl.children.length)this.welcome();setTimeout(()=>this.input.focus(),120)},
-                close(){this.widget.classList.remove('af-open');this.widget.setAttribute('aria-hidden','true')},
+                open(){this.widget.classList.add('af-open');document.body.classList.add('af-assistant-open');this.widget.setAttribute('aria-hidden','false');if(!this.bodyEl.children.length)this.welcome();setTimeout(()=>this.input.focus(),120)},
+                close(){this.widget.classList.remove('af-open');document.body.classList.remove('af-assistant-open');this.widget.setAttribute('aria-hidden','true')},
                 toggle(){this.widget.classList.contains('af-open')?this.close():this.open()},
                 restart(){this.welcome()}
             };
@@ -4283,11 +4295,8 @@ const ALL_ITEMS_DATA = [
     app.handleSaveEditModal = function() {
         const id = document.getElementById('edit-item-id')?.value;
         const type = document.getElementById('edit-item-type')?.value;
-        if (!id || type !== 'despensa') return;
-        const idx = this.state.despensa.findIndex(i => i.id.toString() === String(id));
-        if (idx < 0) return;
-        this.state.despensa[idx] = {
-            ...this.state.despensa[idx],
+        if (type !== 'despensa') return;
+        const itemData = {
             name: document.getElementById('edit-item-name')?.value.trim() || 'Item sem nome',
             qtd: parseFloat(document.getElementById('edit-item-qtd')?.value) || 1,
             unid: document.getElementById('edit-item-unid')?.value || 'un',
@@ -4295,11 +4304,18 @@ const ALL_ITEMS_DATA = [
             validade: document.getElementById('edit-item-validade')?.value || '',
             stock: parseInt(document.getElementById('edit-item-stock')?.value || '100', 10)
         };
+        if (id) {
+            const idx = this.state.despensa.findIndex(i => i.id.toString() === String(id));
+            if (idx < 0) return;
+            this.state.despensa[idx] = { ...this.state.despensa[idx], ...itemData };
+        } else {
+            this.state.despensa.unshift({ id: this.generateId(), ...itemData });
+        }
         this.saveState();
         this.renderDespensaWidget();
         if (this.activeModule === 'despensa') this.renderDespensa();
         this.closeModal('item-edit-modal');
-        this.showNotification('Item da despensa atualizado!', 'success');
+        this.showNotification(id ? 'Item da despensa atualizado!' : 'Item adicionado à despensa!', 'success');
     };
 
     app.showRecipeDetailModal = function(recipeId) {
@@ -4324,14 +4340,14 @@ const ALL_ITEMS_DATA = [
         this.tempRecipeIngredients = recipe?.ingredients ? JSON.parse(JSON.stringify(recipe.ingredients)) : [];
         const initialName = options.initialName || recipe?.name || '';
         const prepText = recipe?.content?.replace(/<h4>Ingredientes<\/h4>/gi, '').replace(/<ul>[\s\S]*?<\/ul>/i, '').replace(/<h4>Preparo<\/h4>/gi, '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim() || '';
-        const content = `<form id="recipe-edit-form" onsubmit="return false;"><input type="hidden" id="recipe-edit-id" value="${recipeId || ''}"><div class="form-group"><label for="recipe-edit-name">Nome da Receita</label><input type="text" id="recipe-edit-name" value="${this.escapeHtml(initialName)}" required></div><div class="form-group"><label for="recipe-edit-desc">Descrição Curta</label><input type="text" id="recipe-edit-desc" value="${this.escapeHtml(recipe?.desc || '')}"></div><hr class="divider"><label style="display:block; font-size:.9rem; font-weight:500; color:var(--glass-text-primary); margin-bottom:.5rem;">Ingredientes</label><div id="recipe-ing-form" class="add-item-form-container" style="padding:0; border:none; background:rgba(0,0,0,0.2); border-radius:8px; margin-bottom:1rem;"><div class="add-item-form" style="padding:.75rem;"><div class="form-group form-group-flex"><label for="recipe-ing-name">Nome</label><input type="text" id="recipe-ing-name" placeholder="Ex: Arroz"></div><div class="form-group form-group-small"><label for="recipe-ing-qtd">Qtd</label><input type="text" id="recipe-ing-qtd" value="1"></div><div class="form-group form-group-small"><label for="recipe-ing-unid">Unid</label><select id="recipe-ing-unid">${['un','kg','g','L','ml','pct','cx','xícara','colher','pitada','dentes','a gosto','fio'].map(u => `<option value="${u}">${u}</option>`).join('')}</select></div><button type="button" class="btn-add-item" id="recipe-add-ing-btn"><i class="fa-solid fa-plus"></i></button></div></div><div id="recipe-ingredients-list"></div><hr class="divider"><div class="form-group"><label for="recipe-edit-content">Modo de Preparo</label><textarea id="recipe-edit-content" rows="7">${this.escapeHtml(prepText)}</textarea></div></form>`;
+        const content = `<form id="recipe-edit-form" onsubmit="return false;"><input type="hidden" id="recipe-edit-id" value="${recipeId || ''}"><div class="form-group"><label for="recipe-edit-name">Nome da Receita</label><input type="text" id="recipe-edit-name" value="${this.escapeHtml(initialName)}" required></div><div class="form-group"><label for="recipe-edit-desc">Descrição Curta</label><input type="text" id="recipe-edit-desc" value="${this.escapeHtml(recipe?.desc || '')}"></div><hr class="divider"><label style="display:block; font-size:.9rem; font-weight:500; color:var(--glass-text-primary); margin-bottom:.5rem;">Ingredientes</label><div id="recipe-ing-form" class="add-item-form-container" style="padding:0; border:none; background:rgba(0,0,0,0.2); border-radius:8px; margin-bottom:1rem;"><div class="add-item-form" style="padding:.75rem;"><div class="form-group form-group-flex"><label for="recipe-ing-name">Nome</label><input type="text" id="recipe-ing-name" placeholder="Ex: Arroz" aria-label="Nome do ingrediente"></div><div class="form-group form-group-small"><label for="recipe-ing-qtd">Qtd</label><input type="text" id="recipe-ing-qtd" value="1" aria-label="Quantidade do ingrediente"></div><div class="form-group form-group-small"><label for="recipe-ing-unid">Unid</label><select id="recipe-ing-unid" aria-label="Unidade do ingrediente">${['un','kg','g','L','ml','pct','cx','xícara','colher','pitada','dentes','a gosto','fio'].map(u => `<option value="${u}">${u}</option>`).join('')}</select></div><button type="button" class="btn-add-item" id="recipe-add-ing-btn" aria-label="Adicionar ingrediente"><i class="fa-solid fa-plus"></i></button></div></div><div id="recipe-ingredients-list"></div><hr class="divider"><div class="form-group"><label for="recipe-edit-content">Modo de Preparo</label><textarea id="recipe-edit-content" rows="7" required>${this.escapeHtml(prepText)}</textarea></div></form>`;
         this.openConfirmModal(isEditing ? 'Editar Receita' : 'Criar Receita', content, () => this.handleSaveRecipe());
         const modal = document.getElementById('custom-confirm-modal');
         if (!modal) return;
         modal.classList.add('recipe-editor-modal');
         const footer = modal.querySelector('.modal-footer');
         if (footer) {
-            footer.innerHTML = `${isEditing ? `<button type="button" class="icon-button danger" id="recipe-editor-delete-btn"><i class="fa-solid fa-trash"></i></button>` : ''}<button type="button" class="icon-button" id="recipe-editor-save-btn"><i class="fa-solid fa-floppy-disk"></i></button>`;
+            footer.innerHTML = `${isEditing ? `<button type="button" class="btn btn-danger recipe-editor-delete-action" id="recipe-editor-delete-btn"><i class="fa-solid fa-trash"></i><span>Excluir</span></button>` : ''}<button type="button" class="btn btn-primary recipe-editor-save-action" id="recipe-editor-save-btn"><i class="fa-solid fa-floppy-disk"></i><span>Salvar receita</span></button>`;
             footer.querySelector('#recipe-editor-save-btn')?.addEventListener('click', () => this.handleSaveRecipe(), { once: true });
             footer.querySelector('#recipe-editor-delete-btn')?.addEventListener('click', () => { this.closeModal('custom-confirm-modal'); this.handleDeleteRecipe(recipeId); }, { once: true });
         }
@@ -10210,6 +10226,7 @@ labels: {
             position: 'bottom',
             labels: {
               color: '#ffffff',
+              fontColor: '#ffffff',
               usePointStyle: true,
               boxWidth: 8,
               padding: 16,
@@ -10221,6 +10238,8 @@ labels: {
                   const percent = total > 0 ? Math.round((Number(value || 0) / total) * 100) : 0;
                   return {
                     ...item,
+                    color: '#ffffff',
+                    fontColor: '#ffffff',
                     text: ['doughnut', 'pie'].includes(type)
                       ? `${chart.data.labels[item.index]} • ${value} (${percent}%)`
                       : `${chart.data.labels[item.index]} • ${value}`
@@ -10286,10 +10305,6 @@ labels: {
     app.analysisV3DrawChart = function(payload){
       const canvas = document.getElementById('analysis-v3-chart');
       if (!canvas || typeof Chart === 'undefined') return;
-      Chart.defaults.color = '#ffffff';
-      if (Chart.defaults?.plugins?.legend?.labels) {
-        Chart.defaults.plugins.legend.labels.color = '#ffffff';
-      }
       const ctx = canvas.getContext('2d');
       if (this.charts.analysisRebuiltChart) this.charts.analysisRebuiltChart.destroy();
 
@@ -10323,6 +10338,7 @@ labels: {
             position: 'bottom',
             labels: {
               color: '#ffffff',
+              fontColor: '#ffffff',
               usePointStyle: true,
               boxWidth: 8,
               padding: 16,
@@ -10337,6 +10353,7 @@ labels: {
                     : chart.data.datasets?.[0]?.backgroundColor;
                   return {
                     text: `${label} • ${value} (${percent}%)`,
+                    color: '#ffffff',
                     fontColor: '#ffffff',
                     fillStyle,
                     strokeStyle: fillStyle,
@@ -12010,6 +12027,123 @@ console.log('handleSignup chamada');
 
 
 
+/* Sincronização segura do painel por conta, com cópia local por usuário. */
+(() => {
+  const app = window.app;
+  if (!app || app.__accountStateSyncInstalled) return;
+  app.__accountStateSyncInstalled = true;
+  const originalSaveState = app.saveState.bind(app);
+  const originalApplyAuthenticatedUser = app.applyAuthenticatedUser?.bind(app);
+  const originalHandleLogout = app.handleLogout?.bind(app);
+
+  app.getAccountStateKey = function() {
+    const id = this.state?.user?.id || 'anonymous';
+    return `alimenteFacilAccountState_${id}`;
+  };
+
+  app.getPanelStatePayload = function() {
+    return {
+      data: this.state,
+      activeModule: this.activeModule || 'inicio',
+      activeListId: this.activeListId || 'listaDaSemana'
+    };
+  };
+
+  app.applyPanelStatePayload = function(payload) {
+    if (!payload?.data || typeof payload.data !== 'object') return false;
+    const authenticatedUser = { ...(this.state?.user || {}) };
+    this.state = payload.data;
+    this.state.user = { ...(this.state.user || {}), ...authenticatedUser };
+    this.state.listas = this.state.listas || {};
+    this.state.despensa = Array.isArray(this.state.despensa) ? this.state.despensa : [];
+    this.state.essenciais = Array.isArray(this.state.essenciais) ? this.state.essenciais : [];
+    this.state.receitas = this.state.receitas || {};
+    this.state.planejador = this.state.planejador || {};
+    this.state.orcamento = this.state.orcamento || { total: 500 };
+    this.activeModule = payload.activeModule || this.activeModule || 'inicio';
+    this.activeListId = payload.activeListId || this.activeListId || 'listaDaSemana';
+    if (!this.state.listas[this.activeListId]) this.activeListId = Object.keys(this.state.listas)[0] || 'listaDaSemana';
+    return true;
+  };
+
+  app.pushRemoteAppState = async function() {
+    const token = this.getStoredAuthToken?.();
+    if (!token || !this.isLoggedIn || !this._remoteStateReady) return false;
+    const payload = this.getPanelStatePayload();
+    localStorage.setItem(this.getAccountStateKey(), JSON.stringify(payload));
+    await this.apiFetchJson('/api/app-state', {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ state: payload })
+    });
+    return true;
+  };
+
+  app.scheduleRemoteStateSync = function() {
+    if (!this._remoteStateReady || !this.isLoggedIn) return;
+    clearTimeout(this._remoteStateTimer);
+    this._remoteStateTimer = setTimeout(() => this.pushRemoteAppState().catch((error) => console.warn('Sincronização pendente:', error?.message)), 650);
+  };
+
+  app.loadRemoteAppState = async function() {
+    const token = this.getStoredAuthToken?.();
+    if (!token || !this.isLoggedIn) return false;
+    this._remoteStateReady = false;
+    let applied = false;
+    try {
+      const remote = await this.apiFetchJson('/api/app-state', { headers: { Authorization: `Bearer ${token}` } });
+      if (remote?.state) applied = this.applyPanelStatePayload(remote.state);
+    } catch (error) {
+      console.warn('Dados online indisponíveis; usando cópia local.', error?.message);
+    }
+    if (!applied) {
+      try {
+        const local = JSON.parse(localStorage.getItem(this.getAccountStateKey()) || 'null');
+        if (local) applied = this.applyPanelStatePayload(local);
+      } catch (_error) {}
+    }
+    this._remoteStateReady = true;
+    originalSaveState();
+    if (this.isAppMode) this.renderAllPanelContent?.();
+    this.updateStartButton?.();
+    this.scheduleRemoteStateSync();
+    return applied;
+  };
+
+  app.saveState = function() {
+    originalSaveState();
+    if (this.isLoggedIn && this.state?.user?.id) {
+      try { localStorage.setItem(this.getAccountStateKey(), JSON.stringify(this.getPanelStatePayload())); } catch (_error) {}
+      this.scheduleRemoteStateSync();
+    }
+  };
+
+  if (originalApplyAuthenticatedUser) {
+    app.applyAuthenticatedUser = function(sessionData = {}) {
+      this._remoteStateReady = false;
+      const result = originalApplyAuthenticatedUser(sessionData);
+      this.loadRemoteAppState().catch(() => {});
+      return result;
+    };
+  }
+
+  if (originalHandleLogout) {
+    app.handleLogout = async function() {
+      clearTimeout(this._remoteStateTimer);
+      try {
+        if (this.isLoggedIn && this._remoteStateReady) await this.pushRemoteAppState();
+      } catch (_error) {
+        try { localStorage.setItem(this.getAccountStateKey(), JSON.stringify(this.getPanelStatePayload())); } catch (_ignored) {}
+      }
+      return originalHandleLogout();
+    };
+  }
+
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.color = '#ffffff';
+    if (Chart.defaults.plugins?.legend?.labels) Chart.defaults.plugins.legend.labels.color = '#ffffff';
+  }
+})();
 
 ;(() => {
   const PATCH_FLAG = '__afProductAutocompletePatchAppliedLite';
