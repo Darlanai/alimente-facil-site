@@ -51,8 +51,8 @@
     },
     {
       id:'trial', phrases:['como funciona o teste gratis','precisa de cartao','sao quantos dias gratis','quando comeca a cobrar'], keywords:['teste','gratis','cartao','cobranca','7','dias'],
-      answer:'O teste começa quando a conta é criada e dura <strong>7 dias completos</strong>. Não é solicitado cartão no cadastro e não existe cobrança automática sem uma assinatura escolhida por você.',
-      actions:[['Criar conta grátis','signup']]
+      answer:'O teste começa quando a conta é criada e dura <strong>7 dias completos</strong>. Não é solicitado cartão no cadastro e não existe cobrança automática. A opção de assinatura por R$ 9,90/mês só é apresentada a partir do <strong>8º dia</strong>, e você continua apenas se decidir assinar.',
+      actions:[['Criar conta grátis','signup'],['Ver o plano','plans']]
     },
     {
       id:'signup', phrases:['como criar conta','como cadastrar','quero comecar','fazer cadastro'], keywords:['cadastro','criar','registrar','conta','comecar'],

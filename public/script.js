@@ -10286,6 +10286,10 @@ labels: {
     app.analysisV3DrawChart = function(payload){
       const canvas = document.getElementById('analysis-v3-chart');
       if (!canvas || typeof Chart === 'undefined') return;
+      Chart.defaults.color = '#ffffff';
+      if (Chart.defaults?.plugins?.legend?.labels) {
+        Chart.defaults.plugins.legend.labels.color = '#ffffff';
+      }
       const ctx = canvas.getContext('2d');
       if (this.charts.analysisRebuiltChart) this.charts.analysisRebuiltChart.destroy();
 
@@ -10333,6 +10337,7 @@ labels: {
                     : chart.data.datasets?.[0]?.backgroundColor;
                   return {
                     text: `${label} • ${value} (${percent}%)`,
+                    fontColor: '#ffffff',
                     fillStyle,
                     strokeStyle: fillStyle,
                     lineWidth: 0,

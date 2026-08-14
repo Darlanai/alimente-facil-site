@@ -219,8 +219,8 @@ function subscriptionsCollection() {
   return db.collection('subscriptions');
 }
 
-function appStatesCollection() {
-  return db.collection('app_states');
+function userDataCollection() {
+  return db.collection('user_data');
 }
 
 function now() {
@@ -309,7 +309,7 @@ function publicSubscription(subscription) {
 async function ensureIndexes() {
   await usersCollection().createIndex({ email: 1 }, { unique: true });
   await subscriptionsCollection().createIndex({ userId: 1 }, { unique: true });
-  await appStatesCollection().createIndex({ userId: 1 }, { unique: true });
+  await userDataCollection().createIndex({ userId: 1 }, { unique: true });
 }
 
 async function connectToMongo() {
@@ -655,45 +655,43 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   }
 });
 
-// Estado persistente do painel, separado por usuário.
-// Esta é a fonte de verdade para listas, despensa, receitas, planejador e demais dados do app.
-app.get('/api/app-state', authMiddleware, async (req, res) => {
+// Estado persistente do painel, sempre vinculado ao usuário autenticado.
+// O cliente não escolhe o userId: ele vem do token JWT validado acima.
+app.get('/api/user-data', authMiddleware, async (req, res) => {
   try {
-    const userId = new ObjectId(req.auth.sub);
-    const saved = await appStatesCollection().findOne({ userId });
+    const userId = new ObjectId(String(req.auth.sub));
+    const record = await userDataCollection().findOne({ userId });
+
+    if (!record) {
+      return res.json({ ok: true, exists: false, data: null, updatedAt: null });
+    }
+
     return res.json({
       ok: true,
-      state: saved?.state || null,
-      updatedAt: saved?.updatedAt || null
+      exists: true,
+      data: record.data || null,
+      updatedAt: record.updatedAt || null
     });
   } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      message: 'Não foi possível carregar os dados salvos do painel.',
-      error: error.message
-    });
+    console.error('Erro ao carregar dados do usuário:', error);
+    return res.status(500).json({ ok: false, message: 'Não foi possível carregar os dados da sua conta.' });
   }
 });
 
-app.put('/api/app-state', authMiddleware, async (req, res) => {
+app.put('/api/user-data', authMiddleware, async (req, res) => {
   try {
-    const userId = new ObjectId(req.auth.sub);
-    const panelState = req.body?.state;
+    const userId = new ObjectId(String(req.auth.sub));
+    const incoming = req.body?.data;
 
-    if (!panelState || typeof panelState !== 'object' || Array.isArray(panelState)) {
-      return res.status(400).json({ ok: false, message: 'Estado do painel inválido.' });
-    }
-
-    const serialized = JSON.stringify(panelState);
-    if (Buffer.byteLength(serialized, 'utf8') > 1_500_000) {
-      return res.status(413).json({ ok: false, message: 'Os dados do painel excederam o limite permitido.' });
+    if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+      return res.status(400).json({ ok: false, message: 'Dados do painel inválidos.' });
     }
 
     const updatedAt = now();
-    await appStatesCollection().updateOne(
+    await userDataCollection().updateOne(
       { userId },
       {
-        $set: { state: panelState, updatedAt },
+        $set: { data: incoming, updatedAt },
         $setOnInsert: { userId, createdAt: updatedAt }
       },
       { upsert: true }
@@ -701,11 +699,8 @@ app.put('/api/app-state', authMiddleware, async (req, res) => {
 
     return res.json({ ok: true, updatedAt });
   } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      message: 'Não foi possível salvar os dados do painel.',
-      error: error.message
-    });
+    console.error('Erro ao salvar dados do usuário:', error);
+    return res.status(500).json({ ok: false, message: 'Não foi possível salvar os dados da sua conta.' });
   }
 });
 

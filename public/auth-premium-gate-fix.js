@@ -19,6 +19,8 @@
 
   const AUTH_TOKEN_KEY = 'alimenteFacilAuthToken';
   const AUTH_USER_KEY = 'alimenteFacilAuthUser';
+  const LEGACY_STATE_KEY = 'alimenteFacilState_vFinal';
+  const USER_DATA_BACKUP_PREFIX = 'alimenteFacilUserData:';
   const PREMIUM_PLAN = 'premium';
   const BASIC_PLAN = 'basic';
   const PANEL_ROOT_SELECTOR = '.app-panel-container-standalone';
@@ -28,17 +30,25 @@
   const originalCloseAllModals = typeof app.closeAllModals === 'function' ? app.closeAllModals.bind(app) : function () {};
   const originalSaveState = typeof app.saveState === 'function' ? app.saveState.bind(app) : function () {};
 
+  let initialLegacyState = null;
+  try {
+    initialLegacyState = JSON.parse(storage.getItem(LEGACY_STATE_KEY) || 'null');
+  } catch (_error) {
+    initialLegacyState = null;
+  }
+
   const state = {
     refreshing: false,
     lastRefreshAt: 0,
     sessionPayload: null,
     trialWatchTimer: null,
-    appStateReadyUserId: '',
-    appStateLoadingUserId: '',
-    appStateLoadPromise: null,
-    appStateSaveTimer: null,
-    appStateSavePromise: null,
-    pendingAppStateSnapshot: null
+    cloudReady: false,
+    cloudLoading: false,
+    cloudOwnerId: '',
+    cloudLoadPromise: null,
+    cloudSaveTimer: null,
+    cloudSaveChain: Promise.resolve(),
+    cloudLastSerialized: ''
   };
 
   function getToken() {
@@ -62,9 +72,12 @@
   }
 
   async function apiFetchJson(url, options) {
-    const response = await fetchImpl(fullUrl(url), Object.assign({
-      headers: { 'Content-Type': 'application/json' }
-    }, options || {}));
+    const requestOptions = Object.assign({}, options || {});
+    requestOptions.headers = Object.assign(
+      { 'Content-Type': 'application/json' },
+      (options && options.headers) || {}
+    );
+    const response = await fetchImpl(fullUrl(url), requestOptions);
     const data = await response.json().catch(function () { return {}; });
     if (!response.ok) {
       const error = new Error(data && data.message ? data.message : 'Erro na comunicação com o servidor.');
@@ -75,200 +88,201 @@
     return data;
   }
 
-  function cloneJson(value, fallback) {
-    try { return JSON.parse(JSON.stringify(value)); } catch (_error) { return fallback; }
+  function cloneJson(value) {
+    try { return JSON.parse(JSON.stringify(value)); }
+    catch (_error) { return null; }
   }
 
-  function currentUserId() {
-    return String(app.state?.user?.id || state.sessionPayload?.user?.id || '').trim();
+  function cloudBackupKey(userId) {
+    return `${USER_DATA_BACKUP_PREFIX}${String(userId || '').trim()}`;
   }
 
-  function normalizePanelData(data, user) {
-    const base = cloneJson(app.defaultState || {}, {});
-    const incoming = data && typeof data === 'object' && !Array.isArray(data) ? cloneJson(data, {}) : {};
-    const merged = Object.assign(base, incoming);
-
-    merged.listas = incoming.listas && typeof incoming.listas === 'object' ? incoming.listas : (base.listas || {});
-    merged.despensa = Array.isArray(incoming.despensa) ? incoming.despensa : (base.despensa || []);
-    merged.essenciais = Array.isArray(incoming.essenciais) ? incoming.essenciais : (base.essenciais || []);
-    merged.orcamento = incoming.orcamento && typeof incoming.orcamento === 'object' ? incoming.orcamento : (base.orcamento || { total: 500 });
-    merged.receitas = incoming.receitas && typeof incoming.receitas === 'object' ? incoming.receitas : (base.receitas || {});
-    merged.planejador = incoming.planejador && typeof incoming.planejador === 'object' ? incoming.planejador : (base.planejador || {});
-    merged.aiUsage = incoming.aiUsage && typeof incoming.aiUsage === 'object' ? incoming.aiUsage : (base.aiUsage || {});
-
-    if (!merged.listas.listaDaSemana && app.defaultState?.listas?.listaDaSemana) {
-      merged.listas.listaDaSemana = cloneJson(app.defaultState.listas.listaDaSemana, {});
-    }
-
-    const authUser = user || state.sessionPayload?.user || {};
-    merged.user = {
-      nome: authUser.name || authUser.nome || incoming.user?.nome || 'Usuário',
-      email: authUser.email || incoming.user?.email || '',
-      id: authUser.id || incoming.user?.id || ''
-    };
-    return merged;
-  }
-
-  function buildPortableAppState() {
-    const data = cloneJson(app.state || {}, {});
-    if (data && typeof data === 'object') delete data.user;
+  function buildCloudPayload() {
+    const panelState = cloneJson(app.state || {}) || {};
+    // Nome/e-mail/id vêm da autenticação. Os dados funcionais ficam no documento do usuário.
+    delete panelState.user;
     return {
       schemaVersion: 1,
-      activeModule: app.activeModule || 'inicio',
+      state: panelState,
       activeListId: app.activeListId || 'listaDaSemana',
-      listSortMode: app.listSortMode || 'date_desc',
-      data
+      activeModule: app.activeModule || 'inicio'
     };
   }
 
-  function saveLocalStateOnly() {
-    try { originalSaveState(); } catch (error) { console.error('Erro ao salvar estado local:', error); }
+  function serializeCloudPayload(payload) {
+    try { return JSON.stringify(payload || {}); }
+    catch (_error) { return ''; }
   }
 
-  function canSaveRemoteAppState() {
-    const userId = currentUserId();
-    return Boolean(
-      userId &&
-      getToken() &&
-      app.isLoggedIn &&
-      state.appStateReadyUserId === userId &&
-      state.appStateLoadingUserId !== userId
-    );
+  function saveLocalUserBackup(userId, payload) {
+    if (!userId || !payload) return;
+    try { storage.setItem(cloudBackupKey(userId), JSON.stringify(payload)); }
+    catch (_error) {}
   }
 
-  async function startRemoteAppStateSave(snapshot, keepalive) {
+  function readLocalUserBackup(userId) {
+    if (!userId) return null;
+    try { return JSON.parse(storage.getItem(cloudBackupKey(userId)) || 'null'); }
+    catch (_error) { return null; }
+  }
+
+  function getLegacyPayloadForUser(user) {
+    const legacy = initialLegacyState;
+    const legacyUser = legacy?.data?.user || {};
+    const sameId = user?.id && legacyUser?.id && String(user.id) === String(legacyUser.id);
+    const sameEmail = user?.email && legacyUser?.email && String(user.email).toLowerCase() === String(legacyUser.email).toLowerCase();
+    if (!legacy || (!sameId && !sameEmail)) return null;
+
+    const legacyData = cloneJson(legacy.data || {}) || {};
+    delete legacyData.user;
+    return {
+      schemaVersion: 1,
+      state: legacyData,
+      activeListId: legacy.activeListId || 'listaDaSemana',
+      activeModule: legacy.activeModule || 'inicio'
+    };
+  }
+
+  function applyCloudPayload(payload, user) {
+    const incomingState = payload?.state && typeof payload.state === 'object'
+      ? cloneJson(payload.state)
+      : cloneJson(app.defaultState || {});
+
+    app.state = incomingState || {};
+    app.state.user = {
+      nome: user?.name || user?.nome || 'Usuário',
+      email: user?.email || '',
+      id: user?.id || ''
+    };
+    app.state.listas = app.state.listas && typeof app.state.listas === 'object' ? app.state.listas : {};
+    app.state.despensa = Array.isArray(app.state.despensa) ? app.state.despensa : [];
+    app.state.essenciais = Array.isArray(app.state.essenciais) ? app.state.essenciais : [];
+    app.state.receitas = app.state.receitas && typeof app.state.receitas === 'object' ? app.state.receitas : {};
+    app.state.planejador = app.state.planejador && typeof app.state.planejador === 'object' ? app.state.planejador : {};
+    app.state.orcamento = app.state.orcamento && typeof app.state.orcamento === 'object' ? app.state.orcamento : { total: 500 };
+    app.activeListId = payload?.activeListId || app.activeListId || 'listaDaSemana';
+    app.activeModule = payload?.activeModule || app.activeModule || 'inicio';
+
+    if (Object.keys(app.state.listas).length && !app.state.listas[app.activeListId]) {
+      app.activeListId = Object.keys(app.state.listas)[0];
+    }
+  }
+
+  async function persistCloudNow(options) {
+    options = options || {};
     const token = getToken();
-    if (!token || !snapshot || !canSaveRemoteAppState()) return null;
-    return apiFetchJson('/api/app-state', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ state: snapshot }),
-      keepalive: Boolean(keepalive)
-    });
+    const userId = state.cloudOwnerId || app.state?.user?.id || '';
+    if (!token || !userId || !app.isLoggedIn) return null;
+
+    const payload = buildCloudPayload();
+    const serialized = serializeCloudPayload(payload);
+    saveLocalUserBackup(userId, payload);
+    // Nunca grava no servidor antes de terminar a leitura inicial da conta.
+    // Isso impede um navegador com estado velho/default de sobrescrever dados válidos da nuvem.
+    if (!state.cloudReady) return null;
+    if (!options.force && serialized && serialized === state.cloudLastSerialized) return null;
+
+    const saveOperation = async function () {
+      const result = await apiFetchJson('/api/user-data', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ data: payload }),
+        keepalive: Boolean(options.keepalive)
+      });
+      state.cloudLastSerialized = serialized;
+      return result;
+    };
+
+    state.cloudSaveChain = state.cloudSaveChain.catch(function () { return null; }).then(saveOperation);
+    return state.cloudSaveChain;
   }
 
-  async function drainRemoteAppStateSaves(keepalive) {
-    if (state.appStateSavePromise) {
-      try { await state.appStateSavePromise; } catch (_error) {}
-    }
-
-    while (state.pendingAppStateSnapshot && canSaveRemoteAppState()) {
-      const snapshot = state.pendingAppStateSnapshot;
-      state.pendingAppStateSnapshot = null;
-      state.appStateSavePromise = startRemoteAppStateSave(snapshot, keepalive);
-      try {
-        await state.appStateSavePromise;
-      } catch (error) {
-        state.pendingAppStateSnapshot = snapshot;
-        console.error('Erro ao sincronizar dados do painel:', error);
-        throw error;
-      } finally {
-        state.appStateSavePromise = null;
-      }
-    }
-    return true;
-  }
-
-  function scheduleRemoteAppStateSave() {
-    if (!canSaveRemoteAppState()) return;
-    state.pendingAppStateSnapshot = buildPortableAppState();
-    if (state.appStateSaveTimer && windowRef?.clearTimeout) windowRef.clearTimeout(state.appStateSaveTimer);
-    if (!windowRef?.setTimeout) return;
-    state.appStateSaveTimer = windowRef.setTimeout(function () {
-      state.appStateSaveTimer = null;
-      drainRemoteAppStateSaves(false).catch(function () { return null; });
+  function scheduleCloudSave() {
+    const userId = state.cloudOwnerId || app.state?.user?.id || '';
+    if (userId && app.isLoggedIn) saveLocalUserBackup(userId, buildCloudPayload());
+    if (!state.cloudReady || !app.isLoggedIn || !getToken()) return;
+    if (state.cloudSaveTimer) windowRef.clearTimeout(state.cloudSaveTimer);
+    state.cloudSaveTimer = windowRef.setTimeout(function () {
+      state.cloudSaveTimer = null;
+      persistCloudNow().catch(function (error) {
+        console.error('Falha ao sincronizar dados da conta:', error);
+      });
     }, 350);
   }
 
-  async function flushRemoteAppState(keepalive) {
-    if (!canSaveRemoteAppState()) return true;
-    if (state.appStateSaveTimer && windowRef?.clearTimeout) {
-      windowRef.clearTimeout(state.appStateSaveTimer);
-      state.appStateSaveTimer = null;
-    }
-    state.pendingAppStateSnapshot = buildPortableAppState();
-    try {
-      await drainRemoteAppStateSaves(keepalive);
-      return true;
-    } catch (_error) {
-      return false;
-    }
-  }
+  async function loadCloudForUser(user) {
+    const userId = String(user?.id || '').trim();
+    if (!userId || !getToken()) return null;
+    if (state.cloudReady && state.cloudOwnerId === userId) return true;
+    if (state.cloudLoading && state.cloudOwnerId === userId && state.cloudLoadPromise) return state.cloudLoadPromise;
 
-  function renderRestoredPanelState() {
-    if (!app.isAppMode) return;
-    try {
-      if (typeof app.activateModuleUI === 'function') app.activateModuleUI(app.activeModule || 'inicio');
-      if (typeof app.renderAllPanelContent === 'function') app.renderAllPanelContent();
-    } catch (error) {
-      console.error('Erro ao renderizar estado restaurado:', error);
+    state.cloudOwnerId = userId;
+    state.cloudReady = false;
+    state.cloudLoading = true;
+    if (state.cloudSaveTimer) {
+      windowRef.clearTimeout(state.cloudSaveTimer);
+      state.cloudSaveTimer = null;
     }
-  }
 
-  async function syncAppStateFromServer(user) {
-    const authUser = user || state.sessionPayload?.user || {};
-    const userId = String(authUser.id || '').trim();
-    const token = getToken();
-    if (!userId || !token) return null;
-    if (state.appStateReadyUserId === userId) return app.state;
-    if (state.appStateLoadingUserId === userId && state.appStateLoadPromise) return state.appStateLoadPromise;
-
-    state.appStateLoadingUserId = userId;
-    state.appStateLoadPromise = (async function () {
+    state.cloudLoadPromise = (async function () {
       try {
-        const response = await apiFetchJson('/api/app-state', {
-          headers: { Authorization: `Bearer ${token}` }
+        const response = await apiFetchJson('/api/user-data', {
+          headers: { Authorization: `Bearer ${getToken()}` }
         });
 
-        if (response?.state?.data && typeof response.state.data === 'object') {
-          app.state = normalizePanelData(response.state.data, authUser);
-          app.activeModule = response.state.activeModule || 'inicio';
-          app.activeListId = response.state.activeListId || 'listaDaSemana';
-          app.listSortMode = response.state.listSortMode || app.listSortMode || 'date_desc';
-          if (!app.state.listas?.[app.activeListId]) app.activeListId = 'listaDaSemana';
-        } else {
-          // Primeira sincronização desta conta: migra o estado local atual para o perfil.
-          app.state = normalizePanelData(app.state, authUser);
+        let payload = response?.exists && response?.data ? response.data : null;
+        if (!payload) payload = readLocalUserBackup(userId) || getLegacyPayloadForUser(user);
+        if (!payload) {
+          const initialState = cloneJson(app.defaultState || {}) || {};
+          delete initialState.user;
+          payload = {
+            schemaVersion: 1,
+            state: initialState,
+            activeListId: 'listaDaSemana',
+            activeModule: 'inicio'
+          };
         }
 
-        state.appStateReadyUserId = userId;
-        saveLocalStateOnly();
-        saveLegacyVisualState();
+        applyCloudPayload(payload, user);
+        state.cloudLastSerialized = response?.exists ? serializeCloudPayload(payload) : '';
+        state.cloudReady = true;
+        saveLocalUserBackup(userId, payload);
+        originalSaveState();
 
-        if (!response?.state) {
-          // Libera o primeiro PUT da migração sem esperar o finally do carregamento.
-          state.appStateLoadingUserId = '';
-          await flushRemoteAppState(false);
-        }
-
-        renderRestoredPanelState();
-        return app.state;
+        // Primeiro acesso após a correção: cria o documento da conta (ou migra o local antigo).
+        if (!response?.exists) await persistCloudNow({ force: true });
+        return true;
       } catch (error) {
-        console.error('Erro ao carregar dados persistentes do painel:', error);
-        // Mantém a experiência local em caso de indisponibilidade temporária do banco,
-        // mas não marca a conta como pronta para evitar sobrescrever dados remotos às cegas.
-        app.state = normalizePanelData(app.state, authUser);
-        saveLocalStateOnly();
-        return app.state;
+        const backup = readLocalUserBackup(userId) || getLegacyPayloadForUser(user);
+        if (backup) {
+          applyCloudPayload(backup, user);
+          originalSaveState();
+        }
+        state.cloudReady = false;
+        console.error('Falha ao carregar dados persistentes da conta:', error);
+        return false;
       } finally {
-        state.appStateLoadingUserId = '';
-        state.appStateLoadPromise = null;
+        state.cloudLoading = false;
+        state.cloudLoadPromise = null;
       }
     })();
 
-    return state.appStateLoadPromise;
+    return state.cloudLoadPromise;
   }
 
   app.saveState = function saveStateWithAccountSync() {
-    saveLocalStateOnly();
-    scheduleRemoteAppStateSave();
+    const result = originalSaveState.apply(app, arguments);
+    scheduleCloudSave();
+    return result;
   };
 
-  app.syncAppStateFromServer = syncAppStateFromServer;
-  app.flushRemoteAppState = flushRemoteAppState;
+  app.flushAccountData = function flushAccountData(options) {
+    if (state.cloudSaveTimer) {
+      windowRef.clearTimeout(state.cloudSaveTimer);
+      state.cloudSaveTimer = null;
+    }
+    return persistCloudNow(Object.assign({ force: true }, options || {}));
+  };
 
   function getCheckoutUrl(payload) {
     return payload?.subscription?.checkoutUrl || payload?.checkoutUrl || app.checkoutLinks?.premium || '';
@@ -434,26 +448,18 @@
     if (typeof app.initLandingPage === 'function') app.initLandingPage();
   }
 
-  function applySessionPayload(payload) {
-    const previousUserId = String(app.state?.user?.id || '').trim();
-    const nextUserId = String(payload?.user?.id || '').trim();
-
-    if (previousUserId && nextUserId && previousUserId !== nextUserId) {
-      app.state = cloneJson(app.defaultState || {}, {});
-      state.appStateReadyUserId = '';
-      state.pendingAppStateSnapshot = null;
-    }
-
+  async function applySessionPayload(payload) {
     state.sessionPayload = payload || null;
     app.backendSessionPayload = payload || null;
     const user = payload?.user || {};
-    app.state = app.state || cloneJson(app.defaultState || {}, {});
+    app.isLoggedIn = true;
+    app.userPlan = isPremiumPayload(payload) ? PREMIUM_PLAN : BASIC_PLAN;
+    await loadCloudForUser(user);
+    app.state = app.state || JSON.parse(JSON.stringify(app.defaultState || {}));
     app.state.user = app.state.user || {};
     app.state.user.nome = user.name || user.nome || app.state.user.nome || 'Usuário';
     app.state.user.email = user.email || app.state.user.email || '';
     app.state.user.id = user.id || app.state.user.id || '';
-    app.isLoggedIn = true;
-    app.userPlan = isPremiumPayload(payload) ? PREMIUM_PLAN : BASIC_PLAN;
     if (typeof app.updateStartButton === 'function') app.updateStartButton();
     if (typeof app.saveState === 'function') app.saveState();
     saveLegacyVisualState();
@@ -461,12 +467,15 @@
   }
 
   function forceLogoutToLanding() {
+    state.cloudReady = false;
+    state.cloudLoading = false;
+    state.cloudOwnerId = '';
+    state.cloudLastSerialized = '';
+    if (state.cloudSaveTimer) {
+      windowRef.clearTimeout(state.cloudSaveTimer);
+      state.cloudSaveTimer = null;
+    }
     clearSession();
-    if (state.appStateSaveTimer && windowRef?.clearTimeout) windowRef.clearTimeout(state.appStateSaveTimer);
-    state.appStateSaveTimer = null;
-    state.pendingAppStateSnapshot = null;
-    state.appStateReadyUserId = '';
-    state.appStateLoadingUserId = '';
     app.isLoggedIn = false;
     app.userPlan = 'free';
     app.isAppMode = false;
@@ -506,8 +515,7 @@
       const payload = await apiFetchJson('/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const plan = applySessionPayload(payload);
-      await syncAppStateFromServer(payload?.user);
+      const plan = await applySessionPayload(payload);
       if (plan === PREMIUM_PLAN) {
         closePaymentGateModal();
       } else if (isTrialExpiredPayload(payload)) {
@@ -538,8 +546,7 @@
           body: JSON.stringify({ preapprovalId })
         });
         setSession(payload.token || getToken(), payload.user);
-        const plan = applySessionPayload(payload);
-        await syncAppStateFromServer(payload?.user);
+        const plan = await applySessionPayload(payload);
         if (plan === PREMIUM_PLAN) {
           closePaymentGateModal();
           rawEnterPanelHome();
@@ -627,8 +634,7 @@
         body: JSON.stringify({ email, password })
       });
       setSession(payload.token, payload.user);
-      const plan = applySessionPayload(payload);
-      await syncAppStateFromServer(payload?.user);
+      const plan = await applySessionPayload(payload);
       originalCloseAllModals();
       if (plan === PREMIUM_PLAN) {
         rawEnterPanelHome();
@@ -663,8 +669,7 @@
         body: JSON.stringify({ name, email, password, acceptedTerms })
       });
       setSession(payload.token, payload.user);
-      const plan = applySessionPayload(payload);
-      await syncAppStateFromServer(payload?.user);
+      const plan = await applySessionPayload(payload);
       originalCloseAllModals();
       if (plan === PREMIUM_PLAN) {
         rawEnterPanelHome();
@@ -679,7 +684,13 @@
   };
 
   app.handleLogout = async function handleLogout() {
-    await flushRemoteAppState(false);
+    try {
+      await app.flushAccountData?.({ force: true });
+    } catch (error) {
+      console.error('Falha ao salvar os dados antes do logout:', error);
+      originalShowNotification('Não foi possível confirmar o último salvamento. Verifique sua conexão.', 'error');
+      return;
+    }
     forceLogoutToLanding();
     originalShowNotification('Você saiu da sua conta.', 'info');
   };
@@ -834,6 +845,10 @@
       windowRef.addEventListener('focus', function () {
         if (app.isLoggedIn) refreshAccessFromServer(false).catch(function () { return null; });
       });
+      windowRef.addEventListener('pagehide', function () {
+        if (!app.isLoggedIn || !getToken() || !state.cloudOwnerId) return;
+        app.flushAccountData?.({ force: true, keepalive: true }).catch(function () { return null; });
+      });
     }
     if (documentRef && typeof documentRef.addEventListener === 'function') {
       documentRef.addEventListener('visibilitychange', function () {
@@ -846,11 +861,6 @@
       state.trialWatchTimer = windowRef.setInterval(function () {
         if (app.isLoggedIn) refreshAccessFromServer(true).catch(function () { return null; });
       }, 10 * 60 * 1000);
-    }
-    if (windowRef && typeof windowRef.addEventListener === 'function') {
-      windowRef.addEventListener('pagehide', function () {
-        if (app.isLoggedIn) flushRemoteAppState(true).catch(function () { return null; });
-      });
     }
   }
 

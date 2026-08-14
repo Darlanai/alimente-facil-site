@@ -1,9 +1,9 @@
 /* Alimente Fácil - Service Worker (offline-first app shell + runtime caching)
    - Precache: app shell (HTML/CSS/JS/manifest/icons/offline)
-   - Runtime cache: images (cache-first), fonts (stale-while-revalidate), CSS/JS (network-first)
+   - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.08.11.account-sync-v67';
+const VERSION = '2026.08.11.account-persistence-v1';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -121,8 +121,9 @@ self.addEventListener('fetch', (event) => {
 
   // Static assets
   const dest = request.destination;
+  // JS/CSS precisam priorizar a versão publicada para correções de conta não
+  // ficarem presas em um cache antigo. Fontes podem continuar em SWR.
   if (dest === 'style' || dest === 'script') {
-    // Código e estilos precisam chegar atualizados imediatamente após um deploy.
     event.respondWith(networkFirst(request));
     return;
   }

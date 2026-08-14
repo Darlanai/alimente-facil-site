@@ -14,7 +14,7 @@
 <meta charset="utf-8"/>
 <title>Alimente Fácil | Compras, despensa e receitas em um só app</title>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="#00f2ea" name="theme-color"/>
+<meta content="#10251b" name="theme-color"/>
 <meta content="Organize listas de compras, controle a despensa, planeje refeições e reduza desperdícios com o Alimente Fácil. Teste grátis por 7 dias sem cartão." name="description"/>
 <meta content="Alimente Fácil" name="author"/>
 <meta content="index, follow, max-image-preview:large" name="robots"/>
@@ -28,7 +28,8 @@
 <meta content="Alimente Fácil | Sua cozinha organizada" name="twitter:title"/>
 <meta content="Organize compras, despensa, receitas e planejamento semanal. Teste grátis por 7 dias sem cartão." name="twitter:description"/>
 <link href="manifest.webmanifest" rel="manifest"/>
-<link href="apple-touch-icon.png" rel="apple-touch-icon"/>
+<link href="/icons/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
+<link href="/icons/favicon-64.png" rel="icon" sizes="64x64" type="image/png"/>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Sora:wght@500;600;700;800&amp;family=Roboto+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
@@ -86,6 +87,11 @@
 <div class="af-home-actions">
 <button class="af-primary-cta" data-af-start-trial="" type="button">Começar agora <i class="fa-solid fa-arrow-right"></i></button>
 <div class="af-price-compact" aria-label="Plano por R$ 9,90 ao mês, com 7 dias grátis e sem cartão"><strong>R$ 9,90<small>/mês</small></strong><span>7 dias grátis · sem cartão</span></div>
+</div>
+<div aria-label="Benefícios do Alimente Fácil" class="af-home-benefits">
+<span><i class="fa-solid fa-ban" aria-hidden="true"></i> Sem anúncios</span>
+<span><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> Instala como app</span>
+<span><i class="fa-regular fa-circle-check" aria-hidden="true"></i> Cancele quando quiser</span>
 </div>
 </section>
 </main>
@@ -575,8 +581,8 @@
 <i class="fa-solid fa-comments"></i>
 </div>
 <div class="af-title-group">
-<span class="af-bot-name">Especialista Alimente</span>
-<span class="af-bot-status">Conhece o app e sua cozinha</span>
+<span class="af-bot-name">Assistente Alimente Fácil</span>
+<span class="af-bot-status">Ajuda com o app e sua cozinha</span>
 </div>
 </div>
 <div class="af-header-actions">
@@ -587,13 +593,13 @@
 <div aria-live="polite" class="af-chatbot-body" id="af-chatbot-body" role="log"></div>
 <form class="af-chatbot-footer af-ai-composer" id="af-ai-form">
 <label class="sr-only" for="af-ai-input">Pergunte sobre o Alimente Fácil</label>
-<input id="af-ai-input" type="text" maxlength="240" autocomplete="off" placeholder="Pergunte sobre listas, despensa, receitas..."/>
+<input id="af-ai-input" type="text" maxlength="240" autocomplete="off" placeholder="Digite sua pergunta..."/>
 <button aria-label="Enviar pergunta" id="af-ai-send" type="submit"><i class="fa-solid fa-arrow-up"></i></button>
 </form>
 </div>
-<button aria-label="Abrir Assistente do Alimente Fácil" class="af-chatbot-toggle af-assistant-toggle" id="af-chatbot-toggle" type="button">
+<button aria-label="Abrir ajuda por IA do Alimente Fácil" class="af-chatbot-toggle af-assistant-toggle" id="af-chatbot-toggle" title="Ajuda por IA" type="button">
 <i aria-hidden="true" class="fa-solid fa-wand-magic-sparkles"></i>
-<span class="af-assistant-toggle-label">Assistente</span>
+<span class="af-assistant-toggle-label">Ajuda IA</span>
 </button>
 <div class="pwa-banner" id="pwa-floating-banner" style="display:none;">
 <div class="pwa-banner-content">
