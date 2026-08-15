@@ -636,6 +636,7 @@
       setSession(payload.token, payload.user);
       const plan = await applySessionPayload(payload);
       originalCloseAllModals();
+      documentRef.dispatchEvent(new CustomEvent('af:auth-success', { detail: { user: app.state?.user || payload.user, source: 'login' } }));
       if (plan === PREMIUM_PLAN) {
         rawEnterPanelHome();
         originalShowNotification('Login premium realizado com sucesso.', 'success');
@@ -671,6 +672,7 @@
       setSession(payload.token, payload.user);
       const plan = await applySessionPayload(payload);
       originalCloseAllModals();
+      documentRef.dispatchEvent(new CustomEvent('af:auth-success', { detail: { user: app.state?.user || payload.user, source: 'signup' } }));
       if (plan === PREMIUM_PLAN) {
         rawEnterPanelHome();
         originalShowNotification('Cadastro concluído: painel completo liberado por 7 dias sem cartão. O pagamento só aparece no 8º dia. ✨', 'success');

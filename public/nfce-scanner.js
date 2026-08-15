@@ -2,7 +2,7 @@
   'use strict';
 
   const PENDING_KEY = 'afNfcePendingReceipt_v1';
-  const state = { receipt: null, stream: null, scanTimer: 0, busy: false, keyMetadata:null };
+  const state = { receipt: null, stream: null, scanTimer: 0, busy: false, keyMetadata:null, pendingPantryAfterAuth:false };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const money = (value) => Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -372,7 +372,7 @@
 
   async function importToPantry() {
     const currentApp = app();
-    if (!currentApp?.isLoggedIn) { $('#nfce-auth-gate').hidden = false; return; }
+    if (!currentApp?.isLoggedIn) { state.pendingPantryAfterAuth = true; $('#nfce-auth-gate').hidden = false; return false; }
     const products = selectedProducts();
     if (!products.length) return;
     currentApp.state = currentApp.state || {};
@@ -411,10 +411,13 @@
     $('#nfce-done-copy').textContent = merged ? `A CozIA adicionou ${added} e atualizou ${merged} ${merged === 1 ? 'item repetido' : 'itens repetidos'} na sua despensa.` : 'A CozIA separou sua compra por categoria e deixou a despensa pronta para usar.';
     setStage('done');
     currentApp.showNotification?.('Compra organizada na despensa! ✨', 'success');
+    state.pendingPantryAfterAuth = false;
+    return true;
   }
 
   function openAuth(view) {
     const currentApp = app();
+    state.pendingPantryAfterAuth = Boolean(state.receipt?.products?.length);
     currentApp?.showAuthModal?.();
     const auth = $('#auth-modal');
     auth?.querySelectorAll('.auth-form-container').forEach((node) => node.classList.remove('active'));
@@ -500,7 +503,37 @@
     const list = $('#pantry-notes-list');
     if (!list) return;
     if (!notes.length) { list.innerHTML = '<div class="pantry-notes-empty"><i class="fa-solid fa-receipt"></i><h3>Nenhuma nota salva ainda</h3><p>As proximas compras importadas aparecerao aqui.</p></div>'; return; }
-    list.innerHTML = notes.map((note) => `<article class="pantry-note-card" data-note-id="${escapeHtml(note.id)}"><details><summary><span><small>${escapeHtml(note.state || 'NFC-e')} · ${noteDate(note.issueDate || note.importedAt)}${note.documentNumber ? ` · Nº ${escapeHtml(note.documentNumber)}` : ''}</small><strong>${escapeHtml(note.merchant || 'Compra identificada')}</strong><em>${(note.products || []).length} itens${note.itemsRemovedAt ? ' · itens removidos' : ''}${note.merchantDocument ? ` · ${escapeHtml(note.merchantDocument)}` : ''}</em></span><b>${money(note.total)}</b></summary><div class="pantry-note-products">${(note.products || []).map((product) => { const live = pantry.find((item) => String(item.id) === String(product.pantryItemId)); return `<div class="pantry-note-product"><span><strong>${escapeHtml(live?.name || product.name)}</strong><small>${Number(product.quantity || 1).toLocaleString('pt-BR')} ${escapeHtml(product.unit || 'un')} · ${money(product.total)}</small></span>${live ? `<button type="button" data-note-edit="${escapeHtml(live.id)}" aria-label="Editar ${escapeHtml(live.name)}"><i class="fa-solid fa-pen"></i></button>` : '<small class="pantry-removed-label">Removido</small>'}</div>`; }).join('')}</div><div class="pantry-note-actions"><button type="button" data-note-remove-items="${escapeHtml(note.id)}" ${note.itemsRemovedAt ? 'disabled' : ''}><i class="fa-solid fa-box-open"></i> Excluir itens</button><button type="button" data-note-delete="${escapeHtml(note.id)}"><i class="fa-regular fa-trash-can"></i> Excluir nota</button></div></details></article>`).join('');
+    list.innerHTML = notes.map((note) => `<article class="pantry-note-card" data-note-id="${escapeHtml(note.id)}"><details><summary><span><small>${escapeHtml(note.state || 'NFC-e')} · ${noteDate(note.issueDate || note.importedAt)}${note.documentNumber ? ` · Nº ${escapeHtml(note.documentNumber)}` : ''}</small><strong>${escapeHtml(note.merchant || 'Compra identificada')}</strong><em>${(note.products || []).length} itens${note.itemsRemovedAt ? ' · itens removidos' : ''}${note.merchantDocument ? ` · ${escapeHtml(note.merchantDocument)}` : ''}</em></span><b>${money(note.total)}</b></summary><div class="pantry-note-products">${(note.products || []).map((product) => { const live = pantry.find((item) => String(item.id) === String(product.pantryItemId)); return `<div class="pantry-note-product"><span><strong>${escapeHtml(live?.name || product.name)}</strong><small>${Number(product.quantity || 1).toLocaleString('pt-BR')} ${escapeHtml(product.unit || 'un')} · ${money(product.total)}</small></span>${live ? `<button type="button" data-note-edit="${escapeHtml(live.id)}" aria-label="Editar ${escapeHtml(live.name)}"><i class="fa-solid fa-pen"></i></button>` : '<small class="pantry-removed-label">Removido</small>'}</div>`; }).join('')}</div><div class="pantry-note-actions"><button type="button" class="pantry-note-generate" data-note-generate-list="${escapeHtml(note.id)}"><i class="fa-solid fa-list-check"></i> Gerar lista com esta nota</button><button type="button" data-note-remove-items="${escapeHtml(note.id)}" ${note.itemsRemovedAt ? 'disabled' : ''}><i class="fa-solid fa-box-open"></i> Excluir itens</button><button type="button" data-note-delete="${escapeHtml(note.id)}"><i class="fa-regular fa-trash-can"></i> Excluir nota</button></div></details></article>`).join('');
+  }
+
+  async function generateListFromNote(noteId) {
+    const currentApp = app();
+    const note = currentApp?.state?.notasFiscais?.find((entry) => String(entry.id) === String(noteId));
+    if (!note?.products?.length) { currentApp?.showNotification?.('Esta nota não possui itens disponíveis.', 'info'); return; }
+    currentApp.state.listas = currentApp.state.listas || {};
+    const listId = currentApp.generateId?.() || `lista-nota-${Date.now()}`;
+    currentApp.state.listas[listId] = {
+      nome: `Lista · ${String(note.merchant || 'Nota fiscal').trim()}`,
+      sourceNoteId: note.id,
+      createdAt: new Date().toISOString(),
+      items: note.products.map((product, index) => ({
+        id: currentApp.generateId?.() || `${Date.now()}-${index}`,
+        name: receiptProductName(product.originalName || product.name),
+        qtd: Number(product.quantity || 1),
+        unid: product.unit || 'un',
+        valor: Number(product.unitPrice || 0).toFixed(2),
+        checked: false,
+        categoria: product.category || categoryFor(product.name)
+      }))
+    };
+    currentApp.activeListId = listId;
+    currentApp.saveState?.();
+    await currentApp.flushRemoteStateSync?.().catch(() => false);
+    closeNotes();
+    currentApp.enterAppMode?.();
+    currentApp.activateModuleAndRender?.('lista');
+    currentApp.renderListas?.();
+    currentApp.showNotification?.(`Lista criada com os ${note.products.length} itens da nota.`, 'success');
   }
 
   function deleteNoteRecord(noteId) {
@@ -578,10 +611,22 @@
     $('#pantry-empty-open')?.addEventListener('click', openPasswordConfirmation);
     $('#pantry-password-form')?.addEventListener('submit', emptyPantry);
     $('#pantry-notes-list')?.addEventListener('click', (event) => {
-      const edit = event.target.closest('[data-note-edit]'); const remove = event.target.closest('[data-note-remove-items]'); const del = event.target.closest('[data-note-delete]');
-      if (edit) editNoteItem(edit.dataset.noteEdit); else if (remove) deleteNoteItems(remove.dataset.noteRemoveItems); else if (del) deleteNoteRecord(del.dataset.noteDelete);
+      const generate = event.target.closest('[data-note-generate-list]'); const edit = event.target.closest('[data-note-edit]'); const remove = event.target.closest('[data-note-remove-items]'); const del = event.target.closest('[data-note-delete]');
+      if (generate) generateListFromNote(generate.dataset.noteGenerateList); else if (edit) editNoteItem(edit.dataset.noteEdit); else if (remove) deleteNoteItems(remove.dataset.noteRemoveItems); else if (del) deleteNoteRecord(del.dataset.noteDelete);
     });
-    document.addEventListener('af:auth-success', () => { if (state.receipt?.products?.length) { $('#nfce-auth-gate').hidden = true; modal()?.classList.add('is-open'); document.body.classList.add('nfce-lock'); } });
+    document.addEventListener('af:auth-success', async () => {
+      if (!state.pendingPantryAfterAuth || !state.receipt?.products?.length) return;
+      const auth = $('#auth-modal');
+      auth?.classList.remove('active', 'is-visible', 'is-open');
+      auth?.setAttribute('aria-hidden', 'true');
+      auth?.style.removeProperty('z-index');
+      $('#nfce-auth-gate').hidden = true;
+      modal()?.classList.add('is-open');
+      modal()?.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('nfce-lock');
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      if (await importToPantry()) openPantry();
+    });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && modal()?.classList.contains('is-open')) closeScanner(); });
     new MutationObserver(addPantryEntry).observe(document.body, { childList:true, subtree:true });
     addPantryEntry();
