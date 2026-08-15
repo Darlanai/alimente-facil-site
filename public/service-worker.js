@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.08.15.nfce-notes-v3';
+const VERSION = '2026.08.15.purchase-intelligence-v4';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -26,6 +26,8 @@ const APP_SHELL = [
   '/cozia-v7.css',
   '/nfce-scanner.css',
   '/nfce-scanner.js',
+  '/purchase-intelligence.css',
+  '/purchase-intelligence.js',
   '/auth-premium-gate-fix.js',
   '/reset-password.html',
   '/manifest.webmanifest',

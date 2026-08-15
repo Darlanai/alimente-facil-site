@@ -440,10 +440,38 @@ function authMiddleware(req, res, next) {
 }
 
 const NFCE_STATE_HOSTS = Object.freeze({
-  BA: ['sefaz.ba.gov.br'], SP: ['fazenda.sp.gov.br'], MG: ['fazenda.mg.gov.br'],
-  RJ: ['fazenda.rj.gov.br'], RS: ['sefaz.rs.gov.br'], PR: ['fazenda.pr.gov.br'],
-  PE: ['sefaz.pe.gov.br'], CE: ['sefaz.ce.gov.br'], ES: ['sefaz.es.gov.br'],
-  GO: ['sefaz.go.gov.br', 'economia.go.gov.br'], DF: ['fazenda.df.gov.br', 'economia.df.gov.br']
+  AC: ['sefaz.ac.gov.br', 'sefaznet.ac.gov.br'], AL: ['sefaz.al.gov.br'], AP: ['sefaz.ap.gov.br'],
+  AM: ['sefaz.am.gov.br'], BA: ['sefaz.ba.gov.br'], CE: ['sefaz.ce.gov.br'],
+  DF: ['fazenda.df.gov.br', 'economia.df.gov.br'], ES: ['sefaz.es.gov.br'],
+  GO: ['sefaz.go.gov.br', 'economia.go.gov.br'], MA: ['sefaz.ma.gov.br'], MT: ['sefaz.mt.gov.br'],
+  MS: ['sefaz.ms.gov.br', 'dfe.ms.gov.br'], MG: ['fazenda.mg.gov.br'], PA: ['sefaz.pa.gov.br'],
+  PB: ['sefaz.pb.gov.br'], PR: ['fazenda.pr.gov.br'], PE: ['sefaz.pe.gov.br'], PI: ['sefaz.pi.gov.br'],
+  RJ: ['fazenda.rj.gov.br'], RN: ['sefaz.rn.gov.br', 'set.rn.gov.br'], RS: ['sefaz.rs.gov.br', 'svrs.rs.gov.br'],
+  RO: ['sefaz.ro.gov.br'], RR: ['sefaz.rr.gov.br'], SC: ['sef.sc.gov.br'], SP: ['fazenda.sp.gov.br'],
+  SE: ['sefaz.se.gov.br'], TO: ['sefaz.to.gov.br']
+});
+
+const NFCE_CUF_STATES = Object.freeze({
+  12:'AC',27:'AL',16:'AP',13:'AM',29:'BA',23:'CE',53:'DF',32:'ES',52:'GO',21:'MA',51:'MT',
+  50:'MS',31:'MG',15:'PA',25:'PB',41:'PR',26:'PE',22:'PI',33:'RJ',24:'RN',43:'RS',11:'RO',
+  14:'RR',42:'SC',35:'SP',28:'SE',17:'TO'
+});
+
+const NFCE_KEY_URLS = Object.freeze({
+  AC:'https://www.sefaznet.ac.gov.br/nfce/consulta?p={key}', AL:'https://nfce.sefaz.al.gov.br/consultaNFCe.htm?p={key}',
+  AP:'https://www.sefaz.ap.gov.br/nfce/nfcep.php?p={key}', AM:'https://sistemas.sefaz.am.gov.br/nfceweb/consultarNFCe.jsp?p={key}',
+  BA:'https://nfe.sefaz.ba.gov.br/servicos/nfce/qrcode.aspx?p={key}', CE:'https://nfce.sefaz.ce.gov.br/pages/ShowNFCe.html?p={key}',
+  DF:'https://www.fazenda.df.gov.br/nfce/qrcode?p={key}', ES:'https://www2.sefaz.es.gov.br/nfce/consulta?p={key}',
+  GO:'https://www.nfce.go.gov.br/post/ver/214413/consulta-nfce?p={key}', MA:'https://nfce.sefaz.ma.gov.br/portal/consultaNFe.do?p={key}',
+  MT:'https://www.sefaz.mt.gov.br/nfce/consultanfce?p={key}', MS:'https://www.dfe.ms.gov.br/nfce/qrcode?p={key}',
+  MG:'https://portalsped.fazenda.mg.gov.br/portalnfce/sistema/qrcode.xhtml?p={key}', PA:'https://app.sefa.pa.gov.br/consulta-nfce/#/consulta?p={key}',
+  PB:'https://www.sefaz.pb.gov.br/nfce?p={key}', PR:'https://www.fazenda.pr.gov.br/nfce/qrcode?p={key}',
+  PE:'https://nfce.sefaz.pe.gov.br/nfce/consulta?p={key}', PI:'https://webas.sefaz.pi.gov.br/nfceweb/consultarNFCe.jsf?p={key}',
+  RJ:'https://consultadfe.fazenda.rj.gov.br/consultaNFCe/QRCode?p={key}', RN:'https://nfce.set.rn.gov.br/consultarNFCe.aspx?p={key}',
+  RS:'https://dfe-portal.svrs.rs.gov.br/Dfe/QrCodeNFce?p={key}', RO:'https://portalcontribuinte.sefin.ro.gov.br/Publico/parametropublica.jsp?p={key}',
+  RR:'https://portalapp.sefaz.rr.gov.br/nfce/servlet/qrcode?p={key}', SC:'https://sat.sef.sc.gov.br/nfce/consulta?p={key}',
+  SP:'https://www.nfce.fazenda.sp.gov.br/qrcode?p={key}', SE:'https://www.nfce.se.gov.br/portal/consultarNFCe.jsp?p={key}',
+  TO:'https://www.sefaz.to.gov.br/nfce/consulta?p={key}'
 });
 
 function nfceStateFromHostname(hostname) {
@@ -459,16 +487,29 @@ function validateNfceUrl(rawUrl) {
     const error = new Error('O QR Code não contém um link válido de NFC-e.');
     error.statusCode = 400; throw error;
   }
-  if (parsed.protocol !== 'https:') {
-    const error = new Error('Por segurança, a consulta da nota precisa usar HTTPS.');
+  if (!['http:','https:'].includes(parsed.protocol)) {
+    const error = new Error('O QR Code precisa apontar para um portal oficial da Secretaria da Fazenda.');
     error.statusCode = 400; throw error;
   }
-  const state = nfceStateFromHostname(parsed.hostname);
+  const accessKey = (parsed.toString().match(/\b(\d{44})\b/) || [])[1] || '';
+  const state = NFCE_CUF_STATES[Number(accessKey.slice(0, 2))] || nfceStateFromHostname(parsed.hostname) || '';
   if (!state) {
     const error = new Error('Esta Secretaria da Fazenda ainda não está na área atendida.');
     error.statusCode = 422; error.payload = { supportedStates: Object.keys(NFCE_STATE_HOSTS) }; throw error;
   }
   return { url: parsed.toString(), state };
+}
+
+function nfceUrlFromAccessKey(rawKey) {
+  const key = String(rawKey || '').replace(/\D/g, '');
+  if (key.length !== 44) {
+    const error = new Error('Digite os 44 numeros da chave de acesso da NFC-e.'); error.statusCode = 400; throw error;
+  }
+  const state = NFCE_CUF_STATES[Number(key.slice(0, 2))];
+  if (!state || !NFCE_KEY_URLS[state]) {
+    const error = new Error('A UF desta chave ainda nao possui rota publica compativel.'); error.statusCode = 422; throw error;
+  }
+  return { url:NFCE_KEY_URLS[state].replace('{key}', key), state, accessKey:key, keyMetadata:{ state, accessKey:key, issuePeriod:`20${key.slice(2,4)}-${key.slice(4,6)}`, merchantDocument:key.slice(6,20), model:key.slice(20,22), series:String(Number(key.slice(22,25))), documentNumber:String(Number(key.slice(25,34))) } };
 }
 
 function decodeNfceText(value) {
@@ -513,14 +554,14 @@ function parseNfceHtml(html, state, sourceUrl) {
     return ({ und:'un', unid:'un', unidade:'un', lt:'L', l:'L', kilo:'kg', quilo:'kg' })[unit] || unit;
   };
   const addProduct = ({ name, quantity, unit, total, unitPrice }) => {
-    const cleanName = titleCaseProduct(name);
+    const cleanName = decodeNfceText(name).replace(/^\d+\s*[-–.]?\s*/, '').replace(/\s+/g, ' ').trim();
     if (cleanName.length < 2 || /^(produto|descri[cç][aã]o|item)$/i.test(cleanName)) return;
     const cleanQuantity = Math.max(.001, nfceNumber(quantity) || 1);
     const cleanTotal = Math.max(0, nfceNumber(total));
     const cleanUnitPrice = Math.max(0, nfceNumber(unitPrice)) || (cleanTotal ? cleanTotal / cleanQuantity : 0);
     const duplicate = products.find((item) => item.name === cleanName && Math.abs(item.total - cleanTotal) < .005 && Math.abs(item.quantity - cleanQuantity) < .005);
     if (duplicate) return;
-    products.push({ name: cleanName, quantity: cleanQuantity, unit: normalizedUnit(unit), total: cleanTotal || cleanUnitPrice * cleanQuantity, unitPrice: cleanUnitPrice, category: categorizeNfceProduct(cleanName) });
+    products.push({ name: cleanName, originalName:cleanName, analysisName:titleCaseProduct(cleanName), quantity: cleanQuantity, unit: normalizedUnit(unit), total: cleanTotal || cleanUnitPrice * cleanQuantity, unitPrice: cleanUnitPrice, category: categorizeNfceProduct(cleanName) });
   };
 
   // Modelo XML da NFC-e, usado diretamente ou embutido por alguns portais.
@@ -582,16 +623,22 @@ function parseNfceHtml(html, state, sourceUrl) {
   const merchant = decodeNfceText(source.match(/<(?:h1|h2|h3|div|span)[^>]*(?:class|id)=["'][^"']*(?:emit|empresa|razao|estabelecimento|txtTopo)[^"']*["'][^>]*>([\s\S]*?)<\/(?:h1|h2|h3|div|span)>/i)?.[1]) || decodeNfceText(source.match(/<xNome\b[^>]*>([\s\S]*?)<\/xNome>/i)?.[1]) || 'Estabelecimento identificado';
   const totalMatch = plain.match(/(?:valor\s+a\s+pagar|valor\s+total|total\s+da\s+nota)\s*R?\$?\s*([\d.]+,\d{2})/i);
   const accessKey = (plain.match(/\b(\d{44})\b/) || sourceUrl.match(/[?&]p=(\d{44})/i) || [])[1] || '';
+  const issueDate = decodeNfceText(source.match(/<dhEmi\b[^>]*>([\s\S]*?)<\/dhEmi>/i)?.[1]) || plain.match(/(?:data\s+(?:de\s+)?emiss[aã]o|emiss[aã]o)\s*[:\-]?\s*(\d{2}\/\d{2}\/\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/i)?.[1] || '';
+  const documentNumber = decodeNfceText(source.match(/<nNF\b[^>]*>([\s\S]*?)<\/nNF>/i)?.[1]) || plain.match(/(?:n[uú]mero|n[oº°])\s*[:\-]?\s*(\d{1,12})/i)?.[1] || '';
+  const series = decodeNfceText(source.match(/<serie\b[^>]*>([\s\S]*?)<\/serie>/i)?.[1]) || plain.match(/s[eé]rie\s*[:\-]?\s*(\d{1,5})/i)?.[1] || '';
+  const merchantDocument = decodeNfceText(source.match(/<CNPJ\b[^>]*>([\s\S]*?)<\/CNPJ>/i)?.[1]) || plain.match(/CNPJ\s*[:\-]?\s*([\d.\/\-]{14,18})/i)?.[1] || '';
   if (!products.length) {
     console.warn('NFC-e sem produtos reconhecidos', { state, bytes:Buffer.byteLength(source, 'utf8'), hasTable:/<tr\b/i.test(source), hasProductMarker:/(?:txtTit|xProd|qCom|Rqtd)/i.test(source) });
     const error = new Error('A nota foi localizada, mas a Secretaria não liberou os produtos neste formato. Tente uma foto nítida ou consulte novamente em instantes.');
     error.statusCode = 422; throw error;
   }
-  return { state, merchant: merchant.slice(0, 100), accessKey, total: nfceNumber(totalMatch?.[1]) || products.reduce((sum, item) => sum + item.total, 0), products };
+  return { state, merchant: merchant.slice(0, 100), merchantDocument, issueDate, documentNumber, series, accessKey, sourceUrl, total: nfceNumber(totalMatch?.[1]) || products.reduce((sum, item) => sum + item.total, 0), products };
 }
 
 // Mantido em locals para testes automatizados, sem criar uma rota pública de diagnóstico.
 app.locals.parseNfceHtml = parseNfceHtml;
+app.locals.validateNfceUrl = validateNfceUrl;
+app.locals.nfceUrlFromAccessKey = nfceUrlFromAccessKey;
 
 async function fetchNfceDocument(initialUrl) {
   let current = initialUrl;
@@ -660,7 +707,7 @@ app.get('/api/health', (_req, res) => {
 
 app.post('/api/nfce/preview', async (req, res) => {
   try {
-    const validated = validateNfceUrl(req.body?.url);
+    const validated = req.body?.key ? nfceUrlFromAccessKey(req.body.key) : validateNfceUrl(req.body?.url);
     const queue = [validated.url];
     const visited = new Set();
     let lastParseError = null;
@@ -698,6 +745,12 @@ app.post('/api/nfce/preview', async (req, res) => {
       const verificationError = new Error('A SEF/MG exige verificação humana para mostrar os produtos. Fotografe a parte da nota onde aparecem os itens; a CozIA fará a leitura no seu celular.');
       verificationError.statusCode = 409;
       verificationError.payload = { code:'NFCE_HUMAN_VERIFICATION_REQUIRED', state:'MG', photoFallback:true };
+      throw verificationError;
+    }
+    if (req.body?.key) {
+      const verificationError = new Error('A chave foi validada e a nota identificada, mas o portal estadual exige a verificacao visual para liberar os produtos. Escaneie o QR Code ou fotografe os itens.');
+      verificationError.statusCode = 409;
+      verificationError.payload = { code:'NFCE_KEY_PORTAL_VERIFICATION', state:validated.state, keyMetadata:validated.keyMetadata, photoFallback:true };
       throw verificationError;
     }
     throw lastParseError || new Error('Não foi possível localizar os produtos desta NFC-e.');

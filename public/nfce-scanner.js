@@ -2,13 +2,14 @@
   'use strict';
 
   const PENDING_KEY = 'afNfcePendingReceipt_v1';
-  const state = { receipt: null, stream: null, scanTimer: 0, busy: false };
+  const state = { receipt: null, stream: null, scanTimer: 0, busy: false, keyMetadata:null };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const money = (value) => Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const escapeHtml = (value) => String(value || '').replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char]));
   const normalize = (value) => String(value || '').toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
   const number = (value) => Number.parseFloat(String(value || '').replace(/\//g, '7').replace(/[^0-9,.-]/g, '').replace(/\.(?=\d{3}(?:\D|$))/g, '').replace(',', '.')) || 0;
+  const CUF_STATES = {12:'AC',27:'AL',16:'AP',13:'AM',29:'BA',23:'CE',53:'DF',32:'ES',52:'GO',21:'MA',51:'MT',50:'MS',31:'MG',15:'PA',25:'PB',41:'PR',26:'PE',22:'PI',33:'RJ',24:'RN',43:'RS',11:'RO',14:'RR',42:'SC',35:'SP',28:'SE',17:'TO'};
 
   function categoryFor(name) {
     const text = normalize(name);
@@ -26,6 +27,10 @@
     const ignored = new Set(['de','da','do','das','dos','com','sem','e']);
     return String(value || '').replace(/^\s*(?:[%#]\s*)?[0-9A-Z]{4,18}\s+/i, '').replace(/\s+/g, ' ').trim().toLocaleLowerCase('pt-BR').split(' ').filter(Boolean)
       .map((word, index) => index && ignored.has(word) ? word : word.charAt(0).toLocaleUpperCase('pt-BR') + word.slice(1)).join(' ');
+  }
+
+  function receiptProductName(value) {
+    return String(value || '').replace(/^\s*(?:[%#]\s*)?[0-9A-Z]{4,18}\s+/i, '').replace(/\s+/g, ' ').trim();
   }
 
   function smartProductName(value) {
@@ -134,7 +139,7 @@
     stopCamera();
     setStatus('Abrindo a câmera…');
     try {
-      state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
+      state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 }, advanced:[{ focusMode:'continuous' }] }, audio: false });
       const video = $('#nfce-video');
       video.srcObject = state.stream;
       await video.play();
@@ -154,8 +159,23 @@
       } catch (_error) {}
     }
     if (window.jsQR) {
-      const image = context.getImageData(0, 0, canvas.width, canvas.height);
-      return window.jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' })?.data || '';
+      const regions = [
+        [0,0,canvas.width,canvas.height],
+        [canvas.width*.12,canvas.height*.06,canvas.width*.76,canvas.height*.88],
+        [canvas.width*.22,canvas.height*.16,canvas.width*.56,canvas.height*.68]
+      ];
+      for (const [x,y,w,h] of regions) {
+        const image = context.getImageData(Math.max(0,Math.round(x)),Math.max(0,Math.round(y)),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));
+        const direct = window.jsQR(image.data, image.width, image.height, { inversionAttempts:'attemptBoth' })?.data;
+        if (direct) return direct;
+        const contrasted = new Uint8ClampedArray(image.data);
+        for (let i=0;i<contrasted.length;i+=4) {
+          const gray=contrasted[i]*.299+contrasted[i+1]*.587+contrasted[i+2]*.114;
+          const value=gray>145?255:0; contrasted[i]=contrasted[i+1]=contrasted[i+2]=value;
+        }
+        const enhanced = window.jsQR(contrasted, image.width, image.height, { inversionAttempts:'attemptBoth' })?.data;
+        if (enhanced) return enhanced;
+      }
     }
     return '';
   }
@@ -165,7 +185,7 @@
     const canvas = $('#nfce-canvas');
     if (!state.stream || !video || !canvas) return;
     if (video.readyState >= 2) {
-      const max = 900;
+      const max = 1280;
       const scale = Math.min(1, max / Math.max(video.videoWidth, video.videoHeight));
       canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
       canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
@@ -222,19 +242,24 @@
         }
       }
       if (!match) return;
-      const originalName = cleanProductName(match[1].replace(/\b(?:KG|KA|UN|UM|UND)\s*$/i, ''));
-      const name = smartProductName(originalName);
+      const originalName = receiptProductName(match[1].replace(/\b(?:KG|KA|UN|UM|UND)\s*$/i, ''));
+      const name = originalName;
       if (name.length < 2 || /^(documento|codigo|descricao|valor|total)/i.test(name)) return;
       const parsedQuantity = number(match[2]);
       const quantity = parsedQuantity > 100 ? 1 : Math.max(.001, parsedQuantity || 1);
       const unit = String(match[3]).toLowerCase().replace(/und|unid|um|nx/, 'un').replace(/^ka$/, 'kg').replace(/^p[rt]$/, 'pct').replace(/^lt$/, 'L');
       const unitPrice = number(match[4]);
       const total = number(match[5]) || quantity * unitPrice;
-      if (!products.some((item) => normalize(item.name) === normalize(name) && item.total === total)) products.push({ name, originalName, quantity, unit, unitPrice, total, category:categoryFor(name) });
+      if (!products.some((item) => normalize(item.name) === normalize(name) && item.total === total)) products.push({ name, originalName, analysisName:smartProductName(name), quantity, unit, unitPrice, total, category:categoryFor(name) });
     });
     if (!products.length) throw new Error('Não consegui separar os produtos. Fotografe de frente, com boa luz, incluindo do primeiro item até o valor total.');
     const totalMatch = text.match(/VALOR\s+TOTAL(?:\s+R\$)?\s*[:]?\s*([\d.,]+)/i);
-    state.receipt = { state:'MG', merchant:'Compra lida pela CozIA', accessKey:'', total:number(totalMatch?.[1]) || products.reduce((sum, item) => sum + item.total, 0), products, source:'photo-ocr' };
+    const accessKey = (text.replace(/\s/g,'').match(/\d{44}/) || [])[0] || '';
+    const issueDate = text.match(/(?:DATA\s+DE\s+AUTORIZA[CÇ][AÃ]O|EMISS[AÃ]O)\s*[:]?\s*(\d{2}\/\d{2}\/\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/i)?.[1] || text.match(/\b(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}(?::\d{2})?)\b/)?.[1] || '';
+    const merchantDocument = text.match(/CNPJ\s*[:]?\s*([\d.\/\- ]{14,22})/i)?.[1]?.trim() || '';
+    const lines = text.split(/\r?\n/).map(line=>line.replace(/\s+/g,' ').trim()).filter(Boolean);
+    const merchant = lines.find(line=>/[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{3}/.test(line) && !/(DOCUMENTO|CODIGO|DESCRI|CONSUMIDOR|CNPJ|VALOR|TOTAL|NFC-E|PROTOCOLO)/i.test(line) && line.length>5 && line.length<100) || 'Estabelecimento lido pela CozIA';
+    state.receipt = { state:CUF_STATES[Number(accessKey.slice(0,2))] || state.keyMetadata?.state || '', merchant, merchantDocument:merchantDocument || state.keyMetadata?.merchantDocument || '', issueDate, documentNumber:state.keyMetadata?.documentNumber || '', series:state.keyMetadata?.series || '', accessKey:accessKey || state.keyMetadata?.accessKey || '', total:number(totalMatch?.[1]) || products.reduce((sum, item) => sum + item.total, 0), products, source:'photo-ocr' };
     savePending(state.receipt);
     renderReceipt();
   }
@@ -256,10 +281,28 @@
         throw new Error(data.message || 'Não foi possível consultar a nota.');
       }
       state.receipt = data.receipt;
-      state.receipt.products = state.receipt.products.map((item) => ({ ...item, originalName:item.originalName || item.name, name:smartProductName(item.name), category:item.category || categoryFor(item.name) }));
+      state.receipt.products = state.receipt.products.map((item) => ({ ...item, name:receiptProductName(item.originalName || item.name), originalName:receiptProductName(item.originalName || item.name), analysisName:item.analysisName || smartProductName(item.name), category:item.category || categoryFor(item.name) }));
       savePending(state.receipt);
       renderReceipt();
     } catch (error) { setStatus(error.message || 'Não foi possível consultar a nota.', true); }
+    finally { state.busy = false; if (button) button.disabled = false; }
+  }
+
+  async function readAccessKey() {
+    const input = $('#nfce-key-input');
+    const key = String(input?.value || '').replace(/\D/g, '');
+    if (key.length !== 44) { setStatus('A chave de acesso precisa ter exatamente 44 números.', true); input?.focus(); return; }
+    if (state.busy) return;
+    state.busy = true; const button = $('#nfce-read-key'); if (button) button.disabled = true;
+    setStatus('Consultando a chave no portal oficial…');
+    try {
+      const response = await fetch('/api/nfce/preview', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ key }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.receipt) { if (data.keyMetadata) state.keyMetadata=data.keyMetadata; throw new Error(data.message || 'Não foi possível consultar esta chave.'); }
+      state.receipt = data.receipt;
+      state.receipt.products = state.receipt.products.map((item) => ({ ...item, name:receiptProductName(item.originalName || item.name), originalName:receiptProductName(item.originalName || item.name), analysisName:item.analysisName || smartProductName(item.name), category:item.category || categoryFor(item.name) }));
+      savePending(state.receipt); renderReceipt();
+    } catch (error) { setStatus(error.message || 'Não foi possível consultar esta chave.', true); }
     finally { state.busy = false; if (button) button.disabled = false; }
   }
 
@@ -272,12 +315,12 @@
     if (!receipt?.products?.length) return;
     stopCamera(); setStage('review');
     $('#nfce-merchant').textContent = receipt.merchant || 'Compra identificada';
-    $('#nfce-meta').textContent = `${receipt.state || 'NFC-e'}${receipt.accessKey ? ` · chave final ${receipt.accessKey.slice(-6)}` : ''}`;
+    $('#nfce-meta').textContent = [receipt.state || 'NFC-e', receipt.issueDate, receipt.documentNumber ? `Nota ${receipt.documentNumber}` : '', receipt.series ? `Série ${receipt.series}` : '', receipt.accessKey ? `chave final ${receipt.accessKey.slice(-6)}` : ''].filter(Boolean).join(' · ');
     $('#nfce-total').textContent = money(receipt.total);
     $('#nfce-products').innerHTML = receipt.products.map((item, index) => `
       <label class="nfce-product">
         <input class="nfce-product-check" type="checkbox" data-index="${index}" checked aria-label="Selecionar ${escapeHtml(item.name)}">
-        <span class="nfce-product-main"><strong>${escapeHtml(item.name)}</strong>${item.originalName && normalize(item.originalName) !== normalize(item.name) ? `<small class="nfce-original-name">Na nota: ${escapeHtml(item.originalName)}</small>` : ''}<small>${Number(item.quantity || 1).toLocaleString('pt-BR')} ${escapeHtml(item.unit || 'un')} · ${money(item.unitPrice)} por unidade</small><small class="nfce-category">${escapeHtml(item.category || 'Mercearia')}</small></span>
+        <span class="nfce-product-main"><strong>${escapeHtml(item.name)}</strong><small>${Number(item.quantity || 1).toLocaleString('pt-BR')} ${escapeHtml(item.unit || 'un')} · ${money(item.unitPrice)} por unidade</small><small class="nfce-category">${escapeHtml(item.category || 'Mercearia')}</small></span>
         <span class="nfce-product-price"><strong>${money(item.total)}</strong><small>total</small></span>
       </label>`).join('');
     $('#nfce-select-all').checked = true;
@@ -316,18 +359,19 @@
         existing.valor = Number(product.unitPrice || existing.valor || 0);
         existing.stock = 100;
         existing.categoria = existing.categoria || product.category;
+        existing.analysisName = product.analysisName || smartProductName(product.name);
         existing.notaIds = Array.isArray(existing.notaIds) ? existing.notaIds : [];
         if (!existing.notaIds.includes(noteId)) existing.notaIds.push(noteId);
         noteProducts.push({ name:product.name, originalName:product.originalName || product.name, quantity:Number(product.quantity || 1), unit:product.unit || 'un', unitPrice:Number(product.unitPrice || 0), total:Number(product.total || 0), category:product.category || 'Mercearia', pantryItemId:existing.id, quantityImported:Number(product.quantity || 1) });
         merged += 1;
       } else {
-        const item = { id: currentApp.generateId?.() || `${Date.now()}-${added}`, name: product.name, qtd:Number(product.quantity || 1), unid:product.unit || 'un', valor:Number(product.unitPrice || 0), stock:100, validade:'', categoria:product.category || 'Mercearia', origem:'NFC-e', ufNota:state.receipt.state || '', notaIds:[noteId] };
+        const item = { id: currentApp.generateId?.() || `${Date.now()}-${added}`, name: product.name, analysisName:product.analysisName || smartProductName(product.name), qtd:Number(product.quantity || 1), unid:product.unit || 'un', valor:Number(product.unitPrice || 0), stock:100, validade:'', categoria:product.category || 'Mercearia', origem:'NFC-e', ufNota:state.receipt.state || '', notaIds:[noteId] };
         currentApp.state.despensa.push(item);
         noteProducts.push({ name:product.name, originalName:product.originalName || product.name, quantity:Number(product.quantity || 1), unit:product.unit || 'un', unitPrice:Number(product.unitPrice || 0), total:Number(product.total || 0), category:product.category || 'Mercearia', pantryItemId:item.id, quantityImported:Number(product.quantity || 1) });
         added += 1;
       }
     });
-    currentApp.state.notasFiscais.unshift({ id:noteId, merchant:state.receipt.merchant || 'Compra identificada', state:state.receipt.state || '', total:Number(state.receipt.total || 0), importedAt:new Date().toISOString(), source:state.receipt.source || 'nfce', products:noteProducts, itemsRemovedAt:null });
+    currentApp.state.notasFiscais.unshift({ id:noteId, merchant:state.receipt.merchant || 'Compra identificada', merchantDocument:state.receipt.merchantDocument || '', state:state.receipt.state || '', total:Number(state.receipt.total || 0), issueDate:state.receipt.issueDate || '', documentNumber:state.receipt.documentNumber || '', series:state.receipt.series || '', accessKey:state.receipt.accessKey || '', importedAt:new Date().toISOString(), source:state.receipt.source || 'nfce', products:noteProducts, itemsRemovedAt:null });
     currentApp.state.despensa.sort((a,b) => String(a.categoria || '').localeCompare(String(b.categoria || ''), 'pt-BR') || String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR'));
     currentApp.pantrySortMode = 'name_asc';
     currentApp.saveState?.();
@@ -350,7 +394,7 @@
   }
 
   function resetScanner() {
-    stopCamera(); state.receipt = null; clearPending(); setStage('scan'); setStatus('Pronto para abrir a câmera.');
+    stopCamera(); state.receipt = null; state.keyMetadata=null; clearPending(); setStage('scan'); setStatus('Pronto para abrir a câmera.');
   }
 
   function openPantry() {
@@ -394,8 +438,12 @@
     let changed = false;
     pantry.forEach((item) => {
       if (item?.origem !== 'NFC-e') return;
-      const repaired = smartProductName(item.name);
-      if (repaired && repaired !== item.name) { item.name = repaired; item.categoria = categoryFor(repaired); changed = true; }
+      const noteProduct = (currentApp.state.notasFiscais || []).flatMap((note) => note.products || []).find((product) => String(product.pantryItemId) === String(item.id));
+      const exact = receiptProductName(noteProduct?.originalName || item.name);
+      if (exact && exact !== item.name) { item.name = exact; changed = true; }
+      const analysisName = noteProduct?.analysisName || smartProductName(exact);
+      if (item.analysisName !== analysisName) { item.analysisName = analysisName; changed = true; }
+      item.categoria = item.categoria || categoryFor(analysisName);
     });
     if (!Array.isArray(currentApp.state.notasFiscais)) currentApp.state.notasFiscais = [];
     if (!currentApp.state.notasFiscais.length) {
@@ -412,7 +460,7 @@
 
   function closeNotes() { $('#pantry-notes-modal')?.classList.remove('is-open'); $('#pantry-notes-modal')?.setAttribute('aria-hidden','true'); document.body.classList.remove('nfce-lock'); }
   function openNotes() { repairImportedNames(); renderNotes(); $('#pantry-notes-modal')?.classList.add('is-open'); $('#pantry-notes-modal')?.setAttribute('aria-hidden','false'); document.body.classList.add('nfce-lock'); }
-  function noteDate(value) { try { return new Date(value).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' }); } catch (_error) { return ''; } }
+  function noteDate(value) { const raw=String(value||''); if (/^\d{2}\/\d{2}\/\d{4}/.test(raw)) return raw.slice(0,10); try { const date=new Date(raw); return Number.isNaN(date.getTime())?'':date.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' }); } catch (_error) { return ''; } }
 
   function renderNotes() {
     const currentApp = app();
@@ -421,7 +469,7 @@
     const list = $('#pantry-notes-list');
     if (!list) return;
     if (!notes.length) { list.innerHTML = '<div class="pantry-notes-empty"><i class="fa-solid fa-receipt"></i><h3>Nenhuma nota salva ainda</h3><p>As proximas compras importadas aparecerao aqui.</p></div>'; return; }
-    list.innerHTML = notes.map((note) => `<article class="pantry-note-card" data-note-id="${escapeHtml(note.id)}"><details><summary><span><small>${escapeHtml(note.state || 'NFC-e')} · ${noteDate(note.importedAt)}</small><strong>${escapeHtml(note.merchant || 'Compra identificada')}</strong><em>${(note.products || []).length} itens${note.itemsRemovedAt ? ' · itens removidos' : ''}</em></span><b>${money(note.total)}</b></summary><div class="pantry-note-products">${(note.products || []).map((product) => { const live = pantry.find((item) => String(item.id) === String(product.pantryItemId)); return `<div class="pantry-note-product"><span><strong>${escapeHtml(live?.name || product.name)}</strong><small>${Number(product.quantity || 1).toLocaleString('pt-BR')} ${escapeHtml(product.unit || 'un')} · ${money(product.total)}</small></span>${live ? `<button type="button" data-note-edit="${escapeHtml(live.id)}" aria-label="Editar ${escapeHtml(live.name)}"><i class="fa-solid fa-pen"></i></button>` : '<small class="pantry-removed-label">Removido</small>'}</div>`; }).join('')}</div><div class="pantry-note-actions"><button type="button" data-note-remove-items="${escapeHtml(note.id)}" ${note.itemsRemovedAt ? 'disabled' : ''}><i class="fa-solid fa-box-open"></i> Excluir itens</button><button type="button" data-note-delete="${escapeHtml(note.id)}"><i class="fa-regular fa-trash-can"></i> Excluir nota</button></div></details></article>`).join('');
+    list.innerHTML = notes.map((note) => `<article class="pantry-note-card" data-note-id="${escapeHtml(note.id)}"><details><summary><span><small>${escapeHtml(note.state || 'NFC-e')} · ${noteDate(note.issueDate || note.importedAt)}${note.documentNumber ? ` · Nº ${escapeHtml(note.documentNumber)}` : ''}</small><strong>${escapeHtml(note.merchant || 'Compra identificada')}</strong><em>${(note.products || []).length} itens${note.itemsRemovedAt ? ' · itens removidos' : ''}${note.merchantDocument ? ` · ${escapeHtml(note.merchantDocument)}` : ''}</em></span><b>${money(note.total)}</b></summary><div class="pantry-note-products">${(note.products || []).map((product) => { const live = pantry.find((item) => String(item.id) === String(product.pantryItemId)); return `<div class="pantry-note-product"><span><strong>${escapeHtml(live?.name || product.name)}</strong><small>${Number(product.quantity || 1).toLocaleString('pt-BR')} ${escapeHtml(product.unit || 'un')} · ${money(product.total)}</small></span>${live ? `<button type="button" data-note-edit="${escapeHtml(live.id)}" aria-label="Editar ${escapeHtml(live.name)}"><i class="fa-solid fa-pen"></i></button>` : '<small class="pantry-removed-label">Removido</small>'}</div>`; }).join('')}</div><div class="pantry-note-actions"><button type="button" data-note-remove-items="${escapeHtml(note.id)}" ${note.itemsRemovedAt ? 'disabled' : ''}><i class="fa-solid fa-box-open"></i> Excluir itens</button><button type="button" data-note-delete="${escapeHtml(note.id)}"><i class="fa-regular fa-trash-can"></i> Excluir nota</button></div></details></article>`).join('');
   }
 
   function deleteNoteRecord(noteId) {
@@ -481,6 +529,9 @@
     $('#nfce-start-camera')?.addEventListener('click', startCamera);
     $('#nfce-image-input')?.addEventListener('change', (event) => readImage(event.target.files?.[0]));
     $('#nfce-read-url')?.addEventListener('click', () => readReceipt($('#nfce-url-input').value));
+    $('#nfce-read-key')?.addEventListener('click', readAccessKey);
+    $('#nfce-key-input')?.addEventListener('input', (event) => { const digits=event.target.value.replace(/\D/g,'').slice(0,44); event.target.value=digits.replace(/(\d{4})(?=\d)/g,'$1 '); });
+    $('#nfce-key-input')?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); readAccessKey(); } });
     $('#nfce-url-input')?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); readReceipt(event.target.value); } });
     $('#nfce-select-all')?.addEventListener('change', (event) => { $$('.nfce-product-check').forEach((input) => { input.checked = event.target.checked; }); updateSelectedCount(); });
     $('#nfce-products')?.addEventListener('change', updateSelectedCount);

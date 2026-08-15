@@ -37,7 +37,8 @@
 <link href="style.css" rel="stylesheet"/>
 <link href="landing-art.css?v=20260814-6" rel="stylesheet"/>
 <link href="cozia-v7.css?v=20260814-7" rel="stylesheet"/>
-<link href="nfce-scanner.css?v=20260815-1" rel="stylesheet"/>
+<link href="nfce-scanner.css?v=20260815-2" rel="stylesheet"/>
+<link href="purchase-intelligence.css?v=20260815-1" rel="stylesheet"/>
 <style>
     :root {
         --time-scale: 1;
@@ -90,20 +91,20 @@
 <p class="af-brand-slogan">O futuro da sua cozinha, agora.</p>
 <p class="af-greeting" id="afLandingGreeting">Olá, vamos começar?</p>
 <h1 id="afHomeTitle"><span>Sua cozinha.</span><br/><em>Sob controle.</em></h1>
-<p class="af-home-subtitle">Lista de compras, receitas, planejador, análises e despensa — tudo conectado para sua cozinha funcionar melhor.</p>
+<p class="af-home-subtitle">Escaneie ou fotografe sua nota. A CozIA organiza a despensa e transforma compras em análises claras.</p>
 <div class="af-home-actions">
 <button class="af-primary-cta" data-af-start-trial="" type="button">Começar agora <i class="fa-solid fa-arrow-right"></i></button>
 <button class="af-nfce-entry" data-nfce-open="" type="button" aria-label="Escanear QR Code de uma nota fiscal">
 <span class="af-nfce-entry-icon"><i class="fa-solid fa-qrcode" aria-hidden="true"></i></span>
-<span><strong>Comprou? Aponte a câmera.</strong><small>A CozIA leva a nota para sua despensa</small></span>
+<span><strong>Escanear nota</strong><small>Aponte para o QR Code. A CozIA faz o resto.</small></span>
 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
 </button>
 <div class="af-price-compact" aria-label="Plano por R$ 9,90 ao mês, com 7 dias grátis e sem cartão"><strong>R$ 9,90<small>/mês</small></strong><span>7 dias grátis · sem cartão</span></div>
 </div>
 <div aria-label="Benefícios do Alimente Fácil" class="af-home-benefits">
-<span><i class="fa-solid fa-ban" aria-hidden="true"></i> Sem anúncios</span>
-<span><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> Instala como app</span>
-<span><i class="fa-regular fa-circle-check" aria-hidden="true"></i> Cancele quando quiser</span>
+<span><i class="fa-solid fa-camera" aria-hidden="true"></i> Leia a nota</span>
+<span><i class="fa-solid fa-box-archive" aria-hidden="true"></i> Organize a despensa</span>
+<span><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Entenda seus gastos</span>
 </div>
 </section>
 </main>
@@ -247,11 +248,11 @@
 </div>
 <p class="nfce-status" id="nfce-status" aria-live="polite">Pronto para abrir a câmera.</p>
 <div class="nfce-actions">
-<button class="nfce-primary" id="nfce-start-camera" type="button"><i class="fa-solid fa-camera"></i> Abrir câmera</button>
+<button class="nfce-primary nfce-camera-primary" id="nfce-start-camera" type="button"><i class="fa-solid fa-expand"></i> Escanear QR Code</button>
 <label class="nfce-secondary" for="nfce-image-input"><i class="fa-regular fa-image"></i> Fotografar nota<input id="nfce-image-input" type="file" accept="image/*" capture="environment" hidden></label>
 </div>
-<details class="nfce-manual"><summary>Não conseguiu ler? Cole o link da nota</summary><div><input id="nfce-url-input" type="url" inputmode="url" placeholder="https://..." aria-label="Link da NFC-e"><button id="nfce-read-url" type="button">Ler nota</button></div></details>
-<p class="nfce-coverage"><i class="fa-solid fa-location-dot"></i> Compatível com NFC-e de BA, SP, MG, RJ, RS, PR, PE, CE, ES, GO e DF.</p>
+<details class="nfce-manual"><summary>Ou digite a chave da nota</summary><div><input id="nfce-key-input" type="text" inputmode="numeric" maxlength="54" placeholder="44 dígitos da chave de acesso" aria-label="Chave de acesso da NFC-e"><button id="nfce-read-key" type="button">Consultar</button></div><div class="nfce-link-row"><input id="nfce-url-input" type="url" inputmode="url" placeholder="Ou cole o link do QR Code" aria-label="Link da NFC-e"><button id="nfce-read-url" type="button">Abrir</button></div></details>
+<p class="nfce-coverage"><i class="fa-solid fa-shield-check"></i> NFC-e de todos os estados do Brasil.</p>
 </div>
 <div class="nfce-stage" data-nfce-stage="review">
 <div class="nfce-receipt-summary"><div><small>NOTA ENCONTRADA</small><strong id="nfce-merchant">Compra identificada</strong><span id="nfce-meta"></span></div><div><small>TOTAL</small><strong id="nfce-total">R$ 0,00</strong></div></div>
@@ -696,7 +697,8 @@
 <script src="auth-premium-gate-fix.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
-<script src="nfce-scanner.js?v=20260815-3" defer></script>
+<script src="nfce-scanner.js?v=20260815-4" defer></script>
+<script src="purchase-intelligence.js?v=20260815-1" defer></script>
 <script>
         window.addEventListener('DOMContentLoaded', () => {
             let attempts = 0;
