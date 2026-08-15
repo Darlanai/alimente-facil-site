@@ -25,12 +25,12 @@
 
   function cleanProductName(value) {
     const ignored = new Set(['de','da','do','das','dos','com','sem','e']);
-    return String(value || '').replace(/^\s*(?:[%#]\s*)?[0-9A-Z]{4,18}\s+/i, '').replace(/\s+/g, ' ').trim().toLocaleLowerCase('pt-BR').split(' ').filter(Boolean)
+    return String(value || '').replace(/^\s*(?:[%#]\s*)?(?=[0-9A-Z]*\d)[0-9A-Z]{4,18}\s+/i, '').replace(/\s+/g, ' ').trim().toLocaleLowerCase('pt-BR').split(' ').filter(Boolean)
       .map((word, index) => index && ignored.has(word) ? word : word.charAt(0).toLocaleUpperCase('pt-BR') + word.slice(1)).join(' ');
   }
 
   function receiptProductName(value) {
-    return String(value || '').replace(/^\s*(?:[%#]\s*)?[0-9A-Z]{4,18}\s+/i, '').replace(/\s+/g, ' ').trim();
+    return String(value || '').replace(/\s+/g, ' ').trim();
   }
 
   function smartProductName(value) {
@@ -98,7 +98,10 @@
     if (!node) return;
     node.textContent = message;
     node.classList.toggle('is-error', error);
+    if (!error) { const official=$('#nfce-official-link'); if(official) official.hidden=true; }
   }
+
+  function showOfficialValidation(url) { const link=$('#nfce-official-link'); if(!link||!url)return; link.href=url; link.hidden=false; }
 
   function setStage(name) {
     $$('[data-nfce-stage]').forEach((node) => node.classList.toggle('is-active', node.dataset.nfceStage === name));
@@ -226,32 +229,15 @@
         if (messages[status]) setStatus(messages[status]);
       }
     });
-    const text = String(result?.data?.text || '');
-    const products = [];
-    const units = 'UN|UM|UND|UNID|KG|KA|G|L|LT|ML|PT|PR|PCT|CX|NX';
-    const productPattern = new RegExp(`^\\s*\\S{1,3}\\s+\\d{3,14}\\s+(.+?)\\s+([\\d.,/]+)\\s*(${units})\\s*(?:\\|\\s*\\w{1,3}\\s*)?[XxÀÁ4]\\s*(\\d+(?:[.,]\\d{2}))(?:\\s*\\([^)]*\\))?\\s+(\\d+(?:[.,]\\d{2}))(?:\\s*\\S)?\\s*$`, 'i');
-    const loosePattern = new RegExp(`^\\s*(?:\\S{1,3}\\s+)?(?:\\d{3,14}\\s+)?(.+?)\\s+([\\d.,/]+)\\s*(${units})\\s*(?:\\|\\s*\\w{1,3}\\s*)?[XxÀÁ4]\\s*(\\d+(?:[.,]\\d{2}))(?:\\s*\\([^)]*\\))?\\s+(\\d+(?:[.,]\\d{2}))(?:\\s*\\S)?\\s*$`, 'i');
-    text.split(/\r?\n/).map((line) => line.replace(/\s+/g, ' ').trim()).forEach((line) => {
-      let match = line.match(productPattern) || line.match(loosePattern);
-      if (!match && /^\S{1,3}\s+/.test(line)) {
-        const priceMatches = [...line.matchAll(/\d+[.,]\d{2}(?!\d)/g)];
-        const quantityUnit = line.match(new RegExp(`([\\d.,/]+)\\s*(${units})\\s*(?:\\|\\s*\\w{1,3}\\s*)?[XxÀÁ4|]`, 'i'));
-        if (priceMatches.length >= 2 && quantityUnit) {
-          let prefix = line.slice(0, quantityUnit.index).replace(/^\s*\S{1,3}\s+/, '').replace(/^\s*(?:[%#]\s*)?[0-9A-Z]{3,18}\s+/i, '');
-          match = [line, prefix, quantityUnit[1], quantityUnit[2], priceMatches[0][0], priceMatches.at(-1)[0]];
-        }
-      }
-      if (!match) return;
-      const originalName = receiptProductName(match[1].replace(/\b(?:KG|KA|UN|UM|UND)\s*$/i, ''));
-      const name = originalName;
-      if (name.length < 2 || /^(documento|codigo|descricao|valor|total)/i.test(name)) return;
-      const parsedQuantity = number(match[2]);
-      const quantity = parsedQuantity > 100 ? 1 : Math.max(.001, parsedQuantity || 1);
-      const unit = String(match[3]).toLowerCase().replace(/und|unid|um|nx/, 'un').replace(/^ka$/, 'kg').replace(/^p[rt]$/, 'pct').replace(/^lt$/, 'L');
-      const unitPrice = number(match[4]);
-      const total = number(match[5]) || quantity * unitPrice;
-      if (!products.some((item) => normalize(item.name) === normalize(name) && item.total === total)) products.push({ name, originalName, analysisName:smartProductName(name), quantity, unit, unitPrice, total, category:categoryFor(name) });
-    });
+    let text = String(result?.data?.text || '');
+    let products = parseOcrProducts(text);
+    const expectedItems = estimateReceiptItemCount(text);
+    if (products.length < Math.max(7, expectedItems)) {
+      setStatus(`Encontrei ${products.length} itens. Fazendo uma segunda conferência…`);
+      const second = await window.Tesseract.recognize(preparedImage, 'por', { tessedit_pageseg_mode:'6', preserve_interword_spaces:'1' });
+      text += `\n${String(second?.data?.text || '')}`;
+      products = parseOcrProducts(text);
+    }
     if (!products.length) throw new Error('Não consegui separar os produtos. Fotografe de frente, com boa luz, incluindo do primeiro item até o valor total.');
     const totalMatch = text.match(/VALOR\s+TOTAL(?:\s+R\$)?\s*[:]?\s*([\d.,]+)/i);
     const accessKey = (text.replace(/\s/g,'').match(/\d{44}/) || [])[0] || '';
@@ -262,6 +248,49 @@
     state.receipt = { state:CUF_STATES[Number(accessKey.slice(0,2))] || state.keyMetadata?.state || '', merchant, merchantDocument:merchantDocument || state.keyMetadata?.merchantDocument || '', issueDate, documentNumber:state.keyMetadata?.documentNumber || '', series:state.keyMetadata?.series || '', accessKey:accessKey || state.keyMetadata?.accessKey || '', total:number(totalMatch?.[1]) || products.reduce((sum, item) => sum + item.total, 0), products, source:'photo-ocr' };
     savePending(state.receipt);
     renderReceipt();
+  }
+
+  function estimateReceiptItemCount(text) {
+    const lines=String(text||'').split(/\r?\n/);
+    const numbered=lines.map(line=>line.match(/^\s*(\d{1,3})\s+/)?.[1]).filter(Boolean).map(Number).filter(value=>value>0&&value<150);
+    const unique=[...new Set(numbered)];
+    return unique.length ? Math.max(unique.length,Math.min(Math.max(...unique),60)) : 0;
+  }
+
+  function parseOcrProducts(text) {
+    const units='UN|UM|UND|UNID|KG|KA|G|L|LT|ML|PT|PR|PCT|CX|NX';
+    const rawLines=String(text||'').split(/\r?\n/).map(line=>line.replace(/[|¦]/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
+    const candidates=[];
+    rawLines.forEach((line,index)=>{ candidates.push(line); if(index&&line.length<120)candidates.push(`${rawLines[index-1]} ${line}`); });
+    const products=[];
+    candidates.forEach(line=>{
+      if(/(?:DOCUMENTO|DESCRI[CÇ][AÃ]O|VALOR\s+TOTAL|FORMA\s+DE\s+PAGAMENTO|CHAVE\s+DE\s+ACESSO|PROTOCOLO)/i.test(line))return;
+      const quantityMatches=[...line.matchAll(new RegExp(`([0-9OIl/,.-]+)\\s*(${units})\\b\\s*(?:[Xx×ÀÁ4]|V[LI]|VL)?`, 'ig'))];
+      const quantityUnit=quantityMatches.at(-1);
+      if(!quantityUnit)return;
+      const after=line.slice((quantityUnit.index||0)+quantityUnit[0].length);
+      const prices=[...after.matchAll(/(?:R\$\s*)?(\d{1,5}[.,]\d{2})(?!\d)/g)].map(match=>match[1]);
+      if(!prices.length)return;
+      const ocrItemNo=line.match(/^\s*(\d{1,3})\s+/)?.[1] || '';
+      let prefix=line.slice(0,quantityUnit.index).replace(/^\s*\d{1,3}\s+/, '').replace(/^\s*(?:[%#]\s*)?(?=[0-9A-Z]*\d)[0-9A-Z]{3,18}\s+/i,'').trim();
+      prefix=prefix.replace(/^[-:.;]+|[-:.;]+$/g,'').trim();
+      if(!/[A-Za-zÁÀÂÃÉÊÍÓÔÕÚÇ]{2}/.test(prefix))return;
+      const originalName=receiptProductName(prefix);
+      if(originalName.length<2)return;
+      const parsedQuantity=number(quantityUnit[1].replace(/[Oo]/g,'0').replace(/[Il]/g,'1'));
+      const quantity=parsedQuantity>100?1:Math.max(.001,parsedQuantity||1);
+      const unit=String(quantityUnit[2]).toLowerCase().replace(/und|unid|um|nx/,'un').replace(/^ka$/,'kg').replace(/^p[rt]$/,'pct').replace(/^lt$/,'L');
+      const total=number(prices.at(-1));
+      let unitPrice=number(prices[0]);
+      if(prices.length===1&&quantity)unitPrice=total/quantity;
+      const analysisName=smartProductName(originalName);
+      const name=analysisName&&normalize(analysisName)!==normalize(originalName)?analysisName:originalName;
+      const duplicate=products.find(item=>(ocrItemNo&&item.ocrItemNo===ocrItemNo)||(normalize(item.originalName)===normalize(originalName)&&Math.abs(item.total-total)<.011));
+      const product={name,originalName,analysisName,quantity,unit,unitPrice,total:total||quantity*unitPrice,category:categoryFor(analysisName||originalName),ocrItemNo};
+      if(!duplicate)products.push(product);
+      else if(originalName.length<duplicate.originalName.length)Object.assign(duplicate,product);
+    });
+    return products;
   }
 
   async function readReceipt(url, fallbackPhoto = null) {
@@ -275,13 +304,14 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.receipt) {
         if (data.code === 'NFCE_HUMAN_VERIFICATION_REQUIRED') {
+          showOfficialValidation(data.officialUrl || url);
           if (fallbackPhoto) { await readProductsFromPhoto(fallbackPhoto); return; }
           throw new Error('A SEF/MG pede verificação humana. Toque em “Fotografar nota” e enquadre toda a lista de produtos. A leitura acontece só no seu celular.');
         }
         throw new Error(data.message || 'Não foi possível consultar a nota.');
       }
       state.receipt = data.receipt;
-      state.receipt.products = state.receipt.products.map((item) => ({ ...item, name:receiptProductName(item.originalName || item.name), originalName:receiptProductName(item.originalName || item.name), analysisName:item.analysisName || smartProductName(item.name), category:item.category || categoryFor(item.name) }));
+      state.receipt.products = state.receipt.products.map((item) => { const originalName=receiptProductName(item.originalName || item.name); const analysisName=smartProductName(originalName); return {...item,originalName,analysisName,name:analysisName&&normalize(analysisName)!==normalize(originalName)?analysisName:originalName,category:item.category||categoryFor(analysisName||originalName)}; });
       savePending(state.receipt);
       renderReceipt();
     } catch (error) { setStatus(error.message || 'Não foi possível consultar a nota.', true); }
@@ -298,9 +328,9 @@
     try {
       const response = await fetch('/api/nfce/preview', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ key }) });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.receipt) { if (data.keyMetadata) state.keyMetadata=data.keyMetadata; throw new Error(data.message || 'Não foi possível consultar esta chave.'); }
+      if (!response.ok || !data.receipt) { if (data.keyMetadata) state.keyMetadata=data.keyMetadata; if(data.officialUrl)showOfficialValidation(data.officialUrl); throw new Error(data.message || 'Não foi possível consultar esta chave.'); }
       state.receipt = data.receipt;
-      state.receipt.products = state.receipt.products.map((item) => ({ ...item, name:receiptProductName(item.originalName || item.name), originalName:receiptProductName(item.originalName || item.name), analysisName:item.analysisName || smartProductName(item.name), category:item.category || categoryFor(item.name) }));
+      state.receipt.products = state.receipt.products.map((item) => { const originalName=receiptProductName(item.originalName || item.name); const analysisName=smartProductName(originalName); return {...item,originalName,analysisName,name:analysisName&&normalize(analysisName)!==normalize(originalName)?analysisName:originalName,category:item.category||categoryFor(analysisName||originalName)}; });
       savePending(state.receipt); renderReceipt();
     } catch (error) { setStatus(error.message || 'Não foi possível consultar esta chave.', true); }
     finally { state.busy = false; if (button) button.disabled = false; }
@@ -440,8 +470,9 @@
       if (item?.origem !== 'NFC-e') return;
       const noteProduct = (currentApp.state.notasFiscais || []).flatMap((note) => note.products || []).find((product) => String(product.pantryItemId) === String(item.id));
       const exact = receiptProductName(noteProduct?.originalName || item.name);
-      if (exact && exact !== item.name) { item.name = exact; changed = true; }
-      const analysisName = noteProduct?.analysisName || smartProductName(exact);
+      const analysisName = smartProductName(exact);
+      const displayName = analysisName && normalize(analysisName) !== normalize(exact) ? analysisName : exact;
+      if (displayName && displayName !== item.name) { item.name = displayName; changed = true; }
       if (item.analysisName !== analysisName) { item.analysisName = analysisName; changed = true; }
       item.categoria = item.categoria || categoryFor(analysisName);
     });
@@ -522,6 +553,8 @@
     finally { button.disabled = false; }
   }
 
+  window.AF_NFCE_TESTS = { parseOcrProducts, estimateReceiptItemCount, smartProductName };
+
   document.addEventListener('DOMContentLoaded', () => {
     $$('[data-nfce-open]').forEach((button) => button.addEventListener('click', openScanner));
     $$('[data-nfce-close]').forEach((button) => button.addEventListener('click', closeScanner));
@@ -552,5 +585,6 @@
     new MutationObserver(addPantryEntry).observe(document.body, { childList:true, subtree:true });
     addPantryEntry();
     setTimeout(repairImportedNames, 900);
+    window.AF_NFCE = { openScanner, openNotes, repairImportedNames };
   });
 })();

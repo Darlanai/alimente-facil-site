@@ -744,13 +744,13 @@ app.post('/api/nfce/preview', async (req, res) => {
     if (validated.state === 'MG') {
       const verificationError = new Error('A SEF/MG exige verificação humana para mostrar os produtos. Fotografe a parte da nota onde aparecem os itens; a CozIA fará a leitura no seu celular.');
       verificationError.statusCode = 409;
-      verificationError.payload = { code:'NFCE_HUMAN_VERIFICATION_REQUIRED', state:'MG', photoFallback:true };
+      verificationError.payload = { code:'NFCE_HUMAN_VERIFICATION_REQUIRED', state:'MG', officialUrl:validated.url, ...(validated.keyMetadata ? { keyMetadata:validated.keyMetadata } : {}), photoFallback:true };
       throw verificationError;
     }
     if (req.body?.key) {
       const verificationError = new Error('A chave foi validada e a nota identificada, mas o portal estadual exige a verificacao visual para liberar os produtos. Escaneie o QR Code ou fotografe os itens.');
       verificationError.statusCode = 409;
-      verificationError.payload = { code:'NFCE_KEY_PORTAL_VERIFICATION', state:validated.state, keyMetadata:validated.keyMetadata, photoFallback:true };
+      verificationError.payload = { code:'NFCE_KEY_PORTAL_VERIFICATION', state:validated.state, officialUrl:validated.url, keyMetadata:validated.keyMetadata, photoFallback:true };
       throw verificationError;
     }
     throw lastParseError || new Error('Não foi possível localizar os produtos desta NFC-e.');
