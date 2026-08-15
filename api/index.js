@@ -488,7 +488,7 @@ function nfceNumber(value) {
 
 function titleCaseProduct(value) {
   const ignored = new Set(['de','da','do','das','dos','com','sem','e']);
-  return decodeNfceText(value).replace(/^\d+\s*[-–.]?\s*/, '').replace(/\s*\(c[oó]digo.*$/i, '')
+  return decodeNfceText(value).replace(/^\d+\s*[-–.]?\s*/, '').replace(/\s*\(?c[oó]d(?:igo)?\s*[:.]?.*$/i, '')
     .replace(/\b(UN|UND|UNID|KG|G|LT|L|ML|PCT|CX)\b.*$/i, '').trim().toLocaleLowerCase('pt-BR')
     .split(' ').filter(Boolean).slice(0, 10).map((word, index) => index && ignored.has(word) ? word : word.charAt(0).toLocaleUpperCase('pt-BR') + word.slice(1)).join(' ');
 }
@@ -506,33 +506,92 @@ function categorizeNfceProduct(name) {
 }
 
 function parseNfceHtml(html, state, sourceUrl) {
-  const rows = [...String(html || '').matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)];
+  const source = String(html || '');
   const products = [];
-  for (const row of rows) {
+  const normalizedUnit = (value) => {
+    const unit = String(value || 'un').trim().toLowerCase();
+    return ({ und:'un', unid:'un', unidade:'un', lt:'L', l:'L', kilo:'kg', quilo:'kg' })[unit] || unit;
+  };
+  const addProduct = ({ name, quantity, unit, total, unitPrice }) => {
+    const cleanName = titleCaseProduct(name);
+    if (cleanName.length < 2 || /^(produto|descri[cç][aã]o|item)$/i.test(cleanName)) return;
+    const cleanQuantity = Math.max(.001, nfceNumber(quantity) || 1);
+    const cleanTotal = Math.max(0, nfceNumber(total));
+    const cleanUnitPrice = Math.max(0, nfceNumber(unitPrice)) || (cleanTotal ? cleanTotal / cleanQuantity : 0);
+    const duplicate = products.find((item) => item.name === cleanName && Math.abs(item.total - cleanTotal) < .005 && Math.abs(item.quantity - cleanQuantity) < .005);
+    if (duplicate) return;
+    products.push({ name: cleanName, quantity: cleanQuantity, unit: normalizedUnit(unit), total: cleanTotal || cleanUnitPrice * cleanQuantity, unitPrice: cleanUnitPrice, category: categorizeNfceProduct(cleanName) });
+  };
+
+  // Modelo XML da NFC-e, usado diretamente ou embutido por alguns portais.
+  for (const match of source.matchAll(/<det\b[^>]*>[\s\S]*?<prod\b[^>]*>([\s\S]*?)<\/prod>[\s\S]*?<\/det>/gi)) {
+    const block = match[1];
+    const tag = (name) => decodeNfceText(block.match(new RegExp(`<${name}\\b[^>]*>([\\s\\S]*?)<\\/${name}>`, 'i'))?.[1]);
+    addProduct({ name:tag('xProd'), quantity:tag('qCom'), unit:tag('uCom'), unitPrice:tag('vUnCom'), total:tag('vProd') });
+  }
+
+  // Estruturas JSON de SPAs e consultas estaduais mais recentes.
+  const jsonProductPattern = /["'](?:xProd|descricao|description|nomeProduto|produto)["']\s*:\s*["']([^"']+)["']([\s\S]{0,900}?)(?=["'](?:xProd|descricao|description|nomeProduto|produto)["']\s*:|[}\]])/gi;
+  for (const match of source.matchAll(jsonProductPattern)) {
+    const block = match[2];
+    const field = (...names) => {
+      const union = names.join('|');
+      return block.match(new RegExp(`["'](?:${union})["']\\s*:\\s*(?:["'])?([\\d.,A-Za-z]+)`, 'i'))?.[1] || '';
+    };
+    addProduct({ name:match[1], quantity:field('qCom','quantidade','quantity','qtd'), unit:field('uCom','unidade','unit'), unitPrice:field('vUnCom','valorUnitario','unitPrice','preco'), total:field('vProd','valorTotal','total') });
+  }
+
+  // Tabelas tradicionais do DANFE NFC-e.
+  for (const row of source.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
     const cells = [...row[1].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((match) => decodeNfceText(match[1]));
     const joined = cells.join(' | ');
-    if (cells.length < 2 || /descri[cç][aã]o|produto|quantidade|valor\s*total/i.test(joined)) continue;
-    let name = cells.find((cell) => /[a-záàâãéêíóôõúç]{3}/i.test(cell) && !/^\s*(qtd|un|vl|r\$|\d+[,.]?\d*)\s*$/i.test(cell));
-    if (!name) continue;
-    const quantityMatch = joined.match(/(?:qtd\.?|quantidade)\s*[:\-]?\s*([\d.,]+)/i);
-    const unitMatch = joined.match(/(?:un\.?|unidade)\s*[:\-]?\s*(un|und|kg|g|l|lt|ml|pct|cx)/i);
-    const money = [...joined.matchAll(/(?:R\$\s*)?([\d.]+,\d{2})/g)].map((match) => nfceNumber(match[1]));
-    const quantity = Math.max(.001, nfceNumber(quantityMatch?.[1]) || nfceNumber(cells.find((cell) => /^\d+(?:[.,]\d+)?$/.test(cell))) || 1);
-    const total = money.at(-1) || 0;
-    const cleanName = titleCaseProduct(name);
-    if (cleanName.length < 2 || products.some((item) => item.name === cleanName && item.total === total)) continue;
-    products.push({ name: cleanName, quantity, unit: (unitMatch?.[1] || 'un').toLowerCase().replace('und','un').replace('lt','L'), total, unitPrice: total && quantity ? total / quantity : 0, category: categorizeNfceProduct(cleanName) });
+    if (!cells.length || /^(?:\s*descri[cç][aã]o|\s*produto).*quantidade.*valor/i.test(joined)) continue;
+    const name = cells.find((cell) => /[a-záàâãéêíóôõúç]{3}/i.test(cell) && !/^\s*(qtd|qtde|un|vl|valor|r\$|\d+[,.]?\d*)\s*$/i.test(cell));
+    const quantity = joined.match(/(?:qtd\.?|qtde\.?|quantidade)\s*[:\-]?\s*([\d.,]+)/i)?.[1];
+    const unit = joined.match(/(?:un\.?|unidade)\s*[:\-]?\s*(un|und|unid|kg|g|l|lt|ml|pct|cx)/i)?.[1];
+    const values = [...joined.matchAll(/(?:R\$\s*)?([\d.]+,\d{2})/g)].map((item) => item[1]);
+    addProduct({ name, quantity, unit, unitPrice:values.length > 1 ? values.at(-2) : '', total:values.at(-1) });
   }
-  const plain = decodeNfceText(html);
-  const merchant = decodeNfceText(html.match(/<(?:h1|h2|h3|div)[^>]*(?:class|id)=["'][^"']*(?:emit|empresa|razao|estabelecimento)[^"']*["'][^>]*>([\s\S]*?)<\/(?:h1|h2|h3|div)>/i)?.[1]) || 'Estabelecimento identificado';
+
+  // Layout responsivo mais comum: txtTit/xProd + Rqtd/RUN/RvlUnit/valor.
+  const markers = [...source.matchAll(/<(?:span|div|p|td)[^>]*(?:class|id)=["'][^"']*(?:txtTit|xProd|nome-produto|descricao-produto|desc-prod)[^"']*["'][^>]*>([\s\S]*?)<\/(?:span|div|p|td)>/gi)];
+  markers.forEach((marker, index) => {
+    const start = marker.index;
+    const end = markers[index + 1]?.index || Math.min(source.length, start + 2500);
+    const block = source.slice(start, end);
+    const plain = decodeNfceText(block);
+    const values = [...plain.matchAll(/(?:R\$\s*)?([\d.]+,\d{2})/g)].map((item) => item[1]);
+    addProduct({
+      name:marker[1],
+      quantity:plain.match(/(?:qtd\.?|qtde\.?|quantidade)\s*[:\-]?\s*([\d.,]+)/i)?.[1],
+      unit:plain.match(/(?:un\.?|unidade)\s*[:\-]?\s*(un|und|unid|kg|g|l|lt|ml|pct|cx)/i)?.[1],
+      unitPrice:plain.match(/(?:vl\.?\s*unit\.?|valor\s*unit[aá]rio)\s*[:\-]?\s*(?:R\$\s*)?([\d.,]+)/i)?.[1] || (values.length > 1 ? values.at(-2) : ''),
+      total:plain.match(/(?:vl\.?\s*total|valor\s*total)\s*[:\-]?\s*(?:R\$\s*)?([\d.,]+)/i)?.[1] || values.at(-1)
+    });
+  });
+
+  // Última camada para portais que usam cartões ou listas sem classes padronizadas.
+  for (const blockMatch of source.matchAll(/<(?:li|article)\b[^>]*>([\s\S]{20,2200}?)<\/(?:li|article)>/gi)) {
+    const plain = decodeNfceText(blockMatch[1]);
+    if (!/(?:qtd|qtde|quantidade).{0,30}\d/i.test(plain) || !/(?:R\$|valor).{0,30}\d/i.test(plain)) continue;
+    const name = plain.split(/(?:c[oó]d(?:igo)?|qtd\.?|qtde\.?|quantidade)/i)[0];
+    const values = [...plain.matchAll(/(?:R\$\s*)?([\d.]+,\d{2})/g)].map((item) => item[1]);
+    addProduct({ name, quantity:plain.match(/(?:qtd\.?|qtde\.?|quantidade)\s*[:\-]?\s*([\d.,]+)/i)?.[1], unit:plain.match(/(?:un\.?|unidade)\s*[:\-]?\s*(un|und|unid|kg|g|l|lt|ml|pct|cx)/i)?.[1], unitPrice:values.length > 1 ? values.at(-2) : '', total:values.at(-1) });
+  }
+  const plain = decodeNfceText(source);
+  const merchant = decodeNfceText(source.match(/<(?:h1|h2|h3|div|span)[^>]*(?:class|id)=["'][^"']*(?:emit|empresa|razao|estabelecimento|txtTopo)[^"']*["'][^>]*>([\s\S]*?)<\/(?:h1|h2|h3|div|span)>/i)?.[1]) || decodeNfceText(source.match(/<xNome\b[^>]*>([\s\S]*?)<\/xNome>/i)?.[1]) || 'Estabelecimento identificado';
   const totalMatch = plain.match(/(?:valor\s+a\s+pagar|valor\s+total|total\s+da\s+nota)\s*R?\$?\s*([\d.]+,\d{2})/i);
   const accessKey = (plain.match(/\b(\d{44})\b/) || sourceUrl.match(/[?&]p=(\d{44})/i) || [])[1] || '';
   if (!products.length) {
+    console.warn('NFC-e sem produtos reconhecidos', { state, bytes:Buffer.byteLength(source, 'utf8'), hasTable:/<tr\b/i.test(source), hasProductMarker:/(?:txtTit|xProd|qCom|Rqtd)/i.test(source) });
     const error = new Error('A nota foi localizada, mas a Secretaria não liberou os produtos neste formato. Tente uma foto nítida ou consulte novamente em instantes.');
     error.statusCode = 422; throw error;
   }
   return { state, merchant: merchant.slice(0, 100), accessKey, total: nfceNumber(totalMatch?.[1]) || products.reduce((sum, item) => sum + item.total, 0), products };
 }
+
+// Mantido em locals para testes automatizados, sem criar uma rota pública de diagnóstico.
+app.locals.parseNfceHtml = parseNfceHtml;
 
 async function fetchNfceDocument(initialUrl) {
   let current = initialUrl;
@@ -602,8 +661,32 @@ app.get('/api/health', (_req, res) => {
 app.post('/api/nfce/preview', async (req, res) => {
   try {
     const validated = validateNfceUrl(req.body?.url);
-    const { html, finalUrl } = await fetchNfceDocument(validated.url);
-    return res.json({ ok: true, receipt: parseNfceHtml(html, validated.state, finalUrl), privacy: 'A imagem do QR Code não é enviada nem armazenada.' });
+    const queue = [validated.url];
+    const visited = new Set();
+    let lastParseError = null;
+    while (queue.length && visited.size < 4) {
+      const candidate = queue.shift();
+      if (visited.has(candidate)) continue;
+      visited.add(candidate);
+      const { html, finalUrl } = await fetchNfceDocument(candidate);
+      try {
+        return res.json({ ok:true, receipt:parseNfceHtml(html, validated.state, finalUrl), privacy:'A imagem do QR Code não é enviada nem armazenada.' });
+      } catch (error) {
+        if (error.statusCode !== 422) throw error;
+        lastParseError = error;
+        // Algumas SEFAZ colocam o DANFE dentro de iframe ou em um segundo link.
+        for (const match of html.matchAll(/(?:src|href|action)\s*=\s*["']([^"']+)["']/gi)) {
+          const raw = decodeNfceText(match[1]);
+          if (!/(?:nfce|nota|danfe|consulta|qrcode|chave|visualiza)/i.test(raw)) continue;
+          try {
+            const nextUrl = new URL(raw, finalUrl).toString();
+            const nextValidation = validateNfceUrl(nextUrl);
+            if (nextValidation.state === validated.state && !visited.has(nextUrl)) queue.push(nextUrl);
+          } catch (_error) {}
+        }
+      }
+    }
+    throw lastParseError || new Error('Não foi possível localizar os produtos desta NFC-e.');
   } catch (error) {
     return res.status(error.statusCode || 502).json({ ok: false, message: error.message || 'Não foi possível consultar esta NFC-e.', ...(error.payload || {}) });
   }
