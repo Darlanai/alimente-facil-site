@@ -2,7 +2,7 @@
   'use strict';
 
   const PENDING_KEY = 'afNfcePendingReceipt_v1';
-  const state = { receipt: null, stream: null, scanTimer: 0, busy: false, keyMetadata:null };
+  const state = { receipt: null, stream: null, scanTimer: 0, busy: false, keyMetadata:null, officialUrl:'', officialWindow:null, officialTimer:0, lastLookup:null, captchaRetry:false };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const money = (value) => Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -101,7 +101,28 @@
     if (!error) { const official=$('#nfce-official-link'); if(official) official.hidden=true; }
   }
 
-  function showOfficialValidation(url) { const link=$('#nfce-official-link'); if(!link||!url)return; link.href=url; link.hidden=false; }
+  function showOfficialValidation(url) { const link=$('#nfce-official-link'); if(!link||!url)return; state.officialUrl=url; link.hidden=false; }
+
+  function openOfficialValidation() {
+    if (!state.officialUrl) return;
+    const width=Math.min(540,screen.availWidth||540),height=Math.min(760,screen.availHeight||760);
+    const left=Math.max(0,Math.round(((screen.availWidth||width)-width)/2)),top=Math.max(0,Math.round(((screen.availHeight||height)-height)/2));
+    state.officialWindow=window.open(state.officialUrl,'alimente_facil_validacao_nfce',`popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+    $('#nfce-validation-return').hidden=false;
+    if (!state.officialWindow) { setStatus('O navegador bloqueou a janela. Autorize pop-ups para abrir a validação oficial.',true); return; }
+    clearInterval(state.officialTimer);
+    state.officialTimer=window.setInterval(()=>{if(state.officialWindow?.closed){clearInterval(state.officialTimer);state.officialTimer=0;continueAfterOfficialValidation();}},600);
+  }
+
+  async function continueAfterOfficialValidation() {
+    $('#nfce-validation-return').hidden=true;
+    try { if(state.officialWindow&&!state.officialWindow.closed)state.officialWindow.close(); } catch (_error) {}
+    state.officialWindow=null;
+    if (!state.lastLookup) return;
+    state.captchaRetry=true;
+    setStatus('Retomando a consulta da nota…');
+    if (state.lastLookup.type==='key') await readAccessKey(); else await readReceipt(state.lastLookup.value);
+  }
 
   function setStage(name) {
     $$('[data-nfce-stage]').forEach((node) => node.classList.toggle('is-active', node.dataset.nfceStage === name));
@@ -122,6 +143,7 @@
 
   function closeScanner() {
     stopCamera();
+    clearInterval(state.officialTimer); state.officialTimer=0;
     modal()?.classList.remove('is-open');
     modal()?.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('nfce-lock');
@@ -296,6 +318,7 @@
   async function readReceipt(url, fallbackPhoto = null) {
     if (state.busy) return;
     state.busy = true;
+    state.lastLookup={type:'url',value:url};
     const button = $('#nfce-read-url');
     if (button) button.disabled = true;
     setStatus('A CozIA está conferindo os produtos da nota…');
@@ -306,11 +329,13 @@
         if (data.code === 'NFCE_HUMAN_VERIFICATION_REQUIRED') {
           showOfficialValidation(data.officialUrl || url);
           if (fallbackPhoto) { await readProductsFromPhoto(fallbackPhoto); return; }
+          if (state.captchaRetry) { state.captchaRetry=false; throw new Error('A validação foi concluída no portal, mas a Fazenda não compartilhou essa sessão com o Alimente Fácil. Para importar os itens agora, fotografe a nota.'); }
           throw new Error('A SEF/MG pede verificação humana. Toque em “Fotografar nota” e enquadre toda a lista de produtos. A leitura acontece só no seu celular.');
         }
         throw new Error(data.message || 'Não foi possível consultar a nota.');
       }
       state.receipt = data.receipt;
+      state.captchaRetry=false;
       state.receipt.products = state.receipt.products.map((item) => { const originalName=receiptProductName(item.originalName || item.name); const analysisName=smartProductName(originalName); return {...item,originalName,analysisName,name:analysisName&&normalize(analysisName)!==normalize(originalName)?analysisName:originalName,category:item.category||categoryFor(analysisName||originalName)}; });
       savePending(state.receipt);
       renderReceipt();
@@ -324,12 +349,14 @@
     if (key.length !== 44) { setStatus('A chave de acesso precisa ter exatamente 44 números.', true); input?.focus(); return; }
     if (state.busy) return;
     state.busy = true; const button = $('#nfce-read-key'); if (button) button.disabled = true;
+    state.lastLookup={type:'key',value:key};
     setStatus('Consultando a chave no portal oficial…');
     try {
       const response = await fetch('/api/nfce/preview', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ key }) });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.receipt) { if (data.keyMetadata) state.keyMetadata=data.keyMetadata; if(data.officialUrl)showOfficialValidation(data.officialUrl); throw new Error(data.message || 'Não foi possível consultar esta chave.'); }
+      if (!response.ok || !data.receipt) { if (data.keyMetadata) state.keyMetadata=data.keyMetadata; if(data.officialUrl)showOfficialValidation(data.officialUrl); if(state.captchaRetry){state.captchaRetry=false;throw new Error('A validação ficou restrita ao portal da Fazenda. Para importar os produtos, use o QR novamente ou fotografe a nota.');} throw new Error(data.message || 'Não foi possível consultar esta chave.'); }
       state.receipt = data.receipt;
+      state.captchaRetry=false;
       state.receipt.products = state.receipt.products.map((item) => { const originalName=receiptProductName(item.originalName || item.name); const analysisName=smartProductName(originalName); return {...item,originalName,analysisName,name:analysisName&&normalize(analysisName)!==normalize(originalName)?analysisName:originalName,category:item.category||categoryFor(analysisName||originalName)}; });
       savePending(state.receipt); renderReceipt();
     } catch (error) { setStatus(error.message || 'Não foi possível consultar esta chave.', true); }
@@ -563,6 +590,9 @@
     $('#nfce-image-input')?.addEventListener('change', (event) => readImage(event.target.files?.[0]));
     $('#nfce-read-url')?.addEventListener('click', () => readReceipt($('#nfce-url-input').value));
     $('#nfce-read-key')?.addEventListener('click', readAccessKey);
+    $('#nfce-official-link')?.addEventListener('click', openOfficialValidation);
+    $('#nfce-validation-continue')?.addEventListener('click', continueAfterOfficialValidation);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.officialWindow)$('#nfce-validation-return').hidden=false;});
     $('#nfce-key-input')?.addEventListener('input', (event) => { const digits=event.target.value.replace(/\D/g,'').slice(0,44); event.target.value=digits.replace(/(\d{4})(?=\d)/g,'$1 '); });
     $('#nfce-key-input')?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); readAccessKey(); } });
     $('#nfce-url-input')?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); readReceipt(event.target.value); } });
