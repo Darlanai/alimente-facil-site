@@ -636,13 +636,14 @@
       setSession(payload.token, payload.user);
       const plan = await applySessionPayload(payload);
       originalCloseAllModals();
-      documentRef.dispatchEvent(new CustomEvent('af:auth-success', { detail: { user: app.state?.user || payload.user, source: 'login' } }));
       if (plan === PREMIUM_PLAN) {
         rawEnterPanelHome();
+        documentRef.dispatchEvent(new CustomEvent('af:auth-success', { detail: { user: app.state?.user || payload.user, source: 'login' } }));
         originalShowNotification('Login premium realizado com sucesso.', 'success');
       } else {
         rawExitToLanding();
         windowRef.setTimeout(function () { showPaymentGateModal(payload); }, 60);
+        documentRef.dispatchEvent(new CustomEvent('af:auth-success', { detail: { user: app.state?.user || payload.user, source: 'login' } }));
         originalShowNotification(isTrialExpiredPayload(payload) ? 'Seu teste grátis terminou.' : 'O acesso completo exige Premium.', 'info');
       }
     } catch (error) {
@@ -672,13 +673,14 @@
       setSession(payload.token, payload.user);
       const plan = await applySessionPayload(payload);
       originalCloseAllModals();
-      documentRef.dispatchEvent(new CustomEvent('af:auth-success', { detail: { user: app.state?.user || payload.user, source: 'signup' } }));
       if (plan === PREMIUM_PLAN) {
         rawEnterPanelHome();
+        documentRef.dispatchEvent(new CustomEvent('af:auth-success', { detail: { user: app.state?.user || payload.user, source: 'signup' } }));
         originalShowNotification('Cadastro concluído: painel completo liberado por 7 dias sem cartão. O pagamento só aparece no 8º dia. ✨', 'success');
       } else {
         rawExitToLanding();
         windowRef.setTimeout(function () { showPaymentGateModal(payload); }, 60);
+        documentRef.dispatchEvent(new CustomEvent('af:auth-success', { detail: { user: app.state?.user || payload.user, source: 'signup' } }));
       }
     } catch (error) {
       showInlineError('signup-form', error?.payload?.message || error.message || 'Não foi possível concluir o cadastro.', 'error');

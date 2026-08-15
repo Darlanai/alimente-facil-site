@@ -303,9 +303,13 @@
       const response = await fetch('/api/nfce/preview', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ url }) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.receipt) {
-        if (data.code === 'NFCE_HUMAN_VERIFICATION_REQUIRED') {
+        if (data.code === 'NFCE_HUMAN_VERIFICATION_REQUIRED' || data.code === 'NFCE_KEY_PORTAL_VERIFICATION' || data.photoFallback) {
           showOfficialValidation(data.officialUrl || url);
-          if (fallbackPhoto) { await readProductsFromPhoto(fallbackPhoto); return; }
+          if (fallbackPhoto) {
+            setStatus('O QR foi identificado. Como a Fazenda protegeu a consulta, vou ler os produtos diretamente da foto…');
+            await readProductsFromPhoto(fallbackPhoto);
+            return;
+          }
           throw new Error('A consulta por QR foi protegida pela Fazenda. Fotografe os itens para continuar sem sair do Alimente Fácil.');
         }
         throw new Error(data.message || 'Não foi possível consultar a nota.');
@@ -602,7 +606,7 @@
     $('#nfce-url-input')?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); readReceipt(event.target.value); } });
     $('#nfce-select-all')?.addEventListener('change', (event) => { $$('.nfce-product-check').forEach((input) => { input.checked = event.target.checked; }); updateSelectedCount(); });
     $('#nfce-products')?.addEventListener('change', updateSelectedCount);
-    $('#nfce-import')?.addEventListener('click', importToPantry);
+    $('#nfce-import')?.addEventListener('click', async () => { if (await importToPantry()) openPantry(); });
     $('#nfce-create-account')?.addEventListener('click', () => openAuth('signup-view'));
     $('#nfce-login')?.addEventListener('click', () => openAuth('login-view'));
     $('#nfce-open-pantry')?.addEventListener('click', openPantry);
