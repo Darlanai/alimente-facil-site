@@ -2,7 +2,7 @@
   'use strict';
 
   const PENDING_KEY = 'afNfcePendingReceipt_v1';
-  const state = { receipt: null, stream: null, scanTimer: 0, busy: false, keyMetadata:null, pendingPantryAfterAuth:false };
+  const state = { receipt: null, photos:[], photoUrls:[], stream: null, scanTimer: 0, busy: false, keyMetadata:null, pendingPantryAfterAuth:false };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const money = (value) => Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -117,7 +117,8 @@
     const pending = loadPending();
     if (pending?.products?.length) { state.receipt = pending; renderReceipt(); }
     else setStage('scan');
-    setTimeout(() => $('#nfce-start-camera')?.focus(), 30);
+    updatePhotoQueue();
+    setTimeout(() => $('#nfce-camera-input')?.focus(), 30);
   }
 
   function closeScanner() {
@@ -199,54 +200,79 @@
     state.scanTimer = window.setTimeout(scanVideoFrame, 260);
   }
 
-  async function readImage(file) {
-    if (!file) return;
-    setStatus('Procurando o QR Code na imagem…');
-    try {
-      const bitmap = await createImageBitmap(file);
-      const canvas = $('#nfce-canvas');
-      const max = 1600;
-      const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
-      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-      canvas.getContext('2d', { willReadFrequently: true }).drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      bitmap.close?.();
-      const value = await decodeCanvas(canvas);
-      if (value) await readReceipt(value, file);
-      else await readProductsFromPhoto(file);
-    } catch (error) { setStatus(error.message || 'Não foi possível ler a imagem.', true); }
-    finally { $('#nfce-image-input').value = ''; }
+  function clearQueuedPhotos() {
+    state.photoUrls.forEach((url) => URL.revokeObjectURL(url));
+    state.photos = [];
+    state.photoUrls = [];
+    updatePhotoQueue();
+    setStatus('Abra a câmera ou envie imagens da nota.');
   }
 
-  async function readProductsFromPhoto(file) {
-    if (!file) return;
-    if (!window.Tesseract?.recognize) throw new Error('O leitor de texto ainda está carregando. Aguarde alguns segundos e fotografe novamente.');
-    setStatus('Preparando a leitura privada da nota…');
-    const preparedImage = await prepareReceiptImage(file);
-    const result = await window.Tesseract.recognize(preparedImage, 'por', {
-      logger: ({ status, progress }) => {
-        const messages = { 'loading tesseract core':'Preparando o leitor…', 'loading language traineddata':'Carregando o português…', 'initializing api':'Iniciando a CozIA…', 'recognizing text':`Lendo os produtos… ${Math.round((progress || 0) * 100)}%` };
-        if (messages[status]) setStatus(messages[status]);
-      }
+  function updatePhotoQueue() {
+    const queue = $('#nfce-photo-queue');
+    const count = state.photos.length;
+    if (queue) queue.hidden = !count;
+    const readButton = $('#nfce-read-photos');
+    if (readButton) readButton.hidden = !count;
+    const countNode = $('#nfce-photo-count');
+    if (countNode) countNode.textContent = `${count} ${count === 1 ? 'imagem adicionada' : 'imagens adicionadas'}`;
+    const thumbs = $('#nfce-photo-thumbs');
+    if (thumbs) thumbs.innerHTML = state.photoUrls.map((url, index) => `<figure><img src="${url}" alt="Parte ${index + 1} da nota"><figcaption>Parte ${index + 1}</figcaption><button type="button" data-photo-remove="${index}" aria-label="Remover parte ${index + 1}"><i class="fa-solid fa-xmark"></i></button></figure>`).join('');
+  }
+
+  function queuePhotos(files) {
+    const incoming = [...(files || [])].filter((file) => file?.type?.startsWith('image/'));
+    incoming.forEach((file) => {
+      const duplicate = state.photos.some((saved) => saved.name === file.name && saved.size === file.size && saved.lastModified === file.lastModified);
+      if (!duplicate && state.photos.length < 20) { state.photos.push(file); state.photoUrls.push(URL.createObjectURL(file)); }
     });
-    let text = String(result?.data?.text || '');
+    updatePhotoQueue();
+    if (state.photos.length) setStatus(`${state.photos.length} ${state.photos.length === 1 ? 'imagem pronta' : 'imagens prontas'}. Adicione outra parte ou toque em “Ler nota completa”.`);
+    if (state.photos.length >= 20) setStatus('Limite de 20 imagens atingido. Já é possível ler a nota completa.', true);
+  }
+
+  async function readProductsFromPhoto(file) { return readProductsFromPhotos(file ? [file] : []); }
+
+  async function readProductsFromPhotos(files) {
+    const photos = [...(files || [])];
+    if (!photos.length) return;
+    if (!window.Tesseract?.recognize) throw new Error('O leitor de texto ainda está carregando. Aguarde alguns segundos e fotografe novamente.');
+    const readButton = $('#nfce-read-photos');
+    if (readButton) readButton.disabled = true;
+    let text = '';
+    const preparedImages = [];
+    for (let index = 0; index < photos.length; index += 1) {
+      setStatus(`Preparando imagem ${index + 1} de ${photos.length}…`);
+      const preparedImage = await prepareReceiptImage(photos[index]);
+      preparedImages.push(preparedImage);
+      const result = await window.Tesseract.recognize(preparedImage, 'por', {
+        logger: ({ status, progress }) => {
+          if (status === 'recognizing text') setStatus(`Lendo imagem ${index + 1} de ${photos.length}… ${Math.round((progress || 0) * 100)}%`);
+        }
+      });
+      text += `\n${String(result?.data?.text || '')}`;
+    }
     let products = parseOcrProducts(text);
     const expectedItems = estimateReceiptItemCount(text);
-    if (products.length < Math.max(7, expectedItems)) {
-      setStatus(`Encontrei ${products.length} itens. Fazendo uma segunda conferência…`);
-      const second = await window.Tesseract.recognize(preparedImage, 'por', { tessedit_pageseg_mode:'6', preserve_interword_spaces:'1' });
-      text += `\n${String(second?.data?.text || '')}`;
+    if (products.length < Math.max(5, Math.ceil(expectedItems * .85))) {
+      for (let index = 0; index < preparedImages.length; index += 1) {
+        setStatus(`Conferindo imagem ${index + 1} de ${photos.length} para não perder produtos…`);
+        const second = await window.Tesseract.recognize(preparedImages[index], 'por', { tessedit_pageseg_mode:'6', preserve_interword_spaces:'1' });
+        text += `\n${String(second?.data?.text || '')}`;
+      }
       products = parseOcrProducts(text);
     }
-    if (!products.length) throw new Error('Não consegui separar os produtos. Fotografe de frente, com boa luz, incluindo do primeiro item até o valor total.');
-    const totalMatch = text.match(/VALOR\s+TOTAL(?:\s+R\$)?\s*[:]?\s*([\d.,]+)/i);
+    if (!products.length) { if (readButton) readButton.disabled = false; throw new Error('Não consegui separar os produtos. Fotografe de frente, com boa luz e sobreponha um pequeno trecho entre as imagens.'); }
+    const totalMatches = [...text.matchAll(/VALOR\s+TOTAL(?:\s+R\$)?\s*[:]?\s*([\d.,]+)/ig)];
     const accessKey = (text.replace(/\s/g,'').match(/\d{44}/) || [])[0] || '';
     const issueDate = text.match(/(?:DATA\s+DE\s+AUTORIZA[CÇ][AÃ]O|EMISS[AÃ]O)\s*[:]?\s*(\d{2}\/\d{2}\/\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/i)?.[1] || text.match(/\b(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}(?::\d{2})?)\b/)?.[1] || '';
     const merchantDocument = text.match(/CNPJ\s*[:]?\s*([\d.\/\- ]{14,22})/i)?.[1]?.trim() || '';
     const lines = text.split(/\r?\n/).map(line=>line.replace(/\s+/g,' ').trim()).filter(Boolean);
     const merchant = lines.find(line=>/[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{3}/.test(line) && !/(DOCUMENTO|CODIGO|DESCRI|CONSUMIDOR|CNPJ|VALOR|TOTAL|NFC-E|PROTOCOLO)/i.test(line) && line.length>5 && line.length<100) || 'Estabelecimento lido pela CozIA';
-    state.receipt = { state:CUF_STATES[Number(accessKey.slice(0,2))] || state.keyMetadata?.state || '', merchant, merchantDocument:merchantDocument || state.keyMetadata?.merchantDocument || '', issueDate, documentNumber:state.keyMetadata?.documentNumber || '', series:state.keyMetadata?.series || '', accessKey:accessKey || state.keyMetadata?.accessKey || '', total:number(totalMatch?.[1]) || products.reduce((sum, item) => sum + item.total, 0), products, source:'photo-ocr' };
+    state.receipt = { state:CUF_STATES[Number(accessKey.slice(0,2))] || '', merchant, merchantDocument, issueDate, documentNumber:'', series:'', accessKey, total:number(totalMatches.at(-1)?.[1]) || products.reduce((sum, item) => sum + item.total, 0), products, source:'photo-ocr', imageCount:photos.length };
     savePending(state.receipt);
+    state.photoUrls.forEach((url) => URL.revokeObjectURL(url)); state.photos=[]; state.photoUrls=[]; updatePhotoQueue();
+    if (readButton) readButton.disabled = false;
     renderReceipt();
   }
 
@@ -431,7 +457,7 @@
   }
 
   function resetScanner() {
-    stopCamera(); state.receipt = null; state.keyMetadata=null; clearPending(); setStage('scan'); setStatus('Pronto para abrir a câmera.');
+    stopCamera(); state.receipt = null; state.keyMetadata=null; clearPending(); clearQueuedPhotos(); setStage('scan'); setStatus('Abra a câmera ou envie imagens da nota.');
   }
 
   function openPantry() {
@@ -447,7 +473,7 @@
     if (!$('.pantry-nfce-btn', header)) {
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'btn btn-secondary pantry-nfce-btn';
-      button.innerHTML = '<i class="fa-solid fa-qrcode"></i><span>Escanear nota</span>';
+      button.innerHTML = '<i class="fa-solid fa-camera"></i><span>Fotografar nota</span>';
       button.addEventListener('click', openScanner);
       header.prepend(button);
     }
@@ -596,14 +622,22 @@
     $$('[data-nfce-open]').forEach((button) => button.addEventListener('click', openScanner));
     $$('[data-nfce-close]').forEach((button) => button.addEventListener('click', closeScanner));
     $$('[data-nfce-rescan]').forEach((button) => button.addEventListener('click', resetScanner));
-    $('#nfce-start-camera')?.addEventListener('click', startCamera);
-    $('#nfce-image-input')?.addEventListener('change', (event) => readImage(event.target.files?.[0]));
-    $('#nfce-read-url')?.addEventListener('click', () => readReceipt($('#nfce-url-input').value));
-    $('#nfce-read-key')?.addEventListener('click', readAccessKey);
-    $('#nfce-captcha-photo')?.addEventListener('click',()=>$('#nfce-image-input')?.click());
-    $('#nfce-key-input')?.addEventListener('input', (event) => { const digits=event.target.value.replace(/\D/g,'').slice(0,44); event.target.value=digits.replace(/(\d{4})(?=\d)/g,'$1 '); });
-    $('#nfce-key-input')?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); readAccessKey(); } });
-    $('#nfce-url-input')?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); readReceipt(event.target.value); } });
+    $('#nfce-camera-input')?.addEventListener('change', (event) => { queuePhotos(event.target.files); event.target.value = ''; });
+    $('#nfce-image-input')?.addEventListener('change', (event) => { queuePhotos(event.target.files); event.target.value = ''; });
+    $('#nfce-read-photos')?.addEventListener('click', async () => {
+      try { await readProductsFromPhotos(state.photos); }
+      catch (error) { setStatus(error.message || 'Não foi possível ler as imagens.', true); }
+      finally { const button=$('#nfce-read-photos'); if(button) button.disabled=false; }
+    });
+    $('#nfce-clear-photos')?.addEventListener('click', clearQueuedPhotos);
+    $('#nfce-photo-thumbs')?.addEventListener('click', (event) => {
+      const remove = event.target.closest('[data-photo-remove]');
+      if (!remove) return;
+      const index = Number(remove.dataset.photoRemove);
+      if (!Number.isInteger(index) || !state.photos[index]) return;
+      URL.revokeObjectURL(state.photoUrls[index]); state.photos.splice(index,1); state.photoUrls.splice(index,1); updatePhotoQueue();
+      setStatus(state.photos.length ? 'Imagem removida. Adicione outra ou leia a nota completa.' : 'Abra a câmera ou envie imagens da nota.');
+    });
     $('#nfce-select-all')?.addEventListener('change', (event) => { $$('.nfce-product-check').forEach((input) => { input.checked = event.target.checked; }); updateSelectedCount(); });
     $('#nfce-products')?.addEventListener('change', updateSelectedCount);
     $('#nfce-import')?.addEventListener('click', async () => { if (await importToPantry()) openPantry(); });
