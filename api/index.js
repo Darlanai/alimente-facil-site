@@ -877,6 +877,24 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   }
 });
 
+// Confirma a senha sem expor o hash. Usado apenas antes de acoes destrutivas.
+app.post('/api/auth/verify-password', authMiddleware, async (req, res) => {
+  try {
+    const password = String(req.body?.password || '');
+    if (!password) return res.status(400).json({ ok: false, message: 'Informe sua senha.' });
+    const user = await usersCollection().findOne(
+      { _id: new ObjectId(req.auth.sub) },
+      { projection: { passwordHash: 1 } }
+    );
+    if (!user) return res.status(404).json({ ok: false, message: 'Usuario nao encontrado.' });
+    const passwordOk = await bcrypt.compare(password, user.passwordHash || '');
+    if (!passwordOk) return res.status(401).json({ ok: false, message: 'Senha incorreta.' });
+    return res.json({ ok: true, verified: true });
+  } catch (error) {
+    return res.status(500).json({ ok: false, message: 'Nao foi possivel confirmar sua senha.', error: error.message });
+  }
+});
+
 // Estado funcional do painel, associado à conta autenticada.
 app.get('/api/app-state', authMiddleware, async (req, res) => {
   try {

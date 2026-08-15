@@ -28,6 +28,32 @@
       .map((word, index) => index && ignored.has(word) ? word : word.charAt(0).toLocaleUpperCase('pt-BR') + word.slice(1)).join(' ');
   }
 
+  function smartProductName(value) {
+    const cleaned = cleanProductName(value);
+    const text = normalize(cleaned);
+    const aliases = [
+      [/couve|vfernandes/, 'Couve'], [/alf?ace.*crespa|crespa.*(?:uv|v)?$/, 'Alface crespa'],
+      [/banan.*ma(?:ca|ca)|bananama/, 'Banana maçã'], [/lar.*pera|laranj.*pera/, 'Laranja pera'],
+      [/tomate.*andr|tomat.*andr/, 'Tomate'], [/coco.*seco|^seco(?:k3|kg)?$/, 'Coco seco'],
+      [/sem.*chia|chia.*(?:vbe)?/, 'Semente de chia'], [/abob.*ital/, 'Abóbora italiana'],
+      [/sal.*mor|sal.*jas/, 'Sal'], [/feij.*car|feijao.*carioc/, 'Feijão carioca'],
+      [/ovos?.*(?:bcos|branc)|bcos.*20un/, 'Ovos brancos (20 unidades)']
+    ];
+    const direct = aliases.find(([pattern]) => pattern.test(text));
+    if (direct) return direct[1];
+    const catalog = window.AF_AI_DATABASE?.catalog;
+    if (!Array.isArray(catalog)) return cleaned;
+    const rawTokens = String(cleaned).toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z0-9]+/).filter((token) => token.length > 2);
+    let best = null; let bestScore = 0;
+    catalog.forEach((entry) => {
+      const candidate = String(entry?.name || entry?.nome || '');
+      const tokens = candidate.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z0-9]+/).filter(Boolean);
+      const score = tokens.reduce((sum, token) => sum + (rawTokens.some((raw) => raw.startsWith(token.slice(0, 4)) || token.startsWith(raw.slice(0, 4))) ? 1 : 0), 0);
+      if (score > bestScore) { bestScore = score; best = candidate; }
+    });
+    return bestScore >= 1 ? cleanProductName(best) : cleaned;
+  }
+
   async function prepareReceiptImage(file) {
     const bitmap = await createImageBitmap(file);
     const sideways = bitmap.width > bitmap.height;
@@ -196,14 +222,15 @@
         }
       }
       if (!match) return;
-      const name = cleanProductName(match[1].replace(/\b(?:KG|KA|UN|UM|UND)\s*$/i, ''));
+      const originalName = cleanProductName(match[1].replace(/\b(?:KG|KA|UN|UM|UND)\s*$/i, ''));
+      const name = smartProductName(originalName);
       if (name.length < 2 || /^(documento|codigo|descricao|valor|total)/i.test(name)) return;
       const parsedQuantity = number(match[2]);
       const quantity = parsedQuantity > 100 ? 1 : Math.max(.001, parsedQuantity || 1);
       const unit = String(match[3]).toLowerCase().replace(/und|unid|um|nx/, 'un').replace(/^ka$/, 'kg').replace(/^p[rt]$/, 'pct').replace(/^lt$/, 'L');
       const unitPrice = number(match[4]);
       const total = number(match[5]) || quantity * unitPrice;
-      if (!products.some((item) => normalize(item.name) === normalize(name) && item.total === total)) products.push({ name, quantity, unit, unitPrice, total, category:categoryFor(name) });
+      if (!products.some((item) => normalize(item.name) === normalize(name) && item.total === total)) products.push({ name, originalName, quantity, unit, unitPrice, total, category:categoryFor(name) });
     });
     if (!products.length) throw new Error('Não consegui separar os produtos. Fotografe de frente, com boa luz, incluindo do primeiro item até o valor total.');
     const totalMatch = text.match(/VALOR\s+TOTAL(?:\s+R\$)?\s*[:]?\s*([\d.,]+)/i);
@@ -229,6 +256,7 @@
         throw new Error(data.message || 'Não foi possível consultar a nota.');
       }
       state.receipt = data.receipt;
+      state.receipt.products = state.receipt.products.map((item) => ({ ...item, originalName:item.originalName || item.name, name:smartProductName(item.name), category:item.category || categoryFor(item.name) }));
       savePending(state.receipt);
       renderReceipt();
     } catch (error) { setStatus(error.message || 'Não foi possível consultar a nota.', true); }
@@ -249,7 +277,7 @@
     $('#nfce-products').innerHTML = receipt.products.map((item, index) => `
       <label class="nfce-product">
         <input class="nfce-product-check" type="checkbox" data-index="${index}" checked aria-label="Selecionar ${escapeHtml(item.name)}">
-        <span class="nfce-product-main"><strong>${escapeHtml(item.name)}</strong><small>${Number(item.quantity || 1).toLocaleString('pt-BR')} ${escapeHtml(item.unit || 'un')} · ${money(item.unitPrice)} por unidade</small><small class="nfce-category">${escapeHtml(item.category || 'Mercearia')}</small></span>
+        <span class="nfce-product-main"><strong>${escapeHtml(item.name)}</strong>${item.originalName && normalize(item.originalName) !== normalize(item.name) ? `<small class="nfce-original-name">Na nota: ${escapeHtml(item.originalName)}</small>` : ''}<small>${Number(item.quantity || 1).toLocaleString('pt-BR')} ${escapeHtml(item.unit || 'un')} · ${money(item.unitPrice)} por unidade</small><small class="nfce-category">${escapeHtml(item.category || 'Mercearia')}</small></span>
         <span class="nfce-product-price"><strong>${money(item.total)}</strong><small>total</small></span>
       </label>`).join('');
     $('#nfce-select-all').checked = true;
@@ -276,6 +304,9 @@
     if (!products.length) return;
     currentApp.state = currentApp.state || {};
     currentApp.state.despensa = Array.isArray(currentApp.state.despensa) ? currentApp.state.despensa : [];
+    currentApp.state.notasFiscais = Array.isArray(currentApp.state.notasFiscais) ? currentApp.state.notasFiscais : [];
+    const noteId = currentApp.generateId?.() || `nota-${Date.now()}`;
+    const noteProducts = [];
     let added = 0; let merged = 0;
     products.forEach((product) => {
       const key = normalize(product.name);
@@ -285,12 +316,18 @@
         existing.valor = Number(product.unitPrice || existing.valor || 0);
         existing.stock = 100;
         existing.categoria = existing.categoria || product.category;
+        existing.notaIds = Array.isArray(existing.notaIds) ? existing.notaIds : [];
+        if (!existing.notaIds.includes(noteId)) existing.notaIds.push(noteId);
+        noteProducts.push({ name:product.name, originalName:product.originalName || product.name, quantity:Number(product.quantity || 1), unit:product.unit || 'un', unitPrice:Number(product.unitPrice || 0), total:Number(product.total || 0), category:product.category || 'Mercearia', pantryItemId:existing.id, quantityImported:Number(product.quantity || 1) });
         merged += 1;
       } else {
-        currentApp.state.despensa.push({ id: currentApp.generateId?.() || `${Date.now()}-${added}`, name: product.name, qtd:Number(product.quantity || 1), unid:product.unit || 'un', valor:Number(product.unitPrice || 0), stock:100, validade:'', categoria:product.category || 'Mercearia', origem:'NFC-e', ufNota:state.receipt.state || '' });
+        const item = { id: currentApp.generateId?.() || `${Date.now()}-${added}`, name: product.name, qtd:Number(product.quantity || 1), unid:product.unit || 'un', valor:Number(product.unitPrice || 0), stock:100, validade:'', categoria:product.category || 'Mercearia', origem:'NFC-e', ufNota:state.receipt.state || '', notaIds:[noteId] };
+        currentApp.state.despensa.push(item);
+        noteProducts.push({ name:product.name, originalName:product.originalName || product.name, quantity:Number(product.quantity || 1), unit:product.unit || 'un', unitPrice:Number(product.unitPrice || 0), total:Number(product.total || 0), category:product.category || 'Mercearia', pantryItemId:item.id, quantityImported:Number(product.quantity || 1) });
         added += 1;
       }
     });
+    currentApp.state.notasFiscais.unshift({ id:noteId, merchant:state.receipt.merchant || 'Compra identificada', state:state.receipt.state || '', total:Number(state.receipt.total || 0), importedAt:new Date().toISOString(), source:state.receipt.source || 'nfce', products:noteProducts, itemsRemovedAt:null });
     currentApp.state.despensa.sort((a,b) => String(a.categoria || '').localeCompare(String(b.categoria || ''), 'pt-BR') || String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR'));
     currentApp.pantrySortMode = 'name_asc';
     currentApp.saveState?.();
@@ -324,13 +361,117 @@
   }
 
   function addPantryEntry() {
-    const header = $('#module-despensa .card-header .card-actions, #module-despensa .module-actions');
-    if (!header || $('.pantry-nfce-btn', header)) return;
-    const button = document.createElement('button');
-    button.type = 'button'; button.className = 'btn btn-secondary pantry-nfce-btn';
-    button.innerHTML = '<i class="fa-solid fa-qrcode"></i><span>Escanear nota</span>';
-    button.addEventListener('click', openScanner);
-    header.prepend(button);
+    const header = $('#module-despensa .card-header .card-actions, #module-despensa .module-actions, #module-despensa .card-header');
+    if (!header) return;
+    if (!$('.pantry-nfce-btn', header)) {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'btn btn-secondary pantry-nfce-btn';
+      button.innerHTML = '<i class="fa-solid fa-qrcode"></i><span>Escanear nota</span>';
+      button.addEventListener('click', openScanner);
+      header.prepend(button);
+    }
+    if (!$('.pantry-notes-btn', header)) {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'btn btn-secondary pantry-notes-btn';
+      button.innerHTML = '<i class="fa-solid fa-receipt"></i><span>Minhas notas</span>';
+      button.addEventListener('click', openNotes);
+      header.prepend(button);
+    }
+  }
+
+  function persistPantry() {
+    const currentApp = app();
+    currentApp?.saveState?.();
+    currentApp?.flushRemoteStateSync?.().catch(() => false);
+    currentApp?.renderDespensa?.();
+    setTimeout(addPantryEntry, 0);
+  }
+
+  function repairImportedNames() {
+    const currentApp = app();
+    const pantry = currentApp?.state?.despensa;
+    if (!Array.isArray(pantry)) return;
+    let changed = false;
+    pantry.forEach((item) => {
+      if (item?.origem !== 'NFC-e') return;
+      const repaired = smartProductName(item.name);
+      if (repaired && repaired !== item.name) { item.name = repaired; item.categoria = categoryFor(repaired); changed = true; }
+    });
+    if (!Array.isArray(currentApp.state.notasFiscais)) currentApp.state.notasFiscais = [];
+    if (!currentApp.state.notasFiscais.length) {
+      const imported = pantry.filter((item) => item?.origem === 'NFC-e');
+      if (imported.length) {
+        const noteId = `nota-legada-${Date.now()}`;
+        imported.forEach((item) => { item.notaIds = [noteId]; });
+        currentApp.state.notasFiscais.push({ id:noteId, merchant:'Importacao anterior', state:imported[0]?.ufNota || '', total:imported.reduce((sum,item) => sum + Number(item.qtd || 0) * Number(item.valor || 0), 0), importedAt:new Date().toISOString(), source:'legacy', itemsRemovedAt:null, products:imported.map((item) => ({ name:item.name, originalName:item.name, quantity:Number(item.qtd || 1), quantityImported:Number(item.qtd || 1), unit:item.unid || 'un', unitPrice:Number(item.valor || 0), total:Number(item.qtd || 1) * Number(item.valor || 0), category:item.categoria, pantryItemId:item.id })) });
+        changed = true;
+      }
+    }
+    if (changed) persistPantry();
+  }
+
+  function closeNotes() { $('#pantry-notes-modal')?.classList.remove('is-open'); $('#pantry-notes-modal')?.setAttribute('aria-hidden','true'); document.body.classList.remove('nfce-lock'); }
+  function openNotes() { repairImportedNames(); renderNotes(); $('#pantry-notes-modal')?.classList.add('is-open'); $('#pantry-notes-modal')?.setAttribute('aria-hidden','false'); document.body.classList.add('nfce-lock'); }
+  function noteDate(value) { try { return new Date(value).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' }); } catch (_error) { return ''; } }
+
+  function renderNotes() {
+    const currentApp = app();
+    const notes = Array.isArray(currentApp?.state?.notasFiscais) ? currentApp.state.notasFiscais : [];
+    const pantry = Array.isArray(currentApp?.state?.despensa) ? currentApp.state.despensa : [];
+    const list = $('#pantry-notes-list');
+    if (!list) return;
+    if (!notes.length) { list.innerHTML = '<div class="pantry-notes-empty"><i class="fa-solid fa-receipt"></i><h3>Nenhuma nota salva ainda</h3><p>As proximas compras importadas aparecerao aqui.</p></div>'; return; }
+    list.innerHTML = notes.map((note) => `<article class="pantry-note-card" data-note-id="${escapeHtml(note.id)}"><details><summary><span><small>${escapeHtml(note.state || 'NFC-e')} · ${noteDate(note.importedAt)}</small><strong>${escapeHtml(note.merchant || 'Compra identificada')}</strong><em>${(note.products || []).length} itens${note.itemsRemovedAt ? ' · itens removidos' : ''}</em></span><b>${money(note.total)}</b></summary><div class="pantry-note-products">${(note.products || []).map((product) => { const live = pantry.find((item) => String(item.id) === String(product.pantryItemId)); return `<div class="pantry-note-product"><span><strong>${escapeHtml(live?.name || product.name)}</strong><small>${Number(product.quantity || 1).toLocaleString('pt-BR')} ${escapeHtml(product.unit || 'un')} · ${money(product.total)}</small></span>${live ? `<button type="button" data-note-edit="${escapeHtml(live.id)}" aria-label="Editar ${escapeHtml(live.name)}"><i class="fa-solid fa-pen"></i></button>` : '<small class="pantry-removed-label">Removido</small>'}</div>`; }).join('')}</div><div class="pantry-note-actions"><button type="button" data-note-remove-items="${escapeHtml(note.id)}" ${note.itemsRemovedAt ? 'disabled' : ''}><i class="fa-solid fa-box-open"></i> Excluir itens</button><button type="button" data-note-delete="${escapeHtml(note.id)}"><i class="fa-regular fa-trash-can"></i> Excluir nota</button></div></details></article>`).join('');
+  }
+
+  function deleteNoteRecord(noteId) {
+    const currentApp = app();
+    if (!confirm('Excluir apenas este registro de nota? Os produtos continuarao na despensa.')) return;
+    currentApp.state.notasFiscais = currentApp.state.notasFiscais.filter((note) => String(note.id) !== String(noteId));
+    (currentApp.state.despensa || []).forEach((item) => { item.notaIds = (item.notaIds || []).filter((id) => String(id) !== String(noteId)); });
+    persistPantry(); renderNotes(); currentApp.showNotification?.('Nota excluida. Os itens foram mantidos.', 'success');
+  }
+
+  function deleteNoteItems(noteId) {
+    const currentApp = app();
+    const note = currentApp.state.notasFiscais.find((entry) => String(entry.id) === String(noteId));
+    if (!note || note.itemsRemovedAt || !confirm('Excluir da despensa os itens importados por esta nota?')) return;
+    (note.products || []).forEach((product) => {
+      const item = currentApp.state.despensa.find((entry) => String(entry.id) === String(product.pantryItemId));
+      if (!item) return;
+      item.qtd = Number(item.qtd || 0) - Number(product.quantityImported || product.quantity || 1);
+      item.notaIds = (item.notaIds || []).filter((id) => String(id) !== String(noteId));
+    });
+    currentApp.state.despensa = currentApp.state.despensa.filter((item) => Number(item.qtd || 0) > 0);
+    note.itemsRemovedAt = new Date().toISOString();
+    persistPantry(); renderNotes(); currentApp.showNotification?.('Itens desta nota removidos da despensa.', 'success');
+  }
+
+  function editNoteItem(itemId) {
+    const currentApp = app();
+    closeNotes();
+    const proxy = document.createElement('div'); proxy.dataset.id = itemId;
+    currentApp?.handleOpenDespensaEditModal?.(proxy);
+  }
+
+  function openPasswordConfirmation() { $('#pantry-password-modal')?.classList.add('is-open'); $('#pantry-password-modal')?.setAttribute('aria-hidden','false'); $('#pantry-password-error').textContent = ''; $('#pantry-confirm-password').value = ''; setTimeout(() => $('#pantry-confirm-password')?.focus(), 30); }
+  function closePasswordConfirmation() { $('#pantry-password-modal')?.classList.remove('is-open'); $('#pantry-password-modal')?.setAttribute('aria-hidden','true'); }
+  async function emptyPantry(event) {
+    event.preventDefault();
+    const currentApp = app(); const password = $('#pantry-confirm-password')?.value || ''; const button = $('#pantry-empty-confirm');
+    const token = currentApp?.getStoredAuthToken?.();
+    if (!token) { $('#pantry-password-error').textContent = 'Sua sessao expirou. Entre novamente.'; return; }
+    button.disabled = true; $('#pantry-password-error').textContent = 'Confirmando sua senha...';
+    try {
+      const response = await fetch('/api/auth/verify-password', { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${token}` }, body:JSON.stringify({ password }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.verified) throw new Error(result.message || 'Senha incorreta.');
+      currentApp.state.despensa = [];
+      (currentApp.state.notasFiscais || []).forEach((note) => { note.itemsRemovedAt = note.itemsRemovedAt || new Date().toISOString(); });
+      currentApp.saveState?.(); if (currentApp.flushRemoteStateSync) await currentApp.flushRemoteStateSync().catch(() => false);
+      currentApp.renderDespensa?.(); closePasswordConfirmation(); closeNotes(); currentApp.showNotification?.('Despensa esvaziada com seguranca.', 'success');
+    } catch (error) { $('#pantry-password-error').textContent = error.message || 'Nao foi possivel confirmar sua senha.'; }
+    finally { button.disabled = false; }
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -347,9 +488,18 @@
     $('#nfce-create-account')?.addEventListener('click', () => openAuth('signup-view'));
     $('#nfce-login')?.addEventListener('click', () => openAuth('login-view'));
     $('#nfce-open-pantry')?.addEventListener('click', openPantry);
+    $$('[data-notes-close]').forEach((button) => button.addEventListener('click', closeNotes));
+    $$('[data-password-close]').forEach((button) => button.addEventListener('click', closePasswordConfirmation));
+    $('#pantry-empty-open')?.addEventListener('click', openPasswordConfirmation);
+    $('#pantry-password-form')?.addEventListener('submit', emptyPantry);
+    $('#pantry-notes-list')?.addEventListener('click', (event) => {
+      const edit = event.target.closest('[data-note-edit]'); const remove = event.target.closest('[data-note-remove-items]'); const del = event.target.closest('[data-note-delete]');
+      if (edit) editNoteItem(edit.dataset.noteEdit); else if (remove) deleteNoteItems(remove.dataset.noteRemoveItems); else if (del) deleteNoteRecord(del.dataset.noteDelete);
+    });
     document.addEventListener('af:auth-success', () => { if (state.receipt?.products?.length) { $('#nfce-auth-gate').hidden = true; modal()?.classList.add('is-open'); document.body.classList.add('nfce-lock'); } });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && modal()?.classList.contains('is-open')) closeScanner(); });
     new MutationObserver(addPantryEntry).observe(document.body, { childList:true, subtree:true });
     addPantryEntry();
+    setTimeout(repairImportedNames, 900);
   });
 })();

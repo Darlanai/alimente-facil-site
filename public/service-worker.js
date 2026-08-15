@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.08.15.nfce-photo-v2';
+const VERSION = '2026.08.15.nfce-notes-v3';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 

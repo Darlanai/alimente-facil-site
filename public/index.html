@@ -263,6 +263,22 @@
 <div class="nfce-stage nfce-done" data-nfce-stage="done"><span class="nfce-success-mark"><i class="fa-solid fa-check"></i></span><small>TUDO ORGANIZADO</small><h3 id="nfce-done-title">Compra guardada.</h3><p id="nfce-done-copy">A CozIA organizou os produtos na sua despensa.</p><button class="nfce-primary" id="nfce-open-pantry" type="button">Ver minha despensa <i class="fa-solid fa-arrow-right"></i></button></div>
 </section>
 </div>
+<div class="nfce-modal pantry-notes-modal" id="pantry-notes-modal" aria-hidden="true">
+<div class="nfce-backdrop" data-notes-close=""></div>
+<section class="nfce-shell pantry-notes-shell" role="dialog" aria-modal="true" aria-labelledby="pantry-notes-title">
+<header class="nfce-header"><div class="nfce-brand"><span><i class="fa-solid fa-receipt"></i></span><div><small>HISTORICO DA DESPENSA</small><h2 id="pantry-notes-title">Minhas notas</h2></div></div><button class="nfce-icon-button" data-notes-close="" type="button" aria-label="Fechar minhas notas"><i class="fa-solid fa-xmark"></i></button></header>
+<div class="pantry-notes-intro"><p>Consulte cada compra, edite produtos ou remova somente o que escolher.</p></div>
+<div class="pantry-notes-list" id="pantry-notes-list"></div>
+<footer class="pantry-notes-footer"><button class="pantry-danger-outline" id="pantry-empty-open" type="button"><i class="fa-solid fa-triangle-exclamation"></i> Esvaziar toda a despensa</button><small>Esta acao exige a senha da sua conta.</small></footer>
+</section>
+</div>
+<div class="nfce-modal pantry-password-modal" id="pantry-password-modal" aria-hidden="true">
+<div class="nfce-backdrop" data-password-close=""></div>
+<section class="nfce-shell pantry-password-shell" role="dialog" aria-modal="true" aria-labelledby="pantry-password-title">
+<header class="nfce-header"><div class="nfce-brand"><span class="pantry-warning-icon"><i class="fa-solid fa-lock"></i></span><div><small>CONFIRMACAO DE SEGURANCA</small><h2 id="pantry-password-title">Esvaziar a despensa?</h2></div></div><button class="nfce-icon-button" data-password-close="" type="button" aria-label="Cancelar"><i class="fa-solid fa-xmark"></i></button></header>
+<form id="pantry-password-form" class="pantry-password-body"><p>Todos os itens serao removidos. O historico das notas sera mantido, mas esta acao nao pode ser desfeita.</p><label for="pantry-confirm-password">Digite a senha da sua conta</label><input id="pantry-confirm-password" type="password" autocomplete="current-password" required><p class="pantry-password-error" id="pantry-password-error" aria-live="polite"></p><div><button class="nfce-secondary" data-password-close="" type="button">Cancelar</button><button class="pantry-danger" id="pantry-empty-confirm" type="submit"><i class="fa-solid fa-trash-can"></i> Confirmar e esvaziar</button></div></form>
+</section>
+</div>
 <div class="modal-overlay" id="auth-modal">
 <div aria-labelledby="auth-modal-title" aria-modal="true" class="modal-box auth-modal-content" role="dialog">
 <div class="modal-header">
@@ -680,7 +696,7 @@
 <script src="auth-premium-gate-fix.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
-<script src="nfce-scanner.js?v=20260815-2" defer></script>
+<script src="nfce-scanner.js?v=20260815-3" defer></script>
 <script>
         window.addEventListener('DOMContentLoaded', () => {
             let attempts = 0;
