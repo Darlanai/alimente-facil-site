@@ -37,6 +37,7 @@
 <link href="style.css" rel="stylesheet"/>
 <link href="landing-art.css?v=20260814-6" rel="stylesheet"/>
 <link href="cozia-v7.css?v=20260814-7" rel="stylesheet"/>
+<link href="nfce-scanner.css?v=20260815-1" rel="stylesheet"/>
 <style>
     :root {
         --time-scale: 1;
@@ -92,6 +93,11 @@
 <p class="af-home-subtitle">Lista de compras, receitas, planejador, análises e despensa — tudo conectado para sua cozinha funcionar melhor.</p>
 <div class="af-home-actions">
 <button class="af-primary-cta" data-af-start-trial="" type="button">Começar agora <i class="fa-solid fa-arrow-right"></i></button>
+<button class="af-nfce-entry" data-nfce-open="" type="button" aria-label="Escanear QR Code de uma nota fiscal">
+<span class="af-nfce-entry-icon"><i class="fa-solid fa-qrcode" aria-hidden="true"></i></span>
+<span><strong>Comprou? Aponte a câmera.</strong><small>A CozIA leva a nota para sua despensa</small></span>
+<i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+</button>
 <div class="af-price-compact" aria-label="Plano por R$ 9,90 ao mês, com 7 dias grátis e sem cartão"><strong>R$ 9,90<small>/mês</small></strong><span>7 dias grátis · sem cartão</span></div>
 </div>
 <div aria-label="Benefícios do Alimente Fácil" class="af-home-benefits">
@@ -221,6 +227,41 @@
 <button class="btn btn-primary" id="item-edit-save-btn">Salvar</button>
 </div>
 </div>
+</div>
+<div class="nfce-modal" id="nfce-modal" aria-hidden="true">
+<div class="nfce-backdrop" data-nfce-close=""></div>
+<section class="nfce-shell" role="dialog" aria-modal="true" aria-labelledby="nfce-title">
+<header class="nfce-header">
+<div class="nfce-brand"><span><i class="fa-solid fa-sparkles"></i></span><div><small>COZIA ORGANIZA</small><h2 id="nfce-title">Sua compra, direto para a despensa.</h2></div></div>
+<button class="nfce-icon-button" data-nfce-close="" type="button" aria-label="Fechar leitor"><i class="fa-solid fa-xmark"></i></button>
+</header>
+<div class="nfce-progress" aria-label="Etapas da importação">
+<span class="is-active" data-nfce-step-dot="scan"><b>1</b> Escanear</span><i></i><span data-nfce-step-dot="review"><b>2</b> Conferir</span><i></i><span data-nfce-step-dot="done"><b>3</b> Guardar</span>
+</div>
+<div class="nfce-stage is-active" data-nfce-stage="scan">
+<div class="nfce-camera-wrap">
+<video id="nfce-video" playsinline muted></video>
+<canvas id="nfce-canvas" hidden></canvas>
+<div class="nfce-camera-empty" id="nfce-camera-empty"><span class="nfce-qr-glyph"><i class="fa-solid fa-qrcode"></i></span><h3>Leia o QR Code da NFC-e</h3><p>Ele costuma ficar no final da nota. Nenhuma foto é armazenada.</p></div>
+<div class="nfce-target" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+</div>
+<p class="nfce-status" id="nfce-status" aria-live="polite">Pronto para abrir a câmera.</p>
+<div class="nfce-actions">
+<button class="nfce-primary" id="nfce-start-camera" type="button"><i class="fa-solid fa-camera"></i> Abrir câmera</button>
+<label class="nfce-secondary" for="nfce-image-input"><i class="fa-regular fa-image"></i> Usar foto<input id="nfce-image-input" type="file" accept="image/*" capture="environment" hidden></label>
+</div>
+<details class="nfce-manual"><summary>Não conseguiu ler? Cole o link da nota</summary><div><input id="nfce-url-input" type="url" inputmode="url" placeholder="https://..." aria-label="Link da NFC-e"><button id="nfce-read-url" type="button">Ler nota</button></div></details>
+<p class="nfce-coverage"><i class="fa-solid fa-location-dot"></i> Compatível com NFC-e de BA, SP, MG, RJ, RS, PR, PE, CE, ES, GO e DF.</p>
+</div>
+<div class="nfce-stage" data-nfce-stage="review">
+<div class="nfce-receipt-summary"><div><small>NOTA ENCONTRADA</small><strong id="nfce-merchant">Compra identificada</strong><span id="nfce-meta"></span></div><div><small>TOTAL</small><strong id="nfce-total">R$ 0,00</strong></div></div>
+<div class="nfce-review-heading"><div><h3>Confira antes de guardar</h3><p>A CozIA já limpou os nomes e separou tudo por categoria.</p></div><label><input id="nfce-select-all" type="checkbox" checked> Selecionar todos</label></div>
+<div class="nfce-products" id="nfce-products"></div>
+<footer class="nfce-review-footer"><button class="nfce-secondary" data-nfce-rescan="" type="button"><i class="fa-solid fa-rotate-left"></i> Ler outra</button><button class="nfce-primary" id="nfce-import" type="button"><i class="fa-solid fa-box-open"></i> Enviar à despensa <span id="nfce-selected-count"></span></button></footer>
+<div class="nfce-auth-gate" id="nfce-auth-gate" hidden><div class="nfce-auth-card"><span class="nfce-auth-icon"><i class="fa-solid fa-lock"></i></span><small>SUA COMPRA ESTÁ PRONTA</small><h3>Entre para guardar na sua despensa</h3><p>Os produtos continuam aqui embaixo. Crie sua conta grátis ou entre para concluir em um clique.</p><button class="nfce-primary" id="nfce-create-account" type="button">Criar conta grátis</button><button class="nfce-text-button" id="nfce-login" type="button">Já tenho conta</button></div></div>
+</div>
+<div class="nfce-stage nfce-done" data-nfce-stage="done"><span class="nfce-success-mark"><i class="fa-solid fa-check"></i></span><small>TUDO ORGANIZADO</small><h3 id="nfce-done-title">Compra guardada.</h3><p id="nfce-done-copy">A CozIA organizou os produtos na sua despensa.</p><button class="nfce-primary" id="nfce-open-pantry" type="button">Ver minha despensa <i class="fa-solid fa-arrow-right"></i></button></div>
+</section>
 </div>
 <div class="modal-overlay" id="auth-modal">
 <div aria-labelledby="auth-modal-title" aria-modal="true" class="modal-box auth-modal-content" role="dialog">
@@ -637,6 +678,8 @@
 <script src="script.js?v=20260814-7"></script>
 <script src="landing-art.js?v=20260814-7"></script>
 <script src="auth-premium-gate-fix.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+<script src="nfce-scanner.js?v=20260815-1" defer></script>
 <script>
         window.addEventListener('DOMContentLoaded', () => {
             let attempts = 0;

@@ -439,6 +439,125 @@ function authMiddleware(req, res, next) {
   }
 }
 
+const NFCE_STATE_HOSTS = Object.freeze({
+  BA: ['sefaz.ba.gov.br'], SP: ['fazenda.sp.gov.br'], MG: ['fazenda.mg.gov.br'],
+  RJ: ['fazenda.rj.gov.br'], RS: ['sefaz.rs.gov.br'], PR: ['fazenda.pr.gov.br'],
+  PE: ['sefaz.pe.gov.br'], CE: ['sefaz.ce.gov.br'], ES: ['sefaz.es.gov.br'],
+  GO: ['sefaz.go.gov.br', 'economia.go.gov.br'], DF: ['fazenda.df.gov.br', 'economia.df.gov.br']
+});
+
+function nfceStateFromHostname(hostname) {
+  const host = String(hostname || '').toLowerCase().replace(/^www\./, '');
+  return Object.entries(NFCE_STATE_HOSTS).find(([, domains]) =>
+    domains.some((domain) => host === domain || host.endsWith(`.${domain}`))
+  )?.[0] || '';
+}
+
+function validateNfceUrl(rawUrl) {
+  let parsed;
+  try { parsed = new URL(String(rawUrl || '').trim()); } catch (_error) {
+    const error = new Error('O QR Code não contém um link válido de NFC-e.');
+    error.statusCode = 400; throw error;
+  }
+  if (parsed.protocol !== 'https:') {
+    const error = new Error('Por segurança, a consulta da nota precisa usar HTTPS.');
+    error.statusCode = 400; throw error;
+  }
+  const state = nfceStateFromHostname(parsed.hostname);
+  if (!state) {
+    const error = new Error('Esta Secretaria da Fazenda ainda não está na área atendida.');
+    error.statusCode = 422; error.payload = { supportedStates: Object.keys(NFCE_STATE_HOSTS) }; throw error;
+  }
+  return { url: parsed.toString(), state };
+}
+
+function decodeNfceText(value) {
+  return String(value || '').replace(/<br\s*\/?\s*>/gi, ' ').replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'").replace(/&ccedil;/gi, 'ç').replace(/&atilde;/gi, 'ã')
+    .replace(/&otilde;/gi, 'õ').replace(/&aacute;/gi, 'á').replace(/&eacute;/gi, 'é')
+    .replace(/&iacute;/gi, 'í').replace(/&oacute;/gi, 'ó').replace(/&uacute;/gi, 'ú')
+    .replace(/\s+/g, ' ').trim();
+}
+
+function nfceNumber(value) {
+  const normalized = String(value || '').replace(/[^0-9,.-]/g, '').replace(/\.(?=\d{3}(?:\D|$))/g, '').replace(',', '.');
+  const number = Number.parseFloat(normalized);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function titleCaseProduct(value) {
+  const ignored = new Set(['de','da','do','das','dos','com','sem','e']);
+  return decodeNfceText(value).replace(/^\d+\s*[-–.]?\s*/, '').replace(/\s*\(c[oó]digo.*$/i, '')
+    .replace(/\b(UN|UND|UNID|KG|G|LT|L|ML|PCT|CX)\b.*$/i, '').trim().toLocaleLowerCase('pt-BR')
+    .split(' ').filter(Boolean).slice(0, 10).map((word, index) => index && ignored.has(word) ? word : word.charAt(0).toLocaleUpperCase('pt-BR') + word.slice(1)).join(' ');
+}
+
+function categorizeNfceProduct(name) {
+  const text = String(name || '').toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const groups = [
+    ['Hortifruti', /banana|maca|laranja|limao|manga|tomate|cebola|alho|batata|cenoura|alface|fruta|verdura|legume/],
+    ['Carnes e ovos', /carne|frango|peixe|bacon|linguica|ovo/], ['Laticínios', /leite|queijo|iogurte|manteiga|requeijao/],
+    ['Bebidas', /agua|suco|refrigerante|cerveja|vinho|cafe|cha/], ['Padaria', /pao|bolo|biscoito|torrada/],
+    ['Grãos e massas', /arroz|feijao|macarrao|farinha|aveia|lentilha|grao/], ['Limpeza', /detergente|sabao|amaciante|desinfetante|limpeza/],
+    ['Higiene', /papel higienico|shampoo|sabonete|creme dental|desodorante/]
+  ];
+  return groups.find(([, pattern]) => pattern.test(text))?.[0] || 'Mercearia';
+}
+
+function parseNfceHtml(html, state, sourceUrl) {
+  const rows = [...String(html || '').matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)];
+  const products = [];
+  for (const row of rows) {
+    const cells = [...row[1].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((match) => decodeNfceText(match[1]));
+    const joined = cells.join(' | ');
+    if (cells.length < 2 || /descri[cç][aã]o|produto|quantidade|valor\s*total/i.test(joined)) continue;
+    let name = cells.find((cell) => /[a-záàâãéêíóôõúç]{3}/i.test(cell) && !/^\s*(qtd|un|vl|r\$|\d+[,.]?\d*)\s*$/i.test(cell));
+    if (!name) continue;
+    const quantityMatch = joined.match(/(?:qtd\.?|quantidade)\s*[:\-]?\s*([\d.,]+)/i);
+    const unitMatch = joined.match(/(?:un\.?|unidade)\s*[:\-]?\s*(un|und|kg|g|l|lt|ml|pct|cx)/i);
+    const money = [...joined.matchAll(/(?:R\$\s*)?([\d.]+,\d{2})/g)].map((match) => nfceNumber(match[1]));
+    const quantity = Math.max(.001, nfceNumber(quantityMatch?.[1]) || nfceNumber(cells.find((cell) => /^\d+(?:[.,]\d+)?$/.test(cell))) || 1);
+    const total = money.at(-1) || 0;
+    const cleanName = titleCaseProduct(name);
+    if (cleanName.length < 2 || products.some((item) => item.name === cleanName && item.total === total)) continue;
+    products.push({ name: cleanName, quantity, unit: (unitMatch?.[1] || 'un').toLowerCase().replace('und','un').replace('lt','L'), total, unitPrice: total && quantity ? total / quantity : 0, category: categorizeNfceProduct(cleanName) });
+  }
+  const plain = decodeNfceText(html);
+  const merchant = decodeNfceText(html.match(/<(?:h1|h2|h3|div)[^>]*(?:class|id)=["'][^"']*(?:emit|empresa|razao|estabelecimento)[^"']*["'][^>]*>([\s\S]*?)<\/(?:h1|h2|h3|div)>/i)?.[1]) || 'Estabelecimento identificado';
+  const totalMatch = plain.match(/(?:valor\s+a\s+pagar|valor\s+total|total\s+da\s+nota)\s*R?\$?\s*([\d.]+,\d{2})/i);
+  const accessKey = (plain.match(/\b(\d{44})\b/) || sourceUrl.match(/[?&]p=(\d{44})/i) || [])[1] || '';
+  if (!products.length) {
+    const error = new Error('A nota foi localizada, mas a Secretaria não liberou os produtos neste formato. Tente uma foto nítida ou consulte novamente em instantes.');
+    error.statusCode = 422; throw error;
+  }
+  return { state, merchant: merchant.slice(0, 100), accessKey, total: nfceNumber(totalMatch?.[1]) || products.reduce((sum, item) => sum + item.total, 0), products };
+}
+
+async function fetchNfceDocument(initialUrl) {
+  let current = initialUrl;
+  for (let redirects = 0; redirects < 4; redirects += 1) {
+    validateNfceUrl(current);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12_000);
+    let response;
+    try { response = await fetch(current, { redirect: 'manual', signal: controller.signal, headers: { 'User-Agent': 'AlimenteFacil-NFCe/1.0', Accept: 'text/html,application/xhtml+xml' } }); }
+    finally { clearTimeout(timer); }
+    if ([301,302,303,307,308].includes(response.status)) {
+      const location = response.headers.get('location');
+      if (!location) throw new Error('A Secretaria redirecionou a consulta sem informar o destino.');
+      current = new URL(location, current).toString(); continue;
+    }
+    if (!response.ok) { const error = new Error(`A Secretaria da Fazenda respondeu com status ${response.status}. Tente novamente em instantes.`); error.statusCode = 502; throw error; }
+    const declaredLength = Number(response.headers.get('content-length') || 0);
+    if (declaredLength > 2_000_000) { const error = new Error('A resposta da nota excedeu o limite seguro.'); error.statusCode = 413; throw error; }
+    const html = await response.text();
+    if (Buffer.byteLength(html, 'utf8') > 2_000_000) { const error = new Error('A resposta da nota excedeu o limite seguro.'); error.statusCode = 413; throw error; }
+    return { html, finalUrl: current };
+  }
+  const error = new Error('A consulta da nota teve redirecionamentos demais.'); error.statusCode = 502; throw error;
+}
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -448,7 +567,8 @@ app.use('/api', async (req, res, next) => {
     '/health',
     '/contact',
     '/billing/checkout-link',
-    '/chef'
+    '/chef',
+    '/nfce/preview'
   ]);
 
   if (noDbRoutes.has(req.path)) {
@@ -477,6 +597,16 @@ app.get('/api/health', (_req, res) => {
     hasJwtSecret: Boolean(JWT_SECRET),
     mongoConnected: Boolean(db)
   });
+});
+
+app.post('/api/nfce/preview', async (req, res) => {
+  try {
+    const validated = validateNfceUrl(req.body?.url);
+    const { html, finalUrl } = await fetchNfceDocument(validated.url);
+    return res.json({ ok: true, receipt: parseNfceHtml(html, validated.state, finalUrl), privacy: 'A imagem do QR Code não é enviada nem armazenada.' });
+  } catch (error) {
+    return res.status(error.statusCode || 502).json({ ok: false, message: error.message || 'Não foi possível consultar esta NFC-e.', ...(error.payload || {}) });
+  }
 });
 
 app.get('/api/db-test', async (_req, res) => {
