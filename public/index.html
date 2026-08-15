@@ -37,7 +37,7 @@
 <link href="style.css" rel="stylesheet"/>
 <link href="landing-art.css?v=20260814-6" rel="stylesheet"/>
 <link href="cozia-v7.css?v=20260814-7" rel="stylesheet"/>
-<link href="nfce-scanner.css?v=20260815-4" rel="stylesheet"/>
+<link href="nfce-scanner.css?v=20260815-5" rel="stylesheet"/>
 <link href="purchase-intelligence.css?v=20260815-2" rel="stylesheet"/>
 <link href="system-sync.css?v=20260815-5" rel="stylesheet"/>
 <style>
@@ -244,14 +244,14 @@
 <div class="nfce-camera-wrap nfce-photo-wrap">
 <div class="nfce-camera-empty" id="nfce-camera-empty"><span class="nfce-qr-glyph"><i class="fa-solid fa-receipt"></i></span><h3>Fotografe sua nota fiscal</h3><p>Notas compridas podem ser enviadas em várias imagens. Fotografe de cima para baixo, sem cortar produtos.</p></div>
 </div>
-<div class="nfce-photo-queue" id="nfce-photo-queue" hidden><div class="nfce-photo-queue-head"><span><strong id="nfce-photo-count">0 imagens</strong><small>A CozIA lerá todas como uma única nota.</small></span><button id="nfce-clear-photos" type="button">Limpar</button></div><div class="nfce-photo-thumbs" id="nfce-photo-thumbs"></div></div>
+<div class="nfce-photo-queue" id="nfce-photo-queue" hidden><div class="nfce-photo-queue-head"><span><strong id="nfce-photo-count">0 arquivos</strong><small>A CozIA lerá tudo como uma única nota.</small></span><button id="nfce-clear-photos" type="button">Limpar</button></div><div class="nfce-photo-thumbs" id="nfce-photo-thumbs"></div></div>
 <p class="nfce-status" id="nfce-status" aria-live="polite">Abra a câmera ou envie imagens da nota.</p>
 <div class="nfce-actions">
 <label class="nfce-primary nfce-camera-primary" for="nfce-camera-input"><i class="fa-solid fa-camera"></i> Abrir câmera<input id="nfce-camera-input" type="file" accept="image/*" capture="environment" hidden></label>
-<label class="nfce-secondary" for="nfce-image-input"><i class="fa-regular fa-images"></i> Enviar imagens<input id="nfce-image-input" type="file" accept="image/*" multiple hidden></label>
+<label class="nfce-secondary" for="nfce-image-input"><i class="fa-solid fa-paperclip"></i> Anexar arquivos<input id="nfce-image-input" type="file" accept="image/*,.pdf,.txt,.csv,.xlsx,.xls,.json,text/plain,text/csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple hidden></label>
 </div>
 <button class="nfce-primary nfce-read-photos" id="nfce-read-photos" type="button" hidden><i class="fa-solid fa-wand-magic-sparkles"></i> Ler nota completa</button>
-<p class="nfce-coverage"><i class="fa-solid fa-shield-check"></i> As imagens são processadas para transcrever a compra; somente os dados conferidos seguem para a despensa.</p>
+<p class="nfce-coverage"><i class="fa-solid fa-mobile-screen"></i> Fotos, PDF, TXT, CSV e Excel. Os dados do painel ficam somente neste aparelho.</p>
 </div>
 <div class="nfce-stage" data-nfce-stage="review">
 <div class="nfce-receipt-summary"><div><small>NOTA ENCONTRADA</small><strong id="nfce-merchant">Compra identificada</strong><span id="nfce-meta"></span></div><div><small>TOTAL</small><strong id="nfce-total">R$ 0,00</strong></div></div>
@@ -687,11 +687,13 @@
 <script src="ai-data-health-profiles.js?v=20260814-6"></script>
 <script src="ai-data-cozia-brain.js?v=20260814-7"></script>
 <script src="assistant-pro.js?v=20260814-7"></script>
-<script src="script.js?v=20260814-7"></script>
+<script src="script.js?v=20260815-8"></script>
 <script src="landing-art.js?v=20260814-7"></script>
 <script src="auth-premium-gate-fix.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
-<script src="nfce-scanner.js?v=20260815-11" defer></script>
+<script src="nfce-scanner.js?v=20260815-12" defer></script>
 <script src="purchase-intelligence.js?v=20260815-2" defer></script>
 <script src="system-sync.js?v=20260815-1" defer></script>
 <script>

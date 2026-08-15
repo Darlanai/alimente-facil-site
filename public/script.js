@@ -12152,15 +12152,9 @@ console.log('handleSignup chamada');
   };
 
   app.pushRemoteAppState = async function() {
-    const token = this.getStoredAuthToken?.();
-    if (!token || !this.isLoggedIn || !this._remoteStateReady) return false;
+    if (!this.isLoggedIn || !this._remoteStateReady) return false;
     const payload = this.getPanelStatePayload();
     localStorage.setItem(this.getAccountStateKey(), JSON.stringify(payload));
-    await this.apiFetchJson('/api/app-state', {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ state: payload })
-    });
     return true;
   };
 
@@ -12181,22 +12175,13 @@ console.log('handleSignup chamada');
   };
 
   app.loadRemoteAppState = async function() {
-    const token = this.getStoredAuthToken?.();
-    if (!token || !this.isLoggedIn) return false;
+    if (!this.isLoggedIn) return false;
     this._remoteStateReady = false;
     let applied = false;
     try {
-      const remote = await this.apiFetchJson('/api/app-state', { headers: { Authorization: `Bearer ${token}` } });
-      if (remote?.state) applied = this.applyPanelStatePayload(remote.state);
-    } catch (error) {
-      console.warn('Dados online indisponíveis; usando cópia local.', error?.message);
-    }
-    if (!applied) {
-      try {
-        const local = JSON.parse(localStorage.getItem(this.getAccountStateKey()) || 'null');
-        if (local) applied = this.applyPanelStatePayload(local);
-      } catch (_error) {}
-    }
+      const local = JSON.parse(localStorage.getItem(this.getAccountStateKey()) || 'null');
+      if (local) applied = this.applyPanelStatePayload(local);
+    } catch (_error) {}
     this._remoteStateReady = true;
     originalSaveState();
     if (this.isAppMode) this.renderAllPanelContent?.();

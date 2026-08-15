@@ -11,6 +11,9 @@
   const number = (value) => Number.parseFloat(String(value || '').replace(/\//g, '7').replace(/[^0-9,.-]/g, '').replace(/\.(?=\d{3}(?:\D|$))/g, '').replace(',', '.')) || 0;
   const CUF_STATES = {12:'AC',27:'AL',16:'AP',13:'AM',29:'BA',23:'CE',53:'DF',32:'ES',52:'GO',21:'MA',51:'MT',50:'MS',31:'MG',15:'PA',25:'PB',41:'PR',26:'PE',22:'PI',33:'RJ',24:'RN',43:'RS',11:'RO',14:'RR',42:'SC',35:'SP',28:'SE',17:'TO'};
 
+  function nameSimilarity(left,right){const a=String(left||'').toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/[^a-z0-9]+/).filter(token=>token.length>1);const b=String(right||'').toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/[^a-z0-9]+/).filter(token=>token.length>1);if(!a.length||!b.length)return 0;const hits=a.filter(token=>b.some(other=>token===other||(token.length>3&&other.length>3&&token.slice(0,4)===other.slice(0,4)))).length;return hits/Math.max(a.length,b.length);}
+  function sameProductCandidate(left,right){const leftNo=String(left.itemNumber||left.ocrItemNo||''),rightNo=String(right.itemNumber||right.ocrItemNo||'');if(leftNo&&rightNo&&leftNo===rightNo)return true;const totalClose=Math.abs(Number(left.total||0)-Number(right.total||0))<.021;const qtyClose=Math.abs(Number(left.quantity||1)-Number(right.quantity||1))<.011;const unitClose=String(left.unit||'un').toLowerCase()===String(right.unit||'un').toLowerCase();if(!totalClose||!qtyClose||!unitClose)return false;const a=normalize(left.originalName||left.name),b=normalize(right.originalName||right.name);return a===b||a.includes(b)||b.includes(a)||nameSimilarity(left.originalName||left.name,right.originalName||right.name)>=.5;}
+
   function categoryFor(name) {
     const text = normalize(name);
     const groups = [
@@ -201,7 +204,7 @@
   }
 
   function clearQueuedPhotos() {
-    state.photoUrls.forEach((url) => URL.revokeObjectURL(url));
+    state.photoUrls.filter(Boolean).forEach((url) => URL.revokeObjectURL(url));
     state.photos = [];
     state.photoUrls = [];
     updatePhotoQueue();
@@ -215,23 +218,53 @@
     const readButton = $('#nfce-read-photos');
     if (readButton) readButton.hidden = !count;
     const countNode = $('#nfce-photo-count');
-    if (countNode) countNode.textContent = `${count} ${count === 1 ? 'imagem adicionada' : 'imagens adicionadas'}`;
+    if (countNode) countNode.textContent = `${count} ${count === 1 ? 'arquivo adicionado' : 'arquivos adicionados'}`;
     const thumbs = $('#nfce-photo-thumbs');
-    if (thumbs) thumbs.innerHTML = state.photoUrls.map((url, index) => `<figure><img src="${url}" alt="Parte ${index + 1} da nota"><figcaption>Parte ${index + 1}</figcaption><button type="button" data-photo-remove="${index}" aria-label="Remover parte ${index + 1}"><i class="fa-solid fa-xmark"></i></button></figure>`).join('');
+    if (thumbs) thumbs.innerHTML = state.photos.map((file, index) => { const url=state.photoUrls[index]; const extension=String(file.name||'arquivo').split('.').pop().toUpperCase(); return `<figure>${url?`<img src="${url}" alt="Parte ${index + 1} da nota">`:`<span class="nfce-file-icon"><i class="fa-solid fa-file-lines"></i><b>${escapeHtml(extension)}</b></span>`}<figcaption>${escapeHtml(file.name||`Parte ${index+1}`)}</figcaption><button type="button" data-photo-remove="${index}" aria-label="Remover arquivo ${index + 1}"><i class="fa-solid fa-xmark"></i></button></figure>`; }).join('');
   }
 
   function queuePhotos(files) {
-    const incoming = [...(files || [])].filter((file) => file?.type?.startsWith('image/'));
+    const allowed=/\.(?:pdf|txt|csv|xlsx|xls|json)$/i;
+    const incoming = [...(files || [])].filter((file) => file?.type?.startsWith('image/')||allowed.test(file?.name||''));
     incoming.forEach((file) => {
       const duplicate = state.photos.some((saved) => saved.name === file.name && saved.size === file.size && saved.lastModified === file.lastModified);
-      if (!duplicate && state.photos.length < 20) { state.photos.push(file); state.photoUrls.push(URL.createObjectURL(file)); }
+      if (!duplicate && state.photos.length < 20) { state.photos.push(file); state.photoUrls.push(file.type?.startsWith('image/')?URL.createObjectURL(file):''); }
     });
     updatePhotoQueue();
-    if (state.photos.length) setStatus(`${state.photos.length} ${state.photos.length === 1 ? 'imagem pronta' : 'imagens prontas'}. Adicione outra parte ou toque em “Ler nota completa”.`);
-    if (state.photos.length >= 20) setStatus('Limite de 20 imagens atingido. Já é possível ler a nota completa.', true);
+    if (state.photos.length) setStatus(`${state.photos.length} ${state.photos.length === 1 ? 'arquivo pronto' : 'arquivos prontos'}. Adicione outro ou toque em “Ler nota completa”.`);
+    if (state.photos.length >= 20) setStatus('Limite de 20 arquivos atingido. Já é possível ler a nota completa.', true);
   }
 
   async function readProductsFromPhoto(file) { return readProductsFromPhotos(file ? [file] : []); }
+
+  function canvasToImageFile(canvas,name){return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(new File([blob],name,{type:'image/jpeg'})):reject(new Error('Não foi possível preparar o arquivo.')),'image/jpeg',.9));}
+
+  async function textToImageFiles(text,label){
+    const clean=String(text||'').replace(/\r/g,'').trim(); if(!clean)return [];
+    const rawLines=clean.split('\n');const lines=[];rawLines.forEach(line=>{const value=line||' ';for(let start=0;start<value.length;start+=92)lines.push(value.slice(start,start+92));});
+    const results=[];const pageSize=64;
+    for(let page=0;page<Math.ceil(lines.length/pageSize)&&page<20;page+=1){const canvas=document.createElement('canvas');canvas.width=1800;canvas.height=2200;const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.fillStyle='#111';context.font='24px monospace';context.textBaseline='top';lines.slice(page*pageSize,(page+1)*pageSize).forEach((line,index)=>context.fillText(line,55,55+index*32));results.push(await canvasToImageFile(canvas,`${label}-${page+1}.jpg`));}
+    return results;
+  }
+
+  async function expandAttachment(file){
+    if(file.type?.startsWith('image/'))return [file];
+    const name=String(file.name||'arquivo');
+    if(/\.pdf$/i.test(name)){
+      if(!window.pdfjsLib)throw new Error('O leitor de PDF ainda está carregando. Aguarde alguns segundos.');
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;const pages=[];
+      for(let index=1;index<=Math.min(pdf.numPages,20);index+=1){const page=await pdf.getPage(index);const viewport=page.getViewport({scale:2.2});const canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;pages.push(await canvasToImageFile(canvas,`${name}-pagina-${index}.jpg`));}
+      return pages;
+    }
+    if(/\.(?:xlsx|xls)$/i.test(name)){
+      if(!window.XLSX)throw new Error('O leitor de Excel ainda está carregando. Aguarde alguns segundos.');
+      const workbook=window.XLSX.read(await file.arrayBuffer(),{type:'array'});const text=workbook.SheetNames.map(sheet=>`PLANILHA: ${sheet}\n${window.XLSX.utils.sheet_to_csv(workbook.Sheets[sheet],{FS:' | '})}`).join('\n\n');return textToImageFiles(text,name);
+    }
+    return textToImageFiles(await file.text(),name);
+  }
+
+  async function expandAttachments(files){const expanded=[];for(let index=0;index<files.length;index+=1){setStatus(`Preparando arquivo ${index+1} de ${files.length}…`);expanded.push(...await expandAttachment(files[index]));if(expanded.length>20)throw new Error('Os arquivos geraram páginas demais. Envie no máximo 20 páginas por leitura.');}return expanded;}
 
   async function fileToVisionDataUrl(file) {
     const bitmap = await createImageBitmap(file);
@@ -266,22 +299,24 @@
       const originalName=receiptProductName(item.namePrinted);
       const quantity=Number(item.quantity||1),unit=String(item.unit||'un'),unitPrice=Number(item.unitPrice||0),total=Number(item.total||quantity*unitPrice);
       const itemNumber=String(item.itemNumber||'');
-      const duplicate=merged.find(entry=>(itemNumber&&entry.itemNumber===itemNumber)||(!itemNumber&&normalize(entry.originalName)===normalize(originalName)&&Math.abs(entry.total-total)<.011&&Math.abs(entry.quantity-quantity)<.001));
       const product={name:originalName,originalName,analysisName:smartProductName(originalName),quantity,unit,unitPrice:unitPrice||(quantity?total/quantity:0),total,category:categoryFor(originalName),itemNumber,confidence:Number(item.confidence||0),source:'vision'};
+      const duplicate=merged.find(entry=>sameProductCandidate(entry,product));
       if(!duplicate)merged.push(product); else if(product.confidence>duplicate.confidence)Object.assign(duplicate,product);
     });
     if(!merged.length)throw new Error('Nenhum produto foi identificado com segurança.');
     const metadata=parts.reduce((result,part)=>({merchant:result.merchant||part.merchant,merchantDocument:result.merchantDocument||part.merchantDocument,issueDate:result.issueDate||part.issueDate,documentNumber:result.documentNumber||part.documentNumber,series:result.series||part.series,accessKey:result.accessKey||part.accessKey,total:Number(part.total||result.total||0)}),{});
     state.receipt={state:CUF_STATES[Number(String(metadata.accessKey||'').slice(0,2))]||'',merchant:metadata.merchant||'Compra identificada',merchantDocument:metadata.merchantDocument||'',issueDate:metadata.issueDate||'',documentNumber:metadata.documentNumber||'',series:metadata.series||'',accessKey:metadata.accessKey||'',total:Number(metadata.total||0)||merged.reduce((sum,item)=>sum+item.total,0),products:merged,source:'photo-vision',imageCount:photos.length};
-    savePending(state.receipt); state.photoUrls.forEach(url=>URL.revokeObjectURL(url)); state.photos=[];state.photoUrls=[];updatePhotoQueue();renderReceipt();
+    savePending(state.receipt); state.photoUrls.filter(Boolean).forEach(url=>URL.revokeObjectURL(url)); state.photos=[];state.photoUrls=[];updatePhotoQueue();renderReceipt();
     return true;
   }
 
   async function readProductsFromPhotos(files) {
-    const photos = [...(files || [])];
-    if (!photos.length) return;
+    const attachments = [...(files || [])];
+    if (!attachments.length) return;
     const readButton = $('#nfce-read-photos');
     if (readButton) readButton.disabled = true;
+    const photos=await expandAttachments(attachments);
+    if(!photos.length)throw new Error('Os arquivos não possuem conteúdo legível.');
     try { if(await readReceiptWithVision(photos))return; }
     catch(_visionError){ setStatus('Fazendo a leitura de segurança no aparelho…'); }
     if (!window.Tesseract?.recognize) throw new Error('O leitor de segurança ainda está carregando. Aguarde alguns segundos e tente novamente.');
@@ -317,7 +352,7 @@
     const merchant = lines.find(line=>/[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]{3}/.test(line) && !/(DOCUMENTO|CODIGO|DESCRI|CONSUMIDOR|CNPJ|VALOR|TOTAL|NFC-E|PROTOCOLO)/i.test(line) && line.length>5 && line.length<100) || 'Estabelecimento lido pela CozIA';
     state.receipt = { state:CUF_STATES[Number(accessKey.slice(0,2))] || '', merchant, merchantDocument, issueDate, documentNumber:'', series:'', accessKey, total:number(totalMatches.at(-1)?.[1]) || products.reduce((sum, item) => sum + item.total, 0), products, source:'photo-ocr', imageCount:photos.length };
     savePending(state.receipt);
-    state.photoUrls.forEach((url) => URL.revokeObjectURL(url)); state.photos=[]; state.photoUrls=[]; updatePhotoQueue();
+    state.photoUrls.filter(Boolean).forEach((url) => URL.revokeObjectURL(url)); state.photos=[]; state.photoUrls=[]; updatePhotoQueue();
     if (readButton) readButton.disabled = false;
     renderReceipt();
   }
@@ -356,11 +391,11 @@
       let unitPrice=number(prices[0]);
       if(prices.length===1&&quantity)unitPrice=total/quantity;
       const analysisName=smartProductName(originalName);
-      const name=analysisName&&normalize(analysisName)!==normalize(originalName)?analysisName:originalName;
-      const duplicate=products.find(item=>(ocrItemNo&&item.ocrItemNo===ocrItemNo)||(normalize(item.originalName)===normalize(originalName)&&Math.abs(item.total-total)<.011));
+      const name=originalName;
       const product={name,originalName,analysisName,quantity,unit,unitPrice,total:total||quantity*unitPrice,category:categoryFor(analysisName||originalName),ocrItemNo};
+      const duplicate=products.find(item=>sameProductCandidate(item,product));
       if(!duplicate)products.push(product);
-      else if(originalName.length<duplicate.originalName.length)Object.assign(duplicate,product);
+      else if(!duplicate.ocrItemNo&&product.ocrItemNo)Object.assign(duplicate,product);
     });
     return products;
   }
@@ -662,7 +697,7 @@
     finally { button.disabled = false; }
   }
 
-  window.AF_NFCE_TESTS = { parseOcrProducts, estimateReceiptItemCount, smartProductName };
+  window.AF_NFCE_TESTS = { parseOcrProducts, estimateReceiptItemCount, smartProductName, sameProductCandidate };
 
   document.addEventListener('DOMContentLoaded', () => {
     $$('[data-nfce-open]').forEach((button) => button.addEventListener('click', openScanner));

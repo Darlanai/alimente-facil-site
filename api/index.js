@@ -676,6 +676,7 @@ app.use('/api', async (req, res, next) => {
     '/contact',
     '/billing/checkout-link',
     '/chef',
+    '/receipts/vision',
     '/nfce/preview'
   ]);
 
