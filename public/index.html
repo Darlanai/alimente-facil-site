@@ -39,7 +39,7 @@
 <link href="cozia-v7.css?v=20260814-7" rel="stylesheet"/>
 <link href="nfce-scanner.css?v=20260815-2" rel="stylesheet"/>
 <link href="purchase-intelligence.css?v=20260815-2" rel="stylesheet"/>
-<link href="system-sync.css?v=20260815-2" rel="stylesheet"/>
+<link href="system-sync.css?v=20260815-3" rel="stylesheet"/>
 <style>
     :root {
         --time-scale: 1;
@@ -248,8 +248,7 @@
 <div class="nfce-target" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 </div>
 <p class="nfce-status" id="nfce-status" aria-live="polite">Pronto para abrir a câmera.</p>
-<button class="nfce-official-link" id="nfce-official-link" type="button" hidden><i class="fa-solid fa-arrow-up-right-from-square"></i> Validar no portal oficial</button>
-<div class="nfce-validation-return" id="nfce-validation-return" hidden><span><i class="fa-solid fa-shield-check"></i></span><div><strong>O Alimente Fácil ficará aguardando</strong><small>Resolva o reCAPTCHA na janela oficial e volte. Ao fechar a janela, tentaremos continuar automaticamente.</small><button id="nfce-validation-continue" type="button">Já validei · continuar</button></div></div>
+<div class="nfce-captcha-fallback" id="nfce-captcha-fallback" hidden><span><i class="fa-solid fa-camera"></i></span><div><strong>A Fazenda protegeu esta consulta</strong><small>Você continua no Alimente Fácil. Fotografe a área dos produtos e a CozIA conclui a importação.</small><button id="nfce-captcha-photo" type="button">Fotografar os itens</button></div></div>
 <div class="nfce-actions">
 <button class="nfce-primary nfce-camera-primary" id="nfce-start-camera" type="button"><i class="fa-solid fa-expand"></i> Escanear QR Code</button>
 <label class="nfce-secondary" for="nfce-image-input"><i class="fa-regular fa-image"></i> Fotografar nota<input id="nfce-image-input" type="file" accept="image/*" capture="environment" hidden></label>
@@ -667,11 +666,6 @@
 </div>
 <button aria-label="Conversar com a CozIA" class="af-chatbot-toggle af-assistant-toggle" id="af-chatbot-toggle" title="Conversar com a CozIA" type="button">
 <img alt="" aria-hidden="true" src="alimenta-ai-icon.png?v=20260814-6"/>
-<span class="af-assistant-toggle-label">Fale com a CozIA</span>
-</button>
-<button aria-label="Abrir sugestão da CozIA" class="af-ai-invite" id="af-ai-invite" type="button">
-<img alt="" aria-hidden="true" src="alimenta-ai-icon.png?v=20260814-6"/>
-<span>🛒 Vamos criar sua primeira lista?</span>
 </button>
 <div class="pwa-banner" id="pwa-floating-banner" style="display:none;">
 <div class="pwa-banner-content">
@@ -700,7 +694,7 @@
 <script src="auth-premium-gate-fix.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
-<script src="nfce-scanner.js?v=20260815-6" defer></script>
+<script src="nfce-scanner.js?v=20260815-7" defer></script>
 <script src="purchase-intelligence.js?v=20260815-2" defer></script>
 <script src="system-sync.js?v=20260815-1" defer></script>
 <script>
