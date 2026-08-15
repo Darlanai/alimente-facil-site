@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.08.11.account-persistence-v1';
+const VERSION = '2026.08.14.assistant-pro-v30';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -12,6 +12,9 @@ const APP_SHELL = [
   '/index.html',
   '/style.css',
   '/script.js',
+  '/assistant-knowledge.js',
+  '/assistant-pro.js',
+  '/landing-art.css',
   '/auth-premium-gate-fix.js',
   '/reset-password.html',
   '/manifest.webmanifest',
@@ -121,14 +124,7 @@ self.addEventListener('fetch', (event) => {
 
   // Static assets
   const dest = request.destination;
-  // JS/CSS precisam priorizar a versão publicada para correções de conta não
-  // ficarem presas em um cache antigo. Fontes podem continuar em SWR.
-  if (dest === 'style' || dest === 'script') {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
-  if (dest === 'font') {
+  if (dest === 'style' || dest === 'script' || dest === 'font') {
     event.respondWith(staleWhileRevalidate(request));
     return;
   }

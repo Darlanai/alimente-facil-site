@@ -138,6 +138,158 @@ html body #landing-auth-btn:hover,html body #landing-auth-btn.power-on:hover,htm
   border:0!important;background:transparent!important;box-shadow:none!important;filter:none!important;backdrop-filter:none!important;
   transform:none!important;color:#78f1df!important;
 }
+
+/* V6 prioridade final — mantém a assistente acima de regras legadas. */
+html body #af-chatbot.af-chatbot-lite{
+  left:50%!important;right:auto!important;top:clamp(76px,10vh,108px)!important;bottom:auto!important;
+  width:min(430px,calc(100vw - 24px))!important;height:min(600px,calc(100dvh - 98px))!important;
+  transform:translate(-50%,12px) scale(.985)!important;
+}
+html body #af-chatbot.af-chatbot-lite.af-open{transform:translateX(-50%)!important}
+html body #af-chatbot.af-chatbot-lite .af-avatar-lite{display:grid!important;place-items:center!important;overflow:hidden!important;background:linear-gradient(145deg,rgba(169,239,139,.15),rgba(64,230,204,.07))!important}
+html body #af-chatbot.af-chatbot-lite .af-avatar-lite img{display:block!important;width:34px!important;height:34px!important;object-fit:contain!important;filter:drop-shadow(0 4px 10px rgba(61,235,190,.23))!important}
+
+html body #af-chatbot-toggle.af-assistant-toggle,
+html body #af-chatbot-toggle.af-assistant-toggle:hover,
+html body #af-chatbot-toggle.af-assistant-toggle:active,
+html body #af-chatbot-toggle.af-assistant-toggle:focus,
+html body #af-chatbot-toggle.af-assistant-toggle.is-dragging,
+html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable{
+  position:fixed!important;left:50%!important;right:auto!important;top:auto!important;bottom:82px!important;
+  width:172px!important;min-width:172px!important;max-width:172px!important;height:48px!important;min-height:48px!important;max-height:48px!important;
+  transform:translateX(-50%)!important;padding:0 15px!important;gap:9px!important;
+  border:1px solid rgba(169,239,139,.24)!important;background:linear-gradient(145deg,rgba(10,27,17,.94),rgba(9,20,14,.88))!important;
+  box-shadow:0 15px 42px rgba(0,0,0,.34),0 0 24px rgba(94,236,190,.08)!important;
+}
+html body #af-chatbot-toggle.af-assistant-toggle:hover{background:linear-gradient(145deg,rgba(17,43,27,.97),rgba(9,27,18,.94))!important}
+html body #af-chatbot-toggle.af-assistant-toggle img{display:block!important;width:30px!important;height:30px!important;flex:0 0 30px!important;object-fit:contain!important;filter:drop-shadow(0 4px 9px rgba(78,240,197,.22))!important}
+html body #af-chatbot-toggle.af-assistant-toggle .af-assistant-toggle-label{font:800 12px/1 Manrope,sans-serif!important;letter-spacing:.01em!important;text-overflow:clip!important}
+
+html body .af-ai-invite{left:50%!important;right:auto!important;bottom:142px!important;transform:translate(-50%,8px) scale(.98)!important;max-width:min(350px,calc(100vw - 24px))!important;border-color:rgba(169,239,139,.18)!important;background:rgba(7,21,13,.94)!important}
+html body .af-ai-invite.is-visible{transform:translateX(-50%)!important}
+html body .af-ai-invite:hover{transform:translate(-50%,-2px)!important}
+html body .af-ai-invite img{display:block!important;width:28px!important;height:28px!important;flex:0 0 28px!important;object-fit:contain!important;filter:drop-shadow(0 4px 9px rgba(78,240,197,.18))!important}
+
+@media(max-width:760px){
+  html body #af-chatbot.af-chatbot-lite{left:50%!important;right:auto!important;top:66px!important;bottom:auto!important;width:calc(100vw - 18px)!important;height:min(600px,calc(100dvh - 76px))!important}
+  html body #af-chatbot-toggle.af-assistant-toggle,
+  html body #af-chatbot-toggle.af-assistant-toggle:hover,
+  html body #af-chatbot-toggle.af-assistant-toggle:active,
+  html body #af-chatbot-toggle.af-assistant-toggle:focus,
+  html body #af-chatbot-toggle.af-assistant-toggle.is-dragging,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable{left:50%!important;right:auto!important;bottom:74px!important;width:158px!important;min-width:158px!important;max-width:158px!important;height:45px!important;min-height:45px!important;max-height:45px!important;transform:translateX(-50%)!important;font-size:11px!important}
+  html body #af-chatbot-toggle.af-assistant-toggle img{width:27px!important;height:27px!important;flex-basis:27px!important}
+  html body .af-ai-invite{left:50%!important;right:auto!important;bottom:130px!important;width:max-content!important;max-width:calc(100vw - 22px)!important;font-size:10px!important}
+}
+
+/* V6 — identidade própria e cartões de perfil alimentar. */
+html body #af-chatbot.af-chatbot-lite{
+  left:50%!important;right:auto!important;top:clamp(76px,10vh,108px)!important;bottom:auto!important;
+  width:min(430px,calc(100vw - 24px))!important;height:min(600px,calc(100dvh - 98px))!important;
+  transform:translate(-50%,12px) scale(.985)!important;
+}
+html body #af-chatbot.af-chatbot-lite.af-open{transform:translateX(-50%)!important}
+html body #af-chatbot.af-chatbot-lite .af-avatar-lite{display:grid!important;place-items:center!important;overflow:hidden;background:linear-gradient(145deg,rgba(169,239,139,.15),rgba(64,230,204,.07))!important}
+html body #af-chatbot.af-chatbot-lite .af-avatar-lite img{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(61,235,190,.23))}
+html body #af-chatbot.af-chatbot-lite .af-bot-name{font-size:14px;letter-spacing:.02em}
+html body #af-chatbot.af-chatbot-lite .af-bot-status{color:rgba(221,255,208,.76);font-size:9px}
+
+html body #af-chatbot-toggle.af-assistant-toggle,
+html body #af-chatbot-toggle.af-assistant-toggle:hover,
+html body #af-chatbot-toggle.af-assistant-toggle:active,
+html body #af-chatbot-toggle.af-assistant-toggle:focus,
+html body #af-chatbot-toggle.af-assistant-toggle.is-dragging,
+html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable{
+  position:fixed!important;left:50%!important;right:auto!important;top:auto!important;bottom:82px!important;
+  width:172px!important;min-width:172px!important;max-width:172px!important;height:48px!important;min-height:48px!important;max-height:48px!important;
+  transform:translateX(-50%)!important;padding:0 15px!important;gap:9px!important;
+  border:1px solid rgba(169,239,139,.24)!important;background:linear-gradient(145deg,rgba(10,27,17,.94),rgba(9,20,14,.88))!important;
+  box-shadow:0 15px 42px rgba(0,0,0,.34),0 0 24px rgba(94,236,190,.08)!important;
+}
+html body #af-chatbot-toggle.af-assistant-toggle:hover{background:linear-gradient(145deg,rgba(17,43,27,.97),rgba(9,27,18,.94))!important}
+html body #af-chatbot-toggle.af-assistant-toggle img{display:block;width:30px;height:30px;flex:0 0 30px;object-fit:contain;filter:drop-shadow(0 4px 9px rgba(78,240,197,.22))}
+html body #af-chatbot-toggle.af-assistant-toggle .af-assistant-toggle-label{font:800 12px/1 Manrope,sans-serif;letter-spacing:.01em;text-overflow:clip}
+
+.af-ai-invite{left:50%!important;right:auto!important;bottom:142px!important;transform:translate(-50%,8px) scale(.98)!important;max-width:min(350px,calc(100vw - 24px));border-color:rgba(169,239,139,.18);background:rgba(7,21,13,.94)}
+.af-ai-invite.is-visible{transform:translateX(-50%)!important}
+.af-ai-invite:hover{transform:translate(-50%,-2px)!important}
+.af-ai-invite img{width:28px;height:28px;flex:0 0 28px;object-fit:contain;filter:drop-shadow(0 4px 9px rgba(78,240,197,.18))}
+
+.af-ai-profile-strip{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px}
+.af-ai-profile-strip span{display:inline-flex;align-items:center;min-height:25px;padding:5px 8px;border-radius:999px;background:rgba(169,239,139,.09);border:1px solid rgba(169,239,139,.16);color:#e8ffde;font:750 9px/1 Manrope,sans-serif}
+.af-ai-health-note{margin:8px 0;padding:9px 10px;border-radius:11px;background:rgba(94,202,255,.07);border-left:2px solid rgba(94,202,255,.45);color:rgba(235,248,255,.76);font:550 9px/1.45 Manrope,sans-serif}
+
+@media(max-width:760px){
+  html body #af-chatbot.af-chatbot-lite{left:50%!important;right:auto!important;top:66px!important;bottom:auto!important;width:calc(100vw - 18px)!important;height:min(600px,calc(100dvh - 76px))!important}
+  html body #af-chatbot-toggle.af-assistant-toggle,
+  html body #af-chatbot-toggle.af-assistant-toggle:hover,
+  html body #af-chatbot-toggle.af-assistant-toggle:active,
+  html body #af-chatbot-toggle.af-assistant-toggle:focus,
+  html body #af-chatbot-toggle.af-assistant-toggle.is-dragging,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable{left:50%!important;right:auto!important;bottom:74px!important;width:158px!important;min-width:158px!important;max-width:158px!important;height:45px!important;min-height:45px!important;max-height:45px!important;transform:translateX(-50%)!important;font-size:11px!important}
+  html body #af-chatbot-toggle.af-assistant-toggle img{width:27px;height:27px;flex-basis:27px}
+  .af-ai-invite{left:50%!important;right:auto!important;bottom:130px!important;width:max-content;max-width:calc(100vw - 22px);font-size:10px}
+}
+
+/* Assistente conversacional local */
+.af-ai-composer{display:grid!important;grid-template-columns:minmax(0,1fr) 40px 40px!important;gap:7px!important;align-items:center!important}
+.af-ai-voice{display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:50%;background:rgba(120,241,223,.1);color:#78f1df;cursor:pointer;transition:.2s ease}
+.af-ai-voice:hover{background:rgba(120,241,223,.18);transform:translateY(-1px)}
+.af-ai-voice.is-listening{color:#fff;background:#ef476f;animation:afVoicePulse 1s ease-in-out infinite}
+@keyframes afVoicePulse{50%{box-shadow:0 0 0 8px rgba(239,71,111,.14)}}
+.af-ai-result-card{margin:10px 0 2px;padding:12px;border:1px solid rgba(120,241,223,.17);border-radius:16px;background:rgba(255,255,255,.055);box-shadow:0 10px 28px rgba(0,0,0,.1)}
+.af-ai-result-card header{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.af-ai-result-card header>span{font-size:20px}.af-ai-result-card header div{display:grid;gap:1px}.af-ai-result-card header strong{font-size:13px}.af-ai-result-card header small,.af-ai-result-card>small{font-size:10px;opacity:.65}
+.af-ai-result-card h5{margin:10px 0 5px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.72}
+.af-ai-result-card p{margin:7px 0;font-size:11px;line-height:1.5}
+.af-ai-result-card ul{display:grid;gap:5px;margin:0;padding:0;list-style:none}
+.af-ai-result-card li{display:flex;justify-content:space-between;gap:10px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.07);font-size:11px}
+.af-ai-result-card li b{font-size:10px;white-space:nowrap;color:#aaf59f}
+.af-ai-mini-chart{display:grid;gap:8px}.af-ai-mini-chart>div{display:grid;grid-template-columns:78px 1fr 22px;align-items:center;gap:7px;font-size:10px}
+.af-ai-mini-chart i{height:6px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.09)}.af-ai-mini-chart i b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#78f1df,#aaf59f)}
+
+/* V4 — experiência conversacional e prévia comercial para visitantes */
+.af-ai-list-card{position:relative;overflow:hidden;min-height:190px}
+.af-ai-list-card.is-guest{padding-bottom:96px}
+.af-ai-list-card .af-ai-locked-row{filter:blur(3.4px);opacity:.35;user-select:none;pointer-events:none}
+.af-ai-guest-gate{position:absolute;left:8px;right:8px;bottom:8px;min-height:82px;display:grid;grid-template-columns:30px 1fr;align-content:center;column-gap:8px;padding:10px 12px;border:1px solid rgba(169,239,139,.26);border-radius:14px;background:linear-gradient(135deg,rgba(12,28,17,.94),rgba(15,38,24,.97));box-shadow:0 -12px 32px rgba(5,12,8,.7)}
+.af-ai-guest-gate i{grid-row:1/3;align-self:center;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:rgba(169,239,139,.13);color:#a9ef8b}
+.af-ai-guest-gate strong{font:800 11px/1.2 Sora,sans-serif;color:#f5ffeF}
+.af-ai-guest-gate span{margin-top:3px;font:550 9.5px/1.35 Manrope,sans-serif;color:rgba(255,255,255,.7)}
+.af-msg.bot:has(.af-ai-list-card)+.af-ai-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;position:relative;z-index:4}
+.af-msg.bot:has(.af-ai-list-card)+.af-ai-actions .af-ai-action{justify-content:space-between;border-radius:12px;padding:10px 11px}
+html body #af-chatbot.af-chatbot-lite .af-chatbot-body{scroll-behavior:smooth}
+html body #af-chatbot.af-chatbot-lite .af-msg.bot strong{color:#eaffdf}
+@media(max-width:520px){
+  .af-ai-list-card.is-guest{padding-bottom:104px}
+  .af-ai-guest-gate{min-height:90px}
+}
+
+/* V5 — conversa proativa, janela central e consistência visual após login */
+html body #af-chatbot.af-chatbot-lite{
+  top:clamp(82px,11vh,118px)!important;bottom:auto!important;right:clamp(12px,3vw,28px)!important;
+  height:min(650px,calc(100dvh - 104px))!important;
+}
+.af-ai-invite{position:fixed;right:20px;bottom:140px;z-index:2147481500;display:flex;align-items:center;gap:9px;max-width:min(310px,calc(100vw - 28px));padding:11px 14px;border:1px solid rgba(169,239,139,.28);border-radius:18px;background:rgba(7,21,13,.92);color:#f4fff0;box-shadow:0 18px 50px rgba(0,0,0,.34);backdrop-filter:blur(18px);font:750 11px/1.3 Manrope,sans-serif;text-align:left;cursor:pointer;opacity:0;visibility:hidden;transform:translateY(8px) scale(.98);transition:.25s ease}
+.af-ai-invite.is-visible{opacity:1;visibility:visible;transform:none}
+.af-ai-invite i{display:grid;place-items:center;width:26px;height:26px;flex:0 0 26px;border-radius:50%;background:rgba(169,239,139,.12);color:#a9ef8b}
+.af-ai-invite:hover{border-color:rgba(169,239,139,.52);background:rgba(12,32,20,.96);transform:translateY(-2px)}
+body.af-assistant-open .af-ai-invite,body.modal-open .af-ai-invite,body.app-mode .af-ai-invite{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+.af-ai-budget-line{display:flex;justify-content:space-between;align-items:center;margin:2px 0 9px;padding:7px 9px;border-radius:10px;background:rgba(169,239,139,.08);font-size:10px;color:rgba(255,255,255,.72)}
+.af-ai-budget-line b{color:#a9ef8b;font-size:11px}
+.af-ai-result-card li b em{display:block;margin-top:2px;color:rgba(255,255,255,.55);font-style:normal;font-size:8px;font-weight:600}
+.af-ai-price-note{display:block!important;margin-top:8px;line-height:1.3!important;color:rgba(255,255,255,.46)!important}
+html body:not(.app-mode) #landing-video-container.af-landing-stage{filter:none!important}
+html body:not(.app-mode) .af-landing-stage .af-landing-video{filter:saturate(.88) contrast(1.01) brightness(.84)!important}
+html body:not(.app-mode).af-landing-dark .af-landing-stage .af-landing-video,
+html body:not(.app-mode).landing-lua-mode .af-landing-stage .af-landing-video,
+html body:not(.app-mode).lua-mode .af-landing-stage .af-landing-video{filter:saturate(.84) contrast(1.03) brightness(.7)!important}
+html body.af-authenticated-landing:not(.app-mode):not(.modal-open):not(.af-assistant-open)>#afRevealDivider{display:block!important;opacity:1!important;visibility:visible!important;pointer-events:none!important}
+html body.af-authenticated-landing:not(.app-mode):not(.modal-open):not(.af-assistant-open)>#afRevealDivider span{pointer-events:auto!important}
+@media(max-width:760px){
+  html body #af-chatbot.af-chatbot-lite{top:74px!important;height:min(650px,calc(100dvh - 86px))!important}
+  .af-ai-invite{right:12px;bottom:126px;max-width:calc(100vw - 24px)}
+}
 html body .af-top-icon,html body .af-theme-icon,html body .af-power-button,
 html body .af-top-icon:hover,html body .af-theme-icon:hover,html body .af-power-button:hover{
   box-shadow:none!important;filter:none!important;text-shadow:none!important;
@@ -1849,4 +2001,47 @@ html body #landing-auth-btn,html body #landing-auth-btn.power-on,html body #land
 html body #landing-auth-btn:hover,html body #landing-auth-btn.power-on:hover,html body #landing-auth-btn.active:hover{
   border:0!important;background:transparent!important;box-shadow:none!important;filter:none!important;backdrop-filter:none!important;
   transform:none!important;color:#78f1df!important;
+}
+
+/* V6 final — assistente centralizada acima das regras legadas. */
+html body #af-chatbot.af-chatbot-lite{
+  left:50%!important;right:auto!important;top:clamp(76px,10vh,108px)!important;bottom:auto!important;
+  width:min(430px,calc(100vw - 24px))!important;height:min(600px,calc(100dvh - 98px))!important;
+  transform:translate(-50%,12px) scale(.985)!important;
+}
+html body #af-chatbot.af-chatbot-lite.af-open{transform:translateX(-50%)!important}
+html body #af-chatbot.af-chatbot-lite .af-avatar-lite{display:grid!important;place-items:center!important;overflow:hidden!important;background:linear-gradient(145deg,rgba(169,239,139,.15),rgba(64,230,204,.07))!important}
+html body #af-chatbot.af-chatbot-lite .af-avatar-lite img{display:block!important;width:34px!important;height:34px!important;object-fit:contain!important;filter:drop-shadow(0 4px 10px rgba(61,235,190,.23))!important}
+
+html body #af-chatbot-toggle.af-assistant-toggle,
+html body #af-chatbot-toggle.af-assistant-toggle:hover,
+html body #af-chatbot-toggle.af-assistant-toggle:active,
+html body #af-chatbot-toggle.af-assistant-toggle:focus,
+html body #af-chatbot-toggle.af-assistant-toggle.is-dragging,
+html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable{
+  position:fixed!important;left:50%!important;right:auto!important;top:auto!important;bottom:82px!important;
+  width:172px!important;min-width:172px!important;max-width:172px!important;height:48px!important;min-height:48px!important;max-height:48px!important;
+  transform:translateX(-50%)!important;padding:0 15px!important;gap:9px!important;
+  border:1px solid rgba(169,239,139,.24)!important;background:linear-gradient(145deg,rgba(10,27,17,.94),rgba(9,20,14,.88))!important;
+  box-shadow:0 15px 42px rgba(0,0,0,.34),0 0 24px rgba(94,236,190,.08)!important;
+}
+html body #af-chatbot-toggle.af-assistant-toggle:hover{background:linear-gradient(145deg,rgba(17,43,27,.97),rgba(9,27,18,.94))!important}
+html body #af-chatbot-toggle.af-assistant-toggle img{display:block!important;width:30px!important;height:30px!important;flex:0 0 30px!important;object-fit:contain!important;filter:drop-shadow(0 4px 9px rgba(78,240,197,.22))!important}
+html body #af-chatbot-toggle.af-assistant-toggle .af-assistant-toggle-label{font:800 12px/1 Manrope,sans-serif!important;letter-spacing:.01em!important;text-overflow:clip!important}
+
+html body .af-ai-invite{left:50%!important;right:auto!important;bottom:142px!important;transform:translate(-50%,8px) scale(.98)!important;max-width:min(350px,calc(100vw - 24px))!important;border-color:rgba(169,239,139,.18)!important;background:rgba(7,21,13,.94)!important}
+html body .af-ai-invite.is-visible{transform:translateX(-50%)!important}
+html body .af-ai-invite:hover{transform:translate(-50%,-2px)!important}
+html body .af-ai-invite img{display:block!important;width:28px!important;height:28px!important;flex:0 0 28px!important;object-fit:contain!important;filter:drop-shadow(0 4px 9px rgba(78,240,197,.18))!important}
+
+@media(max-width:760px){
+  html body #af-chatbot.af-chatbot-lite{left:50%!important;right:auto!important;top:66px!important;bottom:auto!important;width:calc(100vw - 18px)!important;height:min(600px,calc(100dvh - 76px))!important}
+  html body #af-chatbot-toggle.af-assistant-toggle,
+  html body #af-chatbot-toggle.af-assistant-toggle:hover,
+  html body #af-chatbot-toggle.af-assistant-toggle:active,
+  html body #af-chatbot-toggle.af-assistant-toggle:focus,
+  html body #af-chatbot-toggle.af-assistant-toggle.is-dragging,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable{left:50%!important;right:auto!important;bottom:74px!important;width:158px!important;min-width:158px!important;max-width:158px!important;height:45px!important;min-height:45px!important;max-height:45px!important;transform:translateX(-50%)!important;font-size:11px!important}
+  html body #af-chatbot-toggle.af-assistant-toggle img{width:27px!important;height:27px!important;flex-basis:27px!important}
+  html body .af-ai-invite{left:50%!important;right:auto!important;bottom:130px!important;width:max-content!important;max-width:calc(100vw - 22px)!important;font-size:10px!important}
 }

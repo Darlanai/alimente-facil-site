@@ -32,7 +32,7 @@
 <link href="/icons/favicon-64.png" rel="icon" sizes="64x64" type="image/png"/>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Sora:wght@500;600;700;800&amp;family=Roboto+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Orbitron:wght@400;500;600;700&amp;family=Sora:wght@500;600;700;800&amp;family=Roboto+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet"/>
 <link href="style.css" rel="stylesheet"/>
 <link href="landing-art.css" rel="stylesheet"/>
@@ -68,7 +68,7 @@
 <header class="af-minimal-header">
 <a aria-label="Alimente Fácil" class="af-minimal-brand" data-af-go-landing="" href="#inicio">
 <img alt="" height="46" src="logo-af-transparent.png" width="46"/>
-<span class="af-brand-copy"><strong>ALIMENTE FÁCIL</strong><small>O futuro da sua cozinha, agora.</small></span>
+<span class="af-brand-copy"><strong><span>ALIMENTE</span><span>FÁCIL</span></strong></span>
 </a>
 
 <div class="af-top-controls">
@@ -599,6 +599,7 @@
 <form class="af-chatbot-footer af-ai-composer" id="af-ai-form">
 <label class="sr-only" for="af-ai-input">Pergunte sobre o Alimente Fácil</label>
 <input id="af-ai-input" type="text" maxlength="240" autocomplete="off" placeholder="Digite sua pergunta..."/>
+<button aria-label="Falar com o assistente" class="af-ai-voice" id="af-ai-voice" title="Usar comando de voz" type="button"><i class="fa-solid fa-microphone"></i></button>
 <button aria-label="Enviar pergunta" id="af-ai-send" type="submit"><i class="fa-solid fa-arrow-up"></i></button>
 </form>
 </div>
@@ -620,6 +621,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script src="assistant-knowledge.js"></script>
+<script src="assistant-pro.js"></script>
 <script src="script.js"></script>
 <script src="landing-art.js"></script>
 <script src="auth-premium-gate-fix.js"></script>

@@ -1,0 +1,61 @@
+/* CozIA V7 — camada final carregada depois dos estilos legados. */
+html body #af-chatbot.af-chatbot-lite{
+  width:min(460px,calc(100vw - 24px))!important;
+  height:min(620px,calc(100dvh - 96px))!important;
+}
+html body #af-chatbot.af-chatbot-lite .af-bot-name{font-size:15px!important;letter-spacing:.025em!important}
+html body #af-chatbot.af-chatbot-lite .af-bot-status{max-width:260px!important}
+
+html body #af-chatbot-toggle.af-assistant-toggle,
+html body #af-chatbot-toggle.af-assistant-toggle:hover,
+html body #af-chatbot-toggle.af-assistant-toggle:active,
+html body #af-chatbot-toggle.af-assistant-toggle:focus{
+  width:198px!important;min-width:198px!important;max-width:198px!important;
+  height:50px!important;min-height:50px!important;max-height:50px!important;
+  padding:0 17px!important;gap:10px!important;
+}
+html body #af-chatbot-toggle.af-assistant-toggle .af-assistant-toggle-label{font-size:13px!important;overflow:visible!important}
+
+html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable,
+html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable:hover,
+html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable:active,
+html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable:focus,
+html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable.is-dragging{
+  position:fixed!important;
+  left:var(--af-cozia-x,calc(50% - 99px))!important;
+  top:var(--af-cozia-y,calc(100dvh - 132px))!important;
+  right:auto!important;bottom:auto!important;
+  transform:none!important;scale:1!important;
+  width:198px!important;min-width:198px!important;max-width:198px!important;
+  height:50px!important;min-height:50px!important;max-height:50px!important;
+  touch-action:none!important;cursor:grab!important;user-select:none!important;
+}
+html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable.is-dragging{cursor:grabbing!important;transition:none!important;box-shadow:0 20px 52px rgba(0,0,0,.48),0 0 28px rgba(94,236,190,.12)!important}
+
+.af-ai-shortcuts button,.af-ai-action{white-space:normal!important}
+.af-ai-result-card header small{line-height:1.35!important}
+
+@media(max-width:760px){
+  html body #af-chatbot.af-chatbot-lite{width:calc(100vw - 14px)!important;height:min(620px,calc(100dvh - 72px))!important}
+  html body #af-chatbot-toggle.af-assistant-toggle,
+  html body #af-chatbot-toggle.af-assistant-toggle:hover,
+  html body #af-chatbot-toggle.af-assistant-toggle:active,
+  html body #af-chatbot-toggle.af-assistant-toggle:focus,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable:hover,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable:active,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable:focus,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable.is-dragging{
+    width:184px!important;min-width:184px!important;max-width:184px!important;
+    height:47px!important;min-height:47px!important;max-height:47px!important;
+  }
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable:hover,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable:active,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable:focus,
+  html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable.is-dragging{
+    left:var(--af-cozia-x,calc(50% - 92px))!important;
+    top:var(--af-cozia-y,calc(100dvh - 121px))!important;
+  }
+  html body #af-chatbot-toggle.af-assistant-toggle .af-assistant-toggle-label{font-size:12px!important}
+}

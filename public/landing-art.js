@@ -56,6 +56,12 @@
     const showHome=()=>{document.body.classList.add('af-snap-moving');setReveal(homeEdge());setTimeout(()=>document.body.classList.remove('af-snap-moving'),620)};
     const toggleSide=()=>isPanelOpen()?showHome():showPanel();
     setReveal(range?.value||homeEdge());
+    document.addEventListener('af:auth-success',()=>{
+      document.body.classList.remove('modal-open','af-assistant-open');
+      divider?.removeAttribute('aria-hidden');divider?.classList.add('show-guide','at-right');
+      if(divider){divider.style.removeProperty('display');divider.style.removeProperty('visibility');divider.style.removeProperty('opacity');divider.style.removeProperty('pointer-events')}
+      setReveal(homeEdge());setTimeout(()=>divider?.classList.remove('show-guide'),4200);
+    });
 
     // A alça é somente uma indicação discreta; clicar nela também alterna as telas.
     hint?.classList.remove('hidden');
@@ -173,10 +179,9 @@
   });
 })();
 
-/* Indicador lateral minimalista + botão Ajuda arrastável */
+/* Indicador lateral minimalista + botão móvel da CozIA */
 (()=>{
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
-
   function installEdgeBars(){
     // O indicador antigo criava spans dentro da alça. Como regras antigas estilizam
     // qualquer span descendente, isso podia gerar uma segunda aba/seta visual.
@@ -187,128 +192,42 @@
   function installDraggableHelp(){
     const help=document.getElementById('af-chatbot-toggle');
     if(!help || help.dataset.afDraggableReady==='1') return;
-
     help.dataset.afDraggableReady='1';
     help.classList.add('af-help-draggable');
-
-    const storageKey='af-help-position-v1';
-    const margin=10;
-    let dragging=false;
-    let moved=false;
-    let pointerId=null;
-    let startX=0;
-    let startY=0;
-    let startLeft=0;
-    let startTop=0;
-
-    const initialRect=help.getBoundingClientRect();
-    const initialStyles=getComputedStyle(help);
-    const fixedWidth=Math.round(initialRect.width||108);
-    const fixedHeight=Math.round(initialRect.height||46);
-
-    help.style.setProperty('--af-help-fixed-w',`${fixedWidth}px`);
-    help.style.setProperty('--af-help-fixed-h',`${fixedHeight}px`);
-    help.style.setProperty('--af-help-fixed-padding',initialStyles.padding);
-    help.style.setProperty('--af-help-fixed-radius',initialStyles.borderRadius);
-
-    // Congela as dimensões reais do botão. Durante o arraste só left/top mudam.
-    Object.assign(help.style,{
-      width:`${fixedWidth}px`,
-      minWidth:`${fixedWidth}px`,
-      maxWidth:`${fixedWidth}px`,
-      height:`${fixedHeight}px`,
-      minHeight:`${fixedHeight}px`,
-      maxHeight:`${fixedHeight}px`,
-      boxSizing:'border-box',
-      flex:'none',
-      whiteSpace:'nowrap'
-    });
-
-    const dimensions=()=>({width:fixedWidth,height:fixedHeight});
+    const storageKey='af-cozia-position-v7',margin=10;
+    let dragging=false,moved=false,suppressClick=false,pointerId=null,startX=0,startY=0,startLeft=0,startTop=0;
 
     const setPosition=(left,top,save=false)=>{
-      const {width,height}=dimensions();
-      const x=clamp(left,margin,Math.max(margin,innerWidth-width-margin));
-      const y=clamp(top,margin,Math.max(margin,innerHeight-height-margin));
-
-      help.style.setProperty('--af-help-x',`${Math.round(x)}px`);
-      help.style.setProperty('--af-help-y',`${Math.round(y)}px`);
-
-      if(save){
-        try{
-          localStorage.setItem(storageKey,JSON.stringify({x:x/innerWidth,y:y/innerHeight}));
-        }catch(_error){}
-      }
+      const width=help.offsetWidth||198,height=help.offsetHeight||48;
+      const x=clamp(left,margin,Math.max(margin,innerWidth-width-margin)),y=clamp(top,margin,Math.max(margin,innerHeight-height-margin));
+      help.style.setProperty('--af-cozia-x',`${Math.round(x)}px`);
+      help.style.setProperty('--af-cozia-y',`${Math.round(y)}px`);
+      if(save){try{localStorage.setItem(storageKey,JSON.stringify({x:x/Math.max(1,innerWidth-width),y:y/Math.max(1,innerHeight-height)}))}catch(_error){}}
     };
-
     const restore=()=>{
-      let saved=null;
-      try{saved=JSON.parse(localStorage.getItem(storageKey)||'null')}catch(_error){}
-
-      const {width,height}=dimensions();
-      if(saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)){
-        setPosition(saved.x*innerWidth,saved.y*innerHeight);
-      }else{
-        setPosition(innerWidth-width-16,innerHeight-height-116);
-      }
+      let saved=null;try{saved=JSON.parse(localStorage.getItem(storageKey)||'null')}catch(_error){}
+      const width=help.offsetWidth||198,height=help.offsetHeight||48;
+      if(saved&&Number.isFinite(saved.x)&&Number.isFinite(saved.y))setPosition(saved.x*Math.max(1,innerWidth-width),saved.y*Math.max(1,innerHeight-height));
+      else setPosition((innerWidth-width)/2,innerHeight-height-82);
     };
-
     help.addEventListener('pointerdown',event=>{
-      if(event.button!==undefined && event.button!==0) return;
-
-      const rect=help.getBoundingClientRect();
-
-      /* As dimensões foram congeladas na inicialização. O arraste altera apenas left/top. */
-
-      dragging=true;
-      moved=false;
-      pointerId=event.pointerId;
-      startX=event.clientX;
-      startY=event.clientY;
-      startLeft=rect.left;
-      startTop=rect.top;
-
-      help.classList.add('is-dragging');
-      help.setPointerCapture?.(event.pointerId);
+      if(event.button!==undefined&&event.button!==0)return;
+      const rect=help.getBoundingClientRect();dragging=true;moved=false;pointerId=event.pointerId;startX=event.clientX;startY=event.clientY;startLeft=rect.left;startTop=rect.top;
+      help.classList.add('is-dragging');help.setPointerCapture?.(event.pointerId);
     });
-
     help.addEventListener('pointermove',event=>{
-      if(!dragging || event.pointerId!==pointerId) return;
-
-      const deltaX=event.clientX-startX;
-      const deltaY=event.clientY-startY;
-      if(Math.hypot(deltaX,deltaY)>5) moved=true;
-
-      if(moved){
-        setPosition(startLeft+deltaX,startTop+deltaY);
-        event.preventDefault();
-      }
+      if(!dragging||event.pointerId!==pointerId)return;
+      const dx=event.clientX-startX,dy=event.clientY-startY;if(Math.hypot(dx,dy)>5)moved=true;
+      if(moved){setPosition(startLeft+dx,startTop+dy);event.preventDefault()}
     });
-
     const finish=event=>{
-      if(!dragging || (event && event.pointerId!==pointerId)) return;
-
-      dragging=false;
-      help.classList.remove('is-dragging');
-      const rect=help.getBoundingClientRect();
-      setPosition(rect.left,rect.top,true);
-      setTimeout(()=>{moved=false},0);
+      if(!dragging||(event&&event.pointerId!==pointerId))return;
+      dragging=false;help.classList.remove('is-dragging');const rect=help.getBoundingClientRect();setPosition(rect.left,rect.top,true);
+      if(moved){suppressClick=true;setTimeout(()=>{suppressClick=false;moved=false},0)}
     };
-
-    help.addEventListener('pointerup',finish);
-    help.addEventListener('pointercancel',finish);
-    help.addEventListener('click',event=>{
-      if(!moved) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    },true);
-
-    window.addEventListener('resize',()=>{
-      const rect=help.getBoundingClientRect();
-      setPosition(rect.left,rect.top,true);
-    });
-
-    requestAnimationFrame(restore);
+    help.addEventListener('pointerup',finish);help.addEventListener('pointercancel',finish);
+    help.addEventListener('click',event=>{if(!suppressClick)return;event.preventDefault();event.stopImmediatePropagation()},true);
+    window.addEventListener('resize',restore,{passive:true});requestAnimationFrame(restore);
   }
 
   function boot(){

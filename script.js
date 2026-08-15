@@ -3858,19 +3858,17 @@ async callGeminiAPI(userText) {
             const form = document.getElementById('af-ai-form');
             const input = document.getElementById('af-ai-input');
             const voiceBtn = document.getElementById('af-ai-voice');
-            const inviteBtn = document.getElementById('af-ai-invite');
             if (!widget || !toggleBtn || !closeBtn || !homeBtn || !bodyEl || !form || !input) return;
 
             const safe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
             const assistant = {
                 widget, toggleBtn, closeBtn, homeBtn, bodyEl, input,
                 shortcuts: [
-                    ['🛒 Digitar ingredientes','__list_with_items__'],
-                    ['✨ Lista automática','Monte uma lista automática para 2 pessoas por 7 dias'],
-                    ['🍳 Combinar uma receita','__recipe_with_items__'],
-                    ['📦 Ver minha despensa','Abrir minha despensa'],
-                    ['📅 Abrir planejador','Abrir meu planejador'],
-                    ['📊 Ver análises','Abrir minhas análises']
+                    ['🛒 Montar lista da semana','Monte uma lista de compras da semana'],
+                    ['💰 Criar lista econômica','Monte uma lista de compras econômica'],
+                    ['🍳 Sugerir uma receita','Sugira uma receita com o que tenho'],
+                    ['📅 Planejar refeições','Planeje minhas refeições da semana'],
+                    ['📊 Resumir minha cozinha','Mostre um resumo do meu painel']
                 ],
                 renderMessage(html, sender='bot'){
                     const item=document.createElement('div'); item.className=`af-msg ${sender}`;
@@ -3888,15 +3886,12 @@ async callGeminiAPI(userText) {
                 },
                 renderShortcuts(){
                     const wrap=document.createElement('div'); wrap.className='af-ai-shortcuts';
-                    this.shortcuts.forEach(([label,question])=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>question==='__list_with_items__'?this.requestIngredients():question==='__recipe_with_items__'?this.requestRecipeIngredients():this.ask(question));wrap.appendChild(b)});
+                    this.shortcuts.forEach(([label,question])=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>this.ask(question));wrap.appendChild(b)});
                     this.bodyEl.appendChild(wrap); this.scroll();
                 },
-                requestIngredients(){if(window.AF_ASSISTANT_ENGINE?.memory)window.AF_ASSISTANT_ENGINE.memory.awaiting='list_items';this.renderMessage('🛒 Digite os produtos do seu jeito. Exemplo: <strong>arroz 2 kg, feijão 1 kg, leite 2 litros e ovos 1 dúzia</strong>. Eu reconheço os itens, quantidades e unidades. ✨','bot');this.input.placeholder='Digite os ingredientes e quantidades...';this.input.focus()},
-                requestRecipeIngredients(){if(window.AF_ASSISTANT_ENGINE?.memory)window.AF_ASSISTANT_ENGINE.memory.awaiting='recipe_items';this.renderMessage('🍳 Diga o prato que deseja ou os ingredientes disponíveis. Exemplo: <strong>quero uma receita rápida com frango, batata e cenoura na airfryer</strong>. Eu combino o pedido, o modo de preparo e seu perfil alimentar. 😋','bot');this.input.placeholder='Qual receita ou ingredientes você quer usar?';this.input.focus()},
                 welcome(){
                     this.bodyEl.innerHTML='';
-                    this.renderMessage('<strong>Oi! Eu sou a CozIA 💚🍲</strong><br>Eu entendo os ingredientes que você digitar ou falar e transformo seu pedido em listas, receitas, despensa e planejamento.');
-                    this.renderMessage('Por onde começamos? 😊 Você pode digitar os ingredientes, pedir uma lista automática ou mandar eu abrir uma área do painel.','bot');
+                    this.renderMessage('<strong>Olá! Vamos organizar sua cozinha? 😊</strong><br>Posso montar listas, sugerir receitas, planejar refeições, consultar a despensa e transformar sua fala em ações no painel.');
                     this.renderShortcuts();
                 },
                 context(){return {loggedIn:!!app.isLoggedIn,state:app.state||{},plan:app.userPlan||'free'}},
@@ -3910,25 +3905,14 @@ async callGeminiAPI(userText) {
                         this.renderMessage(result.html,'bot'); this.renderActions(result.actions);
                     },260);
                 },
-                async execute(action,label){
+                execute(action,label){
                     if(String(action).startsWith('pro:')){
                         this.renderMessage(label,'user');
                         const result=window.AF_ASSISTANT_ENGINE?.perform(action,app);
-                        if(result){
-                            this.renderMessage(result.html,'bot');this.renderActions(result.actions||[]);
-                            if(result.authRequired){
-                                setTimeout(()=>{this.close();app.showAuthModal();setTimeout(()=>document.querySelector('.auth-toggle-link[data-view="signup-view"]')?.click(),80)},190);
-                            }else if(result.openModule){
-                                if(result.activeListId)app.activeListId=result.activeListId;
-                                if(result.persisted){try{await app.flushRemoteStateSync?.()}catch(_error){app.showNotification?.('Alteração salva neste aparelho; a sincronização online será repetida.','info')}}
-                                setTimeout(()=>{app.enterAppMode?.();app.activateModuleAndRender?.(result.openModule);this.close()},90);
-                            }
-                        }
+                        if(result){this.renderMessage(result.html,'bot');this.renderActions(result.actions||[])}
                         return;
                     }
-                    if(action==='list_with_items'){this.renderMessage(label,'user');this.requestIngredients();return}
-                    if(action==='recipe_with_items'||action==='meal_ideas'){this.renderMessage(label,'user');this.requestRecipeIngredients();return}
-                    const prompts={suggest_list:'Monte uma lista de compras automática da semana',list_economica:'Monte uma lista de compras econômica',customize_list:'Quero personalizar minha lista',build_planner:'Planeje minhas refeições da semana',show_summary:'Mostre um resumo do meu painel',check_low_stock:'O que está faltando ou acabando na despensa?',check_expiry:'Quais itens estão vencendo?',recipe_quick:'Quero uma receita rápida para o jantar',recipe_meal:'Quero uma receita especial para almoço ou jantar',recipe_cake:'Quero uma receita de bolo',recipe_dessert:'Quero uma receita de sobremesa',profile_vegan:'Sou vegano',profile_vegetarian:'Sou vegetariano',profile_pescatarian:'Sou pescetariano',profile_omnivore:'Sou onívoro',profile_list:'Monte uma lista para meu perfil alimentar',profile_recipe:'Sugira uma receita para meu perfil alimentar',supermarket_savings:'Quero economizar no supermercado',open_dashboard:'Abrir meu painel',open_pantry:'Abrir minha despensa',open_recipes:'Abrir minhas receitas',open_planner:'Abrir meu planejador',open_analytics:'Abrir minhas análises'};
+                    const prompts={suggest_list:'Monte uma lista de compras da semana',list_economica:'Monte uma lista de compras econômica',build_planner:'Planeje minhas refeições da semana',show_summary:'Mostre um resumo do meu painel',check_low_stock:'O que está faltando ou acabando na despensa?',check_expiry:'Quais itens estão vencendo?'};
                     if(prompts[action]){this.ask(prompts[action]);return;}
                     if(['overview','features','lists','pantry','recipes_planner','planner','expiry','meal_ideas','savings','price'].includes(action)){
                         const map={overview:'O que o Alimente Fácil faz?',features:'Quais são os recursos?',lists:'Como funcionam as listas de compras?',pantry:'Como funciona a despensa?',recipes_planner:'Como funcionam receitas e planejador?',planner:'Como funciona o planejador?',expiry:'Como funciona o controle de validades?',meal_ideas:'O que posso cozinhar com o que tenho?',savings:'Como economizar e reduzir desperdício?',price:'Quanto custa?'};
@@ -3946,7 +3930,7 @@ async callGeminiAPI(userText) {
                     if(action==='planner_to_list'){ this.ask('Como gerar uma lista a partir do planejador?'); return; }
                     const modules={nav_lista:'lista',nav_despensa:'despensa',nav_receitas:'receitas',nav_planejador:'planejador',nav_analises:'analises'};
                     if(modules[action]){
-                        if(!app.isLoggedIn){ this.renderMessage('🔐 Para abrir seus dados reais, entre ou crie uma conta. Vou continuar daqui depois da autenticação.','bot'); try{localStorage.setItem('afAssistantGuestDraft',JSON.stringify({type:'nav_module',payload:{module:modules[action]},createdAt:new Date().toISOString()}))}catch(_error){} this.close();app.showAuthModal();return; }
+                        if(!app.isLoggedIn){ this.renderMessage('Para abrir seus dados reais, entre ou crie uma conta.','bot'); this.renderActions([['Criar conta grátis','signup'],['Entrar','login']]); return; }
                         app.enterAppMode?.(); app.activateModuleAndRender?.(modules[action]); this.close();
                     }
                 },
@@ -3970,33 +3954,13 @@ async callGeminiAPI(userText) {
                         recognition.onstart=()=>{voiceBtn.classList.add('is-listening');input.placeholder='Estou ouvindo...'};
                         recognition.onresult=event=>{input.value=Array.from(event.results).map(result=>result[0].transcript).join('');if(event.results[event.results.length-1].isFinal){const spoken=input.value;setTimeout(()=>assistant.ask(spoken),120)}};
                         recognition.onerror=()=>assistant.renderMessage('Não consegui ouvir com clareza. Tente novamente ou digite seu pedido. 🎙️','bot');
-                        recognition.onend=()=>{recognition=null;voiceBtn.classList.remove('is-listening');input.placeholder='Digite ingredientes ou peça uma ação...'};
+                        recognition.onend=()=>{recognition=null;voiceBtn.classList.remove('is-listening');input.placeholder='Peça uma lista, receita ou planejamento...'};
                         try{recognition.start()}catch(e){recognition=null;}
                     });
                 }
             }
             document.addEventListener('click',e=>{if(assistant.widget.classList.contains('af-open')&&!assistant.widget.contains(e.target)&&!assistant.toggleBtn.contains(e.target))assistant.close()});
             window.AF_CONVERSATIONAL_ASSISTANT=assistant;
-            if(inviteBtn){
-                const invitationQuestions=[
-                    'Olá, CozIA',
-                    '__list_with_items__',
-                    'Monte uma lista automática para 2 pessoas por 7 dias',
-                    '__recipe_with_items__',
-                    'Olá, CozIA',
-                    'Quero economizar no supermercado',
-                    'Enviar minha lista para a despensa',
-                    'Abrir meu planejador',
-                    'Abrir minhas análises',
-                    'Olá, CozIA'
-                ];
-                const invitations=(window.AF_AI_DATABASE?.coziaConversations||[]).map((entry,index)=>[`${entry.emoji||'💚'} ${entry.text||''}`.trim(),invitationQuestions[index]||entry.text]).filter(entry=>entry[0]) || [];
-                if(!invitations.length)invitations.push(['👋 Oi! Eu sou a CozIA. Vamos organizar sua cozinha?','Olá, CozIA']);
-                let inviteIndex=0;
-                const showInvitation=()=>{const [label,question]=invitations[inviteIndex++%invitations.length];inviteBtn.querySelector('span').textContent=label;inviteBtn.dataset.question=question;inviteBtn.classList.add('is-visible')};
-                setTimeout(()=>{if(!app.isAppMode)showInvitation()},1500);setInterval(()=>{if(!app.isAppMode&&!assistant.widget.classList.contains('af-open'))showInvitation()},4800);
-                inviteBtn.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();inviteBtn.classList.remove('is-visible');assistant.open();setTimeout(()=>{if(inviteBtn.dataset.question==='__list_with_items__')assistant.requestIngredients();else if(inviteBtn.dataset.question==='__recipe_with_items__')assistant.requestRecipeIngredients();else assistant.ask(inviteBtn.dataset.question)},180)});
-            }
         }
     };
 
@@ -11367,8 +11331,6 @@ app.apiFetchJson = async function(url, options = {}) {
     this.state.user.id = user.id || '';
     this.updateStartButton?.();
     this.saveState?.();
-    document.body.classList.add('af-authenticated-landing');
-    document.dispatchEvent(new CustomEvent('af:auth-success',{detail:{user:this.state.user}}));
   };
 
   app.forceLoggedOutLanding = function() {
@@ -11380,7 +11342,6 @@ app.apiFetchJson = async function(url, options = {}) {
     this.activeModule = 'inicio';
     this.activeListId = 'listaDaSemana';
     this.updateStartButton?.();
-    document.body.classList.remove('af-authenticated-landing');
     if (this.isAppMode) this.exitAppMode?.();
     this.saveState?.();
   };
@@ -11628,16 +11589,7 @@ console.log('handleSignup chamada');
 
     this.setStoredAuthSession?.(data.token, data.user);
     this.applyAuthenticatedUser?.(data);
-    if(this._remoteStateLoadPromise)await this._remoteStateLoadPromise.catch(()=>false);
     this.closeAllModals?.();
-    const assistantResult=window.AF_ASSISTANT_ENGINE?.resumePending?.(this);
-    if(assistantResult?.openModule){
-      if(assistantResult.activeListId)this.activeListId=assistantResult.activeListId;
-      if(assistantResult.persisted)await this.flushRemoteStateSync?.().catch(()=>false);
-      this.enterAppMode?.();this.activateModuleAndRender?.(assistantResult.openModule);
-      this.showNotification?.('Seu pedido da CozIA foi salvo, sincronizado e aberto no painel. ✨','success');
-      return;
-    }
 
     if (this.isPremiumSession?.(data)) {
       this.enterAppMode?.();
@@ -11680,17 +11632,8 @@ console.log('handleSignup chamada');
 
       this.setStoredAuthSession?.(data.token, data.user);
       this.applyAuthenticatedUser?.(data);
-      if(this._remoteStateLoadPromise)await this._remoteStateLoadPromise.catch(()=>false);
       this.closeAllModals?.();
       setTimeout(() => this.syncRealUserInfoInDOM?.(), 80);
-      const assistantResult=window.AF_ASSISTANT_ENGINE?.resumePending?.(this);
-      if(assistantResult?.openModule){
-        if(assistantResult.activeListId)this.activeListId=assistantResult.activeListId;
-        if(assistantResult.persisted)await this.flushRemoteStateSync?.().catch(()=>false);
-        this.enterAppMode?.();this.activateModuleAndRender?.(assistantResult.openModule);
-        this.showNotification?.('Seu pedido da CozIA foi salvo, sincronizado e aberto no painel. ✨','success');
-        return;
-      }
 
       if (this.isPremiumSession(data)) {
         this.enterAppMode?.();
@@ -11918,8 +11861,6 @@ console.log('handleSignup chamada');
     }
     this.updateStartButton?.();
     this.saveState?.();
-    document.body.classList.add('af-authenticated-landing');
-    document.dispatchEvent(new CustomEvent('af:auth-success',{detail:{user:this.state.user}}));
   };
 
   app.forceLoggedOutLanding = function() {
@@ -11935,7 +11876,6 @@ console.log('handleSignup chamada');
     this.activeModule = 'inicio';
     this.activeListId = 'listaDaSemana';
     clearLegacyPanelState();
-    document.body.classList.remove('af-authenticated-landing');
     if (originalExitAppMode) originalExitAppMode();
     this.updateStartButton?.();
     this.saveState?.();
@@ -12170,16 +12110,6 @@ console.log('handleSignup chamada');
     this._remoteStateTimer = setTimeout(() => this.pushRemoteAppState().catch((error) => console.warn('Sincronização pendente:', error?.message)), 650);
   };
 
-  app.flushRemoteStateSync = async function() {
-    if(this._remoteStateLoadPromise)await this._remoteStateLoadPromise.catch(()=>false);
-    if(!this.isLoggedIn||!this._remoteStateReady)return false;
-    clearTimeout(this._remoteStateTimer);
-    try{return await this.pushRemoteAppState()}catch(error){
-      this.scheduleRemoteStateSync();
-      throw error;
-    }
-  };
-
   app.loadRemoteAppState = async function() {
     const token = this.getStoredAuthToken?.();
     if (!token || !this.isLoggedIn) return false;
@@ -12217,7 +12147,7 @@ console.log('handleSignup chamada');
     app.applyAuthenticatedUser = function(sessionData = {}) {
       this._remoteStateReady = false;
       const result = originalApplyAuthenticatedUser(sessionData);
-      this._remoteStateLoadPromise=this.loadRemoteAppState().catch(()=>false).finally(()=>{this._remoteStateLoadPromise=null});
+      this.loadRemoteAppState().catch(() => {});
       return result;
     };
   }

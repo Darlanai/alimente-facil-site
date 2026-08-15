@@ -126,6 +126,64 @@ body:not(.app-mode) .app-panel-container-standalone{display:flex!important;posit
   .af-reveal-divider::before{height:72px}
 }
 
+/* V2.3 — fundo neutro e controles sem brilho, inclusive quando logado. */
+html body .af-landing-video,html body.lua-mode .af-landing-video,html body.landing-lua-mode .af-landing-video{
+  filter:saturate(.88) contrast(1.01) brightness(.86)!important;
+}
+html body .af-video-shade,html body.lua-mode .af-video-shade,html body.landing-lua-mode .af-video-shade{
+  background:linear-gradient(90deg,rgba(0,0,0,.5) 0%,rgba(0,0,0,.3) 48%,rgba(0,0,0,.1) 100%),linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.05) 55%,rgba(0,0,0,.38))!important;
+}
+html body #landing-auth-btn,html body #landing-auth-btn.power-on,html body #landing-auth-btn.active,
+html body #landing-auth-btn:hover,html body #landing-auth-btn.power-on:hover,html body #landing-auth-btn.active:hover{
+  border:0!important;background:transparent!important;box-shadow:none!important;filter:none!important;backdrop-filter:none!important;
+  transform:none!important;color:#78f1df!important;
+}
+
+/* Assistente conversacional local */
+.af-ai-composer{display:grid!important;grid-template-columns:minmax(0,1fr) 40px 40px!important;gap:7px!important;align-items:center!important}
+.af-ai-voice{display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:50%;background:rgba(120,241,223,.1);color:#78f1df;cursor:pointer;transition:.2s ease}
+.af-ai-voice:hover{background:rgba(120,241,223,.18);transform:translateY(-1px)}
+.af-ai-voice.is-listening{color:#fff;background:#ef476f;animation:afVoicePulse 1s ease-in-out infinite}
+@keyframes afVoicePulse{50%{box-shadow:0 0 0 8px rgba(239,71,111,.14)}}
+.af-ai-result-card{margin:10px 0 2px;padding:12px;border:1px solid rgba(120,241,223,.17);border-radius:16px;background:rgba(255,255,255,.055);box-shadow:0 10px 28px rgba(0,0,0,.1)}
+.af-ai-result-card header{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.af-ai-result-card header>span{font-size:20px}.af-ai-result-card header div{display:grid;gap:1px}.af-ai-result-card header strong{font-size:13px}.af-ai-result-card header small,.af-ai-result-card>small{font-size:10px;opacity:.65}
+.af-ai-result-card h5{margin:10px 0 5px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.72}
+.af-ai-result-card p{margin:7px 0;font-size:11px;line-height:1.5}
+.af-ai-result-card ul{display:grid;gap:5px;margin:0;padding:0;list-style:none}
+.af-ai-result-card li{display:flex;justify-content:space-between;gap:10px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.07);font-size:11px}
+.af-ai-result-card li b{font-size:10px;white-space:nowrap;color:#aaf59f}
+.af-ai-mini-chart{display:grid;gap:8px}.af-ai-mini-chart>div{display:grid;grid-template-columns:78px 1fr 22px;align-items:center;gap:7px;font-size:10px}
+.af-ai-mini-chart i{height:6px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.09)}.af-ai-mini-chart i b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#78f1df,#aaf59f)}
+html body .af-top-icon,html body .af-theme-icon,html body .af-power-button,
+html body .af-top-icon:hover,html body .af-theme-icon:hover,html body .af-power-button:hover{
+  box-shadow:none!important;filter:none!important;text-shadow:none!important;
+}
+
+/* V2.2 — marca em duas linhas, ícones sem contorno e tipografia digital. */
+html body .af-minimal-brand{align-items:center!important}
+html body .af-brand-copy{display:flex!important;align-items:center!important;height:42px!important;gap:0!important}
+html body .af-brand-copy>strong{display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:2px!important;font-size:12px!important;line-height:.95!important;letter-spacing:.14em!important}
+html body .af-brand-copy>strong>span{display:block!important}
+html body .af-brand-copy>small{display:none!important}
+html body .af-top-icon,html body .af-power-button,html body .af-theme-icon,
+html body .af-top-icon:hover,html body .af-power-button:hover,html body .af-theme-icon:hover,
+html body .af-top-icon:focus-visible,html body .af-power-button:focus-visible,html body .af-theme-icon:focus-visible{
+  border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;
+}
+html body .af-top-icon:hover,html body .af-power-button:hover,html body .af-theme-icon:hover{background:rgba(255,255,255,.07)!important}
+html body .af-landing-moment .af-brand-moment,
+html body .af-landing-moment .af-brand-moment b,
+html body .af-landing-moment>em{font-family:'Orbitron','Roboto Mono',monospace!important}
+html body .af-landing-moment .af-brand-moment{font-weight:600!important;letter-spacing:.035em!important}
+html body .af-landing-moment .af-brand-moment b{font-weight:700!important;letter-spacing:.055em!important}
+html body .af-landing-moment>em{font-weight:500!important;letter-spacing:.015em!important}
+
+@media(max-width:760px){
+  html body .af-brand-copy{height:34px!important}
+  html body .af-brand-copy>strong{font-size:9px!important;gap:1px!important;letter-spacing:.11em!important}
+}
+
 /* Ajuste final: marca original, controles circulares sem tarja e mensagem na landing. */
 .af-brand-copy{display:grid!important;grid-template-columns:1fr!important;gap:3px!important;max-width:none!important}
 .af-brand-copy>strong{grid-column:auto!important;font-size:13px!important;letter-spacing:.15em!important}
@@ -1766,4 +1824,46 @@ html body .af-power-button.power-on{background:transparent!important}
   html body .af-top-icon:focus-visible,html body .af-power-button:focus-visible,html body .af-theme-icon:focus-visible{
     display:grid!important;width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;
   }
+}
+
+/* V2.2 final — prevalece sobre todas as versões anteriores do cabeçalho. */
+html body .af-minimal-brand{align-items:center!important}
+html body .af-brand-copy{display:flex!important;align-items:center!important;height:42px!important;gap:0!important;max-width:none!important}
+html body .af-brand-copy>strong{display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:2px!important;font-size:12px!important;line-height:.95!important;letter-spacing:.14em!important}
+html body .af-brand-copy>strong>span{display:block!important}
+html body .af-brand-copy>small{display:none!important}
+html body .af-top-icon,html body .af-power-button,html body .af-theme-icon,
+html body .af-top-icon:hover,html body .af-power-button:hover,html body .af-theme-icon:hover,
+html body .af-top-icon:focus-visible,html body .af-power-button:focus-visible,html body .af-theme-icon:focus-visible{
+  border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;
+}
+html body .af-top-icon:hover,html body .af-power-button:hover,html body .af-theme-icon:hover{background:rgba(255,255,255,.07)!important}
+html body .af-landing-moment .af-brand-moment,
+html body .af-landing-moment .af-brand-moment b,
+html body .af-landing-moment>em{font-family:'Orbitron','Roboto Mono',monospace!important}
+html body .af-landing-moment .af-brand-moment{font-weight:600!important;letter-spacing:.035em!important}
+html body .af-landing-moment .af-brand-moment b{font-weight:700!important;letter-spacing:.055em!important}
+html body .af-landing-moment>em{font-weight:500!important;letter-spacing:.015em!important}
+
+@media(max-width:760px){
+  html body .af-brand-copy{height:34px!important;gap:0!important}
+  html body .af-brand-copy>strong{font-size:9px!important;gap:1px!important;letter-spacing:.11em!important}
+  html body .af-brand-copy>small{display:none!important}
+}
+
+/* V2.3 final — neutralidade idêntica nos estados logado e deslogado. */
+html body:not(.app-mode) .af-landing-stage .af-landing-video,
+html body:not(.app-mode).lua-mode .af-landing-stage .af-landing-video,
+html body:not(.app-mode).landing-lua-mode .af-landing-stage .af-landing-video{
+  filter:saturate(.88) contrast(1.01) brightness(.86)!important;
+}
+html body:not(.app-mode) .af-landing-stage .af-video-shade,
+html body:not(.app-mode).lua-mode .af-landing-stage .af-video-shade,
+html body:not(.app-mode).landing-lua-mode .af-landing-stage .af-video-shade{
+  background:linear-gradient(90deg,rgba(0,0,0,.5) 0%,rgba(0,0,0,.3) 48%,rgba(0,0,0,.1) 100%),linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.05) 55%,rgba(0,0,0,.38))!important;
+}
+html body #landing-auth-btn,html body #landing-auth-btn.power-on,html body #landing-auth-btn.active,
+html body #landing-auth-btn:hover,html body #landing-auth-btn.power-on:hover,html body #landing-auth-btn.active:hover{
+  border:0!important;background:transparent!important;box-shadow:none!important;filter:none!important;backdrop-filter:none!important;
+  transform:none!important;color:#78f1df!important;
 }

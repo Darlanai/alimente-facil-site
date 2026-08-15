@@ -35,7 +35,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Orbitron:wght@400;500;600;700&amp;family=Sora:wght@500;600;700;800&amp;family=Roboto+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet"/>
 <link href="style.css" rel="stylesheet"/>
-<link href="landing-art.css" rel="stylesheet"/>
+<link href="landing-art.css?v=20260814-6" rel="stylesheet"/>
+<link href="cozia-v7.css?v=20260814-7" rel="stylesheet"/>
 <style>
     :root {
         --time-scale: 1;
@@ -583,11 +584,11 @@
 <div class="af-chatbot-header">
 <div class="af-header-info">
 <div aria-hidden="true" class="af-avatar af-avatar-lite">
-<i class="fa-solid fa-comments"></i>
+<img alt="" src="alimenta-ai-icon.png?v=20260814-6"/>
 </div>
 <div class="af-title-group">
-<span class="af-bot-name">Assistente Alimente Fácil</span>
-<span class="af-bot-status">Ajuda com o app e sua cozinha</span>
+<span class="af-bot-name">CozIA</span>
+<span class="af-bot-status">Sua assistente inteligente de cozinha</span>
 </div>
 </div>
 <div class="af-header-actions">
@@ -598,13 +599,18 @@
 <div aria-live="polite" class="af-chatbot-body" id="af-chatbot-body" role="log"></div>
 <form class="af-chatbot-footer af-ai-composer" id="af-ai-form">
 <label class="sr-only" for="af-ai-input">Pergunte sobre o Alimente Fácil</label>
-<input id="af-ai-input" type="text" maxlength="240" autocomplete="off" placeholder="Digite sua pergunta..."/>
+<input id="af-ai-input" type="text" maxlength="500" autocomplete="off" placeholder="Digite ingredientes, uma receita ou ação..."/>
+<button aria-label="Falar com o assistente" class="af-ai-voice" id="af-ai-voice" title="Usar comando de voz" type="button"><i class="fa-solid fa-microphone"></i></button>
 <button aria-label="Enviar pergunta" id="af-ai-send" type="submit"><i class="fa-solid fa-arrow-up"></i></button>
 </form>
 </div>
-<button aria-label="Abrir ajuda por IA do Alimente Fácil" class="af-chatbot-toggle af-assistant-toggle" id="af-chatbot-toggle" title="Ajuda por IA" type="button">
-<i aria-hidden="true" class="fa-solid fa-wand-magic-sparkles"></i>
-<span class="af-assistant-toggle-label">Ajuda IA</span>
+<button aria-label="Conversar com a CozIA" class="af-chatbot-toggle af-assistant-toggle" id="af-chatbot-toggle" title="Conversar com a CozIA" type="button">
+<img alt="" aria-hidden="true" src="alimenta-ai-icon.png?v=20260814-6"/>
+<span class="af-assistant-toggle-label">Fale com a CozIA</span>
+</button>
+<button aria-label="Abrir sugestão da CozIA" class="af-ai-invite" id="af-ai-invite" type="button">
+<img alt="" aria-hidden="true" src="alimenta-ai-icon.png?v=20260814-6"/>
+<span>🛒 Vamos criar sua primeira lista?</span>
 </button>
 <div class="pwa-banner" id="pwa-floating-banner" style="display:none;">
 <div class="pwa-banner-content">
@@ -619,9 +625,17 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
-<script src="assistant-knowledge.js"></script>
-<script src="script.js"></script>
-<script src="landing-art.js"></script>
+<script src="assistant-knowledge.js?v=20260814-4"></script>
+<script src="ai-data-catalog.js?v=20260814-4"></script>
+<script src="ai-data-pricing.js?v=20260814-5"></script>
+<script src="ai-data-recipes.js?v=20260814-4"></script>
+<script src="ai-recipes-extended.js?v=20260814-5"></script>
+<script src="ai-data-knowledge.js?v=20260814-4"></script>
+<script src="ai-data-health-profiles.js?v=20260814-6"></script>
+<script src="ai-data-cozia-brain.js?v=20260814-7"></script>
+<script src="assistant-pro.js?v=20260814-7"></script>
+<script src="script.js?v=20260814-7"></script>
+<script src="landing-art.js?v=20260814-7"></script>
 <script src="auth-premium-gate-fix.js"></script>
 <script>
         window.addEventListener('DOMContentLoaded', () => {
