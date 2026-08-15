@@ -233,12 +233,58 @@
 
   async function readProductsFromPhoto(file) { return readProductsFromPhotos(file ? [file] : []); }
 
+  async function fileToVisionDataUrl(file) {
+    const bitmap = await createImageBitmap(file);
+    const maxSide = 2200;
+    let scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    let dataUrl = '';
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale)); canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const context = canvas.getContext('2d'); context.fillStyle='#fff'; context.fillRect(0,0,canvas.width,canvas.height); context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+      dataUrl = canvas.toDataURL('image/jpeg', attempt ? .78 : .86);
+      if (dataUrl.length <= 1_500_000) break;
+      scale *= .78;
+    }
+    bitmap.close?.();
+    return dataUrl;
+  }
+
+  async function readReceiptWithVision(photos) {
+    const parts=[];
+    for(let start=0;start<photos.length;start+=2){
+      const batch=photos.slice(start,start+2);
+      setStatus(`Leitura inteligente: imagens ${start+1} a ${Math.min(start+2,photos.length)} de ${photos.length}…`);
+      const images=[]; for(const file of batch) images.push(await fileToVisionDataUrl(file));
+      const response=await fetch('/api/receipts/vision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images})});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||!data.receipt?.items?.length)throw new Error(data.message||'Leitura inteligente indisponível.');
+      parts.push(data.receipt);
+    }
+    const merged=[];
+    parts.flatMap(part=>part.items||[]).forEach((item)=>{
+      const originalName=receiptProductName(item.namePrinted);
+      const quantity=Number(item.quantity||1),unit=String(item.unit||'un'),unitPrice=Number(item.unitPrice||0),total=Number(item.total||quantity*unitPrice);
+      const itemNumber=String(item.itemNumber||'');
+      const duplicate=merged.find(entry=>(itemNumber&&entry.itemNumber===itemNumber)||(!itemNumber&&normalize(entry.originalName)===normalize(originalName)&&Math.abs(entry.total-total)<.011&&Math.abs(entry.quantity-quantity)<.001));
+      const product={name:originalName,originalName,analysisName:smartProductName(originalName),quantity,unit,unitPrice:unitPrice||(quantity?total/quantity:0),total,category:categoryFor(originalName),itemNumber,confidence:Number(item.confidence||0),source:'vision'};
+      if(!duplicate)merged.push(product); else if(product.confidence>duplicate.confidence)Object.assign(duplicate,product);
+    });
+    if(!merged.length)throw new Error('Nenhum produto foi identificado com segurança.');
+    const metadata=parts.reduce((result,part)=>({merchant:result.merchant||part.merchant,merchantDocument:result.merchantDocument||part.merchantDocument,issueDate:result.issueDate||part.issueDate,documentNumber:result.documentNumber||part.documentNumber,series:result.series||part.series,accessKey:result.accessKey||part.accessKey,total:Number(part.total||result.total||0)}),{});
+    state.receipt={state:CUF_STATES[Number(String(metadata.accessKey||'').slice(0,2))]||'',merchant:metadata.merchant||'Compra identificada',merchantDocument:metadata.merchantDocument||'',issueDate:metadata.issueDate||'',documentNumber:metadata.documentNumber||'',series:metadata.series||'',accessKey:metadata.accessKey||'',total:Number(metadata.total||0)||merged.reduce((sum,item)=>sum+item.total,0),products:merged,source:'photo-vision',imageCount:photos.length};
+    savePending(state.receipt); state.photoUrls.forEach(url=>URL.revokeObjectURL(url)); state.photos=[];state.photoUrls=[];updatePhotoQueue();renderReceipt();
+    return true;
+  }
+
   async function readProductsFromPhotos(files) {
     const photos = [...(files || [])];
     if (!photos.length) return;
-    if (!window.Tesseract?.recognize) throw new Error('O leitor de texto ainda está carregando. Aguarde alguns segundos e fotografe novamente.');
     const readButton = $('#nfce-read-photos');
     if (readButton) readButton.disabled = true;
+    try { if(await readReceiptWithVision(photos))return; }
+    catch(_visionError){ setStatus('Fazendo a leitura de segurança no aparelho…'); }
+    if (!window.Tesseract?.recognize) throw new Error('O leitor de segurança ainda está carregando. Aguarde alguns segundos e tente novamente.');
     let text = '';
     const preparedImages = [];
     for (let index = 0; index < photos.length; index += 1) {

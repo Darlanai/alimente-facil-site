@@ -12,6 +12,7 @@ app.use(cors());
 const PORT = Number(process.env.PORT || 3000);
 const XAI_API_KEY = process.env.XAI_API_KEY || process.env.GROK_API_KEY || '';
 const XAI_MODEL = process.env.XAI_MODEL || 'grok-3-mini';
+const XAI_VISION_MODEL = process.env.XAI_VISION_MODEL || 'grok-4.6';
 const MONGODB_URI = process.env.MONGODB_URI || '';
 const JWT_SECRET = process.env.JWT_SECRET || '';
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
@@ -35,6 +36,7 @@ try { nodemailer = require('nodemailer'); } catch (_error) { nodemailer = null; 
 
 let mongoClient = null;
 let db = null;
+const receiptVisionUsage = new Map();
 
 let mongoReadyPromise = null;
 
@@ -664,7 +666,7 @@ async function fetchNfceDocument(initialUrl) {
   const error = new Error('A consulta da nota teve redirecionamentos demais.'); error.statusCode = 502; throw error;
 }
 
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '6mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
@@ -699,6 +701,7 @@ app.get('/api/health', (_req, res) => {
     ok: true,
     hasKey: Boolean(XAI_API_KEY),
     model: XAI_MODEL,
+    visionModel: XAI_VISION_MODEL,
     hasMongoUri: Boolean(MONGODB_URI),
     hasJwtSecret: Boolean(JWT_SECRET),
     mongoConnected: Boolean(db)
@@ -1351,6 +1354,73 @@ app.all('/api/mercadopago/webhook', async (req, res) => {
     return res.status(200).json({ ok: true, received: true, preapprovalId });
   } catch (error) {
     return res.status(500).json({ ok: false, message: error.message || 'Falha ao processar webhook.' });
+  }
+});
+
+app.post('/api/receipts/vision', async (req, res) => {
+  try {
+    if (!XAI_API_KEY) return res.status(503).json({ ok:false, fallback:true, message:'Leitura visual indisponível.' });
+    const images = Array.isArray(req.body?.images) ? req.body.images : [];
+    if (!images.length || images.length > 2) return res.status(400).json({ ok:false, message:'Envie de uma a duas imagens por lote.' });
+    const validImages = images.every((image) => /^data:image\/(?:jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/i.test(String(image || '')) && String(image).length <= 1_600_000);
+    if (!validImages) return res.status(400).json({ ok:false, message:'Uma imagem está inválida ou muito grande.' });
+
+    const ip = String(req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim();
+    const nowMs = Date.now();
+    const current = receiptVisionUsage.get(ip);
+    const usage = !current || nowMs - current.startedAt > 10 * 60 * 1000 ? { startedAt:nowMs, count:0 } : current;
+    usage.count += 1; receiptVisionUsage.set(ip, usage);
+    if (usage.count > 12) return res.status(429).json({ ok:false, message:'Muitas leituras em sequência. Aguarde alguns minutos.' });
+
+    const prompt = [
+      'Transcreva estas imagens consecutivas de UMA nota fiscal brasileira de supermercado.',
+      'Retorne SOMENTE JSON válido, sem markdown, no formato:',
+      '{"merchant":"","merchantDocument":"","issueDate":"","documentNumber":"","series":"","accessKey":"","total":0,"items":[{"itemNumber":"","namePrinted":"","quantity":1,"unit":"un","unitPrice":0,"total":0,"confidence":0.0}]}',
+      'Inclua TODOS os produtos visíveis, na ordem da nota. Não resuma e não omita linhas.',
+      'namePrinted deve reproduzir exatamente o nome/abreviação impresso, sem corrigir marca ou trocar o produto.',
+      'Converta vírgula decimal para número JSON. Não confunda código do produto com quantidade ou preço.',
+      'As imagens podem se sobrepor: não duplique a mesma linha. Se algo não estiver visível, use string vazia ou zero; nunca invente.',
+      'confidence deve variar de 0 a 1 para cada item.'
+    ].join(' ');
+    const content = images.map((image) => ({ type:'input_image', image_url:image, detail:'high' }));
+    content.push({ type:'input_text', text:prompt });
+    const receiptSchema = { type:'object', additionalProperties:false, required:['merchant','merchantDocument','issueDate','documentNumber','series','accessKey','total','items'], properties:{
+      merchant:{type:'string'}, merchantDocument:{type:'string'}, issueDate:{type:'string'}, documentNumber:{type:'string'}, series:{type:'string'}, accessKey:{type:'string'}, total:{type:'number'},
+      items:{type:'array',items:{type:'object',additionalProperties:false,required:['itemNumber','namePrinted','quantity','unit','unitPrice','total','confidence'],properties:{itemNumber:{type:'string'},namePrinted:{type:'string'},quantity:{type:'number'},unit:{type:'string'},unitPrice:{type:'number'},total:{type:'number'},confidence:{type:'number'}}}}
+    }};
+    const response = await fetch('https://api.x.ai/v1/responses', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${XAI_API_KEY}` },
+      body:JSON.stringify({ model:XAI_VISION_MODEL, input:[{ role:'user', content }], text:{ format:{ type:'json_schema', name:'receipt_transcription', schema:receiptSchema, strict:true } } })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.error('[receipts/vision] xAI failed', { status:response.status, code:data?.error?.code || '' });
+      return res.status(502).json({ ok:false, fallback:true, message:'A leitura inteligente não respondeu.' });
+    }
+    const outputText = String(data.output_text || (data.output || []).flatMap((entry) => entry?.content || []).find((entry) => entry?.type === 'output_text')?.text || '').trim();
+    const jsonText = outputText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    let receipt;
+    try { receipt = JSON.parse(jsonText); } catch (_error) { return res.status(502).json({ ok:false, fallback:true, message:'A leitura retornou dados incompletos.' }); }
+    const items = Array.isArray(receipt?.items) ? receipt.items.slice(0, 160).map((item) => ({
+      itemNumber:String(item?.itemNumber || '').slice(0,20),
+      namePrinted:String(item?.namePrinted || '').replace(/\s+/g,' ').trim().slice(0,180),
+      quantity:Math.max(0, Number(item?.quantity) || 0),
+      unit:String(item?.unit || 'un').trim().slice(0,12),
+      unitPrice:Math.max(0, Number(item?.unitPrice) || 0),
+      total:Math.max(0, Number(item?.total) || 0),
+      confidence:Math.max(0, Math.min(1, Number(item?.confidence) || 0))
+    })).filter((item) => item.namePrinted && (item.quantity || item.total || item.unitPrice)) : [];
+    if (!items.length) return res.status(422).json({ ok:false, fallback:true, message:'Nenhum produto foi identificado com segurança.' });
+    return res.json({ ok:true, receipt:{
+      merchant:String(receipt.merchant || '').slice(0,180), merchantDocument:String(receipt.merchantDocument || '').slice(0,30),
+      issueDate:String(receipt.issueDate || '').slice(0,40), documentNumber:String(receipt.documentNumber || '').slice(0,30),
+      series:String(receipt.series || '').slice(0,20), accessKey:String(receipt.accessKey || '').replace(/\D/g,'').slice(0,44),
+      total:Math.max(0, Number(receipt.total) || 0), items
+    }, model:XAI_VISION_MODEL });
+  } catch (error) {
+    console.error('[receipts/vision] unexpected failure', { message:error?.message || String(error) });
+    return res.status(502).json({ ok:false, fallback:true, message:'Não foi possível concluir a leitura inteligente.' });
   }
 });
 
