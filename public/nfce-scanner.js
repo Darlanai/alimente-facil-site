@@ -8,6 +8,56 @@
   const money = (value) => Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const escapeHtml = (value) => String(value || '').replace(/[&<>'"]/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[char]));
   const normalize = (value) => String(value || '').toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+  const number = (value) => Number.parseFloat(String(value || '').replace(/\//g, '7').replace(/[^0-9,.-]/g, '').replace(/\.(?=\d{3}(?:\D|$))/g, '').replace(',', '.')) || 0;
+
+  function categoryFor(name) {
+    const text = normalize(name);
+    const groups = [
+      ['Hortifruti', /banana|maca|laranja|limao|manga|tomate|cebola|alho|batata|cenoura|alface|couve|fruta|verdura|legume/],
+      ['Carnes e ovos', /carne|frango|peixe|bacon|linguica|ovo/], ['Laticínios', /leite|queijo|iogurte|manteiga|requeijao/],
+      ['Bebidas', /agua|suco|refrigerante|cerveja|vinho|cafe|cha/], ['Padaria', /pao|bolo|biscoito|torrada/],
+      ['Grãos e massas', /arroz|feijao|macarrao|farinha|aveia|lentilha|grao/], ['Limpeza', /detergente|sabao|amaciante|desinfetante|limpeza/],
+      ['Higiene', /papelhigienico|shampoo|sabonete|cremedental|desodorante/]
+    ];
+    return groups.find(([, pattern]) => pattern.test(text))?.[0] || 'Mercearia';
+  }
+
+  function cleanProductName(value) {
+    const ignored = new Set(['de','da','do','das','dos','com','sem','e']);
+    return String(value || '').replace(/^\s*(?:[%#]\s*)?[0-9A-Z]{4,18}\s+/i, '').replace(/\s+/g, ' ').trim().toLocaleLowerCase('pt-BR').split(' ').filter(Boolean)
+      .map((word, index) => index && ignored.has(word) ? word : word.charAt(0).toLocaleUpperCase('pt-BR') + word.slice(1)).join(' ');
+  }
+
+  async function prepareReceiptImage(file) {
+    const bitmap = await createImageBitmap(file);
+    const sideways = bitmap.width > bitmap.height;
+    const sourceWidth = sideways ? bitmap.height : bitmap.width;
+    const sourceHeight = sideways ? bitmap.width : bitmap.height;
+    const scale = Math.min(1, 1800 / Math.max(sourceWidth, sourceHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+    canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+    const context = canvas.getContext('2d', { willReadFrequently:true });
+    context.save();
+    if (sideways) {
+      // Fotos de recibos compridos normalmente chegam deitadas; gira para texto em pé.
+      context.translate(0, canvas.height);
+      context.rotate(-Math.PI / 2);
+      context.drawImage(bitmap, 0, 0, canvas.height, canvas.width);
+    } else {
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    }
+    context.restore();
+    bitmap.close?.();
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+    for (let index = 0; index < pixels.data.length; index += 4) {
+      const gray = pixels.data[index] * .299 + pixels.data[index + 1] * .587 + pixels.data[index + 2] * .114;
+      const enhanced = Math.max(0, Math.min(255, (gray - 128) * 1.22 + 128));
+      pixels.data[index] = pixels.data[index + 1] = pixels.data[index + 2] = enhanced;
+    }
+    context.putImageData(pixels, 0, 0);
+    return canvas;
+  }
 
   function app() { return window.app || null; }
   function modal() { return $('#nfce-modal'); }
@@ -113,13 +163,56 @@
       canvas.getContext('2d', { willReadFrequently: true }).drawImage(bitmap, 0, 0, canvas.width, canvas.height);
       bitmap.close?.();
       const value = await decodeCanvas(canvas);
-      if (!value) throw new Error('Não encontrei um QR Code legível nessa foto.');
-      await readReceipt(value);
+      if (value) await readReceipt(value, file);
+      else await readProductsFromPhoto(file);
     } catch (error) { setStatus(error.message || 'Não foi possível ler a imagem.', true); }
     finally { $('#nfce-image-input').value = ''; }
   }
 
-  async function readReceipt(url) {
+  async function readProductsFromPhoto(file) {
+    if (!file) return;
+    if (!window.Tesseract?.recognize) throw new Error('O leitor de texto ainda está carregando. Aguarde alguns segundos e fotografe novamente.');
+    setStatus('Preparando a leitura privada da nota…');
+    const preparedImage = await prepareReceiptImage(file);
+    const result = await window.Tesseract.recognize(preparedImage, 'por', {
+      logger: ({ status, progress }) => {
+        const messages = { 'loading tesseract core':'Preparando o leitor…', 'loading language traineddata':'Carregando o português…', 'initializing api':'Iniciando a CozIA…', 'recognizing text':`Lendo os produtos… ${Math.round((progress || 0) * 100)}%` };
+        if (messages[status]) setStatus(messages[status]);
+      }
+    });
+    const text = String(result?.data?.text || '');
+    const products = [];
+    const units = 'UN|UM|UND|UNID|KG|KA|G|L|LT|ML|PT|PR|PCT|CX|NX';
+    const productPattern = new RegExp(`^\\s*\\S{1,3}\\s+\\d{3,14}\\s+(.+?)\\s+([\\d.,/]+)\\s*(${units})\\s*(?:\\|\\s*\\w{1,3}\\s*)?[XxÀÁ4]\\s*(\\d+(?:[.,]\\d{2}))(?:\\s*\\([^)]*\\))?\\s+(\\d+(?:[.,]\\d{2}))(?:\\s*\\S)?\\s*$`, 'i');
+    const loosePattern = new RegExp(`^\\s*(?:\\S{1,3}\\s+)?(?:\\d{3,14}\\s+)?(.+?)\\s+([\\d.,/]+)\\s*(${units})\\s*(?:\\|\\s*\\w{1,3}\\s*)?[XxÀÁ4]\\s*(\\d+(?:[.,]\\d{2}))(?:\\s*\\([^)]*\\))?\\s+(\\d+(?:[.,]\\d{2}))(?:\\s*\\S)?\\s*$`, 'i');
+    text.split(/\r?\n/).map((line) => line.replace(/\s+/g, ' ').trim()).forEach((line) => {
+      let match = line.match(productPattern) || line.match(loosePattern);
+      if (!match && /^\S{1,3}\s+/.test(line)) {
+        const priceMatches = [...line.matchAll(/\d+[.,]\d{2}(?!\d)/g)];
+        const quantityUnit = line.match(new RegExp(`([\\d.,/]+)\\s*(${units})\\s*(?:\\|\\s*\\w{1,3}\\s*)?[XxÀÁ4|]`, 'i'));
+        if (priceMatches.length >= 2 && quantityUnit) {
+          let prefix = line.slice(0, quantityUnit.index).replace(/^\s*\S{1,3}\s+/, '').replace(/^\s*(?:[%#]\s*)?[0-9A-Z]{3,18}\s+/i, '');
+          match = [line, prefix, quantityUnit[1], quantityUnit[2], priceMatches[0][0], priceMatches.at(-1)[0]];
+        }
+      }
+      if (!match) return;
+      const name = cleanProductName(match[1].replace(/\b(?:KG|KA|UN|UM|UND)\s*$/i, ''));
+      if (name.length < 2 || /^(documento|codigo|descricao|valor|total)/i.test(name)) return;
+      const parsedQuantity = number(match[2]);
+      const quantity = parsedQuantity > 100 ? 1 : Math.max(.001, parsedQuantity || 1);
+      const unit = String(match[3]).toLowerCase().replace(/und|unid|um|nx/, 'un').replace(/^ka$/, 'kg').replace(/^p[rt]$/, 'pct').replace(/^lt$/, 'L');
+      const unitPrice = number(match[4]);
+      const total = number(match[5]) || quantity * unitPrice;
+      if (!products.some((item) => normalize(item.name) === normalize(name) && item.total === total)) products.push({ name, quantity, unit, unitPrice, total, category:categoryFor(name) });
+    });
+    if (!products.length) throw new Error('Não consegui separar os produtos. Fotografe de frente, com boa luz, incluindo do primeiro item até o valor total.');
+    const totalMatch = text.match(/VALOR\s+TOTAL(?:\s+R\$)?\s*[:]?\s*([\d.,]+)/i);
+    state.receipt = { state:'MG', merchant:'Compra lida pela CozIA', accessKey:'', total:number(totalMatch?.[1]) || products.reduce((sum, item) => sum + item.total, 0), products, source:'photo-ocr' };
+    savePending(state.receipt);
+    renderReceipt();
+  }
+
+  async function readReceipt(url, fallbackPhoto = null) {
     if (state.busy) return;
     state.busy = true;
     const button = $('#nfce-read-url');
@@ -128,7 +221,13 @@
     try {
       const response = await fetch('/api/nfce/preview', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ url }) });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.receipt) throw new Error(data.message || 'Não foi possível consultar a nota.');
+      if (!response.ok || !data.receipt) {
+        if (data.code === 'NFCE_HUMAN_VERIFICATION_REQUIRED') {
+          if (fallbackPhoto) { await readProductsFromPhoto(fallbackPhoto); return; }
+          throw new Error('A SEF/MG pede verificação humana. Toque em “Fotografar nota” e enquadre toda a lista de produtos. A leitura acontece só no seu celular.');
+        }
+        throw new Error(data.message || 'Não foi possível consultar a nota.');
+      }
       state.receipt = data.receipt;
       savePending(state.receipt);
       renderReceipt();

@@ -248,7 +248,7 @@
 <p class="nfce-status" id="nfce-status" aria-live="polite">Pronto para abrir a câmera.</p>
 <div class="nfce-actions">
 <button class="nfce-primary" id="nfce-start-camera" type="button"><i class="fa-solid fa-camera"></i> Abrir câmera</button>
-<label class="nfce-secondary" for="nfce-image-input"><i class="fa-regular fa-image"></i> Usar foto<input id="nfce-image-input" type="file" accept="image/*" capture="environment" hidden></label>
+<label class="nfce-secondary" for="nfce-image-input"><i class="fa-regular fa-image"></i> Fotografar nota<input id="nfce-image-input" type="file" accept="image/*" capture="environment" hidden></label>
 </div>
 <details class="nfce-manual"><summary>Não conseguiu ler? Cole o link da nota</summary><div><input id="nfce-url-input" type="url" inputmode="url" placeholder="https://..." aria-label="Link da NFC-e"><button id="nfce-read-url" type="button">Ler nota</button></div></details>
 <p class="nfce-coverage"><i class="fa-solid fa-location-dot"></i> Compatível com NFC-e de BA, SP, MG, RJ, RS, PR, PE, CE, ES, GO e DF.</p>
@@ -679,7 +679,8 @@
 <script src="landing-art.js?v=20260814-7"></script>
 <script src="auth-premium-gate-fix.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
-<script src="nfce-scanner.js?v=20260815-1" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
+<script src="nfce-scanner.js?v=20260815-2" defer></script>
 <script>
         window.addEventListener('DOMContentLoaded', () => {
             let attempts = 0;

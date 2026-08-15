@@ -668,7 +668,15 @@ app.post('/api/nfce/preview', async (req, res) => {
       const candidate = queue.shift();
       if (visited.has(candidate)) continue;
       visited.add(candidate);
-      const { html, finalUrl } = await fetchNfceDocument(candidate);
+      let documentResult;
+      try {
+        documentResult = await fetchNfceDocument(candidate);
+      } catch (fetchError) {
+        // Um iframe/link auxiliar quebrado não deve esconder a resposta do QR original.
+        if (visited.size > 1) { lastParseError = lastParseError || fetchError; continue; }
+        throw fetchError;
+      }
+      const { html, finalUrl } = documentResult;
       try {
         return res.json({ ok:true, receipt:parseNfceHtml(html, validated.state, finalUrl), privacy:'A imagem do QR Code não é enviada nem armazenada.' });
       } catch (error) {
@@ -685,6 +693,12 @@ app.post('/api/nfce/preview', async (req, res) => {
           } catch (_error) {}
         }
       }
+    }
+    if (validated.state === 'MG') {
+      const verificationError = new Error('A SEF/MG exige verificação humana para mostrar os produtos. Fotografe a parte da nota onde aparecem os itens; a CozIA fará a leitura no seu celular.');
+      verificationError.statusCode = 409;
+      verificationError.payload = { code:'NFCE_HUMAN_VERIFICATION_REQUIRED', state:'MG', photoFallback:true };
+      throw verificationError;
     }
     throw lastParseError || new Error('Não foi possível localizar os produtos desta NFC-e.');
   } catch (error) {
