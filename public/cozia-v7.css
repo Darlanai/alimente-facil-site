@@ -14,7 +14,9 @@ html body #af-chatbot-toggle.af-assistant-toggle:focus{
   height:50px!important;min-height:50px!important;max-height:50px!important;
   padding:0 17px!important;gap:10px!important;
 }
-html body #af-chatbot-toggle.af-assistant-toggle .af-assistant-toggle-label{font-size:13px!important;overflow:visible!important}
+html body #af-chatbot-toggle.af-assistant-toggle .af-assistant-toggle-label{font-size:13px!important;overflow:visible!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;line-height:1.05!important}
+html body #af-chatbot-toggle.af-assistant-toggle .af-assistant-toggle-label small{font-size:8px!important;letter-spacing:.09em!important;text-transform:uppercase!important;opacity:.66!important;margin-top:4px!important}
+html body #af-chatbot-toggle.af-assistant-toggle>img{width:34px!important;height:34px!important;border-radius:12px!important;padding:4px!important;background:radial-gradient(circle at 35% 30%,#d9ffed,#58d99a 44%,#0d3a27 100%)!important;box-shadow:0 0 0 1px rgba(255,255,255,.24),0 5px 18px rgba(54,213,139,.24)!important}
 
 html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable,
 html body #af-chatbot-toggle.af-assistant-toggle.af-help-draggable:hover,

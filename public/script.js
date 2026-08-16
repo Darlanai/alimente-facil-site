@@ -2319,10 +2319,10 @@ renderPlanejador(container) {
                         <span>Análises</span>
                         <small>Gastos</small>
                     </div>
-                    <div class="action-card config" data-module-target="configuracoes">
-                        <i class="fa-solid fa-sliders"></i>
-                        <span>Ajustes</span>
-                        <small>Sistema</small>
+                    <div class="action-card notes" data-module-target="notas">
+                        <i class="fa-solid fa-receipt"></i>
+                        <span>Minhas Notas</span>
+                        <small>Histórico fiscal</small>
                     </div>
                 </div>
             `;
@@ -2725,7 +2725,7 @@ openConfigSectionModal(section = 'perfil') {
                     <div class="item-row">
                         <div class="item-main-info">
                             <i class="fa-solid fa-grip-vertical drag-handle" title="Arrastar item" aria-label="Arrastar ${itemName}"></i>
-                            <span class="item-name">${itemName}</span>
+                            <span class="item-name">${itemName}${item.notaNumero ? `<small class="pantry-note-badge"><i class="fa-solid fa-receipt"></i> Nota ${this.escapeHtml(String(item.notaNumero))}</small>` : ''}</span>
                         </div>
                         <div>
                             <small class="stock-level-label">Estoque:</small>
@@ -3865,12 +3865,10 @@ async callGeminiAPI(userText) {
             const assistant = {
                 widget, toggleBtn, closeBtn, homeBtn, bodyEl, input,
                 shortcuts: [
-                    ['🛒 Digitar ingredientes','__list_with_items__'],
-                    ['✨ Lista automática','Monte uma lista automática para 2 pessoas por 7 dias'],
-                    ['🍳 Combinar uma receita','__recipe_with_items__'],
-                    ['📦 Ver minha despensa','Abrir minha despensa'],
-                    ['📅 Abrir planejador','Abrir meu planejador'],
-                    ['📊 Ver análises','Abrir minhas análises']
+                    ['Ingredientes','__list_with_items__'],
+                    ['Lista automática','Monte uma lista automática para 2 pessoas por 7 dias'],
+                    ['Criar receita','__recipe_with_items__'],
+                    ['Minha despensa','Abrir minha despensa']
                 ],
                 renderMessage(html, sender='bot'){
                     const item=document.createElement('div'); item.className=`af-msg ${sender}`;
@@ -3895,8 +3893,7 @@ async callGeminiAPI(userText) {
                 requestRecipeIngredients(){if(window.AF_ASSISTANT_ENGINE?.memory)window.AF_ASSISTANT_ENGINE.memory.awaiting='recipe_items';this.renderMessage('🍳 Diga o prato que deseja ou os ingredientes disponíveis. Exemplo: <strong>quero uma receita rápida com frango, batata e cenoura na airfryer</strong>. Eu combino o pedido, o modo de preparo e seu perfil alimentar. 😋','bot');this.input.placeholder='Qual receita ou ingredientes você quer usar?';this.input.focus()},
                 welcome(){
                     this.bodyEl.innerHTML='';
-                    this.renderMessage('<strong>Oi! Eu sou a CozIA 💚🍲</strong><br>Eu entendo os ingredientes que você digitar ou falar e transformo seu pedido em listas, receitas, despensa e planejamento.');
-                    this.renderMessage('Por onde começamos? 😊 Você pode digitar os ingredientes, pedir uma lista automática ou mandar eu abrir uma área do painel.','bot');
+                    this.renderMessage('<strong>Olá, eu sou a CozIA.</strong><br>Escreva com calma ou use um atalho para começar.');
                     this.renderShortcuts();
                 },
                 context(){return {loggedIn:!!app.isLoggedIn,state:app.state||{},plan:app.userPlan||'free'}},
@@ -3960,6 +3957,7 @@ async callGeminiAPI(userText) {
             closeBtn.addEventListener('click',()=>assistant.close());
             homeBtn.addEventListener('click',()=>assistant.restart());
             form.addEventListener('submit',e=>{e.preventDefault();assistant.ask(input.value)});
+            input.addEventListener('keydown',event=>{if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();assistant.ask(input.value)}});
             if(voiceBtn){
                 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
                 if(!SpeechRecognition){voiceBtn.hidden=true}else{
@@ -3968,9 +3966,9 @@ async callGeminiAPI(userText) {
                         if(recognition){recognition.stop();return;}
                         recognition=new SpeechRecognition();recognition.lang='pt-BR';recognition.interimResults=true;recognition.continuous=false;
                         recognition.onstart=()=>{voiceBtn.classList.add('is-listening');input.placeholder='Estou ouvindo...'};
-                        recognition.onresult=event=>{input.value=Array.from(event.results).map(result=>result[0].transcript).join('');if(event.results[event.results.length-1].isFinal){const spoken=input.value;setTimeout(()=>assistant.ask(spoken),120)}};
+                        recognition.onresult=event=>{input.value=Array.from(event.results).map(result=>result[0].transcript).join(' ');input.dispatchEvent(new Event('input',{bubbles:true}));if(event.results[event.results.length-1].isFinal){input.placeholder='Revise e toque em enviar';input.focus()}};
                         recognition.onerror=()=>assistant.renderMessage('Não consegui ouvir com clareza. Tente novamente ou digite seu pedido. 🎙️','bot');
-                        recognition.onend=()=>{recognition=null;voiceBtn.classList.remove('is-listening');input.placeholder='Digite ingredientes ou peça uma ação...'};
+                        recognition.onend=()=>{recognition=null;voiceBtn.classList.remove('is-listening');if(!input.value)input.placeholder='Converse com a CozIA...'};
                         try{recognition.start()}catch(e){recognition=null;}
                     });
                 }

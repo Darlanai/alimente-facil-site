@@ -40,6 +40,8 @@
 <link href="nfce-scanner.css?v=20260815-5" rel="stylesheet"/>
 <link href="purchase-intelligence.css?v=20260815-2" rel="stylesheet"/>
 <link href="system-sync.css?v=20260815-5" rel="stylesheet"/>
+<link href="fiscal-notes.css?v=20260816-1" rel="stylesheet"/>
+<link href="modern-ui.css?v=20260816-8" rel="stylesheet"/>
 <style>
     :root {
         --time-scale: 1;
@@ -92,18 +94,18 @@
 <p class="af-brand-slogan">Menos trabalho. Mais clareza.</p>
 <p class="af-greeting" id="afLandingGreeting">Sua compra já sabe o caminho.</p>
 <h1 id="afHomeTitle"><span>Da nota.</span><br/><em>À rotina.</em></h1>
-<p class="af-home-subtitle">Fotografe sua nota. A CozIA organiza o restante.</p>
+<p class="af-home-subtitle">Leia o QR da nota. A CozIA organiza o restante.</p>
 <div class="af-home-actions">
 <button class="af-primary-cta" data-af-start-trial="" type="button">Começar agora <i class="fa-solid fa-arrow-right"></i></button>
-<button class="af-nfce-entry" data-nfce-open="" type="button" aria-label="Fotografar uma nota fiscal">
-<span class="af-nfce-entry-icon"><i class="fa-solid fa-camera" aria-hidden="true"></i></span>
-<span><strong>Fotografar nota</strong><small>Uma foto ou várias. A CozIA junta tudo.</small></span>
+<button class="af-nfce-entry" data-nfce-open="" type="button" aria-label="Ler uma nota fiscal">
+<span class="af-nfce-entry-icon"><i class="fa-solid fa-qrcode" aria-hidden="true"></i></span>
+<span><strong>Ler nota fiscal</strong><small>Escaneie o QR ou digite a chave de 44 números.</small></span>
 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
 </button>
-<div class="af-price-compact" aria-label="Plano por R$ 9,90 ao mês, com 7 dias grátis e sem cartão"><strong>R$ 9,90<small>/mês</small></strong><span>7 dias grátis · sem cartão</span></div>
+<div class="af-price-compact" aria-label="Plano por R$ 9,90 ao mês, com 7 dias grátis e sem cartão"><strong>R$ 9,90<small>/mês</small></strong><span>7 dias grátis · 1 nota fiscal · sem cartão</span></div>
 </div>
 <div aria-label="Benefícios do Alimente Fácil" class="af-home-benefits">
-<span><i class="fa-solid fa-camera" aria-hidden="true"></i> Leia a nota</span>
+<span><i class="fa-solid fa-qrcode" aria-hidden="true"></i> Leia a nota</span>
 <span><i class="fa-solid fa-box-archive" aria-hidden="true"></i> Organize a despensa</span>
 <span><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Entenda seus gastos</span>
 </div>
@@ -112,9 +114,9 @@
 <footer class="af-minimal-footer"><div class="af-footer-primary"><button class="af-how-link" id="afHowWorks" type="button">Como funciona</button><button class="af-footer-contact" id="afFooterContact" type="button">Contato</button></div><nav aria-label="Links institucionais" class="af-legal-links"><a href="/termos.html">Termos de uso</a><a href="/politica-de-privacidade.html">Privacidade</a></nav></footer>
 </div>
 <div aria-label="Arraste para alternar entre a apresentação e o painel" class="af-global-reveal" id="afGlobalReveal">
-<div aria-hidden="true" class="af-reveal-divider" id="afRevealDivider"><span><i class="fa-solid fa-chevron-left"></i><i class="fa-solid fa-chevron-right"></i></span></div>
-<input aria-label="Arraste para revelar o painel real do Alimente Fácil" class="af-reveal-range" id="afRevealRange" max="100" min="0" type="range" value="99"/>
-<div class="af-reveal-hint" id="afRevealHint"><i class="fa-solid fa-hand-pointer"></i> Arraste para entrar</div>
+<div aria-hidden="true" class="af-reveal-divider" id="afRevealDivider"><span><i aria-hidden="true"></i></span></div>
+<input aria-label="Arraste para abrir o painel do Alimente Fácil" class="af-reveal-range" id="afRevealRange" max="100" min="0" type="range" value="99"/>
+<div class="af-reveal-hint" id="afRevealHint"><i class="fa-solid fa-arrow-left"></i> Abrir painel</div>
 </div>
 <div aria-hidden="true" class="af-info-modal af-blog-modal" id="afHowModal">
 <div aria-labelledby="afHowTitle" aria-modal="true" class="af-blog-shell" role="dialog">
@@ -238,20 +240,15 @@
 <button class="nfce-icon-button" data-nfce-close="" type="button" aria-label="Fechar leitor"><i class="fa-solid fa-xmark"></i></button>
 </header>
 <div class="nfce-progress" aria-label="Etapas da importação">
-<span class="is-active" data-nfce-step-dot="scan"><b>1</b> Fotografar</span><i></i><span data-nfce-step-dot="review"><b>2</b> Conferir</span><i></i><span data-nfce-step-dot="done"><b>3</b> Guardar</span>
+<span class="is-active" data-nfce-step-dot="scan"><b>1</b> Ler QR</span><i></i><span data-nfce-step-dot="review"><b>2</b> Conferir</span><i></i><span data-nfce-step-dot="done"><b>3</b> Guardar</span>
 </div>
 <div class="nfce-stage is-active" data-nfce-stage="scan">
-<div class="nfce-camera-wrap nfce-photo-wrap">
-<div class="nfce-camera-empty" id="nfce-camera-empty"><span class="nfce-qr-glyph"><i class="fa-solid fa-receipt"></i></span><h3>Fotografe sua nota fiscal</h3><p>Notas compridas podem ser enviadas em várias imagens. Fotografe de cima para baixo, sem cortar produtos.</p></div>
-</div>
-<div class="nfce-photo-queue" id="nfce-photo-queue" hidden><div class="nfce-photo-queue-head"><span><strong id="nfce-photo-count">0 arquivos</strong><small>A CozIA lerá tudo como uma única nota.</small></span><button id="nfce-clear-photos" type="button">Limpar</button></div><div class="nfce-photo-thumbs" id="nfce-photo-thumbs"></div></div>
-<p class="nfce-status" id="nfce-status" aria-live="polite">Abra a câmera ou envie imagens da nota.</p>
-<div class="nfce-actions">
-<label class="nfce-primary nfce-camera-primary" for="nfce-camera-input"><i class="fa-solid fa-camera"></i> Abrir câmera<input id="nfce-camera-input" type="file" accept="image/*" capture="environment" hidden></label>
-<label class="nfce-secondary" for="nfce-image-input"><i class="fa-solid fa-paperclip"></i> Anexar arquivos<input id="nfce-image-input" type="file" accept="image/*,.pdf,.txt,.csv,.xlsx,.xls,.json,text/plain,text/csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple hidden></label>
-</div>
-<button class="nfce-primary nfce-read-photos" id="nfce-read-photos" type="button" hidden><i class="fa-solid fa-wand-magic-sparkles"></i> Ler nota completa</button>
-<p class="nfce-coverage"><i class="fa-solid fa-mobile-screen"></i> Fotos, PDF, TXT, CSV e Excel. Os dados do painel ficam somente neste aparelho.</p>
+<div class="af-fiscal-camera"><video id="af-fiscal-video" playsinline muted></video><div class="af-scan-frame"><i></i><i></i><i></i><i></i></div><div class="af-camera-placeholder"><span><i class="fa-solid fa-qrcode"></i></span><strong>Leia o QR Code da NFC-e</strong><small>Nenhuma imagem é armazenada.</small></div></div>
+<p class="nfce-status" id="nfce-status" aria-live="polite">Aponte para o QR Code ou digite a chave de 44 números.</p>
+<div class="af-fiscal-actions"><button class="nfce-primary" id="af-start-camera" type="button"><i class="fa-solid fa-camera"></i> Abrir câmera</button></div>
+<div class="af-key-divider"><span>ou digite a chave</span></div>
+<form class="af-key-form" id="af-key-form"><label for="af-access-key">Chave de acesso da NFC-e</label><div><input id="af-access-key" inputmode="numeric" autocomplete="off" maxlength="54" placeholder="44 números" required><button type="submit" aria-label="Consultar nota"><i class="fa-solid fa-arrow-right"></i></button></div><small id="af-key-counter">0 de 44 números</small></form>
+<p class="nfce-coverage"><i class="fa-solid fa-shield-halved"></i> Consulta fiscal protegida · 1 nota no teste · 10 a cada 30 dias no Premium.</p>
 </div>
 <div class="nfce-stage" data-nfce-stage="review">
 <div class="nfce-receipt-summary"><div><small>NOTA ENCONTRADA</small><strong id="nfce-merchant">Compra identificada</strong><span id="nfce-meta"></span></div><div><small>TOTAL</small><strong id="nfce-total">R$ 0,00</strong></div></div>
@@ -326,7 +323,7 @@
 <button class="icon-button close-btn" data-modal-close="plans-modal"><i class="fa-solid fa-times"></i></button>
 </div>
 <div class="modal-body" style="padding: 2rem;">
-<p class="page-subtitle" style="text-align: center; margin-bottom: 2rem;">Crie sua conta sem cartão e use o painel completo por 7 dias. A opção de assinatura aparece somente a partir do 8º dia.</p>
+<p class="page-subtitle" style="text-align: center; margin-bottom: 2rem;">Teste por 7 dias sem cartão, com 1 consulta de nota fiscal. No Premium, importe até 10 notas a cada 30 dias.</p>
 <div class="plans-container plans-container-single">
 <div class="plan-card recommended" id="plan-premium" style="border-color: var(--primary-color); background: rgba(0, 242, 234, 0.05); max-width: 420px; margin: 0 auto;">
 <div style="background: var(--primary-color); color: #000; font-size: 0.8rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; align-self: center; margin-bottom: 1rem;">PLANO ÚNICO</div>
@@ -337,6 +334,7 @@
 <li><i class="fa-solid fa-check"></i> Receitas ilimitadas</li>
 <li><i class="fa-solid fa-check"></i> Planejador semanal completo</li>
 <li><i class="fa-solid fa-check"></i> Controle de despensa</li>
+<li><i class="fa-solid fa-check"></i> 10 notas fiscais a cada 30 dias</li>
 <li><i class="fa-solid fa-check"></i> Análises e organização do painel</li>
 <li><i class="fa-solid fa-check"></i> Sem anúncios dentro da experiência</li>
 <li><i class="fa-solid fa-check"></i> Instalação como app pelo navegador</li>
@@ -361,6 +359,7 @@
 <nav aria-label="Navegação principal do painel" class="main-nav">
 <button class="nav-item active" data-module="inicio"><i aria-hidden="true" class="fa-solid fa-house"></i><span>Início</span></button>
 <button class="nav-item" data-module="lista"><i aria-hidden="true" class="fa-solid fa-cart-shopping"></i><span>Listas</span></button>
+<button class="nav-item" data-module="notas"><i aria-hidden="true" class="fa-solid fa-receipt"></i><span>Minhas Notas</span></button>
 <button class="nav-item" data-module="despensa"><i aria-hidden="true" class="fa-solid fa-box-archive"></i><span>Despensa</span></button>
 <button class="nav-item" data-module="receitas"><i aria-hidden="true" class="fa-solid fa-utensils"></i><span>Receitas</span></button>
 <button class="nav-item" data-module="planejador"><i aria-hidden="true" class="fa-solid fa-calendar-week"></i><span>Planejador</span></button>
@@ -392,8 +391,8 @@
 <button aria-label="Alternar tema de cores" class="icon-button" id="theme-toggle-btn-panel" title="Alternar Tema">
 <i aria-hidden="true" class="fa-solid fa-sun"></i>
 </button>
-<button aria-label="Notificações" class="icon-button" title="Notificações (Simulação)">
-<i aria-hidden="true" class="fa-solid fa-bell"></i>
+<button aria-label="Configurações" class="icon-button" data-module-target="configuracoes" title="Configurações">
+<i aria-hidden="true" class="fa-solid fa-sliders"></i>
 </button>
 <button aria-label="Voltar para a página inicial" class="icon-button" id="home-btn-panel" title="Voltar para a página inicial">
 <i aria-hidden="true" class="fa-solid fa-sign-out-alt"></i>
@@ -437,6 +436,7 @@
 </div>
 </div>
 </div>
+<div class="module-container" id="module-notas"></div>
 <div class="module-container" id="module-despensa"></div>
 <div class="module-container" id="module-receitas"></div>
 <div class="module-container" id="module-planejador"></div>
@@ -656,14 +656,14 @@
 <div aria-live="polite" class="af-chatbot-body" id="af-chatbot-body" role="log"></div>
 <form class="af-chatbot-footer af-ai-composer" id="af-ai-form">
 <label class="sr-only" for="af-ai-input">Pergunte sobre o Alimente Fácil</label>
-<input id="af-ai-input" type="text" maxlength="500" autocomplete="off" placeholder="Digite ingredientes, uma receita ou ação..."/>
+<textarea id="af-ai-input" rows="1" maxlength="1000" autocomplete="off" placeholder="Converse com a CozIA..."></textarea>
 <button aria-label="Falar com o assistente" class="af-ai-voice" id="af-ai-voice" title="Usar comando de voz" type="button"><i class="fa-solid fa-microphone"></i></button>
 <button aria-label="Enviar pergunta" id="af-ai-send" type="submit"><i class="fa-solid fa-arrow-up"></i></button>
 </form>
 </div>
 <button aria-label="Conversar com a CozIA" class="af-chatbot-toggle af-assistant-toggle" id="af-chatbot-toggle" title="Conversar com a CozIA" type="button">
 <img alt="" aria-hidden="true" src="alimenta-ai-icon.png?v=20260814-6"/>
-<span class="af-assistant-toggle-label">CozIA</span>
+<span class="af-assistant-toggle-label">CozIA <small>inteligência da casa</small></span>
 </button>
 <div class="pwa-banner" id="pwa-floating-banner" style="display:none;">
 <div class="pwa-banner-content">
@@ -687,15 +687,15 @@
 <script src="ai-data-health-profiles.js?v=20260814-6"></script>
 <script src="ai-data-cozia-brain.js?v=20260814-7"></script>
 <script src="assistant-pro.js?v=20260814-7"></script>
-<script src="script.js?v=20260815-8"></script>
+<script src="script.js?v=20260816-8"></script>
 <script src="landing-art.js?v=20260814-7"></script>
 <script src="auth-premium-gate-fix.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
-<script src="nfce-scanner.js?v=20260815-12" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" defer></script>
+<script src="fiscal-notes.js?v=20260816-1" defer></script>
 <script src="purchase-intelligence.js?v=20260815-2" defer></script>
-<script src="system-sync.js?v=20260815-1" defer></script>
+<script src="system-sync.js?v=20260816-8" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+<script src="modern-ui.js?v=20260816-8" defer></script>
 <script>
         window.addEventListener('DOMContentLoaded', () => {
             let attempts = 0;

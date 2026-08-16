@@ -13,6 +13,7 @@ const PORT = Number(process.env.PORT || 3000);
 const XAI_API_KEY = process.env.XAI_API_KEY || process.env.GROK_API_KEY || '';
 const XAI_MODEL = process.env.XAI_MODEL || 'grok-3-mini';
 const XAI_VISION_MODEL = process.env.XAI_VISION_MODEL || 'grok-4.6';
+const INFOSIMPLES_TOKEN = process.env.INFOSIMPLES_TOKEN || '';
 const MONGODB_URI = process.env.MONGODB_URI || '';
 const JWT_SECRET = process.env.JWT_SECRET || '';
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
@@ -221,6 +222,10 @@ function subscriptionsCollection() {
   return db.collection('subscriptions');
 }
 
+function receiptImportsCollection() {
+  return db.collection('receiptImports');
+}
+
 function now() {
   return new Date();
 }
@@ -300,13 +305,20 @@ function publicSubscription(subscription) {
     trialStart:subscription.trialStart || null, trialEnd:subscription.trialEnd || null, paymentAvailableAt:subscription.trialEnd || null,
     trialDaysRemaining, trialActive, trialExpired,
     paymentRequired:trialExpired || ['standby','canceled'].includes(status),
-    lastPaymentAt:subscription.lastPaymentAt || null, blockedAt:subscription.blockedAt || null, checkoutUrl:PREMIUM_CHECKOUT_URL
+    lastPaymentAt:subscription.lastPaymentAt || null, blockedAt:subscription.blockedAt || null, checkoutUrl:PREMIUM_CHECKOUT_URL,
+    receiptQuota: {
+      used: Number(subscription.receiptQuotaUsed || 0),
+      limit: status === 'trialing' ? 1 : 10,
+      startedAt: subscription.receiptQuotaStartedAt || subscription.trialStart || subscription.lastPaymentAt || null
+    }
   };
 }
 
 async function ensureIndexes() {
   await usersCollection().createIndex({ email: 1 }, { unique: true });
   await subscriptionsCollection().createIndex({ userId: 1 }, { unique: true });
+  await receiptImportsCollection().createIndex({ userId: 1, accessKey: 1 }, { unique: true });
+  await receiptImportsCollection().createIndex({ userId: 1, importedAt: -1 });
 }
 
 async function connectToMongo() {
@@ -666,6 +678,96 @@ async function fetchNfceDocument(initialUrl) {
   const error = new Error('A consulta da nota teve redirecionamentos demais.'); error.statusCode = 502; throw error;
 }
 
+function pickInfoValue(source, names, fallback = '') {
+  for (const name of names) {
+    const value = source?.[name];
+    if (value !== undefined && value !== null && String(value).trim() !== '') return value;
+  }
+  return fallback;
+}
+
+function normalizeInfoSimplesReceipt(payload, accessKey) {
+  const root = Array.isArray(payload?.data) ? payload.data[0] : (payload?.data || payload || {});
+  const details = root?.nfce || root?.nota || root?.documento || root;
+  const rawProducts = pickInfoValue(details, ['produtos','itens','items','products'], []);
+  const productList = Array.isArray(rawProducts) ? rawProducts : [];
+  const products = productList.map((item, index) => {
+    const printed = String(pickInfoValue(item, ['descricao','descricao_produto','nome','produto','xprod','xProd'], '')).replace(/\s+/g, ' ').trim();
+    const quantity = Math.max(.001, nfceNumber(pickInfoValue(item, ['normalizado_quantidade','quantidade','qtd','qCom','quantity'], 1)) || 1);
+    const unit = String(pickInfoValue(item, ['unidade','un','uCom','unit'], 'un')).trim().toLowerCase();
+    const total = Math.max(0, nfceNumber(pickInfoValue(item, ['normalizado_valor_total_produto','valor_total_produto','valor_total','total','vProd','valor'], 0)));
+    const unitPrice = Math.max(0, nfceNumber(pickInfoValue(item, ['normalizado_valor_unitario','valor_unitario','preco_unitario','vUnCom','unitPrice'], 0))) || (total / quantity);
+    return {
+      id: String(pickInfoValue(item, ['numero','item','id'], index + 1)),
+      name: printed,
+      originalName: printed,
+      analysisName: titleCaseProduct(printed),
+      quantity,
+      unit: ({und:'un',unid:'un',lt:'L'})[unit] || unit,
+      unitPrice,
+      total: total || unitPrice * quantity,
+      category: categorizeNfceProduct(printed)
+    };
+  }).filter((item) => item.name);
+  if (!products.length) {
+    const error = new Error('A consulta foi concluída, mas não retornou os itens desta nota.');
+    error.statusCode = 422;
+    throw error;
+  }
+  const keyMeta = nfceUrlFromAccessKey(accessKey).keyMetadata;
+  const noteInfo = details?.informacoes_nota || {};
+  const issuer = details?.emitente || {};
+  return {
+    state: keyMeta.state,
+    merchant: String(pickInfoValue(issuer, ['nome_razao_social','razao_social','nome'], pickInfoValue(details, ['razao_social','nome_emitente','estabelecimento','merchant'], 'Estabelecimento identificado'))).trim(),
+    merchantDocument: String(pickInfoValue(issuer, ['cnpj'], pickInfoValue(details, ['cnpj','cnpj_emitente','documento_emitente'], keyMeta.merchantDocument))).replace(/\D/g,''),
+    issueDate: String(pickInfoValue(noteInfo, ['data_emissao'], pickInfoValue(details, ['data_emissao','emissao','data','dhEmi'], ''))),
+    documentNumber: String(pickInfoValue(noteInfo, ['numero'], pickInfoValue(details, ['numero','numero_nota','nNF'], keyMeta.documentNumber))),
+    series: String(pickInfoValue(noteInfo, ['serie'], pickInfoValue(details, ['serie','series'], keyMeta.series))),
+    accessKey,
+    total: Math.max(0, nfceNumber(pickInfoValue(details, ['normalizado_valor_total','normalizado_valor_a_pagar','valor_total','valor_a_pagar','total','total_nota','vNF'], 0))) || products.reduce((sum, item) => sum + item.total, 0),
+    itemCount: products.length,
+    products,
+    source: 'infosimples'
+  };
+}
+
+app.locals.normalizeInfoSimplesReceipt = normalizeInfoSimplesReceipt;
+
+function receiptQuotaWindow(subscription, currentDate = now()) {
+  const status = String(subscription?.status || '').toLowerCase();
+  const trial = status === 'trialing';
+  let startedAt = new Date(subscription?.receiptQuotaStartedAt || subscription?.trialStart || subscription?.lastPaymentAt || currentDate);
+  let used = Number(subscription?.receiptQuotaUsed || 0);
+  if (!trial && currentDate.getTime() - startedAt.getTime() >= 30 * 24 * 60 * 60 * 1000) {
+    startedAt = currentDate;
+    used = 0;
+  }
+  return { limit: trial ? 1 : 10, used, startedAt, trial };
+}
+
+async function reserveReceiptQuota(userId, subscription) {
+  const currentDate = now();
+  const window = receiptQuotaWindow(subscription, currentDate);
+  if (window.used === 0 && Number(subscription.receiptQuotaUsed || 0) > 0 && !window.trial) {
+    await subscriptionsCollection().updateOne({ _id:subscription._id }, { $set:{ receiptQuotaUsed:0, receiptQuotaStartedAt:window.startedAt, updatedAt:currentDate } });
+    subscription.receiptQuotaUsed = 0;
+  }
+  if (window.used >= window.limit) return { ok:false, ...window };
+  const result = await subscriptionsCollection().findOneAndUpdate(
+    { _id:subscription._id, $or:[{ receiptQuotaUsed:{ $lt:window.limit } }, { receiptQuotaUsed:{ $exists:false } }] },
+    { $set:{ receiptQuotaStartedAt:window.startedAt, updatedAt:currentDate }, $inc:{ receiptQuotaUsed:1 } },
+    { returnDocument:'after' }
+  );
+  const updated = result?.value || result;
+  if (!updated) return { ok:false, ...window };
+  return { ok:true, limit:window.limit, used:Number(updated.receiptQuotaUsed || window.used + 1), startedAt:window.startedAt, trial:window.trial };
+}
+
+async function releaseReceiptQuota(subscriptionId) {
+  await subscriptionsCollection().updateOne({ _id:subscriptionId, receiptQuotaUsed:{ $gt:0 } }, { $inc:{ receiptQuotaUsed:-1 }, $set:{ updatedAt:now() } });
+}
+
 app.use(express.json({ limit: '6mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -676,8 +778,7 @@ app.use('/api', async (req, res, next) => {
     '/contact',
     '/billing/checkout-link',
     '/chef',
-    '/receipts/vision',
-    '/nfce/preview'
+    '/receipts/vision'
   ]);
 
   if (noDbRoutes.has(req.path)) {
@@ -705,61 +806,70 @@ app.get('/api/health', (_req, res) => {
     visionModel: XAI_VISION_MODEL,
     hasMongoUri: Boolean(MONGODB_URI),
     hasJwtSecret: Boolean(JWT_SECRET),
+    hasInfoSimplesToken: Boolean(INFOSIMPLES_TOKEN),
     mongoConnected: Boolean(db)
   });
 });
 
-app.post('/api/nfce/preview', async (req, res) => {
+app.post('/api/nfce/preview', authMiddleware, async (req, res) => {
   try {
-    const validated = req.body?.key ? nfceUrlFromAccessKey(req.body.key) : validateNfceUrl(req.body?.url);
-    const queue = [validated.url];
-    const visited = new Set();
-    let lastParseError = null;
-    while (queue.length && visited.size < 4) {
-      const candidate = queue.shift();
-      if (visited.has(candidate)) continue;
-      visited.add(candidate);
-      let documentResult;
-      try {
-        documentResult = await fetchNfceDocument(candidate);
-      } catch (fetchError) {
-        // Um iframe/link auxiliar quebrado não deve esconder a resposta do QR original.
-        if (visited.size > 1) { lastParseError = lastParseError || fetchError; continue; }
-        throw fetchError;
+    if (!INFOSIMPLES_TOKEN) return res.status(503).json({ ok:false, code:'INFOSIMPLES_NOT_CONFIGURED', message:'A consulta fiscal ainda não foi configurada pelo administrador.' });
+    const accessKey = String(req.body?.key || req.body?.url || '').match(/\d{44}/)?.[0] || '';
+    if (!accessKey) return res.status(400).json({ ok:false, message:'Leia o QR Code ou digite a chave de acesso com 44 números.' });
+    nfceUrlFromAccessKey(accessKey);
+    const userId = new ObjectId(req.auth.sub);
+    const existing = await receiptImportsCollection().findOne({ userId, accessKey, status:'completed' });
+    if (existing?.receipt) {
+      const subscription = await refreshSubscriptionState(userId);
+      const quota = receiptQuotaWindow(subscription);
+      return res.json({ ok:true, receipt:existing.receipt, alreadyImported:true, quota:{ used:quota.used, limit:quota.limit }, privacy:'A chave é consultada no servidor e o token da integração nunca é enviado ao navegador.' });
+    }
+    const staleBefore = new Date(Date.now() - 2 * 60 * 1000);
+    await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending', importedAt:{ $lt:staleBefore } });
+    try {
+      await receiptImportsCollection().insertOne({ userId, accessKey, status:'pending', importedAt:now(), provider:'infosimples' });
+    } catch (reservationError) {
+      if (reservationError?.code === 11000) return res.status(409).json({ ok:false, code:'RECEIPT_IN_PROGRESS', message:'Esta nota já está sendo consultada. Aguarde alguns instantes.' });
+      throw reservationError;
+    }
+    const subscription = await refreshSubscriptionState(userId);
+    const access = getAccessDecision(subscription);
+    if (!access.allowed) { await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' }); return res.status(402).json({ ok:false, code:'PLAN_REQUIRED', message:access.message, checkoutUrl:PREMIUM_CHECKOUT_URL }); }
+    const quota = await reserveReceiptQuota(userId, subscription);
+    if (!quota.ok) { await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' }); return res.status(429).json({ ok:false, code:'RECEIPT_QUOTA_REACHED', quota:{ used:quota.used, limit:quota.limit }, message:quota.trial ? 'Seu teste gratuito inclui 1 nota fiscal. Assine para importar até 10 notas a cada 30 dias.' : 'Você já importou as 10 notas deste ciclo. O limite será renovado automaticamente no próximo período.' }); }
+    try {
+      const endpoint = new URL('https://api.infosimples.com/api/v2/consultas/sefaz/nfce');
+      endpoint.searchParams.set('token', INFOSIMPLES_TOKEN);
+      endpoint.searchParams.set('timeout', '50');
+      endpoint.searchParams.set('ignore_site_receipt', '0');
+      endpoint.searchParams.set('nfce', accessKey);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 58_000);
+      let providerResponse;
+      try { providerResponse = await fetch(endpoint, { signal:controller.signal, headers:{ Accept:'application/json' } }); }
+      finally { clearTimeout(timer); }
+      const providerPayload = await providerResponse.json().catch(() => ({}));
+      const providerCode = Number(providerPayload?.code || providerResponse.status);
+      if (!providerResponse.ok || providerCode >= 400 || !providerPayload?.data) {
+        const error = new Error(String(providerPayload?.code_message || providerPayload?.message || 'A consulta fiscal não foi concluída. Tente novamente em instantes.'));
+        error.statusCode = providerCode === 404 ? 404 : 502;
+        throw error;
       }
-      const { html, finalUrl } = documentResult;
-      try {
-        return res.json({ ok:true, receipt:parseNfceHtml(html, validated.state, finalUrl), privacy:'A imagem do QR Code não é enviada nem armazenada.' });
-      } catch (error) {
-        if (error.statusCode !== 422) throw error;
-        lastParseError = error;
-        // Algumas SEFAZ colocam o DANFE dentro de iframe ou em um segundo link.
-        for (const match of html.matchAll(/(?:src|href|action)\s*=\s*["']([^"']+)["']/gi)) {
-          const raw = decodeNfceText(match[1]);
-          if (!/(?:nfce|nota|danfe|consulta|qrcode|chave|visualiza)/i.test(raw)) continue;
-          try {
-            const nextUrl = new URL(raw, finalUrl).toString();
-            const nextValidation = validateNfceUrl(nextUrl);
-            if (nextValidation.state === validated.state && !visited.has(nextUrl)) queue.push(nextUrl);
-          } catch (_error) {}
-        }
-      }
+      const receipt = normalizeInfoSimplesReceipt(providerPayload, accessKey);
+      await receiptImportsCollection().updateOne(
+        { userId, accessKey },
+        { $set:{ userId, accessKey, receipt, status:'completed', importedAt:now(), provider:'infosimples' }, $unset:{ error:1 } },
+        { upsert:true }
+      );
+      return res.json({ ok:true, receipt, quota:{ used:quota.used, limit:quota.limit }, privacy:'A chave é consultada no servidor e o token da integração nunca é enviado ao navegador.' });
+    } catch (providerError) {
+      await releaseReceiptQuota(subscription._id);
+      await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' });
+      throw providerError;
     }
-    if (validated.state === 'MG') {
-      const verificationError = new Error('A SEF/MG exige verificação humana para mostrar os produtos. Fotografe a parte da nota onde aparecem os itens; a CozIA fará a leitura no seu celular.');
-      verificationError.statusCode = 409;
-      verificationError.payload = { code:'NFCE_HUMAN_VERIFICATION_REQUIRED', state:'MG', officialUrl:validated.url, ...(validated.keyMetadata ? { keyMetadata:validated.keyMetadata } : {}), photoFallback:true };
-      throw verificationError;
-    }
-    if (req.body?.key) {
-      const verificationError = new Error('A chave foi validada e a nota identificada, mas o portal estadual exige a verificacao visual para liberar os produtos. Escaneie o QR Code ou fotografe os itens.');
-      verificationError.statusCode = 409;
-      verificationError.payload = { code:'NFCE_KEY_PORTAL_VERIFICATION', state:validated.state, officialUrl:validated.url, keyMetadata:validated.keyMetadata, photoFallback:true };
-      throw verificationError;
-    }
-    throw lastParseError || new Error('Não foi possível localizar os produtos desta NFC-e.');
   } catch (error) {
-    return res.status(error.statusCode || 502).json({ ok: false, message: error.message || 'Não foi possível consultar esta NFC-e.', ...(error.payload || {}) });
+    console.error('[nfce/preview]', { message:error?.message || String(error) });
+    return res.status(error.statusCode || 502).json({ ok:false, message:error.message || 'Não foi possível consultar esta NFC-e.' });
   }
 });
 
@@ -817,6 +927,8 @@ app.post('/api/auth/register', async (req, res) => {
       status: 'trialing',
       trialStart: createdAt,
       trialEnd: getTrialEnd(createdAt),
+      receiptQuotaUsed: 0,
+      receiptQuotaStartedAt: createdAt,
       mercadopagoPreapprovalPlanId: 'ae9349b69ef94a27ad19786352488fa5',
       mercadopagoSubscriptionId: null,
       mercadopagoStatus: null,
@@ -1172,6 +1284,38 @@ app.post('/api/billing/confirm-premium', authMiddleware, async (req, res) => {
       ok: false,
       message: error.message || 'Não foi possível confirmar o Premium agora.'
     });
+  }
+});
+
+app.post('/api/billing/cancel-subscription', authMiddleware, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.auth.sub);
+    const subscription = await subscriptionsCollection().findOne({ userId });
+    if (!subscription) return res.status(404).json({ ok:false, message:'Assinatura não encontrada.' });
+    const status = String(subscription.status || '').toLowerCase();
+    if (['canceled','cancelled','trial_expired','basic'].includes(status)) {
+      return res.json({ ok:true, alreadyCanceled:true, message:'Esta assinatura já está cancelada.' });
+    }
+    const preapprovalId = String(subscription.mercadopagoSubscriptionId || '').trim();
+    if (preapprovalId) {
+      if (!MP_ACCESS_TOKEN) return res.status(503).json({ ok:false, message:'O cancelamento online ainda não foi configurado.' });
+      const response = await fetch(`https://api.mercadopago.com/preapproval/${encodeURIComponent(preapprovalId)}`, {
+        method:'PUT',
+        headers:{ Authorization:`Bearer ${MP_ACCESS_TOKEN}`, 'Content-Type':'application/json' },
+        body:JSON.stringify({ status:'canceled' })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        console.error('[billing/cancel-subscription] Mercado Pago', { status:response.status, message:payload?.message || '' });
+        return res.status(502).json({ ok:false, message:'O Mercado Pago não confirmou o cancelamento. Tente novamente ou faça o cancelamento em Assinaturas no Mercado Pago.' });
+      }
+    }
+    const canceledAt = now();
+    await subscriptionsCollection().updateOne({ _id:subscription._id }, { $set:{ status:'canceled', plan:'basic', mercadopagoStatus:'canceled', canceledAt, blockedAt:canceledAt, updatedAt:canceledAt } });
+    return res.json({ ok:true, message:preapprovalId ? 'Assinatura cancelada. Não haverá novas cobranças.' : 'Período gratuito encerrado. Nenhuma cobrança será realizada.' });
+  } catch (error) {
+    console.error('[billing/cancel-subscription]', { message:error?.message || String(error) });
+    return res.status(500).json({ ok:false, message:'Não foi possível cancelar a assinatura agora.' });
   }
 });
 

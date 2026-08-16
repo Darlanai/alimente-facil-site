@@ -1,0 +1,18 @@
+Arquivos novos
+- INSTRUCOES-NOTAS-FISCAIS.md
+- public/fiscal-notes.js
+- public/fiscal-notes.css
+- public/modern-ui.js
+- public/modern-ui.css
+
+Arquivos alterados
+- .env.example
+- api/index.js
+- package.json
+- package-lock.json
+- public/index.html
+- public/script.js
+- public/cozia-v7.css
+- public/system-sync.js
+
+O pacote contém somente estes arquivos, completos, preservando as pastas corretas.
