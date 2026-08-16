@@ -1,0 +1,22 @@
+ALIMENTE FÁCIL · CORREÇÃO V18
+
+Copie estes arquivos completos, preservando as pastas:
+
+- api/index.js
+- public/index.html
+- public/service-worker.js
+- public/modern-ui.css
+- public/system-sync.js
+- public/fiscal-notes.js
+- INSTRUCOES-NOTAS-FISCAIS.md
+
+O que foi corrigido:
+
+- exclusão confirmada de todas as listas, itens da lista aberta, receitas, itens da despensa, planejamento e notas fiscais;
+- cartões de listas e receitas mais compactos;
+- ações com ícones coloridos e acessíveis;
+- leitor de QR com foco contínuo, zoom compatível, detector nativo e leitura em múltiplas escalas/contrastes;
+- tratamento seguro de INFOSIMPLES_TOKEN, inclusive quando o valor for colado como token=... ou URL de teste;
+- mensagem específica quando a InfoSimples rejeitar a autenticação.
+
+Após substituir os arquivos, faça um novo Deploy na Vercel para carregar o JavaScript, o Service Worker e as variáveis do servidor.

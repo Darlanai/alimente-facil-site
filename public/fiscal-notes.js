@@ -8,7 +8,7 @@
   const money = (value) => Number(value || 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const normalize = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-  const runtime = { stream:null, detector:null, raf:0, receipt:null, busy:false, nameMode:'original' };
+  const runtime = { stream:null, detector:null, raf:0, receipt:null, busy:false, nameMode:'original', lastScan:0, scanCount:0 };
 
   function app() { return window.app; }
   function notes() {
@@ -77,7 +77,12 @@
     stopCamera(); status('Abrindo a câmera…');
     try {
       runtime.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:{ ideal:'environment' }, width:{ ideal:1920 }, height:{ ideal:1080 }, advanced:[{ focusMode:'continuous' }] }, audio:false });
+      const track=runtime.stream.getVideoTracks()[0];const capabilities=track?.getCapabilities?.()||{};const advanced={};
+      if(Array.isArray(capabilities.focusMode)&&capabilities.focusMode.includes('continuous'))advanced.focusMode='continuous';
+      if(capabilities.zoom){advanced.zoom=Math.min(Math.max(1.25,capabilities.zoom.min||1),capabilities.zoom.max||1.25);}
+      if(Object.keys(advanced).length)track.applyConstraints({advanced:[advanced]}).catch(()=>false);
       const video = $('#af-fiscal-video'); video.srcObject = runtime.stream; await video.play();
+      runtime.lastScan=0;runtime.scanCount=0;
       $('.af-fiscal-camera')?.classList.add('is-live');
       if ('BarcodeDetector' in window) runtime.detector = new BarcodeDetector({ formats:['qr_code'] });
       scanFrame(); status('Câmera ativa. Mantenha o QR dentro da moldura.');
@@ -87,17 +92,21 @@
     cancelAnimationFrame(runtime.raf); runtime.raf = 0; runtime.stream?.getTracks().forEach((track) => track.stop()); runtime.stream = null;
     const video = $('#af-fiscal-video'); if (video) video.srcObject = null; $('.af-fiscal-camera')?.classList.remove('is-live');
   }
-  async function scanFrame() {
+  async function scanFrame(timestamp=0) {
     const video = $('#af-fiscal-video'); if (!runtime.stream || !video) return;
+    if(timestamp-runtime.lastScan<110){runtime.raf=requestAnimationFrame(scanFrame);return;}runtime.lastScan=timestamp;runtime.scanCount+=1;
     try {
       let value = '';
       if (runtime.detector) value = (await runtime.detector.detect(video))[0]?.rawValue || '';
       if (!value && window.jsQR && video.readyState >= 2) {
-        const canvas = document.createElement('canvas'); const width = Math.min(960, video.videoWidth || 960); const height = Math.round(width * (video.videoHeight || 720) / (video.videoWidth || 960));
-        canvas.width = width; canvas.height = height; const context = canvas.getContext('2d', { willReadFrequently:true }); context.drawImage(video,0,0,width,height);
-        value = window.jsQR(context.getImageData(0,0,width,height).data,width,height,{ inversionAttempts:'attemptBoth' })?.data || '';
+        const sourceWidth=video.videoWidth||1280,sourceHeight=video.videoHeight||720;const width=Math.min(1120,sourceWidth);const height=Math.round(width*sourceHeight/sourceWidth);
+        const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d',{willReadFrequently:true});context.imageSmoothingEnabled=true;context.drawImage(video,0,0,width,height);
+        let image=context.getImageData(0,0,width,height);value=window.jsQR(image.data,width,height,{inversionAttempts:'attemptBoth'})?.data||'';
+        if(!value){const cropSize=Math.round(Math.min(width,height)*.76),cropX=Math.round((width-cropSize)/2),cropY=Math.round((height-cropSize)/2);const crop=context.getImageData(cropX,cropY,cropSize,cropSize);value=window.jsQR(crop.data,cropSize,cropSize,{inversionAttempts:'attemptBoth'})?.data||'';}
+        if(!value&&runtime.scanCount%4===0){const pixels=image.data;for(let index=0;index<pixels.length;index+=4){const gray=.299*pixels[index]+.587*pixels[index+1]+.114*pixels[index+2];const contrasted=Math.max(0,Math.min(255,(gray-128)*1.55+128));pixels[index]=pixels[index+1]=pixels[index+2]=contrasted;}value=window.jsQR(pixels,width,height,{inversionAttempts:'attemptBoth'})?.data||'';}
       }
-      const key = value.match(/\d{44}/)?.[0];
+      let readableValue=String(value||'');try{readableValue=decodeURIComponent(readableValue);}catch(_error){}
+      const key = readableValue.match(/\d{44}/)?.[0];
       if (key) { stopCamera(); queryReceipt(key); return; }
     } catch (_error) {}
     runtime.raf = requestAnimationFrame(scanFrame);
@@ -164,7 +173,7 @@
   function renderNotesModule() {
     const container = $('#module-notas'); if (!container) return;
     const data = notes();
-    container.innerHTML = `<section class="af-notes-page"><header class="af-page-head"><div><small>CENTRAL FISCAL</small><h2>Minhas Notas</h2><p>Documentos oficiais preservados. Você pode organizar os itens sem alterar a nota original.</p></div><div class="af-page-head-actions"><button class="af-action-secondary" data-af-share="notas" title="Compartilhar"><i class="fa-brands fa-whatsapp"></i></button><button class="af-action-primary" data-nfce-open><i class="fa-solid fa-qrcode"></i> Ler nova nota</button></div></header><div class="af-quota-card"><span><i class="fa-solid fa-shield-halved"></i></span><div><strong>${data.length} ${data.length === 1 ? 'nota salva' : 'notas salvas'}</strong><small>1 consulta no teste · 10 a cada 30 dias no Premium</small></div></div><div class="af-notes-grid">${data.length ? data.map(noteCard).join('') : '<div class="af-empty-note"><i class="fa-solid fa-receipt"></i><h3>Sua primeira nota começa aqui</h3><p>Leia o QR Code ou digite a chave de acesso.</p><button data-nfce-open>Ler nota fiscal</button></div>'}</div></section>`;
+    container.innerHTML = `<section class="af-notes-page"><header class="af-page-head"><div><small>CENTRAL FISCAL</small><h2>Minhas Notas</h2><p>Documentos oficiais preservados. Você pode organizar os itens sem alterar a nota original.</p></div><div class="af-page-head-actions"><button class="af-action-secondary" data-af-share="notas" title="Compartilhar" aria-label="Compartilhar notas"><i class="fa-brands fa-whatsapp"></i></button><button class="af-action-secondary is-danger" data-sync-action="delete-all-notes" title="Excluir todas" aria-label="Excluir todas as notas"><i class="fa-solid fa-trash-can"></i></button><button class="af-action-primary" data-nfce-open><i class="fa-solid fa-qrcode"></i> Ler nova nota</button></div></header><div class="af-quota-card"><span><i class="fa-solid fa-shield-halved"></i></span><div><strong>${data.length} ${data.length === 1 ? 'nota salva' : 'notas salvas'}</strong><small>1 consulta no teste · 10 a cada 30 dias no Premium</small></div></div><div class="af-notes-grid">${data.length ? data.map(noteCard).join('') : '<div class="af-empty-note"><i class="fa-solid fa-receipt"></i><h3>Sua primeira nota começa aqui</h3><p>Leia o QR Code ou digite a chave de acesso.</p><button data-nfce-open>Ler nota fiscal</button></div>'}</div></section>`;
   }
   function noteCard(note) {
     const sent = (note.products || []).filter((product) => product.sentToPantry).length;

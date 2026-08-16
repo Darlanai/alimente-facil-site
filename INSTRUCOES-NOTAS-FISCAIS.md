@@ -11,6 +11,8 @@ No projeto **alimente-facil-site**, abra **Settings → Environment Variables �
 
 Não use `NEXT_PUBLIC_`, não coloque o token no HTML e não envie o arquivo `.env` para ninguém.
 
+No campo Value, use preferencialmente somente o token. O servidor também reconhece `token=...` ou a URL de teste completa e extrai o token automaticamente. Não deixe o valor de exemplo `COLE_AQUI_O_TOKEN_DA_INFOSIMPLES`.
+
 ## 2. Faça um novo deployment
 
 Depois de salvar a variável, abra **Deployments**, escolha o deployment mais recente e use **Redeploy**. Variáveis novas só entram em uma nova implantação.

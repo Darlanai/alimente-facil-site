@@ -13,7 +13,15 @@ const PORT = Number(process.env.PORT || 3000);
 const XAI_API_KEY = process.env.XAI_API_KEY || process.env.GROK_API_KEY || '';
 const XAI_MODEL = process.env.XAI_MODEL || 'grok-3-mini';
 const XAI_VISION_MODEL = process.env.XAI_VISION_MODEL || 'grok-4.6';
-const INFOSIMPLES_TOKEN = process.env.INFOSIMPLES_TOKEN || '';
+function normalizeInfoSimplesToken(rawValue) {
+  let value = String(rawValue || '').trim().replace(/^['"]|['"]$/g, '').trim();
+  if (/^https?:\/\//i.test(value)) {
+    try { value = new URL(value).searchParams.get('token') || value; } catch (_error) {}
+  }
+  if (/^token=/i.test(value)) value = value.slice(value.indexOf('=') + 1);
+  return value.trim();
+}
+const INFOSIMPLES_TOKEN = normalizeInfoSimplesToken(process.env.INFOSIMPLES_TOKEN);
 const MONGODB_URI = process.env.MONGODB_URI || '';
 const JWT_SECRET = process.env.JWT_SECRET || '';
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
@@ -813,7 +821,7 @@ app.get('/api/health', (_req, res) => {
 
 app.post('/api/nfce/preview', authMiddleware, async (req, res) => {
   try {
-    if (!INFOSIMPLES_TOKEN) return res.status(503).json({ ok:false, code:'INFOSIMPLES_NOT_CONFIGURED', message:'A consulta fiscal ainda não foi configurada pelo administrador.' });
+    if (!INFOSIMPLES_TOKEN || INFOSIMPLES_TOKEN === 'COLE_AQUI_O_TOKEN_DA_INFOSIMPLES') return res.status(503).json({ ok:false, code:'INFOSIMPLES_NOT_CONFIGURED', message:'O token da consulta fiscal ainda não foi configurado corretamente.' });
     const accessKey = String(req.body?.key || req.body?.url || '').match(/\d{44}/)?.[0] || '';
     if (!accessKey) return res.status(400).json({ ok:false, message:'Leia o QR Code ou digite a chave de acesso com 44 números.' });
     nfceUrlFromAccessKey(accessKey);
@@ -851,7 +859,10 @@ app.post('/api/nfce/preview', authMiddleware, async (req, res) => {
       const providerPayload = await providerResponse.json().catch(() => ({}));
       const providerCode = Number(providerPayload?.code || providerResponse.status);
       if (!providerResponse.ok || providerCode >= 400 || !providerPayload?.data) {
-        const error = new Error(String(providerPayload?.code_message || providerPayload?.message || 'A consulta fiscal não foi concluída. Tente novamente em instantes.'));
+        const providerMessage = String(providerPayload?.code_message || providerPayload?.message || 'A consulta fiscal não foi concluída. Tente novamente em instantes.');
+        const authenticationError = /autentic|token informado|token inv[aá]lido|token n[aã]o/i.test(providerMessage);
+        const error = new Error(authenticationError ? 'A integração fiscal não conseguiu autenticar. Confira INFOSIMPLES_TOKEN na Vercel e faça um novo Redeploy.' : providerMessage);
+        error.code = authenticationError ? 'INFOSIMPLES_TOKEN_INVALID' : 'INFOSIMPLES_PROVIDER_ERROR';
         error.statusCode = providerCode === 404 ? 404 : 502;
         throw error;
       }
@@ -869,7 +880,7 @@ app.post('/api/nfce/preview', authMiddleware, async (req, res) => {
     }
   } catch (error) {
     console.error('[nfce/preview]', { message:error?.message || String(error) });
-    return res.status(error.statusCode || 502).json({ ok:false, message:error.message || 'Não foi possível consultar esta NFC-e.' });
+    return res.status(error.statusCode || 502).json({ ok:false, code:error.code || 'NFCE_QUERY_FAILED', message:error.message || 'Não foi possível consultar esta NFC-e.' });
   }
 });
 
