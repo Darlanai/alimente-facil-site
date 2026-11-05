@@ -265,3 +265,20 @@ html body #af-chatbot.af-chatbot-lite .af-ai-composer button{width:42px!importan
 #saved-lists-container .card--saved-list .card__action,#main-recipe-grid .card--recipe .card__action{width:31px!important;min-width:31px!important;height:31px!important;min-height:31px!important;padding:0!important;margin:0!important;border:0!important;border-radius:9px!important;background:transparent!important;box-shadow:none!important}
 #saved-lists-container .card--saved-list .card__action--edit,#main-recipe-grid .card--recipe .card__action--edit{color:#38bdf8!important}#saved-lists-container .card--saved-list .card__action--danger,#main-recipe-grid .card--recipe .card__action--danger{color:#fb7185!important}
 @media(max-width:760px){#saved-lists-container .card--saved-list .card__header,#main-recipe-grid .card--recipe .card__header{padding:12px 12px 6px!important}#saved-lists-container .card--saved-list .card__content,#main-recipe-grid .card--recipe .card__content{padding:2px 12px 8px!important}}
+
+
+/* Experiência cinematográfica da landing: o botão de luz escurece a cozinha ao apagar. */
+html body:not(.app-mode) #landing-video-container .af-landing-video,
+html body:not(.app-mode) #landing-video-container .af-video-shade{
+  transition:filter .9s cubic-bezier(.22,1,.36,1),opacity .9s cubic-bezier(.22,1,.36,1),background .9s cubic-bezier(.22,1,.36,1);
+}
+html body:not(.app-mode).lua-mode #landing-video-container .af-landing-video,
+html body:not(.app-mode).landing-lua-mode #landing-video-container .af-landing-video{
+  filter:sepia(.03) saturate(.78) contrast(1.14) brightness(.27)!important;
+}
+html body:not(.app-mode).lua-mode #landing-video-container .af-video-shade,
+html body:not(.app-mode).landing-lua-mode #landing-video-container .af-video-shade{
+  background:linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.42) 52%,rgba(0,0,0,.62))!important;
+}
+html body:not(.app-mode).lua-mode .af-home-copy,
+html body:not(.app-mode).landing-lua-mode .af-home-copy{ text-shadow:0 3px 28px rgba(0,0,0,.95)!important; }
