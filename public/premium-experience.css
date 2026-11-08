@@ -102,3 +102,53 @@ html body .af-home-benefits{color:rgba(255,255,255,.88)!important}
 @media(prefers-reduced-motion:reduce){
  #landing-video-container .af-landing-video{transition:none!important}
 }
+
+
+/* Final mobile composition: CozIA belongs to the app panel only. */
+body:not(.app-mode) #af-chatbot,
+body:not(.app-mode) #af-chatbot-toggle{
+ display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+}
+body.app-mode #af-chatbot-toggle{
+ display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+ position:fixed!important;left:auto!important;right:18px!important;top:auto!important;bottom:18px!important;
+ transform:none!important;z-index:50002!important;
+}
+body.app-mode #af-chatbot{
+ z-index:50003!important;
+}
+body.app-mode #af-chatbot-toggle.af-help-draggable{
+ left:auto!important;right:18px!important;top:auto!important;bottom:18px!important;
+ transform:none!important;
+}
+body:not(.app-mode) #afGlobalReveal{z-index:50010!important}
+body:not(.app-mode) .af-reveal-divider{z-index:50011!important}
+body:not(.app-mode) .af-scene-light{
+ top:clamp(92px,13vh,126px)!important;bottom:auto!important;right:clamp(16px,4vw,52px)!important;
+ z-index:9!important;
+}
+body:not(.app-mode) .af-minimal-footer{bottom:14px!important;z-index:8!important}
+body:not(.app-mode) .af-home-benefits{margin-top:14px!important}
+body:not(.app-mode) .af-home-actions{gap:9px!important}
+body:not(.app-mode) .af-price-compact{margin-top:3px!important}
+.af-install-cta{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;
+ min-height:48px!important;padding:0 18px!important;border-radius:999px!important;
+ border:1px solid rgba(255,255,255,.68)!important;background:rgba(255,255,255,.17)!important;
+ color:#fff!important;font:700 12px/1 Manrope,sans-serif!important;
+ backdrop-filter:blur(16px) saturate(140%)!important;box-shadow:0 8px 24px rgba(0,0,0,.1)!important;
+}
+.af-install-cta i{font-size:13px!important}
+.af-install-top{color:white!important}
+@media(max-width:700px){
+ body:not(.app-mode) .af-top-controls{gap:3px!important}
+ body:not(.app-mode) .af-top-icon{width:29px!important;height:32px!important}
+ body:not(.app-mode) .af-install-top{display:none!important}
+ body:not(.app-mode) .af-home-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+ body:not(.app-mode) .af-primary-cta{grid-column:1/-1!important}
+ body:not(.app-mode) .af-nfce-entry{grid-column:1/-1!important}
+ body:not(.app-mode) .af-install-cta{grid-column:1/-1!important;width:100%!important;min-height:42px!important}
+ body:not(.app-mode) .af-scene-light{top:91px!important;right:15px!important;bottom:auto!important;height:34px!important;padding:0 10px!important}
+ body:not(.app-mode) .af-minimal-footer{bottom:7px!important}
+ body.app-mode #af-chatbot-toggle,body.app-mode #af-chatbot-toggle.af-help-draggable{right:14px!important;bottom:14px!important}
+}
