@@ -234,7 +234,7 @@
 
   function boot(){
     installEdgeBars();
-    installDraggableHelp();
+    // CozIA fica fixa dentro do painel; não compartilha o gesto da alça lateral.
   }
 
   if(document.readyState==='loading'){
