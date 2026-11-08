@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.08.16.bulk-actions-qr-v18';
+const VERSION = '2026.11.08.cinematic-cloud-v19';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -32,6 +32,8 @@ const APP_SHELL = [
   '/system-sync.js',
   '/modern-ui.css',
   '/modern-ui.js',
+  '/omnitech-cinematic.css',
+  '/logo-a-modern.svg',
   '/auth-premium-gate-fix.js',
   '/reset-password.html',
   '/manifest.webmanifest',
