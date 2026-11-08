@@ -199,7 +199,7 @@ html body.app-mode .glass-dock{
   background:rgba(8,23,14,.82)!important;border:1px solid rgba(218,245,224,.13)!important;
   box-shadow:0 15px 45px rgba(0,0,0,.35)!important;backdrop-filter:blur(22px)!important;
 }
-html body.app-mode .glass-dock .dock-item{color:#9daf a3!important}
+html body.app-mode .glass-dock .dock-item{color:#9dafa3!important}
 html body.app-mode .glass-dock .dock-item.active{color:#c9f1d2!important}
 html body.app-mode .af-chatbot{border:1px solid rgba(190,235,202,.2)!important;box-shadow:0 28px 90px rgba(0,0,0,.48)!important;overflow:hidden!important}
 html body.app-mode .af-chatbot-header{background:linear-gradient(120deg,#153b25,#0b2114)!important}
