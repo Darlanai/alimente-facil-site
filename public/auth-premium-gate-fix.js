@@ -178,11 +178,13 @@
     const serialized = serializeCloudPayload(payload);
     if (!options.force && serialized === state.cloudLastSerialized) return { ok:true, unchanged:true };
 
-    const result = await apiFetchJson('/api/app-state', {
+    const write = () => apiFetchJson('/api/app-state', {
       method: 'PUT',
       headers: { Authorization: 'Bearer ' + token },
       body: JSON.stringify({ state: payload })
     });
+    state.cloudSaveChain = state.cloudSaveChain.catch(function () { return null; }).then(write);
+    const result = await state.cloudSaveChain;
     saveLocalUserBackup(userId, payload);
     state.cloudLastSerialized = serialized;
     return result;
