@@ -124,7 +124,9 @@
 
     // Celular: gesto em qualquer ponto da landing ou do painel.
     document.addEventListener('touchstart',e=>{
+      // O gesto da CozIA é independente do gesto da alça lateral.
       if(e.touches.length!==1||document.querySelector('.modal-overlay.active,.af-info-modal.open'))return;
+      if(e.target.closest('#af-chatbot-toggle,#af-chatbot,.af-global-reveal,#afRevealDivider,input,textarea,select,button,a,[data-no-panel-swipe]'))return;
       const t=e.touches[0];beginGesture(t.clientX,t.clientY,'touch');
     },{passive:true});
     document.addEventListener('touchmove',e=>{
