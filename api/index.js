@@ -151,6 +151,12 @@ async function syncSubscriptionFromMercadoPago(userId, preapprovalId) {
     } else {
       updates.status = 'active';
       updates.lastPaymentAt = currentDate;
+      // O período gratuito tem uma franquia própria. Ao migrar para Premium pago,
+      // inicia-se uma nova janela de 30 dias com até 10 notas.
+      if (['trialing', 'trial_expired'].includes(String(current.status || '').toLowerCase())) {
+        updates.receiptQuotaUsed = 0;
+        updates.receiptQuotaStartedAt = currentDate;
+      }
     }
   } else if (delinquent.has(mpStatus)) {
     updates.status = 'standby';
@@ -314,11 +320,20 @@ function publicSubscription(subscription) {
     trialDaysRemaining, trialActive, trialExpired,
     paymentRequired:trialExpired || ['standby','canceled'].includes(status),
     lastPaymentAt:subscription.lastPaymentAt || null, blockedAt:subscription.blockedAt || null, checkoutUrl:PREMIUM_CHECKOUT_URL,
-    receiptQuota: {
-      used: Number(subscription.receiptQuotaUsed || 0),
-      limit: status === 'trialing' ? 1 : 10,
-      startedAt: subscription.receiptQuotaStartedAt || subscription.trialStart || subscription.lastPaymentAt || null
-    }
+    receiptQuota: (() => {
+      const quota = receiptQuotaWindow(subscription, currentDate);
+      const renewsAt = quota.trial
+        ? (subscription.trialEnd || addDays(quota.startedAt, TRIAL_DAYS))
+        : addDays(quota.startedAt, 30);
+      return {
+        used: quota.used,
+        limit: quota.limit,
+        remaining: Math.max(0, quota.limit - quota.used),
+        startedAt: quota.startedAt,
+        renewsAt,
+        periodDays: quota.trial ? TRIAL_DAYS : 30
+      };
+    })()
   };
 }
 
@@ -742,38 +757,82 @@ function normalizeInfoSimplesReceipt(payload, accessKey) {
 
 app.locals.normalizeInfoSimplesReceipt = normalizeInfoSimplesReceipt;
 
+const RECEIPT_QUOTA_PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
+
 function receiptQuotaWindow(subscription, currentDate = now()) {
   const status = String(subscription?.status || '').toLowerCase();
   const trial = status === 'trialing';
-  let startedAt = new Date(subscription?.receiptQuotaStartedAt || subscription?.trialStart || subscription?.lastPaymentAt || currentDate);
-  let used = Number(subscription?.receiptQuotaUsed || 0);
-  if (!trial && currentDate.getTime() - startedAt.getTime() >= 30 * 24 * 60 * 60 * 1000) {
-    startedAt = currentDate;
+  const anchor = trial
+    ? (subscription?.trialStart || subscription?.receiptQuotaStartedAt || currentDate)
+    : (subscription?.receiptQuotaStartedAt || subscription?.lastPaymentAt || subscription?.billingReadyAt || subscription?.trialEnd || subscription?.createdAt || currentDate);
+  const anchorDate = new Date(anchor);
+  let startedAt = Number.isNaN(anchorDate.getTime()) ? new Date(currentDate) : anchorDate;
+  let used = Math.max(0, Number(subscription?.receiptQuotaUsed || 0));
+
+  // Janelas fixas e consecutivas de 30 x 24 horas, sem deriva causada pelo dia
+  // em que o usuário volta a acessar o sistema depois do vencimento.
+  if (!trial && currentDate.getTime() >= startedAt.getTime() + RECEIPT_QUOTA_PERIOD_MS) {
+    const elapsedPeriods = Math.floor((currentDate.getTime() - startedAt.getTime()) / RECEIPT_QUOTA_PERIOD_MS);
+    startedAt = new Date(startedAt.getTime() + elapsedPeriods * RECEIPT_QUOTA_PERIOD_MS);
     used = 0;
   }
-  return { limit: trial ? 1 : 10, used, startedAt, trial };
+
+  return { limit: trial ? 1 : 10, used, startedAt, trial, periodDays: trial ? TRIAL_DAYS : 30 };
 }
 
 async function reserveReceiptQuota(userId, subscription) {
-  const currentDate = now();
-  const window = receiptQuotaWindow(subscription, currentDate);
-  if (window.used === 0 && Number(subscription.receiptQuotaUsed || 0) > 0 && !window.trial) {
-    await subscriptionsCollection().updateOne({ _id:subscription._id }, { $set:{ receiptQuotaUsed:0, receiptQuotaStartedAt:window.startedAt, updatedAt:currentDate } });
-    subscription.receiptQuotaUsed = 0;
+  // A reserva é atômica no MongoDB. Releitura e comparação otimista evitam
+  // que requisições simultâneas ultrapassem a franquia ou zerem o contador duas vezes.
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const current = attempt === 0 ? subscription : await getUserSubscription(userId);
+    if (!current) return { ok:false, limit:10, used:0, startedAt:now(), trial:false };
+
+    const currentDate = now();
+    const window = receiptQuotaWindow(current, currentDate);
+    const storedUsed = Math.max(0, Number(current.receiptQuotaUsed || 0));
+    const storedStart = current.receiptQuotaStartedAt ? new Date(current.receiptQuotaStartedAt) : null;
+    const windowChanged = !storedStart || storedStart.getTime() !== window.startedAt.getTime() || storedUsed !== window.used;
+
+    if (windowChanged) {
+      const resetFilter = { _id:current._id, receiptQuotaUsed: current.receiptQuotaUsed === undefined ? { $exists:false } : current.receiptQuotaUsed };
+      if (current.receiptQuotaStartedAt) {
+        resetFilter.receiptQuotaStartedAt = current.receiptQuotaStartedAt;
+      } else {
+        resetFilter.$or = [{ receiptQuotaStartedAt:{ $exists:false } }, { receiptQuotaStartedAt:null }];
+      }
+      const reset = await subscriptionsCollection().updateOne(resetFilter, {
+        $set:{ receiptQuotaUsed:window.used, receiptQuotaStartedAt:window.startedAt, updatedAt:currentDate }
+      });
+      if (!reset.matchedCount) continue;
+    }
+
+    if (window.used >= window.limit) return { ok:false, ...window };
+
+    const result = await subscriptionsCollection().findOneAndUpdate(
+      {
+        _id:current._id,
+        status:current.status,
+        receiptQuotaStartedAt:window.startedAt,
+        receiptQuotaUsed:{ $lt:window.limit }
+      },
+      { $inc:{ receiptQuotaUsed:1 }, $set:{ updatedAt:currentDate } },
+      { returnDocument:'after' }
+    );
+    const updated = result?.value || result;
+    if (updated) {
+      return { ok:true, limit:window.limit, used:Number(updated.receiptQuotaUsed || window.used + 1), startedAt:window.startedAt, trial:window.trial };
+    }
   }
-  if (window.used >= window.limit) return { ok:false, ...window };
-  const result = await subscriptionsCollection().findOneAndUpdate(
-    { _id:subscription._id, $or:[{ receiptQuotaUsed:{ $lt:window.limit } }, { receiptQuotaUsed:{ $exists:false } }] },
-    { $set:{ receiptQuotaStartedAt:window.startedAt, updatedAt:currentDate }, $inc:{ receiptQuotaUsed:1 } },
-    { returnDocument:'after' }
-  );
-  const updated = result?.value || result;
-  if (!updated) return { ok:false, ...window };
-  return { ok:true, limit:window.limit, used:Number(updated.receiptQuotaUsed || window.used + 1), startedAt:window.startedAt, trial:window.trial };
+
+  const latest = await getUserSubscription(userId);
+  const latestWindow = receiptQuotaWindow(latest || subscription);
+  return { ok:false, ...latestWindow };
 }
 
-async function releaseReceiptQuota(subscriptionId) {
-  await subscriptionsCollection().updateOne({ _id:subscriptionId, receiptQuotaUsed:{ $gt:0 } }, { $inc:{ receiptQuotaUsed:-1 }, $set:{ updatedAt:now() } });
+async function releaseReceiptQuota(subscriptionId, reservedStartedAt) {
+  const filter = { _id:subscriptionId, receiptQuotaUsed:{ $gt:0 } };
+  if (reservedStartedAt) filter.receiptQuotaStartedAt = reservedStartedAt;
+  await subscriptionsCollection().updateOne(filter, { $inc:{ receiptQuotaUsed:-1 }, $set:{ updatedAt:now() } });
 }
 
 app.use(express.json({ limit: '6mb' }));
@@ -874,7 +933,7 @@ app.post('/api/nfce/preview', authMiddleware, async (req, res) => {
       );
       return res.json({ ok:true, receipt, quota:{ used:quota.used, limit:quota.limit }, privacy:'A chave é consultada no servidor e o token da integração nunca é enviado ao navegador.' });
     } catch (providerError) {
-      await releaseReceiptQuota(subscription._id);
+      await releaseReceiptQuota(subscription._id, quota.startedAt);
       await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' });
       throw providerError;
     }
