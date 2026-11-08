@@ -98,6 +98,30 @@ function extractMercadoPagoSubscriptionId(req) {
   return '';
 }
 
+function validateMercadoPagoWebhookSignature(req) {
+  if (!MP_WEBHOOK_SECRET) return false;
+  const signature = String(req.headers['x-signature'] || '');
+  const requestId = String(req.headers['x-request-id'] || '');
+  const dataId = String(req.query?.['data.id'] || req.body?.data?.id || '');
+  const parts = {};
+  signature.split(',').forEach((part) => {
+    const separator = part.indexOf('=');
+    if (separator > 0) parts[part.slice(0, separator).trim()] = part.slice(separator + 1).trim();
+  });
+  const timestamp = String(parts.ts || '');
+  const receivedHash = String(parts.v1 || '');
+  if (!timestamp || !receivedHash || !requestId || !dataId) return false;
+
+  const timestampSeconds = Number(timestamp);
+  if (!Number.isFinite(timestampSeconds) || Math.abs(Math.floor(Date.now() / 1000) - timestampSeconds) > 300) return false;
+
+  const manifest = `id:${dataId};request-id:${requestId};ts:${timestamp};`;
+  const expectedHash = crypto.createHmac('sha256', MP_WEBHOOK_SECRET).update(manifest).digest('hex');
+  const expected = Buffer.from(expectedHash, 'hex');
+  const received = Buffer.from(receivedHash, 'hex');
+  return expected.length === received.length && crypto.timingSafeEqual(expected, received);
+}
+
 async function fetchMercadoPagoSubscription(preapprovalId) {
   if (!MP_ACCESS_TOKEN || !preapprovalId) return null;
 
@@ -151,6 +175,12 @@ async function syncSubscriptionFromMercadoPago(userId, preapprovalId) {
     } else {
       updates.status = 'active';
       updates.lastPaymentAt = currentDate;
+      // O período gratuito tem uma franquia própria. Ao migrar para Premium pago,
+      // inicia-se uma nova janela de 30 dias com até 10 notas.
+      if (['trialing', 'trial_expired'].includes(String(current.status || '').toLowerCase())) {
+        updates.receiptQuotaUsed = 0;
+        updates.receiptQuotaStartedAt = currentDate;
+      }
     }
   } else if (delinquent.has(mpStatus)) {
     updates.status = 'standby';
@@ -234,6 +264,10 @@ function receiptImportsCollection() {
   return db.collection('receiptImports');
 }
 
+function mercadopagoWebhookEventsCollection() {
+  return db.collection('mercadopagoWebhookEvents');
+}
+
 function now() {
   return new Date();
 }
@@ -314,11 +348,20 @@ function publicSubscription(subscription) {
     trialDaysRemaining, trialActive, trialExpired,
     paymentRequired:trialExpired || ['standby','canceled'].includes(status),
     lastPaymentAt:subscription.lastPaymentAt || null, blockedAt:subscription.blockedAt || null, checkoutUrl:PREMIUM_CHECKOUT_URL,
-    receiptQuota: {
-      used: Number(subscription.receiptQuotaUsed || 0),
-      limit: status === 'trialing' ? 1 : 10,
-      startedAt: subscription.receiptQuotaStartedAt || subscription.trialStart || subscription.lastPaymentAt || null
-    }
+    receiptQuota: (() => {
+      const quota = receiptQuotaWindow(subscription, currentDate);
+      const renewsAt = quota.trial
+        ? (subscription.trialEnd || addDays(quota.startedAt, TRIAL_DAYS))
+        : addDays(quota.startedAt, 30);
+      return {
+        used: quota.used,
+        limit: quota.limit,
+        remaining: Math.max(0, quota.limit - quota.used),
+        startedAt: quota.startedAt,
+        renewsAt,
+        periodDays: quota.trial ? TRIAL_DAYS : 30
+      };
+    })()
   };
 }
 
@@ -327,6 +370,7 @@ async function ensureIndexes() {
   await subscriptionsCollection().createIndex({ userId: 1 }, { unique: true });
   await receiptImportsCollection().createIndex({ userId: 1, accessKey: 1 }, { unique: true });
   await receiptImportsCollection().createIndex({ userId: 1, importedAt: -1 });
+  await mercadopagoWebhookEventsCollection().createIndex({ notificationId: 1 }, { unique: true, sparse: true });
 }
 
 async function connectToMongo() {
@@ -742,38 +786,82 @@ function normalizeInfoSimplesReceipt(payload, accessKey) {
 
 app.locals.normalizeInfoSimplesReceipt = normalizeInfoSimplesReceipt;
 
+const RECEIPT_QUOTA_PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
+
 function receiptQuotaWindow(subscription, currentDate = now()) {
   const status = String(subscription?.status || '').toLowerCase();
   const trial = status === 'trialing';
-  let startedAt = new Date(subscription?.receiptQuotaStartedAt || subscription?.trialStart || subscription?.lastPaymentAt || currentDate);
-  let used = Number(subscription?.receiptQuotaUsed || 0);
-  if (!trial && currentDate.getTime() - startedAt.getTime() >= 30 * 24 * 60 * 60 * 1000) {
-    startedAt = currentDate;
+  const anchor = trial
+    ? (subscription?.trialStart || subscription?.receiptQuotaStartedAt || currentDate)
+    : (subscription?.receiptQuotaStartedAt || subscription?.lastPaymentAt || subscription?.billingReadyAt || subscription?.trialEnd || subscription?.createdAt || currentDate);
+  const anchorDate = new Date(anchor);
+  let startedAt = Number.isNaN(anchorDate.getTime()) ? new Date(currentDate) : anchorDate;
+  let used = Math.max(0, Number(subscription?.receiptQuotaUsed || 0));
+
+  // Janelas fixas e consecutivas de 30 x 24 horas, sem deriva causada pelo dia
+  // em que o usuário volta a acessar o sistema depois do vencimento.
+  if (!trial && currentDate.getTime() >= startedAt.getTime() + RECEIPT_QUOTA_PERIOD_MS) {
+    const elapsedPeriods = Math.floor((currentDate.getTime() - startedAt.getTime()) / RECEIPT_QUOTA_PERIOD_MS);
+    startedAt = new Date(startedAt.getTime() + elapsedPeriods * RECEIPT_QUOTA_PERIOD_MS);
     used = 0;
   }
-  return { limit: trial ? 1 : 10, used, startedAt, trial };
+
+  return { limit: trial ? 1 : 10, used, startedAt, trial, periodDays: trial ? TRIAL_DAYS : 30 };
 }
 
 async function reserveReceiptQuota(userId, subscription) {
-  const currentDate = now();
-  const window = receiptQuotaWindow(subscription, currentDate);
-  if (window.used === 0 && Number(subscription.receiptQuotaUsed || 0) > 0 && !window.trial) {
-    await subscriptionsCollection().updateOne({ _id:subscription._id }, { $set:{ receiptQuotaUsed:0, receiptQuotaStartedAt:window.startedAt, updatedAt:currentDate } });
-    subscription.receiptQuotaUsed = 0;
+  // A reserva é atômica no MongoDB. Releitura e comparação otimista evitam
+  // que requisições simultâneas ultrapassem a franquia ou zerem o contador duas vezes.
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const current = attempt === 0 ? subscription : await getUserSubscription(userId);
+    if (!current) return { ok:false, limit:10, used:0, startedAt:now(), trial:false };
+
+    const currentDate = now();
+    const window = receiptQuotaWindow(current, currentDate);
+    const storedUsed = Math.max(0, Number(current.receiptQuotaUsed || 0));
+    const storedStart = current.receiptQuotaStartedAt ? new Date(current.receiptQuotaStartedAt) : null;
+    const windowChanged = !storedStart || storedStart.getTime() !== window.startedAt.getTime() || storedUsed !== window.used;
+
+    if (windowChanged) {
+      const resetFilter = { _id:current._id, receiptQuotaUsed: current.receiptQuotaUsed === undefined ? { $exists:false } : current.receiptQuotaUsed };
+      if (current.receiptQuotaStartedAt) {
+        resetFilter.receiptQuotaStartedAt = current.receiptQuotaStartedAt;
+      } else {
+        resetFilter.$or = [{ receiptQuotaStartedAt:{ $exists:false } }, { receiptQuotaStartedAt:null }];
+      }
+      const reset = await subscriptionsCollection().updateOne(resetFilter, {
+        $set:{ receiptQuotaUsed:window.used, receiptQuotaStartedAt:window.startedAt, updatedAt:currentDate }
+      });
+      if (!reset.matchedCount) continue;
+    }
+
+    if (window.used >= window.limit) return { ok:false, ...window };
+
+    const result = await subscriptionsCollection().findOneAndUpdate(
+      {
+        _id:current._id,
+        status:current.status,
+        receiptQuotaStartedAt:window.startedAt,
+        receiptQuotaUsed:{ $lt:window.limit }
+      },
+      { $inc:{ receiptQuotaUsed:1 }, $set:{ updatedAt:currentDate } },
+      { returnDocument:'after' }
+    );
+    const updated = result?.value || result;
+    if (updated) {
+      return { ok:true, limit:window.limit, used:Number(updated.receiptQuotaUsed || window.used + 1), startedAt:window.startedAt, trial:window.trial };
+    }
   }
-  if (window.used >= window.limit) return { ok:false, ...window };
-  const result = await subscriptionsCollection().findOneAndUpdate(
-    { _id:subscription._id, $or:[{ receiptQuotaUsed:{ $lt:window.limit } }, { receiptQuotaUsed:{ $exists:false } }] },
-    { $set:{ receiptQuotaStartedAt:window.startedAt, updatedAt:currentDate }, $inc:{ receiptQuotaUsed:1 } },
-    { returnDocument:'after' }
-  );
-  const updated = result?.value || result;
-  if (!updated) return { ok:false, ...window };
-  return { ok:true, limit:window.limit, used:Number(updated.receiptQuotaUsed || window.used + 1), startedAt:window.startedAt, trial:window.trial };
+
+  const latest = await getUserSubscription(userId);
+  const latestWindow = receiptQuotaWindow(latest || subscription);
+  return { ok:false, ...latestWindow };
 }
 
-async function releaseReceiptQuota(subscriptionId) {
-  await subscriptionsCollection().updateOne({ _id:subscriptionId, receiptQuotaUsed:{ $gt:0 } }, { $inc:{ receiptQuotaUsed:-1 }, $set:{ updatedAt:now() } });
+async function releaseReceiptQuota(subscriptionId, reservedStartedAt) {
+  const filter = { _id:subscriptionId, receiptQuotaUsed:{ $gt:0 } };
+  if (reservedStartedAt) filter.receiptQuotaStartedAt = reservedStartedAt;
+  await subscriptionsCollection().updateOne(filter, { $inc:{ receiptQuotaUsed:-1 }, $set:{ updatedAt:now() } });
 }
 
 app.use(express.json({ limit: '6mb' }));
@@ -830,7 +918,7 @@ app.post('/api/nfce/preview', authMiddleware, async (req, res) => {
     if (existing?.receipt) {
       const subscription = await refreshSubscriptionState(userId);
       const quota = receiptQuotaWindow(subscription);
-      return res.json({ ok:true, receipt:existing.receipt, alreadyImported:true, quota:{ used:quota.used, limit:quota.limit }, privacy:'A chave é consultada no servidor e o token da integração nunca é enviado ao navegador.' });
+      return res.json({ ok:true, receipt:existing.receipt, alreadyImported:true, quota:{ used:quota.used, limit:quota.limit, remaining:Math.max(0,quota.limit-quota.used), startedAt:quota.startedAt, renewsAt:quota.trial?(subscription?.trialEnd || addDays(quota.startedAt,TRIAL_DAYS)):addDays(quota.startedAt,30) }, privacy:'A chave é consultada no servidor e o token da integração nunca é enviado ao navegador.' });
     }
     const staleBefore = new Date(Date.now() - 2 * 60 * 1000);
     await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending', importedAt:{ $lt:staleBefore } });
@@ -844,7 +932,7 @@ app.post('/api/nfce/preview', authMiddleware, async (req, res) => {
     const access = getAccessDecision(subscription);
     if (!access.allowed) { await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' }); return res.status(402).json({ ok:false, code:'PLAN_REQUIRED', message:access.message, checkoutUrl:PREMIUM_CHECKOUT_URL }); }
     const quota = await reserveReceiptQuota(userId, subscription);
-    if (!quota.ok) { await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' }); return res.status(429).json({ ok:false, code:'RECEIPT_QUOTA_REACHED', quota:{ used:quota.used, limit:quota.limit }, message:quota.trial ? 'Seu teste gratuito inclui 1 nota fiscal. Assine para importar até 10 notas a cada 30 dias.' : 'Você já importou as 10 notas deste ciclo. O limite será renovado automaticamente no próximo período.' }); }
+    if (!quota.ok) { await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' }); return res.status(429).json({ ok:false, code:'RECEIPT_QUOTA_REACHED', quota:{ used:quota.used, limit:quota.limit, remaining:0, startedAt:quota.startedAt, renewsAt:quota.trial?(subscription?.trialEnd || addDays(quota.startedAt,TRIAL_DAYS)):addDays(quota.startedAt,30) }, message:quota.trial ? 'Seu teste gratuito inclui 1 nota fiscal. No Premium, você poderá importar até 10 notas a cada 30 dias.' : 'Você já utilizou as 10 notas deste período de 30 dias. A franquia será renovada automaticamente na data indicada.' }); }
     try {
       const endpoint = new URL('https://api.infosimples.com/api/v2/consultas/sefaz/nfce');
       endpoint.searchParams.set('token', INFOSIMPLES_TOKEN);
@@ -872,9 +960,9 @@ app.post('/api/nfce/preview', authMiddleware, async (req, res) => {
         { $set:{ userId, accessKey, receipt, status:'completed', importedAt:now(), provider:'infosimples' }, $unset:{ error:1 } },
         { upsert:true }
       );
-      return res.json({ ok:true, receipt, quota:{ used:quota.used, limit:quota.limit }, privacy:'A chave é consultada no servidor e o token da integração nunca é enviado ao navegador.' });
+      return res.json({ ok:true, receipt, quota:{ used:quota.used, limit:quota.limit, remaining:Math.max(0,quota.limit-quota.used), startedAt:quota.startedAt, renewsAt:quota.trial?(subscription?.trialEnd || addDays(quota.startedAt,TRIAL_DAYS)):addDays(quota.startedAt,30) }, privacy:'A chave é consultada no servidor e o token da integração nunca é enviado ao navegador.' });
     } catch (providerError) {
-      await releaseReceiptQuota(subscription._id);
+      await releaseReceiptQuota(subscription._id, quota.startedAt);
       await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' });
       throw providerError;
     }
@@ -1494,22 +1582,75 @@ ${message}`,
   }
 });
 
-app.all('/api/mercadopago/webhook', async (req, res) => {
+app.post('/api/mercadopago/webhook', async (req, res) => {
+  let eventId = '';
   try {
+    if (!MP_WEBHOOK_SECRET) {
+      return res.status(503).json({ ok:false, message:'MP_WEBHOOK_SECRET ainda não foi configurado na Vercel.' });
+    }
+    if (!validateMercadoPagoWebhookSignature(req)) {
+      return res.status(401).json({ ok:false, message:'Assinatura do webhook do Mercado Pago inválida ou expirada.' });
+    }
+
+    const eventType = String(req.body?.type || req.query?.type || req.query?.topic || '').toLowerCase();
+    if (eventType && !['subscription_preapproval', 'preapproval'].includes(eventType)) {
+      return res.status(200).json({ ok:true, ignored:true, reason:'unsupported_event_type' });
+    }
+
     const preapprovalId = extractMercadoPagoSubscriptionId(req);
     if (!preapprovalId) {
-      return res.status(200).json({ ok: true, ignored: true, reason: 'subscription_id_not_found' });
+      return res.status(200).json({ ok:true, ignored:true, reason:'subscription_id_not_found' });
     }
 
-    const subscription = await subscriptionsCollection().findOne({ mercadopagoSubscriptionId: preapprovalId });
+    eventId = String(req.body?.id || '').trim();
+    const events = mercadopagoWebhookEventsCollection();
+    if (eventId) {
+      try {
+        await events.insertOne({
+          notificationId:eventId, type:eventType || 'preapproval', resourceId:preapprovalId,
+          status:'processing', attempts:1, receivedAt:now(), updatedAt:now()
+        });
+      } catch (insertError) {
+        if (insertError?.code !== 11000) throw insertError;
+        const previous = await events.findOne({ notificationId:eventId });
+        if (previous?.status === 'processed') {
+          return res.status(200).json({ ok:true, received:true, duplicate:true });
+        }
+        await events.updateOne({ notificationId:eventId }, {
+          $set:{ status:'processing', resourceId:preapprovalId, updatedAt:now() },
+          $inc:{ attempts:1 }
+        });
+      }
+    }
+
+    if (!MP_ACCESS_TOKEN) {
+      if (eventId) await events.updateOne({ notificationId:eventId }, { $set:{ status:'failed', lastError:'MP_ACCESS_TOKEN ausente', updatedAt:now() } });
+      return res.status(503).json({ ok:false, message:'MP_ACCESS_TOKEN não configurado no servidor.' });
+    }
+
+    const subscription = await subscriptionsCollection().findOne({ mercadopagoSubscriptionId:preapprovalId });
     if (!subscription) {
-      return res.status(200).json({ ok: true, ignored: true, reason: 'subscription_not_linked_yet', preapprovalId });
+      if (eventId) await events.updateOne({ notificationId:eventId }, { $set:{ status:'pending_link', updatedAt:now() } });
+      return res.status(503).json({ ok:false, message:'Assinatura ainda não vinculada à conta. O Mercado Pago poderá reenviar a notificação.' });
     }
 
-    await syncSubscriptionFromMercadoPago(subscription.userId, preapprovalId);
-    return res.status(200).json({ ok: true, received: true, preapprovalId });
+    const synced = await syncSubscriptionFromMercadoPago(subscription.userId, preapprovalId);
+    if (!synced) throw new Error('Não foi possível sincronizar a assinatura consultada no Mercado Pago.');
+
+    if (eventId) await events.updateOne({ notificationId:eventId }, {
+      $set:{ status:'processed', processedAt:now(), updatedAt:now() },
+      $unset:{ lastError:1 }
+    });
+    return res.status(200).json({ ok:true, received:true, preapprovalId });
   } catch (error) {
-    return res.status(500).json({ ok: false, message: error.message || 'Falha ao processar webhook.' });
+    if (eventId) {
+      await mercadopagoWebhookEventsCollection().updateOne(
+        { notificationId:eventId },
+        { $set:{ status:'failed', lastError:String(error?.message || error).slice(0,500), updatedAt:now() } }
+      ).catch(() => {});
+    }
+    console.error('[mercadopago/webhook]', { message:error?.message || String(error) });
+    return res.status(500).json({ ok:false, message:'Falha ao sincronizar a assinatura com o Mercado Pago.' });
   }
 });
 
