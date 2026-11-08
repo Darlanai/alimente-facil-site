@@ -98,6 +98,30 @@ function extractMercadoPagoSubscriptionId(req) {
   return '';
 }
 
+function validateMercadoPagoWebhookSignature(req) {
+  if (!MP_WEBHOOK_SECRET) return false;
+  const signature = String(req.headers['x-signature'] || '');
+  const requestId = String(req.headers['x-request-id'] || '');
+  const dataId = String(req.query?.['data.id'] || req.body?.data?.id || '');
+  const parts = {};
+  signature.split(',').forEach((part) => {
+    const separator = part.indexOf('=');
+    if (separator > 0) parts[part.slice(0, separator).trim()] = part.slice(separator + 1).trim();
+  });
+  const timestamp = String(parts.ts || '');
+  const receivedHash = String(parts.v1 || '');
+  if (!timestamp || !receivedHash || !requestId || !dataId) return false;
+
+  const timestampSeconds = Number(timestamp);
+  if (!Number.isFinite(timestampSeconds) || Math.abs(Math.floor(Date.now() / 1000) - timestampSeconds) > 300) return false;
+
+  const manifest = `id:${dataId};request-id:${requestId};ts:${timestamp};`;
+  const expectedHash = crypto.createHmac('sha256', MP_WEBHOOK_SECRET).update(manifest).digest('hex');
+  const expected = Buffer.from(expectedHash, 'hex');
+  const received = Buffer.from(receivedHash, 'hex');
+  return expected.length === received.length && crypto.timingSafeEqual(expected, received);
+}
+
 async function fetchMercadoPagoSubscription(preapprovalId) {
   if (!MP_ACCESS_TOKEN || !preapprovalId) return null;
 
@@ -240,6 +264,10 @@ function receiptImportsCollection() {
   return db.collection('receiptImports');
 }
 
+function mercadopagoWebhookEventsCollection() {
+  return db.collection('mercadopagoWebhookEvents');
+}
+
 function now() {
   return new Date();
 }
@@ -342,6 +370,7 @@ async function ensureIndexes() {
   await subscriptionsCollection().createIndex({ userId: 1 }, { unique: true });
   await receiptImportsCollection().createIndex({ userId: 1, accessKey: 1 }, { unique: true });
   await receiptImportsCollection().createIndex({ userId: 1, importedAt: -1 });
+  await mercadopagoWebhookEventsCollection().createIndex({ notificationId: 1 }, { unique: true, sparse: true });
 }
 
 async function connectToMongo() {
@@ -1553,22 +1582,75 @@ ${message}`,
   }
 });
 
-app.all('/api/mercadopago/webhook', async (req, res) => {
+app.post('/api/mercadopago/webhook', async (req, res) => {
+  let eventId = '';
   try {
+    if (!MP_WEBHOOK_SECRET) {
+      return res.status(503).json({ ok:false, message:'MP_WEBHOOK_SECRET ainda não foi configurado na Vercel.' });
+    }
+    if (!validateMercadoPagoWebhookSignature(req)) {
+      return res.status(401).json({ ok:false, message:'Assinatura do webhook do Mercado Pago inválida ou expirada.' });
+    }
+
+    const eventType = String(req.body?.type || req.query?.type || req.query?.topic || '').toLowerCase();
+    if (eventType && !['subscription_preapproval', 'preapproval'].includes(eventType)) {
+      return res.status(200).json({ ok:true, ignored:true, reason:'unsupported_event_type' });
+    }
+
     const preapprovalId = extractMercadoPagoSubscriptionId(req);
     if (!preapprovalId) {
-      return res.status(200).json({ ok: true, ignored: true, reason: 'subscription_id_not_found' });
+      return res.status(200).json({ ok:true, ignored:true, reason:'subscription_id_not_found' });
     }
 
-    const subscription = await subscriptionsCollection().findOne({ mercadopagoSubscriptionId: preapprovalId });
+    eventId = String(req.body?.id || '').trim();
+    const events = mercadopagoWebhookEventsCollection();
+    if (eventId) {
+      try {
+        await events.insertOne({
+          notificationId:eventId, type:eventType || 'preapproval', resourceId:preapprovalId,
+          status:'processing', attempts:1, receivedAt:now(), updatedAt:now()
+        });
+      } catch (insertError) {
+        if (insertError?.code !== 11000) throw insertError;
+        const previous = await events.findOne({ notificationId:eventId });
+        if (previous?.status === 'processed') {
+          return res.status(200).json({ ok:true, received:true, duplicate:true });
+        }
+        await events.updateOne({ notificationId:eventId }, {
+          $set:{ status:'processing', resourceId:preapprovalId, updatedAt:now() },
+          $inc:{ attempts:1 }
+        });
+      }
+    }
+
+    if (!MP_ACCESS_TOKEN) {
+      if (eventId) await events.updateOne({ notificationId:eventId }, { $set:{ status:'failed', lastError:'MP_ACCESS_TOKEN ausente', updatedAt:now() } });
+      return res.status(503).json({ ok:false, message:'MP_ACCESS_TOKEN não configurado no servidor.' });
+    }
+
+    const subscription = await subscriptionsCollection().findOne({ mercadopagoSubscriptionId:preapprovalId });
     if (!subscription) {
-      return res.status(200).json({ ok: true, ignored: true, reason: 'subscription_not_linked_yet', preapprovalId });
+      if (eventId) await events.updateOne({ notificationId:eventId }, { $set:{ status:'pending_link', updatedAt:now() } });
+      return res.status(503).json({ ok:false, message:'Assinatura ainda não vinculada à conta. O Mercado Pago poderá reenviar a notificação.' });
     }
 
-    await syncSubscriptionFromMercadoPago(subscription.userId, preapprovalId);
-    return res.status(200).json({ ok: true, received: true, preapprovalId });
+    const synced = await syncSubscriptionFromMercadoPago(subscription.userId, preapprovalId);
+    if (!synced) throw new Error('Não foi possível sincronizar a assinatura consultada no Mercado Pago.');
+
+    if (eventId) await events.updateOne({ notificationId:eventId }, {
+      $set:{ status:'processed', processedAt:now(), updatedAt:now() },
+      $unset:{ lastError:1 }
+    });
+    return res.status(200).json({ ok:true, received:true, preapprovalId });
   } catch (error) {
-    return res.status(500).json({ ok: false, message: error.message || 'Falha ao processar webhook.' });
+    if (eventId) {
+      await mercadopagoWebhookEventsCollection().updateOne(
+        { notificationId:eventId },
+        { $set:{ status:'failed', lastError:String(error?.message || error).slice(0,500), updatedAt:now() } }
+      ).catch(() => {});
+    }
+    console.error('[mercadopago/webhook]', { message:error?.message || String(error) });
+    return res.status(500).json({ ok:false, message:'Falha ao sincronizar a assinatura com o Mercado Pago.' });
   }
 });
 
