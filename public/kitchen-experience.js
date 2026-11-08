@@ -71,18 +71,28 @@
   const ambient=new THREE.AmbientLight('#fff8eb',1.45);scene.add(ambient);
   const sun=new THREE.DirectionalLight('#fff0d7',3.1);sun.position.set(-4,8,5);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
   const target=new THREE.Vector3(0,1.65,-1.1);camera.lookAt(target);
-  // Interaction state.
-  let ceilingOn=true,fridgeOpen=false,drag=false,lastX=0,lastY=0,theta=.64,phi=1.18,radius=9.5,tour=false,tourStart=0;
+  // Minimal cinematic interaction: one light switch only.
+  let ceilingOn=true,fridgeOpen=false,drag=false,lastX=0,lastY=0,theta=.64,phi=1.18,radius=9.5,tour=true,tourStart=performance.now(),lampOn=true;
   const controls=document.createElement('div');controls.className='af-kitchen-controls';
-  controls.innerHTML='<div class="af-kitchen-label"><span class="af-live-dot"></span> COZINHA INTERATIVA <small>Explore o ambiente</small></div><div class="af-kitchen-actions"><button type="button" data-light><span>☼</span> Luz ambiente <b>ACESa</b></button><button type="button" data-fridge><span>▣</span> Geladeira <b>FECHADA</b></button><button type="button" data-lamp><span>◉</span> Luz indireta <b>ACESa</b></button><button type="button" data-tour><span>↗</span> Passear pela cozinha</button></div><div class="af-kitchen-hint">Arraste para olhar ao redor · Toque nos controles para interagir</div>';
+  controls.innerHTML='<button type="button" class="af-light-switch" data-light aria-label="Apagar as luzes"><span class="af-switch-icon">☼</span><span class="af-switch-copy"><b>LUZES</b><small>ACESAS</small></span><span class="af-switch-track"><i></i></span></button>';
   root.appendChild(controls);
-  const lightBtn=controls.querySelector('[data-light]'),fridgeBtn=controls.querySelector('[data-fridge]'),lampBtn=controls.querySelector('[data-lamp]'),tourBtn=controls.querySelector('[data-tour]');
-  let lampOn=true;
-  function label(btn,on,onText,offText){btn.classList.toggle('is-on',on);btn.querySelector('b').textContent=on?onText:offText}
-  lightBtn.addEventListener('click',()=>{ceilingOn=!ceilingOn;ceilingLights.forEach(l=>l.intensity=ceilingOn?85:0);under.intensity=ceilingOn?22:0;ambient.intensity=ceilingOn?1.45:.42;sun.intensity=ceilingOn?3.1:.42;label(lightBtn,ceilingOn,'ACESa','APAGADA')});
-  lampBtn.addEventListener('click',()=>{lampOn=!lampOn;lampLight.intensity=lampOn?35:0;label(lampBtn,lampOn,'ACESa','APAGADA')});
-  fridgeBtn.addEventListener('click',()=>{fridgeOpen=!fridgeOpen;doorPivot.rotation.y=fridgeOpen? -1.72:0;inner.intensity=fridgeOpen?32:0;label(fridgeBtn,fridgeOpen,'ABERTA','FECHADA')});
-  tourBtn.addEventListener('click',()=>{tour=!tour;tourStart=performance.now();tourBtn.classList.toggle('is-on',tour);tourBtn.innerHTML=tour?'<span>Ⅱ</span> Pausar passeio':'<span>↗</span> Passear pela cozinha'});
+  const lightBtn=controls.querySelector('[data-light]');
+  function updateSwitch(){
+   lightBtn.classList.toggle('is-off',!ceilingOn);
+   lightBtn.setAttribute('aria-label',ceilingOn?'Apagar as luzes':'Acender as luzes');
+   lightBtn.querySelector('small').textContent=ceilingOn?'ACESAS':'APAGADAS';
+   lightBtn.querySelector('.af-switch-icon').textContent=ceilingOn?'☼':'☾';
+  }
+  lightBtn.addEventListener('click',()=>{
+   ceilingOn=!ceilingOn;
+   ceilingLights.forEach(l=>l.intensity=ceilingOn?85:0);
+   under.intensity=ceilingOn?22:0;
+   ambient.intensity=ceilingOn?1.45:.30;
+   sun.intensity=ceilingOn?3.1:.18;
+   updateSwitch();
+  });
+  // The fridge becomes a quiet story beat during the automatic camera tour.
+  let fridgeBeat=0;
   canvas.addEventListener('pointerdown',e=>{drag=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);tour=false;tourBtn.classList.remove('is-on')});
   canvas.addEventListener('pointermove',e=>{if(!drag)return;theta-=(e.clientX-lastX)*.006;phi=Math.max(.48,Math.min(1.48,phi+(e.clientY-lastY)*.004));lastX=e.clientX;lastY=e.clientY});
   canvas.addEventListener('pointerup',()=>drag=false);canvas.addEventListener('pointercancel',()=>drag=false);
@@ -91,7 +101,15 @@
   const ro=new ResizeObserver(resize);ro.observe(root);resize();
   let raf=0;function frame(now){
    raf=requestAnimationFrame(frame);
-   if(tour&&!drag){const t=(now-tourStart)/1000;theta=.25+Math.sin(t*.16)*.7;phi=1.08+Math.sin(t*.11)*.08;radius=9.2+Math.sin(t*.22)*.45}
+   if(tour&&!drag){
+    const t=(now-tourStart)/1000;
+    theta=.28+Math.sin(t*.105)*.88;
+    phi=1.12+Math.sin(t*.075)*.10;
+    radius=9.4+Math.sin(t*.13)*.55;
+    const beat=t%34;
+    const open=beat>15&&beat<25;
+    if(open!==fridgeOpen){fridgeOpen=open;doorPivot.rotation.y=open?-1.72:0;inner.intensity=open?32:0}
+   }
    camera.position.set(target.x+Math.sin(theta)*Math.sin(phi)*radius,target.y+Math.cos(phi)*radius,target.z+Math.cos(theta)*Math.sin(phi)*radius);camera.lookAt(target);
    renderer.render(scene,camera);
   }frame(0);
