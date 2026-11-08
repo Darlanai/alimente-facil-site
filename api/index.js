@@ -918,7 +918,7 @@ app.post('/api/nfce/preview', authMiddleware, async (req, res) => {
     if (existing?.receipt) {
       const subscription = await refreshSubscriptionState(userId);
       const quota = receiptQuotaWindow(subscription);
-      return res.json({ ok:true, receipt:existing.receipt, alreadyImported:true, quota:{ used:quota.used, limit:quota.limit }, privacy:'A chave é consultada no servidor e o token da integração nunca é enviado ao navegador.' });
+      return res.json({ ok:true, receipt:existing.receipt, alreadyImported:true, quota:{ used:quota.used, limit:quota.limit, remaining:Math.max(0,quota.limit-quota.used), startedAt:quota.startedAt, renewsAt:quota.trial?(subscription?.trialEnd || addDays(quota.startedAt,TRIAL_DAYS)):addDays(quota.startedAt,30) }, privacy:'A chave é consultada no servidor e o token da integração nunca é enviado ao navegador.' });
     }
     const staleBefore = new Date(Date.now() - 2 * 60 * 1000);
     await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending', importedAt:{ $lt:staleBefore } });
@@ -932,7 +932,7 @@ app.post('/api/nfce/preview', authMiddleware, async (req, res) => {
     const access = getAccessDecision(subscription);
     if (!access.allowed) { await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' }); return res.status(402).json({ ok:false, code:'PLAN_REQUIRED', message:access.message, checkoutUrl:PREMIUM_CHECKOUT_URL }); }
     const quota = await reserveReceiptQuota(userId, subscription);
-    if (!quota.ok) { await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' }); return res.status(429).json({ ok:false, code:'RECEIPT_QUOTA_REACHED', quota:{ used:quota.used, limit:quota.limit }, message:quota.trial ? 'Seu teste gratuito inclui 1 nota fiscal. Assine para importar até 10 notas a cada 30 dias.' : 'Você já importou as 10 notas deste ciclo. O limite será renovado automaticamente no próximo período.' }); }
+    if (!quota.ok) { await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' }); return res.status(429).json({ ok:false, code:'RECEIPT_QUOTA_REACHED', quota:{ used:quota.used, limit:quota.limit, remaining:0, startedAt:quota.startedAt, renewsAt:quota.trial?(subscription?.trialEnd || addDays(quota.startedAt,TRIAL_DAYS)):addDays(quota.startedAt,30) }, message:quota.trial ? 'Seu teste gratuito inclui 1 nota fiscal. No Premium, você poderá importar até 10 notas a cada 30 dias.' : 'Você já utilizou as 10 notas deste período de 30 dias. A franquia será renovada automaticamente na data indicada.' }); }
     try {
       const endpoint = new URL('https://api.infosimples.com/api/v2/consultas/sefaz/nfce');
       endpoint.searchParams.set('token', INFOSIMPLES_TOKEN);
@@ -960,7 +960,7 @@ app.post('/api/nfce/preview', authMiddleware, async (req, res) => {
         { $set:{ userId, accessKey, receipt, status:'completed', importedAt:now(), provider:'infosimples' }, $unset:{ error:1 } },
         { upsert:true }
       );
-      return res.json({ ok:true, receipt, quota:{ used:quota.used, limit:quota.limit }, privacy:'A chave é consultada no servidor e o token da integração nunca é enviado ao navegador.' });
+      return res.json({ ok:true, receipt, quota:{ used:quota.used, limit:quota.limit, remaining:Math.max(0,quota.limit-quota.used), startedAt:quota.startedAt, renewsAt:quota.trial?(subscription?.trialEnd || addDays(quota.startedAt,TRIAL_DAYS)):addDays(quota.startedAt,30) }, privacy:'A chave é consultada no servidor e o token da integração nunca é enviado ao navegador.' });
     } catch (providerError) {
       await releaseReceiptQuota(subscription._id, quota.startedAt);
       await receiptImportsCollection().deleteOne({ userId, accessKey, status:'pending' });
