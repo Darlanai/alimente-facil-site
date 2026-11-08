@@ -1,41 +1,76 @@
-/* Interactive kitchen experience */
-html body #landing-video-container:before{
- z-index:1!important;background:linear-gradient(90deg,rgba(8,18,13,.50) 0%,rgba(8,18,13,.20) 48%,rgba(8,18,13,.04) 100%),linear-gradient(0deg,rgba(8,18,13,.30),transparent 36%,rgba(8,18,13,.08))!important;
+/* Alimente Fácil — quiet cinematic kitchen, no dashboard-like overlays */
+html body #landing-video-container{
+ position:relative!important;isolation:isolate!important;overflow:hidden!important;
+ min-height:100svh!important;height:100svh!important;background:#d8d2c5!important;color:#fff!important;
 }
-html body #landing-video-container .af-landing-video{filter:none!important;opacity:0!important}
-#afKitchenCanvas{touch-action:pan-y;cursor:grab}
+html body #landing-video-container:before{display:none!important;content:none!important}
+html body #landing-video-container .af-video-shade{display:none!important}
+html body #landing-video-container .af-landing-video{display:none!important}
+#afKitchenCanvas{position:absolute;inset:0;z-index:0;display:block;width:100%;height:100%;touch-action:pan-y;cursor:grab}
 #afKitchenCanvas:active{cursor:grabbing}
+
+/* Brand and sign-in remain quiet, with no dark capsule/menu. */
+html body .af-minimal-header{
+ position:absolute!important;z-index:8!important;top:0!important;left:0!important;right:0!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ padding:clamp(16px,3vw,34px) clamp(18px,4vw,54px)!important;
+ border:0!important;background:linear-gradient(180deg,rgba(18,26,20,.14),transparent)!important;
+ box-shadow:none!important;backdrop-filter:none!important;
+}
+html body .af-minimal-brand{display:flex!important;align-items:center!important;gap:10px!important}
+html body .af-minimal-brand img{
+ width:46px!important;height:46px!important;object-fit:contain!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;filter:drop-shadow(0 2px 8px rgba(0,0,0,.18))!important;
+}
+html body .af-minimal-brand strong{color:#fff!important;text-shadow:0 1px 8px rgba(0,0,0,.28)!important;letter-spacing:.16em!important}
+html body .af-top-controls{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:0!important;
+ padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;backdrop-filter:none!important;
+}
+html body .af-top-controls .af-top-icon{display:none!important}
+html body .af-top-controls .af-power-button{
+ width:42px!important;height:42px!important;border:1px solid rgba(255,255,255,.55)!important;
+ background:rgba(18,30,22,.18)!important;color:#fff!important;border-radius:50%!important;
+ backdrop-filter:blur(10px)!important;box-shadow:none!important;
+}
+
+/* The old marketing overlay is intentionally removed from the cinematic opening. */
+html body .af-landing-moment,html body .af-one-screen-home,html body .af-minimal-footer,
+html body .af-global-reveal{display:none!important}
+
+/* One small, elegant physical-feeling light switch. */
 .af-kitchen-controls{
- position:absolute;z-index:9;right:clamp(16px,3vw,44px);bottom:clamp(82px,10vh,120px);
- width:min(310px,calc(100vw - 32px));padding:16px;border:1px solid rgba(255,255,255,.48);
- border-radius:22px;background:rgba(248,248,239,.83);color:#17291e;
- box-shadow:0 22px 70px rgba(15,30,20,.2);backdrop-filter:blur(22px) saturate(130%);
- font-family:Manrope,system-ui,sans-serif;
+ position:absolute!important;z-index:10!important;right:clamp(18px,4vw,52px)!important;
+ bottom:clamp(22px,4vh,42px)!important;width:auto!important;padding:0!important;
+ border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;backdrop-filter:none!important;
 }
-.af-kitchen-label{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:900;letter-spacing:.16em}
-.af-kitchen-label small{margin-left:auto;font-size:9px;letter-spacing:0;font-weight:600;color:#637168}
-.af-live-dot{width:7px;height:7px;border-radius:50%;background:#43a96a;box-shadow:0 0 0 4px rgba(67,169,106,.15)}
-.af-kitchen-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:13px}
-.af-kitchen-actions button{
- min-height:43px;display:flex;align-items:center;gap:7px;padding:8px 10px;
- border:1px solid rgba(28,58,39,.12);border-radius:12px;background:rgba(255,255,255,.72);
- color:#23372a;font-size:10px;font-weight:750;text-align:left;cursor:pointer;
- transition:transform .18s ease,background .18s ease,border-color .18s ease;
+.af-light-switch{
+ min-width:132px;height:48px;display:flex;align-items:center;gap:10px;
+ padding:7px 12px;border:1px solid rgba(255,255,255,.5);border-radius:999px;
+ background:rgba(24,33,27,.22);color:#fff;backdrop-filter:blur(16px);
+ box-shadow:0 6px 28px rgba(0,0,0,.12);cursor:pointer;
+ transition:background .35s ease,border-color .35s ease,transform .25s ease;
 }
-.af-kitchen-actions button:hover{transform:translateY(-2px);border-color:rgba(49,129,76,.4)}
-.af-kitchen-actions button span{font-size:16px;color:#408a59}
-.af-kitchen-actions button b{margin-left:auto;font-size:8px;letter-spacing:.04em;color:#8a958d}
-.af-kitchen-actions button.is-on{background:#e4f4e8;border-color:#b7ddc1}
-.af-kitchen-actions button.is-on b{color:#287447}
-.af-kitchen-hint{margin-top:11px;color:#66736a;font-size:9px;line-height:1.45}
+.af-light-switch:hover{transform:translateY(-2px);background:rgba(24,33,27,.34)}
+.af-switch-icon{font-size:19px;line-height:1;color:#fff}
+.af-switch-copy{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.af-switch-copy b{font-size:9px;letter-spacing:.16em;font-weight:800}
+.af-switch-copy small{font-size:8px;letter-spacing:.12em;color:rgba(255,255,255,.78)}
+.af-switch-track{width:29px;height:16px;margin-left:auto;padding:2px;border-radius:99px;background:rgba(255,255,255,.55);transition:background .3s}
+.af-switch-track i{display:block;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .3s}
+.af-light-switch.is-off .af-switch-track{background:rgba(255,255,255,.25)}
+.af-light-switch.is-off .af-switch-track i{transform:translateX(13px)}
+.af-light-switch.is-off{background:rgba(13,20,17,.4)}
 @media(max-width:640px){
- .af-kitchen-controls{left:14px;right:14px;bottom:18px;width:auto;padding:11px 12px;border-radius:17px}
- .af-kitchen-label{font-size:9px}
- .af-kitchen-label small{font-size:8px}
- .af-kitchen-actions{gap:6px;margin-top:9px}
- .af-kitchen-actions button{min-height:38px;padding:6px 8px;font-size:9px}
- .af-kitchen-actions button span{font-size:14px}
- .af-kitchen-hint{margin-top:7px;font-size:8px}
- html body .af-minimal-footer{display:none!important}
+ html body .af-minimal-header{padding:15px 16px!important}
+ html body .af-minimal-brand img{width:40px!important;height:40px!important}
+ html body .af-minimal-brand strong{font-size:10px!important}
+ html body .af-top-controls .af-power-button{width:38px!important;height:38px!important}
+ .af-kitchen-controls{right:16px!important;bottom:20px!important}
+ .af-light-switch{height:44px;min-width:120px;padding:6px 10px}
 }
-@media(prefers-reduced-motion:reduce){.af-kitchen-actions button{transition:none!important}}
+@media(prefers-reduced-motion:reduce){
+ .af-light-switch,.af-switch-track,.af-switch-track i{transition:none!important}
+}
