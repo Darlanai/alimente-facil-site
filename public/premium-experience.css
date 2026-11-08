@@ -1,0 +1,104 @@
+/* AF 2026 — strict screen separation + premium glass dashboard */
+:root{
+ --af-ink:#202522;--af-paper:#f3f1eb;--af-glass:rgba(255,255,255,.68);
+ --af-glass-border:rgba(255,255,255,.56);--af-muted:#747b76;
+ --color-primary:#c4a879;--color-primary-dark:#a78a5f;--color-primary-light:#e0cfad;
+ --highlight:#c4a879;--highlight-glow:rgba(196,168,121,.22);
+ --glass-on-color:#c4a879;--glass-on-glow:rgba(196,168,121,.2);
+ --glass-color:rgba(255,255,255,.08);--glass-border:rgba(255,255,255,.14);
+ --glass-blur:blur(22px);--glass-dark-bg:#171b19;--glass-text-primary:#f5f3ed;--glass-text-secondary:#b5bbb5;
+}
+html,body{max-width:100%;overflow-x:hidden}
+body:not(.app-mode) .app-panel-container-standalone{
+ display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+}
+body:not(.app-mode) .af-global-reveal{display:block!important;visibility:visible!important;opacity:1!important}
+body.app-mode #landing-video-container{
+ display:none!important;visibility:hidden!important;pointer-events:none!important;
+}
+body.app-mode .app-panel-container-standalone{
+ display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+ position:fixed!important;inset:0!important;z-index:100!important;
+}
+body.app-mode .af-global-reveal{display:none!important}
+body:not(.app-mode) #af-chatbot{z-index:50000!important}
+body:not(.app-mode) #af-chatbot-toggle{z-index:50001!important}
+body.app-mode #af-chatbot{z-index:50000!important}
+body.app-mode #af-chatbot-toggle{z-index:50001!important}
+
+/* Cinematic footage receives subtle pointer parallax, without a fake 3D dashboard. */
+#landing-video-container .af-landing-video{
+ will-change:transform;transform:translate3d(var(--af-scene-x,0px),var(--af-scene-y,0px),0) scale(1.055)!important;
+ transition:transform .18s ease-out!important;
+}
+#landing-video-container:after{
+ content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+ background:linear-gradient(110deg,rgba(20,23,20,.23),transparent 58%),linear-gradient(0deg,rgba(15,18,16,.42),transparent 35%);
+}
+#landing-video-container .af-minimal-header,#landing-video-container .af-landing-moment,
+#landing-video-container .af-one-screen-home,#landing-video-container .af-minimal-footer,
+#landing-video-container .af-scene-light{z-index:4!important}
+html body .af-top-controls .af-top-icon{color:rgba(255,255,255,.9)!important}
+html body .af-top-controls .af-instagram,html body .af-top-controls .af-tiktok,
+html body .af-top-controls .af-email{color:rgba(255,255,255,.9)!important}
+html body .af-home-actions .af-primary-cta{
+ background:rgba(248,246,239,.94)!important;color:#252b27!important;border:1px solid rgba(255,255,255,.78)!important;
+ box-shadow:0 12px 38px rgba(0,0,0,.16)!important;
+}
+html body .af-home-actions .af-nfce-entry{
+ background:rgba(246,245,239,.18)!important;border:1px solid rgba(255,255,255,.4)!important;
+ backdrop-filter:blur(18px) saturate(135%)!important;
+}
+html body .af-price-compact strong{color:#f6f2e9!important}
+html body .af-home-benefits{color:rgba(255,255,255,.88)!important}
+
+/* Panel: neutral graphite + champagne accents, glass surfaces instead of saturated green. */
+.app-panel-container-standalone{
+ background:radial-gradient(ellipse at 15% 0%,rgba(196,168,121,.09),transparent 42%),#171b19!important;
+ color:#f3f1eb!important;
+}
+.app-panel-container-standalone .app-sidebar{
+ background:rgba(24,29,26,.82)!important;border-right:1px solid rgba(255,255,255,.09)!important;
+ backdrop-filter:blur(24px)!important;
+}
+.app-panel-container-standalone .main-header{
+ background:rgba(24,29,26,.78)!important;border-bottom:1px solid rgba(255,255,255,.08)!important;
+ backdrop-filter:blur(22px)!important;
+}
+.app-panel-container-standalone .glass-card,
+.app-panel-container-standalone .dashboard-card,
+.app-panel-container-standalone .modal-box{
+ background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.035))!important;
+ border:1px solid rgba(255,255,255,.11)!important;border-radius:18px!important;
+ box-shadow:0 12px 38px rgba(0,0,0,.12)!important;backdrop-filter:blur(18px)!important;
+}
+.app-panel-container-standalone .nav-item.active{
+ background:rgba(196,168,121,.15)!important;color:#e5d3b1!important;
+ border:1px solid rgba(196,168,121,.19)!important;
+}
+.app-panel-container-standalone .btn-primary,
+.app-panel-container-standalone .portal-btn.landing{
+ background:linear-gradient(135deg,#d8c39d,#b89a6b)!important;color:#222720!important;
+ border:1px solid rgba(255,255,255,.35)!important;box-shadow:0 8px 24px rgba(0,0,0,.14)!important;
+}
+.app-panel-container-standalone input,.app-panel-container-standalone textarea,
+.app-panel-container-standalone select{
+ border-color:rgba(255,255,255,.14)!important;border-radius:12px!important;
+}
+.app-panel-container-standalone .page-title{color:#dfcba7!important;text-shadow:none!important}
+.app-panel-container-standalone .page-subtitle{color:#b8bdb8!important}
+.app-panel-container-standalone .header-budget{
+ background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.1)!important;
+ border-radius:14px!important;
+}
+.app-panel-container-standalone .icon-button{border-radius:12px!important}
+.app-panel-container-standalone .card,.app-panel-container-standalone .content-card{
+ border-radius:16px!important;
+}
+@media(max-width:760px){
+ body.app-mode .app-panel-container-standalone{height:100dvh!important;overflow:hidden!important}
+ #landing-video-container .af-landing-video{transform:translate3d(var(--af-scene-x,0px),var(--af-scene-y,0px),0) scale(1.08)!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #landing-video-container .af-landing-video{transition:none!important}
+}
