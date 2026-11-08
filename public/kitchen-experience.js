@@ -16,6 +16,22 @@
   btn.querySelector('small').textContent=off?'Luz apagada':'Luz acesa';
   btn.querySelector('span').textContent=off?'☾':'☼';
  });
+ // Cinematic depth: restrained pointer parallax on the real footage.
+ let parallaxFrame=0;
+ root.addEventListener('pointermove',event=>{
+  if(event.pointerType==='touch'||event.target.closest('button,a,input'))return;
+  const rect=root.getBoundingClientRect();
+  const x=(event.clientX-rect.left)/rect.width-.5;
+  const y=(event.clientY-rect.top)/rect.height-.5;
+  cancelAnimationFrame(parallaxFrame);
+  parallaxFrame=requestAnimationFrame(()=>{
+   video.style.setProperty('--af-scene-x',(-x*13).toFixed(1)+'px');
+   video.style.setProperty('--af-scene-y',(-y*9).toFixed(1)+'px');
+  });
+ });
+ root.addEventListener('pointerleave',()=>{
+  video.style.setProperty('--af-scene-x','0px');video.style.setProperty('--af-scene-y','0px');
+ });
  // Keep the live greeting clock and verse visible, while avoiding duplicated theme controls.
  const clock=document.getElementById('afMomentClock');
  if(clock){
