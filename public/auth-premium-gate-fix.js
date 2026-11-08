@@ -274,10 +274,13 @@
     return result;
   };
 
-  app.flushAccountData = function flushAccountData(options) {
+  app.flushAccountData = async function flushAccountData(options) {
     if (state.cloudSaveTimer) {
       windowRef.clearTimeout(state.cloudSaveTimer);
       state.cloudSaveTimer = null;
+    }
+    if (app.isLoggedIn && (!state.cloudReady || !state.cloudOwnerId || !getToken())) {
+      throw new Error('Os dados da sua conta ainda não foram sincronizados. Aguarde a conexão e tente sair novamente.');
     }
     return persistCloudNow(Object.assign({ force: true }, options || {}));
   };
