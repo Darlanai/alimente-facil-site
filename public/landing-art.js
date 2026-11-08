@@ -196,7 +196,7 @@
     if(!help || help.dataset.afDraggableReady==='1') return;
     help.dataset.afDraggableReady='1';
     help.classList.add('af-help-draggable');
-    const storageKey='af-cozia-position-v7',margin=10;
+    const storageKey='af-cozia-position-v8',margin=12;
     let dragging=false,moved=false,suppressClick=false,pointerId=null,startX=0,startY=0,startLeft=0,startTop=0;
 
     const setPosition=(left,top,save=false)=>{
@@ -210,7 +210,7 @@
       let saved=null;try{saved=JSON.parse(localStorage.getItem(storageKey)||'null')}catch(_error){}
       const width=help.offsetWidth||198,height=help.offsetHeight||48;
       if(saved&&Number.isFinite(saved.x)&&Number.isFinite(saved.y))setPosition(saved.x*Math.max(1,innerWidth-width),saved.y*Math.max(1,innerHeight-height));
-      else setPosition((innerWidth-width)/2,innerHeight-height-82);
+      else setPosition(margin,innerHeight-height-24);
     };
     help.addEventListener('pointerdown',event=>{
       if(event.button!==undefined&&event.button!==0)return;
