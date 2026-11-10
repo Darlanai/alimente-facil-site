@@ -6,6 +6,17 @@
  const lightBtn=document.getElementById('afSceneLight');
  const exploreBtn=document.getElementById('afExploreKitchen');
  if(!root||!video||!lightBtn)return;
+ const syncAssistantVisibility=()=>{
+  const panelActive=document.body.classList.contains('app-mode');
+  ['af-chatbot','af-chatbot-toggle'].forEach(id=>{
+   const element=document.getElementById(id);if(!element)return;
+   if(panelActive){element.style.removeProperty('display');element.style.removeProperty('visibility')}
+   else{element.style.setProperty('display','none','important');element.style.setProperty('visibility','hidden','important')}
+  });
+ };
+ syncAssistantVisibility();
+ const assistantObserver=new MutationObserver(syncAssistantVisibility);
+ assistantObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
  video.style.display='block';video.play().catch(()=>{});
  root.classList.add('af-scene-lit');
  // O controle de iluminação fica no topo, junto da navegação, sem cobrir preço ou rodapé.
