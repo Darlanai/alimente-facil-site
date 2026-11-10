@@ -51,7 +51,7 @@
  spatialToggle.innerHTML='<i class="fa-solid fa-cube" aria-hidden="true"></i>';
  if(topControls)topControls.insertBefore(spatialToggle,lightBtn);
  const spatialPanel=document.createElement('section');spatialPanel.className='af-video-spatial-panel';spatialPanel.hidden=true;
- spatialPanel.innerHTML='<div class="af-video-spatial-head"><div><b>Experiência espacial</b><small>Escolha um elemento da cozinha</small></div><button class="af-video-spatial-close" type="button" aria-label="Fechar experiência">×</button></div><div class="af-video-spatial-items" role="group" aria-label="Elementos interativos"><button type="button" data-object="fridge" aria-pressed="true">Geladeira</button><button type="button" data-object="table" aria-pressed="false">Mesa</button><button type="button" data-object="chairs" aria-pressed="false">Cadeiras</button><button type="button" data-object="cabinets" aria-pressed="false">Armários</button><button type="button" data-object="pantry" aria-pressed="false">Despensa</button><button type="button" data-object="light" aria-pressed="false">Luz</button></div><div class="af-video-spatial-detail" aria-live="polite"><b>Geladeira</b><span>Toque no marcador sobre o vídeo para selecionar este elemento.</span></div><div class="af-video-spatial-actions"><button type="button" data-spatial-action="explore">Explorar em 3D</button><button type="button" data-spatial-action="light">Alternar iluminação</button></div>';
+ spatialPanel.innerHTML='<div class="af-video-spatial-head"><div><b>Experiência espacial</b><small>Escolha um elemento da cozinha</small></div><button class="af-video-spatial-close" type="button" aria-label="Fechar experiência">×</button></div><div class="af-video-spatial-items" role="group" aria-label="Elementos interativos"><button type="button" data-object="fridge" aria-pressed="true">Geladeira</button><button type="button" data-object="table" aria-pressed="false">Mesa</button><button type="button" data-object="chairs" aria-pressed="false">Cadeiras</button><button type="button" data-object="cabinets" aria-pressed="false">Armários</button><button type="button" data-object="pantry" aria-pressed="false">Despensa</button><button type="button" data-object="light" aria-pressed="false">Luz</button></div><div class="af-video-spatial-detail" aria-live="polite"><b>Geladeira</b><span>Toque no marcador sobre o vídeo para selecionar este elemento.</span></div><div class="af-video-spatial-actions"><button type="button" data-spatial-action="detect">Reconhecer objetos</button><button type="button" data-spatial-action="explore">Explorar em 3D</button></div>';
  document.body.appendChild(spatialPanel);
  const spatialObjects=[
   {id:'fridge',label:'Geladeira',x:78,y:42,detail:'Geladeira selecionada. O vídeo continua em reprodução. A abertura real da porta na filmagem depende de rastreamento e reconstrução do objeto.'},
@@ -62,6 +62,76 @@
   {id:'light',label:'Iluminação',x:50,y:17,detail:'Iluminação da experiência. Use o controle para alternar a luz sem interromper o vídeo.'}
  ];
  const markers=new Map();let activeSpatial='fridge';
+ const detectionSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+ detectionSvg.classList.add('af-video-detection-layer');detectionSvg.setAttribute('aria-label','Objetos reconhecidos no vídeo');
+ detectionSvg.setAttribute('preserveAspectRatio','xMidYMid slice');detectionSvg.hidden=true;root.appendChild(detectionSvg);
+ let detectorWorker=null,detectionRaf=0,detectionLast=0,detectionBusy=false,detectionReady=false;
+ const detectionDetail=spatialPanel.querySelector('.af-video-spatial-detail');
+ const detectionButton=spatialPanel.querySelector('[data-spatial-action="detect"]');
+ const stopDetection=()=>{
+  if(detectionRaf)cancelAnimationFrame(detectionRaf);detectionRaf=0;
+  detectorWorker?.terminate();detectorWorker=null;detectionBusy=false;detectionReady=false;detectionLast=0;
+  detectionSvg.replaceChildren();detectionSvg.hidden=true;
+  if(detectionButton)detectionButton.textContent='Reconhecer objetos';
+ };
+ const startDetection=async()=>{
+  if(detectorWorker)return;
+  detectionButton.disabled=true;detectionButton.textContent='Carregando IA…';
+  detectionDetail.innerHTML='<b>Reconhecimento local</b><span>Carregando o modelo de visão computacional. O vídeo continua tocando.</span>';
+  try{
+   detectorWorker=new Worker('/spatial-detector.worker.js',{type:'module'});
+   detectorWorker.onmessage=event=>{
+    const data=event.data||{};
+    if(data.type==='ready'){
+     detectionReady=true;detectionButton.disabled=false;detectionButton.textContent='IA ativa · parar';
+     detectionDetail.innerHTML='<b>IA ativa no vídeo</b><span>Identificando objetos reconhecíveis. Toque em uma moldura para selecionar.</span>';
+     return;
+    }
+    if(data.type==='error'){
+     detectionDetail.innerHTML='<b>Reconhecimento indisponível</b><span>'+String(data.message||'Não foi possível analisar este vídeo.')+'</span>';
+     stopDetection();return;
+    }
+    if(data.type==='detections'){
+     detectionBusy=false;
+     if(data.width&&data.height)detectionSvg.setAttribute('viewBox','0 0 '+data.width+' '+data.height);
+     detectionSvg.replaceChildren();
+     const matches=(data.detections||[]).filter(item=>item.score>=.42);
+     matches.forEach(item=>{
+      const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x',item.x);rect.setAttribute('y',item.y);rect.setAttribute('width',item.width);rect.setAttribute('height',item.height);
+      rect.setAttribute('rx',Math.max(10,Math.min(item.width,item.height)*.06));rect.classList.add('af-video-detection-box');
+      const label=document.createElementNS('http://www.w3.org/2000/svg','text');
+      label.setAttribute('x',item.x+8);label.setAttribute('y',Math.max(22,item.y+22));label.classList.add('af-video-detection-label');
+      label.textContent=item.label+' · '+Math.round(item.score*100)+'%';
+      const group=document.createElementNS('http://www.w3.org/2000/svg','g');group.append(rect,label);
+      group.addEventListener('click',()=>{
+       const name=item.label.toLowerCase();const mapped=name.includes('chair')?'chairs':name.includes('table')?'table':name.includes('refrigerator')?'fridge':'table';
+       selectSpatial(mapped);
+       detectionDetail.innerHTML='<b>'+item.label+'</b><span>Objeto reconhecido pela IA com '+Math.round(item.score*100)+'% de confiança. A moldura acompanha as novas detecções do vídeo.</span>';
+      });
+      detectionSvg.appendChild(group);
+     });
+     if(!matches.length)detectionDetail.innerHTML='<b>Procurando objetos</b><span>Nenhum objeto compatível foi reconhecido neste quadro. A detecção continua enquanto o vídeo toca.</span>';
+    }
+   };
+   detectorWorker.onerror=()=>{detectionDetail.innerHTML='<b>Falha no reconhecimento</b><span>O navegador não conseguiu iniciar o módulo de visão computacional.</span>';stopDetection()};
+   detectorWorker.postMessage({type:'init'});
+   const scan=async now=>{
+    if(!detectorWorker||!spatialPanel.isConnected||spatialPanel.hidden){detectionRaf=0;return}
+    if(detectionReady&&!detectionBusy&&video.readyState>=2&&now-detectionLast>1050){
+     detectionLast=now;detectionBusy=true;
+     try{const bitmap=await createImageBitmap(video);if(detectorWorker)detectorWorker.postMessage({type:'frame',bitmap,timestamp:performance.now()},[bitmap]);else bitmap.close?.()}
+     catch(error){detectionBusy=false;detectionDetail.innerHTML='<b>Vídeo protegido</b><span>O navegador bloqueou a leitura dos frames deste endereço. As âncoras manuais continuam disponíveis.</span>';stopDetection();return}
+    }
+    detectionRaf=requestAnimationFrame(scan);
+   };
+   detectionRaf=requestAnimationFrame(scan);
+  }catch(error){
+   detectionDetail.innerHTML='<b>Modelo indisponível</b><span>Não foi possível carregar a IA de vídeo. Você ainda pode selecionar os pontos manuais.</span>';
+   stopDetection();
+  }
+ };
+ detectionButton.addEventListener('click',()=>{if(detectorWorker){stopDetection();detectionDetail.innerHTML='<b>Reconhecimento pausado</b><span>O vídeo segue normalmente. Você pode voltar a ativar a IA quando quiser.</span>'}else startDetection()});
  spatialObjects.forEach(object=>{
   const marker=document.createElement('button');marker.type='button';marker.className='af-video-spatial-marker';
   marker.dataset.object=object.id;marker.textContent='';marker.setAttribute('aria-label','Selecionar '+object.label);
@@ -76,7 +146,7 @@
   markers.forEach((marker,key)=>{marker.hidden=key!==id;marker.classList.toggle('is-selected',key===id)});
  }
  function closeSpatial(){
-  spatialPanel.hidden=true;markers.forEach(marker=>marker.hidden=true);document.body.classList.remove('af-video-spatial-open');
+  stopDetection();spatialPanel.hidden=true;markers.forEach(marker=>marker.hidden=true);document.body.classList.remove('af-video-spatial-open');
   spatialToggle.setAttribute('aria-pressed','false');spatialToggle.setAttribute('aria-label','Explorar objetos no vídeo');
  }
  spatialPanel.querySelectorAll('.af-video-spatial-items [data-object]').forEach(button=>button.addEventListener('click',()=>selectSpatial(button.dataset.object)));
@@ -87,7 +157,6 @@
   if(open)selectSpatial(activeSpatial);else markers.forEach(marker=>marker.hidden=true);
  });
  spatialPanel.querySelector('[data-spatial-action="explore"]').addEventListener('click',()=>exploreBtn?.click());
- spatialPanel.querySelector('[data-spatial-action="light"]').addEventListener('click',()=>lightBtn.click());
  if(!exploreBtn)return;
  let activeCleanup=null;
  exploreBtn.addEventListener('click',async()=>{
