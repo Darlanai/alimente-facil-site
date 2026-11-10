@@ -26,6 +26,8 @@ self.onmessage = async (event) => {
     if (type === "frame" && detector && bitmap) {
       const safeTimestamp = Math.max(Number(timestamp) || 0, lastTimestamp + 1);
       lastTimestamp = safeTimestamp;
+      const frameWidth = bitmap.width;
+      const frameHeight = bitmap.height;
       const result = detector.detectForVideo(bitmap, safeTimestamp);
       const detections = (result.detections || []).map((item) => {
         const category = item.categories?.[0] || {};
@@ -40,7 +42,7 @@ self.onmessage = async (event) => {
         };
       });
       bitmap.close?.();
-      self.postMessage({ type: "detections", detections, width: bitmap.width, height: bitmap.height });
+      self.postMessage({ type: "detections", detections, width: frameWidth, height: frameHeight });
     }
   } catch (error) {
     bitmap?.close?.();
