@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.11.10.spatial8d-premium-v27';
+const VERSION = '2026.11.10.spatial8d-premium-v28';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -37,6 +37,7 @@ const APP_SHELL = [
   '/immersive-home.css',
   '/premium-experience.css',
   '/kitchen-experience.js',
+  '/spatial-detector.worker.js',
   '/logo-a-modern.svg',
   '/auth-premium-gate-fix.js',
   '/reset-password.html',
