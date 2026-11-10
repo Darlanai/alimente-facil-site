@@ -67,7 +67,7 @@
    for(let i=0;i<4;i++){const x=-2.7+i*1.45;addBox('Armário inferior', [1.38,.92,.72],[x,.52,-3.55],cabinetMat);addBox('Puxador do armário',[.12,.035,.045],[x+.48,.58,-3.16],steel)}
    addBox('Bancada de pedra',[6.1,.13,.94],[0,1.05,-3.38],stone);
    // Armários aéreos.
-   for(let i=0;i<3;i++){const x=-2.05+i*1.8;const cab=addBox('Armário aéreo',[1.65,1.05,.58],[x,2.75,-4.0],cabinetMat);const door=addBox('Porta do armário',[.78,.94,.055],[x-.4,2.75,-3.68],wood);door.userData.kind='cabinetDoor';door.userData.open=false;door.userData.pivot=new THREE.Group();door.userData.pivot.position.set(x-.79,2.75,-3.68);scene.add(door.userData.pivot);door.userData.pivot.add(door);door.position.x=.39}
+   for(let i=0;i<3;i++){const x=-2.05+i*1.8;const cab=addBox('Armário aéreo',[1.65,1.05,.58],[x,2.75,-4.0],cabinetMat);const door=addBox('Porta do armário',[.78,.94,.055],[x-.4,2.75,-3.68],wood);door.userData.kind='cabinetDoor';door.userData.open=false;door.userData.pivot=new THREE.Group();door.userData.pivot.position.set(x-.79,2.75,-3.68);scene.add(door.userData.pivot);door.userData.pivot.add(door);door.position.set(.39,0,0)}
    // Geladeira com porta articulada.
    const fridge=new THREE.Group();fridge.position.set(3.7,0,-2.8);scene.add(fridge);
    addBox('Geladeira',[1.12,2.55,.92],[0,1.28,0],steel,fridge);
