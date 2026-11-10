@@ -1,5 +1,5 @@
 /* Alimente Fácil · demonstração interativa premium */
-.af-demo-open{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 20px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:rgba(255,255,255,.055);color:inherit;font:600 .92rem/1.2 inherit;cursor:pointer;transition:transform .25s,border-color .25s,background .25s}
+.af-demo-open{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 20px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:rgba(255,255,255,.055);color:inherit;font-family:inherit;font-size:.92rem;line-height:1.2;font-weight:600;cursor:pointer;transition:transform .25s,border-color .25s,background .25s}
 .af-demo-open:hover{transform:translateY(-2px);border-color:rgba(123,220,151,.65);background:rgba(123,220,151,.09)}
 .af-demo-backdrop{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:clamp(8px,2vw,24px);background:rgba(3,8,6,.78);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);opacity:0;visibility:hidden;transition:opacity .28s,visibility .28s}
 .af-demo-backdrop.is-open{opacity:1;visibility:visible}
