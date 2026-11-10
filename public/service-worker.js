@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.08.16.bulk-actions-qr-v18';
+const VERSION = '2026.11.10.landing-demo-v19';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -23,6 +23,8 @@ const APP_SHELL = [
   '/ai-data-cozia-brain.js',
   '/alimenta-ai-icon.png',
   '/landing-art.css',
+  '/landing-demo.css',
+  '/landing-demo.js',
   '/cozia-v7.css',
   '/nfce-scanner.css',
   '/nfce-scanner.js',
