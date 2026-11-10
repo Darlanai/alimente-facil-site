@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.11.10.kitchen-immersive-v23';
+const VERSION = '2026.11.10.immersive-home-v24';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -34,6 +34,7 @@ const APP_SHELL = [
   '/modern-ui.js',
   '/omnitech-cinematic.css',
   '/kitchen-experience.css',
+  '/immersive-home.css',
   '/premium-experience.css',
   '/kitchen-experience.js',
   '/logo-a-modern.svg',
