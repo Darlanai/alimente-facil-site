@@ -77,7 +77,7 @@
    addBox('Geladeira',[1.12,2.55,.92],[0,1.28,0],steel,fridge);
    const fridgeDoorPivot=new THREE.Group();fridgeDoorPivot.position.set(-.53,1.28,.49);fridge.add(fridgeDoorPivot);
    const fridgeDoor=new THREE.Mesh(new THREE.BoxGeometry(1.04,2.48,.09),mat(0xcbd2ce,.22,.62));fridgeDoor.position.set(.52,0,.035);fridgeDoor.castShadow=true;fridgeDoor.userData.kind='fridgeDoor';fridgeDoor.userData.label='Geladeira';fridgeDoor.userData.pivot=fridgeDoorPivot;fridgeDoor.userData.open=false;fridgeDoorPivot.add(fridgeDoor);
-   addBox('Puxador da geladeira',[.045,.75,.07],[.93,1.3,.11],dark,fridge);
+   addBox('Puxador da geladeira',[.045,.75,.07],[.93,0,.12],dark,fridgeDoorPivot);
    for(let shelf=0;shelf<3;shelf++){
     addBox('Prateleira interna',[.88,.045,.66],[0,.55+shelf*.62,-.05],stone,fridge);
     for(let item=0;item<3;item++){
@@ -86,11 +86,7 @@
      food.rotation.y=(item-shelf)*.12;
     }
    }
-   // Puxadores e molduras dão leitura de portas e módulos, não apenas caixas soltas.
-   for(let i=0;i<4;i++){
-    const handle=addBox('Puxador do refrigerador',[.035,.34,.045],[.43,.62+i*.01,.11],dark,fridge);
-    handle.position.y=.65;
-   }
+   // O puxador acompanha a porta articulada ao abrir e fechar.
    // Despensa lateral com prateleiras e mantimentos.
    addBox('Despensa',[1.25,2.1,.7],[-3.55,1.08,-2.7],wood);
    for(let i=0;i<3;i++){addBox('Prateleira da despensa',[1.1,.07,.62],[-3.55,.48+i*.58,-2.31],stone);for(let j=0;j<3;j++)addBox('Mantimento na despensa',[.18,.35,.2],[-3.9+j*.34,.7+i*.58,-2.28],mat([0xc9a86e,0x9caa76,0xb78c65][j]))}
