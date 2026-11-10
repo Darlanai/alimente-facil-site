@@ -43,8 +43,9 @@
 <link href="fiscal-notes.css?v=20260816-1" rel="stylesheet"/>
 <link href="modern-ui.css?v=20260816-9" rel="stylesheet"/>
 <link href="omnitech-cinematic.css?v=20261108-1" rel="stylesheet"/>
+
 <link href="premium-experience.css?v=20261110-4" rel="stylesheet"/>
-<link href="landing-clean.css?v=20261110-1" rel="stylesheet"/>
+<link href="landing-clean.css?v=20261110-2" rel="stylesheet"/>
 <style>
     :root {
         --time-scale: 1;
@@ -72,33 +73,53 @@
 </head>
 <body>
 <div aria-label="Apresentação do Alimente Fácil" class="af-landing-stage" id="landing-video-container">
-<video autoplay class="af-landing-video" id="afLandingVideo" loop muted playsinline poster="fundo_poster.jpg" preload="metadata" src="https://videos.pexels.com/video-files/39576532/16868216_3840_2160_30fps.mp4"></video>
+<video autoplay="" class="af-landing-video" id="afLandingVideo" loop="" muted="" playsinline="" poster="fundo_poster.jpg" preload="metadata" src="https://videos.pexels.com/video-files/39576532/16868216_3840_2160_30fps.mp4"></video>
 <div aria-hidden="true" class="af-video-shade"></div>
 <header class="af-minimal-header">
-<a aria-label="Alimente Fácil" class="af-minimal-brand" data-af-go-landing href="#inicio">
-<img alt="" height="42" src="logo-a-modern.svg" width="42"/>
+<a aria-label="Alimente Fácil" class="af-minimal-brand" data-af-go-landing="" href="#inicio">
+<img alt="" height="46" src="logo-a-modern.svg" width="46"/>
 <span class="af-brand-copy"><strong><span>ALIMENTE</span><span>FÁCIL</span></strong></span>
 </a>
+
 <div class="af-top-controls">
-<button type="button" class="af-scene-light af-light-in-header" id="afSceneLight" aria-pressed="false" aria-label="Ativar modo noturno" title="Alternar tema"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i><span class="af-theme-switch" aria-hidden="true"></span></button>
+<a aria-label="Instagram @alimentefacil" class="af-top-icon af-instagram" href="https://www.instagram.com/alimentefacil" rel="noopener" target="_blank" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+<a aria-label="TikTok @alimentefacil" class="af-top-icon af-tiktok" href="https://www.tiktok.com/@alimentefacil" rel="noopener" target="_blank" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+<button aria-label="Enviar e-mail" class="af-top-icon af-email" id="afContactOpen" title="Contato por e-mail" type="button"><i class="fa-regular fa-envelope"></i></button>
+<button aria-label="Instalar Alimente Fácil" class="af-top-icon af-install-top btn-install-pwa" id="afInstallLanding" title="Instalar aplicativo" type="button"><i class="fa-solid fa-download"></i></button>
+
+<button type="button" class="af-scene-light af-light-in-header" id="afSceneLight" aria-pressed="false" aria-label="Ativar modo noturno" title="Alternar aparência"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i><span class="af-theme-switch" aria-hidden="true"></span></button>
 <button aria-label="Entrar ou acessar sua conta" class="af-power-button" id="landing-auth-btn" title="Entrar" type="button"><i aria-hidden="true" class="fa-solid fa-power-off"></i></button>
-</div>
-</header>
+</div></header>
+<aside aria-live="polite" class="af-landing-moment">
+<div class="af-landing-moment-line" aria-hidden="true"></div>
+<div class="af-brand-moment"><span id="afMomentGreeting">Bom dia</span><b id="afMomentClock">00:00</b><i aria-hidden="true" class="fa-solid fa-sun" id="afMomentIcon"></i></div>
+<em id="afMomentVerse">“O Senhor é bom.” — Salmos 100:5</em>
+</aside>
 <main class="af-one-screen-home" id="inicio">
 <section aria-labelledby="afHomeTitle" class="af-home-copy">
-<p class="af-brand-slogan">SUA COZINHA. MAIS LEVE.</p>
-<h1 id="afHomeTitle">Tudo em ordem.<br/><em>Sem complicação.</em></h1>
-<p class="af-home-subtitle">Notas, despensa e compras em um só lugar.</p>
+<p class="af-brand-slogan">Menos trabalho. Mais clareza.</p>
+<p class="af-greeting" id="afLandingGreeting">Sua compra já sabe o caminho.</p>
+<h1 id="afHomeTitle"><span>Da nota.</span><br/><em>À rotina.</em></h1>
+<p class="af-home-subtitle">Leia o QR da nota. A CozIA organiza o restante.</p>
 <div class="af-home-actions">
-<button class="af-primary-cta" data-af-start-trial type="button">Começar agora <i class="fa-solid fa-arrow-right"></i></button>
+<button class="af-primary-cta" data-af-start-trial="" type="button">Começar agora <i class="fa-solid fa-arrow-right"></i></button>
 <button class="af-install-cta btn-install-pwa" id="afInstallApp" type="button"><i class="fa-solid fa-download" aria-hidden="true"></i><span>Instalar aplicativo</span></button>
-<button class="af-nfce-entry" data-nfce-open type="button" aria-label="Ler nota fiscal"><i class="fa-solid fa-qrcode" aria-hidden="true"></i><span>Ler nota fiscal</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+<button class="af-nfce-entry" data-nfce-open="" type="button" aria-label="Ler uma nota fiscal">
+<span class="af-nfce-entry-icon"><i class="fa-solid fa-qrcode" aria-hidden="true"></i></span>
+<span><strong>Ler nota fiscal</strong><small>Escaneie o QR ou digite a chave de 44 números.</small></span>
+<i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+</button>
+<div class="af-price-compact" aria-label="Plano por R$ 9,90 ao mês, com 7 dias grátis e sem cartão"><strong>R$ 9,90<small>/mês</small></strong><span>7 dias grátis · 1 nota fiscal · sem cartão</span></div>
 </div>
-<p class="af-price-compact"><strong>R$ 9,90<small>/mês</small></strong><span>7 dias grátis · sem cartão</span></p>
+<div aria-label="Benefícios do Alimente Fácil" class="af-home-benefits">
+<span><i class="fa-solid fa-qrcode" aria-hidden="true"></i> Leia a nota</span>
+<span><i class="fa-solid fa-box-archive" aria-hidden="true"></i> Organize a despensa</span>
+<span><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Entenda seus gastos</span>
+</div>
 </section>
 </main>
-
-<footer class="af-minimal-footer"><span>ALIMENTE FÁCIL</span><nav aria-label="Informações legais" class="af-legal-links"><a href="/termos.html">Termos</a><a href="/politica-de-privacidade.html">Privacidade</a></nav></footer>
+<button type="button" class="af-scene-light" id="afSceneLight" aria-pressed="false" aria-label="Apagar a iluminação da cozinha"><span aria-hidden="true">☼</span><small>Luz acesa</small><i aria-hidden="true"></i></button>
+<footer class="af-minimal-footer"><div class="af-footer-primary"><button class="af-how-link" id="afHowWorks" type="button">Como funciona</button><button class="af-footer-contact" id="afFooterContact" type="button">Contato</button></div><nav aria-label="Links institucionais" class="af-legal-links"><a href="/termos.html">Termos de uso</a><a href="/politica-de-privacidade.html">Privacidade</a></nav></footer>
 </div>
 <div aria-label="Arraste para alternar entre a apresentação e o painel" class="af-global-reveal" id="afGlobalReveal">
 <div aria-hidden="true" class="af-reveal-divider" id="afRevealDivider"><span><i aria-hidden="true"></i></span></div>
@@ -735,6 +756,6 @@
             });
         }
     </script>
-<script src="landing-runtime.js?v=20261110-1" defer></script>
+<script src="landing-runtime.js?v=20261110-2" defer></script>
 </body>
 </html>
