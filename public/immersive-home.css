@@ -398,3 +398,154 @@ html body:not(.app-mode) .af-top-controls .af-video-spatial-toggle[aria-pressed=
  html body:not(.app-mode) .af-top-controls .af-video-spatial-toggle{width:33px!important;height:33px!important;min-width:33px!important;flex-basis:33px!important}
  .af-video-spatial-marker{width:34px!important;height:34px!important;font-size:17px!important}
 }
+
+/* 2026.11 — Premium mobile composition: fewer controls, deliberate hierarchy. */
+html body:not(.app-mode) #landing-video-container{
+ position:relative!important;display:flex!important;flex-direction:column!important;
+ height:auto!important;min-height:100svh!important;overflow-x:hidden!important;overflow-y:auto!important;
+ isolation:isolate!important;
+}
+html body:not(.app-mode) #afLandingVideo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;z-index:-2!important}
+html body:not(.app-mode) .af-video-shade{position:absolute!important;inset:0!important;z-index:-1!important;background:linear-gradient(180deg,rgba(7,12,9,.42),rgba(7,12,9,.18) 38%,rgba(7,12,9,.70) 100%)!important;pointer-events:none!important}
+html body:not(.app-mode) .af-minimal-header{
+ position:relative!important;inset:auto!important;z-index:20!important;display:flex!important;align-items:center!important;
+ justify-content:space-between!important;gap:12px!important;width:100%!important;box-sizing:border-box!important;
+ padding:16px clamp(16px,4vw,28px)!important;background:linear-gradient(180deg,rgba(9,14,11,.35),transparent)!important;
+}
+html body:not(.app-mode) .af-minimal-brand{flex:0 0 auto!important;gap:9px!important}
+html body:not(.app-mode) .af-top-controls{display:flex!important;align-items:center!important;gap:8px!important;margin-left:auto!important}
+html body:not(.app-mode) .af-top-controls .af-instagram,
+html body:not(.app-mode) .af-top-controls .af-tiktok,
+html body:not(.app-mode) .af-top-controls .af-email,
+html body:not(.app-mode) .af-top-controls .af-install-top,
+html body:not(.app-mode) .af-top-controls .af-explore-kitchen{display:none!important}
+html body:not(.app-mode) .af-top-controls .af-power-button,
+html body:not(.app-mode) .af-top-controls .af-video-spatial-toggle{
+ width:38px!important;height:38px!important;min-width:38px!important;border-radius:50%!important;
+ border:1px solid rgba(255,255,255,.24)!important;background:rgba(10,18,13,.36)!important;
+ color:#fff!important;backdrop-filter:blur(14px)!important;box-shadow:none!important;
+}
+html body:not(.app-mode) .af-top-controls .af-scene-light.af-light-in-header{
+ width:auto!important;min-width:94px!important;height:38px!important;padding:0 11px!important;
+ border:1px solid rgba(255,255,255,.22)!important;background:rgba(10,18,13,.36)!important;
+ box-shadow:none!important;gap:7px!important;
+}
+html body:not(.app-mode) .af-landing-moment{display:none!important}
+html body:not(.app-mode) .af-one-screen-home{
+ position:relative!important;z-index:2!important;display:flex!important;flex:1 0 auto!important;
+ align-items:center!important;justify-content:center!important;min-height:0!important;height:auto!important;
+ box-sizing:border-box!important;padding:clamp(38px,8vh,84px) clamp(18px,5vw,42px) 28px!important;
+}
+html body:not(.app-mode) .af-home-copy{width:min(100%,520px)!important;margin:0 auto!important;text-align:left!important}
+html body:not(.app-mode) .af-brand-slogan,
+html body:not(.app-mode) .af-greeting,
+html body:not(.app-mode) .af-home-benefits{display:none!important}
+html body:not(.app-mode) #afHomeTitle{
+ margin:0!important;font-size:clamp(48px,12vw,76px)!important;line-height:.91!important;
+ letter-spacing:-.075em!important;font-weight:800!important;text-wrap:balance!important;
+}
+html body:not(.app-mode) #afHomeTitle em{font-style:normal!important;font-weight:450!important}
+html body:not(.app-mode) .af-home-subtitle{
+ max-width:320px!important;margin:15px 0 22px!important;font-size:14px!important;line-height:1.5!important;
+ color:rgba(255,255,255,.84)!important;
+}
+html body:not(.app-mode) .af-home-actions{
+ display:grid!important;grid-template-columns:1fr!important;gap:9px!important;width:100%!important;
+}
+html body:not(.app-mode) .af-home-actions>*{grid-column:1!important;width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important}
+html body:not(.app-mode) .af-home-actions .af-primary-cta{
+ min-height:52px!important;border-radius:999px!important;background:#f5f1e8!important;color:#172019!important;
+ border:1px solid rgba(255,255,255,.65)!important;box-shadow:0 10px 28px rgba(0,0,0,.16)!important;
+ font-size:15px!important;font-weight:800!important;
+}
+html body:not(.app-mode) .af-home-actions .af-install-cta{
+ min-height:43px!important;border-radius:999px!important;background:rgba(255,255,255,.09)!important;
+ border:1px solid rgba(255,255,255,.3)!important;color:#fff!important;box-shadow:none!important;
+ font-size:12px!important;font-weight:700!important;
+}
+html body:not(.app-mode) .af-home-actions .af-nfce-entry{
+ min-height:58px!important;padding:8px 13px!important;border-radius:15px!important;
+ background:rgba(12,20,15,.52)!important;border:1px solid rgba(255,255,255,.2)!important;
+ backdrop-filter:blur(12px)!important;box-shadow:none!important;color:#fff!important;
+}
+html body:not(.app-mode) .af-home-actions .af-nfce-entry strong{font-size:13px!important;font-weight:750!important}
+html body:not(.app-mode) .af-home-actions .af-nfce-entry small{display:block!important;font-size:10px!important;line-height:1.35!important;color:rgba(255,255,255,.68)!important;margin-top:3px!important}
+html body:not(.app-mode) .af-home-actions .af-price-compact{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;
+ padding:11px 13px!important;margin:0!important;border-radius:13px!important;
+ background:rgba(10,17,13,.52)!important;border:1px solid rgba(255,255,255,.16)!important;
+ border-left:1px solid rgba(255,255,255,.16)!important;backdrop-filter:blur(12px)!important;
+}
+html body:not(.app-mode) .af-price-compact strong{font-size:19px!important;white-space:nowrap!important}
+html body:not(.app-mode) .af-price-compact span{max-width:175px!important;font-size:10px!important;line-height:1.4!important;text-align:right!important;color:rgba(255,255,255,.72)!important}
+html body:not(.app-mode) .af-minimal-footer{
+ position:relative!important;inset:auto!important;z-index:5!important;display:flex!important;align-items:center!important;
+ justify-content:space-between!important;flex-wrap:wrap!important;gap:12px!important;
+ width:calc(100% - 36px)!important;margin:12px auto max(12px,env(safe-area-inset-bottom))!important;
+ padding:14px 0 2px!important;border-top:1px solid rgba(255,255,255,.18)!important;
+ background:transparent!important;font-size:10px!important;
+}
+html body:not(.app-mode) .af-footer-primary,html body:not(.app-mode) .af-legal-links{display:flex!important;gap:15px!important;flex-wrap:wrap!important}
+html body:not(.app-mode) .af-minimal-footer a,html body:not(.app-mode) .af-minimal-footer button{color:rgba(255,255,255,.78)!important;font-size:10px!important}
+html body:not(.app-mode) .af-global-reveal{display:none!important}
+
+/* Spatial interface: one quiet target, one compact contextual tray. */
+.af-video-spatial-marker{
+ position:absolute!important;z-index:28!important;width:38px!important;height:38px!important;
+ transform:translate(-50%,-50%)!important;border-radius:50%!important;
+ border:1px solid rgba(255,255,255,.82)!important;background:rgba(16,31,22,.76)!important;
+ box-shadow:0 0 0 7px rgba(239,222,185,.13),0 8px 24px rgba(0,0,0,.3)!important;
+ backdrop-filter:blur(12px)!important;cursor:pointer!important;touch-action:none!important;
+}
+.af-video-spatial-marker:after{content:"";position:absolute;inset:11px;border-radius:50%;background:#e6d2a7!important;box-shadow:0 0 16px rgba(230,210,167,.65)!important}
+.af-video-spatial-marker[hidden]{display:none!important}
+.af-video-spatial-panel{
+ position:fixed!important;z-index:10010!important;left:50%!important;bottom:max(16px,env(safe-area-inset-bottom))!important;
+ transform:translateX(-50%)!important;width:min(420px,calc(100vw - 28px))!important;box-sizing:border-box!important;
+ padding:15px!important;border-radius:20px!important;border:1px solid rgba(240,229,205,.2)!important;
+ background:rgba(16,24,19,.94)!important;color:#f6f1e7!important;
+ box-shadow:0 20px 70px rgba(0,0,0,.42)!important;backdrop-filter:blur(24px)!important;
+}
+.af-video-spatial-panel[hidden]{display:none!important}
+.af-video-spatial-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin-bottom:12px!important}
+.af-video-spatial-head b{display:block!important;font-size:13px!important;letter-spacing:.01em!important}
+.af-video-spatial-head small{display:block!important;margin-top:3px!important;font-size:10px!important;color:#aeb9b0!important}
+.af-video-spatial-close{width:30px!important;height:30px!important;flex:0 0 30px!important;border-radius:50%!important;border:1px solid rgba(255,255,255,.16)!important;background:rgba(255,255,255,.06)!important;color:#fff!important;font-size:20px!important}
+.af-video-spatial-items{display:flex!important;gap:6px!important;overflow-x:auto!important;padding:1px 0 8px!important;scrollbar-width:none!important}
+.af-video-spatial-items::-webkit-scrollbar{display:none!important}
+.af-video-spatial-items button{flex:0 0 auto!important;min-height:32px!important;padding:0 11px!important;border-radius:999px!important;border:1px solid rgba(255,255,255,.13)!important;background:rgba(255,255,255,.055)!important;color:#dce2da!important;font-size:10px!important;font-weight:700!important}
+.af-video-spatial-items button[aria-pressed=true]{background:#e7d7b7!important;color:#1d251f!important;border-color:#e7d7b7!important}
+.af-video-spatial-detail{display:flex!important;flex-direction:column!important;gap:3px!important;padding:10px 0 11px!important}
+.af-video-spatial-detail b{font-size:12px!important;color:#f0dfbd!important}
+.af-video-spatial-detail span{font-size:10px!important;line-height:1.45!important;color:#b9c4bb!important}
+.af-video-spatial-actions{display:flex!important;gap:8px!important}
+.af-video-spatial-actions button{flex:1 1 0!important;min-height:39px!important;padding:0 10px!important;border-radius:11px!important;
+ border:1px solid rgba(231,215,183,.22)!important;background:rgba(231,215,183,.1)!important;color:#f2e7d1!important;font-size:10px!important;font-weight:750!important}
+.af-video-spatial-actions button:first-child{background:#e7d7b7!important;color:#20271f!important}
+html body.af-video-spatial-open .af-home-copy,
+html body.af-video-spatial-open .af-minimal-footer{opacity:0!important;pointer-events:none!important;transition:opacity .18s ease!important}
+html body.af-video-spatial-open .af-video-spatial-panel{display:block!important}
+@media(max-width:760px){
+ html body:not(.app-mode) .af-minimal-header{padding:12px 15px!important}
+ html body:not(.app-mode) .af-minimal-brand img{width:34px!important;height:34px!important}
+ html body:not(.app-mode) .af-minimal-brand strong{font-size:9px!important;letter-spacing:.12em!important}
+ html body:not(.app-mode) .af-top-controls{gap:6px!important}
+ html body:not(.app-mode) .af-top-controls .af-power-button,
+ html body:not(.app-mode) .af-top-controls .af-video-spatial-toggle{width:34px!important;height:34px!important;min-width:34px!important}
+ html body:not(.app-mode) .af-top-controls .af-scene-light.af-light-in-header{min-width:86px!important;height:34px!important;padding:0 8px!important}
+ html body:not(.app-mode) .af-one-screen-home{padding:clamp(24px,5vh,52px) 19px 22px!important}
+ html body:not(.app-mode) #afHomeTitle{font-size:clamp(49px,12.4vw,64px)!important}
+ html body:not(.app-mode) .af-home-subtitle{font-size:13px!important;margin:12px 0 18px!important}
+ html body:not(.app-mode) .af-home-actions{gap:8px!important}
+ html body:not(.app-mode) .af-home-actions .af-primary-cta{min-height:48px!important}
+ html body:not(.app-mode) .af-home-actions .af-install-cta{min-height:40px!important}
+ html body:not(.app-mode) .af-home-actions .af-nfce-entry{min-height:54px!important}
+ html body:not(.app-mode) .af-minimal-footer{width:calc(100% - 32px)!important;margin-top:8px!important;gap:10px!important}
+ .af-video-spatial-panel{bottom:max(10px,env(safe-area-inset-bottom))!important;width:calc(100vw - 20px)!important;padding:13px!important}
+}
+@media(max-height:740px) and (max-width:760px){
+ html body:not(.app-mode) .af-one-screen-home{padding-top:12px!important;padding-bottom:12px!important}
+ html body:not(.app-mode) #afHomeTitle{font-size:48px!important}
+ html body:not(.app-mode) .af-home-subtitle{margin:8px 0 12px!important}
+ html body:not(.app-mode) .af-minimal-footer{margin-top:5px!important;padding-top:9px!important}
+}
