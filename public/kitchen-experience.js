@@ -43,12 +43,12 @@
    <header class="af3d-top"><div><span class="af3d-kicker">ALIMENTE FÁCIL · EXPERIÊNCIA IMERSIVA</span><h2>Cozinha viva</h2><p>Toque nos objetos para explorar · arraste para olhar ao redor</p></div><button class="af3d-close" type="button" aria-label="Fechar experiência">×</button></header>
    <div class="af3d-stage"><div class="af3d-loading">Preparando sua cozinha 3D…</div><canvas aria-label="Ambiente de cozinha tridimensional interativo"></canvas></div>
    <aside class="af3d-object-info" aria-live="polite"><b>Explore o ambiente</b><span>Geladeira, armários, despensa, mesa, cadeiras e iluminação.</span></aside>
-   <nav class="af3d-controls" aria-label="Controles da cozinha"><button type="button" data-action="light">☼ Luzes</button><button type="button" data-focus="fridge">Geladeira</button><button type="button" data-focus="pantry">Despensa</button><button type="button" data-focus="dining">Mesa</button><button type="button" data-focus="cabinets">Armários</button><button type="button" data-action="zoom-out" aria-label="Afastar câmera">−</button><button type="button" data-action="zoom-in" aria-label="Aproximar câmera">+</button><button type="button" data-action="reset">Visão inicial</button></nav>`;
+   <nav class="af3d-controls" aria-label="Controles da cozinha"><button type="button" data-action="light">☼ Luzes</button><button type="button" data-focus="fridge">Geladeira</button><button type="button" data-focus="pantry">Despensa</button><button type="button" data-focus="dining">Mesa</button><button type="button" data-focus="cabinets">Armários</button><button type="button" data-walk="forward" aria-label="Avançar pela cozinha">↑</button><button type="button" data-walk="left" aria-label="Mover para a esquerda">←</button><button type="button" data-walk="back" aria-label="Recuar pela cozinha">↓</button><button type="button" data-walk="right" aria-label="Mover para a direita">→</button><button type="button" data-action="zoom-out" aria-label="Afastar câmera">−</button><button type="button" data-action="zoom-in" aria-label="Aproximar câmera">+</button><button type="button" data-action="reset">Visão inicial</button></nav>`;
   document.body.appendChild(overlay);document.body.classList.add('af3d-open');
   const close=()=>{activeCleanup?.();activeCleanup=null;overlay.remove();document.body.classList.remove('af3d-open')};
   overlay.querySelector('.af3d-close').addEventListener('click',close);
   const esc=e=>{if(e.key==='Escape')close()};document.addEventListener('keydown',esc);
-  activeCleanup=()=>{document.removeEventListener('keydown',esc);overlay.remove();document.body.classList.remove('af3d-open')};
+  activeCleanup=()=>{document.removeEventListener('keydown',esc);document.removeEventListener('keydown',onKey);overlay.remove();document.body.classList.remove('af3d-open')};
   try{
    const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js');
    if(!overlay.isConnected)return;
@@ -117,7 +117,7 @@
    const updateCamera=()=>{camera.position.set(target.x+Math.sin(yaw)*radius*Math.cos(pitch),target.y+Math.sin(pitch)*radius,target.z+Math.cos(yaw)*radius*Math.cos(pitch));camera.lookAt(target)};
    updateCamera();
    const onDown=e=>{down={x:e.clientX,y:e.clientY};dragging=false;canvas.setPointerCapture?.(e.pointerId)};
-   const onMove=e=>{if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.abs(dx)+Math.abs(dy)>5)dragging=true;if(dragging){yaw-=dx*.006;pitch=Math.max(-.05,Math.min(.8,pitch+dy*.004));down={x:e.clientX,y:e.clientY};updateCamera()}};
+   const onMove=e=>{if(!down||pinchStart)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.abs(dx)+Math.abs(dy)>5)dragging=true;if(dragging){yaw-=dx*.006;pitch=Math.max(-.05,Math.min(.8,pitch+dy*.004));down={x:e.clientX,y:e.clientY};updateCamera()}};
    const onWheel=e=>{e.preventDefault();radius=Math.max(6.4,Math.min(15,radius+e.deltaY*.009));updateCamera()};
    let pinchStart=null;
    const onTouchStart=e=>{if(e.touches.length===2)pinchStart={distance:Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY),radius}};
@@ -137,7 +137,11 @@
    overlay.querySelector('[data-action="zoom-out"]').addEventListener('click',()=>{radius=Math.min(15,radius+1);updateCamera()});
    overlay.querySelector('[data-action="reset"]').addEventListener('click',()=>{yaw=.62;pitch=.28;radius=10.2;updateCamera();say('Visão inicial','Você voltou ao enquadramento principal da cozinha.')});
    const focusTargets={fridge:new THREE.Vector3(3.7,1.2,-2.8),pantry:new THREE.Vector3(-3.55,1.1,-2.5),dining:new THREE.Vector3(0,1,.55),cabinets:new THREE.Vector3(0,2.4,-3.8)};
-   overlay.querySelectorAll('[data-focus]').forEach(button=>button.addEventListener('click',()=>{target.copy(focusTargets[button.dataset.focus]);radius=7.2;yaw=.62;pitch=.18;updateCamera();say(button.textContent,'Câmera direcionada para esta área. Toque nos objetos para interagir.')}));
+   overlay.querySelectorAll('[data-focus]').forEach(button=>button.addEventListener('click',()=>{target.copy(focusTargets[button.dataset.focus]);radius=7.2;yaw=.62;pitch=.18;updateCamera();say(button.textContent,'Câmera direcionada para esta área. Toque nos objetos para interagir.')})); 
+   const walk=(direction)=>{const step=.48;if(direction==='forward')target.z=Math.max(-2.1,target.z-step);if(direction==='back')target.z=Math.min(2.4,target.z+step);if(direction==='left')target.x=Math.max(-3.7,target.x-step);if(direction==='right')target.x=Math.min(3.7,target.x+step);updateCamera();say('Explorando a cozinha','Você pode avançar pelo ambiente e tocar nos móveis e objetos para interagir.')};
+   overlay.querySelectorAll('[data-walk]').forEach(button=>button.addEventListener('click',()=>walk(button.dataset.walk)));
+   const onKey=e=>{if(['ArrowUp','w','W'].includes(e.key)){e.preventDefault();walk('forward')}if(['ArrowDown','s','S'].includes(e.key)){e.preventDefault();walk('back')}if(['ArrowLeft','a','A'].includes(e.key)){e.preventDefault();walk('left')}if(['ArrowRight','d','D'].includes(e.key)){e.preventDefault();walk('right')}};
+   document.addEventListener('keydown',onKey);
    const resize=()=>{const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)};
    const ro=new ResizeObserver(resize);ro.observe(stage);resize();loading.remove();
    let raf=0;const render=()=>{if(!overlay.isConnected){cancelAnimationFrame(raf);ro.disconnect();renderer.dispose();return}
