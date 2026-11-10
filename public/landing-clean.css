@@ -299,3 +299,129 @@ html body.app-mode .main-header{padding-left:10px!important;padding-right:10px!i
 html body.app-mode .modules-area{padding:14px 12px calc(88px + env(safe-area-inset-bottom))!important}
 html body.app-mode .dashboard-card,html body.app-mode .content-card,html body.app-mode .glass-card{min-width:0!important;width:100%!important;box-sizing:border-box!important}
 }
+
+/* V72 — composição editorial consistente, sem elementos espaciais flutuantes */
+html body #afGlobalReveal,html body .af-global-reveal,
+html body #afExploreKitchen,html body #afVideoSpatialToggle,
+html body .af-spatial-overlay,html body .af-3d-overlay,
+html body .af-spatial-hotspot,html body .af-object-marker,
+html body .af-assistant-toggle{display:none!important;visibility:hidden!important;pointer-events:none!important}
+html body:not(.app-mode) #landing-video-container{
+ position:relative!important;width:100%!important;min-height:100svh!important;height:auto!important;
+ display:flex!important;flex-direction:column!important;overflow:hidden!important;
+ isolation:isolate!important;
+}
+html body:not(.app-mode) #landing-video-container .af-landing-video{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ object-fit:cover!important;transform:none!important;filter:brightness(.72) saturate(.84)!important;
+}
+html body:not(.app-mode) #landing-video-container .af-video-shade{
+ position:absolute!important;inset:0!important;z-index:1!important;
+ background:linear-gradient(180deg,rgba(9,17,12,.48),rgba(9,17,12,.16) 42%,rgba(9,17,12,.68))!important;
+ pointer-events:none!important;
+}
+html body:not(.app-mode) .af-minimal-header{
+ position:relative!important;z-index:5!important;inset:auto!important;
+ width:100%!important;min-height:76px!important;box-sizing:border-box!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:14px!important;padding:14px clamp(18px,4vw,48px)!important;
+ background:rgba(15,22,17,.22)!important;border-bottom:1px solid rgba(255,255,255,.14)!important;
+ backdrop-filter:blur(12px)!important;
+}
+html body:not(.app-mode) .af-minimal-brand{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
+html body:not(.app-mode) .af-top-controls{display:flex!important;align-items:center!important;gap:10px!important;flex-shrink:0!important}
+html body:not(.app-mode) .af-one-screen-home{
+ position:relative!important;z-index:2!important;inset:auto!important;transform:none!important;
+ flex:1 0 auto!important;width:100%!important;min-height:0!important;height:auto!important;
+ box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ padding:clamp(38px,8vh,90px) 24px clamp(36px,7vh,76px)!important;
+}
+html body:not(.app-mode) .af-home-copy{
+ position:relative!important;inset:auto!important;transform:none!important;
+ width:min(100%,680px)!important;max-width:680px!important;margin:0 auto!important;
+ display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+ gap:0!important;box-sizing:border-box!important;
+}
+html body:not(.app-mode) .af-brand-slogan{margin:0 0 22px!important;line-height:1.4!important}
+html body:not(.app-mode) #afHomeTitle{
+ max-width:100%!important;margin:0!important;font-size:clamp(48px,7.4vw,88px)!important;
+ line-height:.98!important;letter-spacing:-.065em!important;overflow-wrap:normal!important;
+}
+html body:not(.app-mode) #afHomeTitle em{display:block!important;font-style:normal!important}
+html body:not(.app-mode) .af-home-subtitle{
+ max-width:540px!important;margin:22px 0 24px!important;font-size:clamp(15px,1.6vw,19px)!important;
+ line-height:1.55!important;
+}
+html body:not(.app-mode) .af-home-actions{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ width:min(100%,430px)!important;max-width:430px!important;gap:11px!important;
+}
+html body:not(.app-mode) .af-home-actions>*{
+ position:relative!important;inset:auto!important;transform:none!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ box-sizing:border-box!important;margin:0!important;
+}
+html body:not(.app-mode) .af-primary-cta{min-height:58px!important}
+html body:not(.app-mode) .af-install-cta{min-height:50px!important}
+html body:not(.app-mode) .af-nfce-entry{min-height:68px!important}
+html body:not(.app-mode) .af-price-compact{
+ position:relative!important;inset:auto!important;transform:none!important;
+ display:flex!important;flex-wrap:wrap!important;align-items:baseline!important;
+ gap:6px 14px!important;margin:18px 0 0!important;padding:14px 0 0!important;
+ border-top:1px solid rgba(255,255,255,.24)!important;
+}
+html body:not(.app-mode) .af-minimal-footer{
+ position:relative!important;z-index:3!important;inset:auto!important;
+ display:flex!important;justify-content:space-between!important;align-items:center!important;
+ gap:14px!important;width:100%!important;box-sizing:border-box!important;
+ padding:16px clamp(18px,4vw,48px) calc(16px + env(safe-area-inset-bottom))!important;
+ background:rgba(8,15,10,.28)!important;
+}
+html body:not(.app-mode) .af-legal-links{display:flex!important;flex-wrap:wrap!important;gap:18px!important}
+html body.app-mode #landing-video-container,
+html body.app-mode .af-minimal-footer{display:none!important}
+html body.app-mode .app-panel-container-standalone{
+ position:relative!important;display:block!important;width:100%!important;max-width:100%!important;
+ min-height:100svh!important;height:auto!important;overflow-x:hidden!important;
+ background:#f4f1e9!important;color:#292d27!important;
+}
+html body.app-mode .app-sidebar{background:#fffdf8!important;color:#30352e!important}
+html body.app-mode .app-main-content,html body.app-mode .modules-area{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+html body.app-mode .main-header{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:10px!important}
+html body.app-mode .modules-area{padding:clamp(14px,2.5vw,32px)!important}
+html body.app-mode .dashboard-card,html body.app-mode .content-card,html body.app-mode .glass-card,
+html body.app-mode .module-card{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+html body.app-mode .app-panel-container-standalone *{overflow-wrap:anywhere}
+html body.app-mode.af-night-mode .app-panel-container-standalone{background:#171c18!important;color:#f3f1e9!important}
+html body.app-mode.af-night-mode .app-sidebar{background:#202720!important;color:#f3f1e9!important}
+@media(min-width:900px){
+ html body:not(.app-mode) .af-one-screen-home{padding-top:clamp(60px,10vh,110px)!important;padding-bottom:clamp(50px,8vh,90px)!important}
+ html body:not(.app-mode) .af-home-copy{margin-left:clamp(24px,9vw,150px)!important;margin-right:auto!important}
+}
+@media(max-width:640px){
+ html body:not(.app-mode) #landing-video-container{min-height:100svh!important}
+ html body:not(.app-mode) .af-minimal-header{min-height:64px!important;padding:10px 16px!important}
+ html body:not(.app-mode) .af-minimal-brand img{width:40px!important;height:40px!important}
+ html body:not(.app-mode) .af-brand-copy strong{font-size:9px!important;letter-spacing:.13em!important}
+ html body:not(.app-mode) .af-top-controls{gap:6px!important}
+ html body:not(.app-mode) #afSceneLight,html body:not(.app-mode) .af-power-button{width:38px!important;height:38px!important;min-width:38px!important}
+ html body:not(.app-mode) .af-one-screen-home{padding:clamp(46px,8vh,76px) 22px 34px!important}
+ html body:not(.app-mode) .af-home-copy{width:100%!important;max-width:440px!important}
+ html body:not(.app-mode) .af-brand-slogan{font-size:9px!important;letter-spacing:.16em!important;margin-bottom:18px!important}
+ html body:not(.app-mode) #afHomeTitle{font-size:clamp(43px,12vw,58px)!important;line-height:1!important;letter-spacing:-.06em!important}
+ html body:not(.app-mode) #afHomeTitle em{margin-top:2px!important}
+ html body:not(.app-mode) .af-home-subtitle{font-size:15px!important;line-height:1.45!important;margin:17px 0 20px!important}
+ html body:not(.app-mode) .af-home-actions{width:100%!important;gap:9px!important}
+ html body:not(.app-mode) .af-primary-cta{min-height:54px!important}
+ html body:not(.app-mode) .af-install-cta{min-height:48px!important}
+ html body:not(.app-mode) .af-nfce-entry{min-height:62px!important;padding:12px 14px!important}
+ html body:not(.app-mode) .af-price-compact{margin-top:15px!important;padding-top:12px!important}
+ html body:not(.app-mode) .af-minimal-footer{padding:13px 16px calc(13px + env(safe-area-inset-bottom))!important;font-size:10px!important}
+ html body:not(.app-mode) .af-legal-links{gap:12px!important}
+ html body.app-mode .app-panel-container-standalone{min-height:100svh!important;height:auto!important}
+ html body.app-mode .app-sidebar{max-width:84vw!important}
+ html body.app-mode .modules-area{padding:12px 12px calc(100px + env(safe-area-inset-bottom))!important}
+ html body.app-mode .main-header{min-height:58px!important;padding:9px 12px!important}
+ html body.app-mode .app-panel-container-standalone .glass-dock{left:10px!important;right:10px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important}
+ html body.app-mode .app-panel-container-standalone .glass-dock .dock-item{flex:1 1 0!important;min-width:0!important;padding:7px 3px!important;font-size:10px!important}
+}
