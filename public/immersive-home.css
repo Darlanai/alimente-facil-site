@@ -1,0 +1,204 @@
+/* Immersive Home 5D — layout responsivo, controles sem colisão e painel renovado */
+:root{--af5-ink:#111713;--af5-surface:#1b241e;--af5-raised:#222d25;--af5-line:rgba(231,222,200,.13);--af5-gold:#d9c39a;--af5-muted:#aeb9b0}
+html,body{max-width:100%;overflow-x:hidden}
+button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid #e8d5ad!important;outline-offset:3px!important}
+
+/* A iluminação vive no cabeçalho, nunca sobre o preço, termos ou rodapé. */
+html body .af-top-controls .af-scene-light.af-light-in-header{
+ position:relative!important;inset:auto!important;z-index:12!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:auto!important;min-width:112px!important;height:42px!important;margin:0!important;padding:0 13px!important;
+ border:1px solid rgba(255,255,255,.25)!important;border-radius:999px!important;
+ background:rgba(9,18,13,.32)!important;color:#fff!important;backdrop-filter:blur(16px)!important;
+ box-shadow:0 8px 24px rgba(0,0,0,.12)!important;gap:8px!important;
+}
+html body .af-top-controls .af-scene-light.af-light-in-header small{font:750 10px/1 Manrope,sans-serif!important;white-space:nowrap!important}
+html body .af-top-controls .af-scene-light.af-light-in-header i{width:27px!important;height:15px!important;flex:0 0 27px!important}
+html body .af-top-controls .af-scene-light.af-light-in-header i:after{width:11px!important;height:11px!important;top:2px!important;left:2px!important}
+html body .af-top-controls .af-scene-light.af-light-in-header[aria-pressed=true] i:after{transform:translateX(12px)!important}
+html body:not(.app-mode) #af-chatbot-toggle{display:none!important;visibility:hidden!important;pointer-events:none!important}
+html body.app-mode #af-chatbot-toggle{display:flex!important;visibility:visible!important;pointer-events:auto!important}
+
+/* Landing: uma coluna de ações e rodapé independente no mobile. */
+html body:not(.app-mode) #landing-video-container{height:100svh!important;min-height:100svh!important;overflow:hidden!important}
+html body:not(.app-mode) .af-one-screen-home{min-height:100svh!important;box-sizing:border-box!important}
+html body:not(.app-mode) .af-home-actions{align-items:stretch!important}
+html body:not(.app-mode) .af-home-actions>*{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+html body:not(.app-mode) .af-minimal-footer{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;flex-wrap:wrap!important}
+html body:not(.app-mode) .af-legal-links{display:flex!important;gap:14px!important;flex-wrap:wrap!important}
+html body:not(.app-mode) .af-global-reveal{pointer-events:none!important}
+@media(max-width:760px){
+ html body:not(.app-mode) .af-minimal-header{padding:12px 14px!important;gap:8px!important}
+ html body:not(.app-mode) .af-minimal-brand img{width:35px!important;height:35px!important}
+ html body:not(.app-mode) .af-minimal-brand strong{font-size:9px!important;letter-spacing:.13em!important}
+ html body:not(.app-mode) .af-top-controls{gap:6px!important;display:flex!important;align-items:center!important}
+ html body:not(.app-mode) .af-top-controls .af-top-icon{width:31px!important;height:31px!important}
+ html body:not(.app-mode) .af-top-controls .af-scene-light.af-light-in-header{min-width:92px!important;width:92px!important;height:36px!important;padding:0 9px!important;gap:6px!important}
+ html body:not(.app-mode) .af-top-controls .af-scene-light.af-light-in-header small{font-size:9px!important}
+ html body:not(.app-mode) .af-landing-moment{top:66px!important;left:18px!important;right:18px!important;max-width:none!important}
+ html body:not(.app-mode) .af-landing-moment em{max-width:290px!important}
+ html body:not(.app-mode) .af-one-screen-home{
+  min-height:100svh!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  padding:clamp(142px,19svh,190px) 20px calc(118px + env(safe-area-inset-bottom))!important;
+ }
+ html body:not(.app-mode) .af-home-copy{width:100%!important;max-width:520px!important;margin:0 auto!important;text-align:left!important}
+ html body:not(.app-mode) .af-brand-slogan{font-size:8px!important;letter-spacing:.18em!important;margin-bottom:12px!important}
+ html body:not(.app-mode) .af-greeting{font-size:13px!important;margin-bottom:9px!important}
+ html body:not(.app-mode) #afHomeTitle{font-size:clamp(53px,14.8vw,78px)!important;line-height:.88!important;letter-spacing:-.085em!important}
+ html body:not(.app-mode) .af-home-subtitle{font-size:14px!important;line-height:1.45!important;margin:14px 0 16px!important;max-width:360px!important}
+ html body:not(.app-mode) .af-home-actions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+ html body:not(.app-mode) .af-home-actions .af-primary-cta{grid-column:1!important;width:100%!important;min-height:49px!important;padding:0 16px!important}
+ html body:not(.app-mode) .af-home-actions .af-install-cta{grid-column:1!important;width:100%!important;min-height:46px!important;padding:0 14px!important}
+ html body:not(.app-mode) .af-home-actions .af-nfce-entry{grid-column:1!important;width:100%!important;min-height:58px!important;padding:7px 12px!important}
+ html body:not(.app-mode) .af-home-actions .af-price-compact{
+  grid-column:1!important;display:flex!important;flex-direction:row!important;align-items:center!important;
+  justify-content:space-between!important;gap:8px!important;width:100%!important;margin:1px 0 0!important;
+  padding:9px 11px!important;border:1px solid rgba(255,255,255,.24)!important;border-radius:13px!important;
+  border-left:1px solid rgba(255,255,255,.24)!important;background:rgba(10,18,13,.22)!important;
+ }
+ html body:not(.app-mode) .af-price-compact strong{font-size:19px!important;white-space:nowrap!important}
+ html body:not(.app-mode) .af-price-compact span{font-size:9px!important;line-height:1.35!important;text-align:right!important;max-width:155px!important}
+ html body:not(.app-mode) .af-home-benefits{display:none!important}
+ html body:not(.app-mode) .af-minimal-footer{
+  position:absolute!important;left:16px!important;right:16px!important;bottom:calc(7px + env(safe-area-inset-bottom))!important;
+  display:flex!important;justify-content:space-between!important;align-items:center!important;gap:8px!important;
+  padding-top:9px!important;border-top:1px solid rgba(255,255,255,.22)!important;font-size:9px!important;
+ }
+ html body:not(.app-mode) .af-footer-primary{gap:12px!important}
+ html body:not(.app-mode) .af-legal-links{gap:9px!important}
+}
+@media(max-height:760px) and (max-width:760px){
+ html body:not(.app-mode) .af-one-screen-home{padding-top:132px!important;padding-bottom:105px!important}
+ html body:not(.app-mode) .af-home-subtitle{margin:10px 0 12px!important}
+ html body:not(.app-mode) .af-home-actions{gap:6px!important}
+ html body:not(.app-mode) .af-home-actions .af-primary-cta,
+ html body:not(.app-mode) .af-home-actions .af-install-cta{min-height:42px!important}
+ html body:not(.app-mode) .af-home-actions .af-nfce-entry{min-height:50px!important}
+}
+
+/* Painel: arquitetura visual renovada, mantendo os módulos e IDs funcionais. */
+html body.app-mode{background:#111713!important;color:#f1eee5!important}
+html body.app-mode .app-panel-container-standalone{
+ background:
+  radial-gradient(ellipse at 8% 0,rgba(197,174,128,.09),transparent 30%),
+  radial-gradient(ellipse at 100% 100%,rgba(80,125,91,.08),transparent 35%),
+  #111713!important;color:#f1eee5!important;
+}
+html body.app-mode .app-sidebar{
+ width:clamp(218px,19vw,270px)!important;flex:0 0 clamp(218px,19vw,270px)!important;
+ background:linear-gradient(180deg,#1b241e,#141b16)!important;
+ border-right:1px solid var(--af5-line)!important;box-shadow:12px 0 40px rgba(0,0,0,.12)!important;
+}
+html body.app-mode .sidebar-header{padding:25px 22px!important;border-bottom:1px solid var(--af5-line)!important}
+html body.app-mode .af-panel-brand-home{color:#f1e6d0!important;letter-spacing:.19em!important;font-size:12px!important}
+html body.app-mode .app-sidebar .main-nav{padding:15px 12px!important;gap:5px!important}
+html body.app-mode .app-sidebar .nav-item{
+ min-height:46px!important;padding:0 13px!important;border:1px solid transparent!important;border-radius:13px!important;
+ color:#aeb9b0!important;font-weight:650!important;transition:all .2s ease!important;
+}
+html body.app-mode .app-sidebar .nav-item:hover{background:rgba(255,255,255,.045)!important;color:#fff!important}
+html body.app-mode .app-sidebar .nav-item.active{
+ color:#f0dfbd!important;background:linear-gradient(100deg,rgba(217,195,154,.16),rgba(217,195,154,.035))!important;
+ border-color:rgba(217,195,154,.14)!important;box-shadow:inset 2px 0 #d9c39a!important;
+}
+html body.app-mode .app-sidebar .nav-item.active i{color:#dfc89e!important}
+html body.app-mode .sidebar-footer{border-top:1px solid var(--af5-line)!important;padding:16px!important}
+html body.app-mode .app-main-content{min-width:0!important;background:transparent!important}
+html body.app-mode .main-header{
+ min-height:70px!important;padding:0 clamp(14px,2.2vw,30px)!important;
+ background:rgba(20,27,22,.86)!important;border-bottom:1px solid var(--af5-line)!important;
+ box-shadow:0 8px 30px rgba(0,0,0,.08)!important;backdrop-filter:blur(20px)!important;
+}
+html body.app-mode .header-budget{
+ border:1px solid var(--af5-line)!important;border-radius:14px!important;background:rgba(255,255,255,.04)!important;
+ color:#e7e2d6!important;padding:9px 13px!important;
+}
+html body.app-mode .header-budget i{color:var(--af5-gold)!important}
+html body.app-mode .header-utility-cluster .icon-button,
+html body.app-mode .main-header .icon-button{
+ width:40px!important;height:40px!important;border:1px solid var(--af5-line)!important;
+ border-radius:12px!important;background:rgba(255,255,255,.035)!important;color:#d7ded7!important;
+}
+html body.app-mode .modules-area{
+ min-width:0!important;padding:clamp(14px,2.4vw,34px)!important;
+ background:transparent!important;overflow:auto!important;overscroll-behavior:contain!important;
+ -webkit-overflow-scrolling:touch!important;
+}
+html body.app-mode .module-container{min-width:0!important;max-width:1480px!important;margin-inline:auto!important}
+html body.app-mode .dashboard-card,
+html body.app-mode .content-card,
+html body.app-mode .glass-card,
+html body.app-mode .card,
+html body.app-mode .md-list-column,
+html body.app-mode .md-detail-column{
+ border:1px solid var(--af5-line)!important;border-radius:18px!important;
+ background:linear-gradient(145deg,rgba(34,45,37,.92),rgba(25,34,28,.97))!important;
+ box-shadow:0 16px 40px rgba(0,0,0,.12)!important;color:#eae9df!important;
+}
+html body.app-mode .card-header{border-bottom:1px solid rgba(231,222,200,.09)!important}
+html body.app-mode .card-header h3,
+html body.app-mode .dashboard-card h3,
+html body.app-mode .content-card h3{color:#f0e8d9!important}
+html body.app-mode .page-title{color:#f0dfbd!important;letter-spacing:-.045em!important}
+html body.app-mode .page-subtitle,
+html body.app-mode .dashboard-card p,
+html body.app-mode .dashboard-card small{color:#aeb9b0!important}
+html body.app-mode .btn-primary,
+html body.app-mode .nfce-primary{
+ border:1px solid rgba(255,255,255,.3)!important;border-radius:12px!important;
+ background:linear-gradient(135deg,#e8d8b7,#c6ad80)!important;color:#24261f!important;font-weight:800!important;
+}
+html body.app-mode .btn-secondary,
+html body.app-mode .btn-outline{
+ border:1px solid var(--af5-line)!important;border-radius:12px!important;
+ background:rgba(255,255,255,.045)!important;color:#e5e5dc!important;
+}
+html body.app-mode input,html body.app-mode select,html body.app-mode textarea{
+ min-width:0!important;border:1px solid rgba(231,222,200,.16)!important;border-radius:11px!important;
+ background:#121a15!important;color:#f3f0e8!important;
+}
+html body.app-mode input::placeholder,html body.app-mode textarea::placeholder{color:#839087!important}
+html body.app-mode .glass-dock{border:1px solid var(--af5-line)!important;background:rgba(25,34,28,.94)!important;backdrop-filter:blur(20px)!important}
+html body.app-mode #af-chatbot-toggle{z-index:1200!important;box-shadow:0 16px 42px rgba(0,0,0,.35)!important}
+@media(max-width:760px){
+ html body.app-mode .app-sidebar{width:min(84vw,300px)!important;flex-basis:min(84vw,300px)!important}
+ html body.app-mode .main-header{min-height:60px!important;padding:0 10px!important}
+ html body.app-mode .header-budget{padding:7px 9px!important;font-size:10px!important}
+ html body.app-mode .header-utility-cluster{gap:5px!important}
+ html body.app-mode .header-utility-cluster .icon-button{width:34px!important;height:34px!important}
+ html body.app-mode .modules-area{padding:12px 10px calc(20px + env(safe-area-inset-bottom))!important}
+ html body.app-mode .dashboard-card,html body.app-mode .content-card,html body.app-mode .card{border-radius:15px!important}
+}
+
+/* Cena 3D: controles e cartões de informação com ergonomia de toque. */
+.af3d-open{overflow:hidden!important}
+.af3d-overlay{
+ position:fixed!important;inset:0!important;z-index:99999!important;display:grid!important;
+ grid-template-rows:auto minmax(0,1fr) auto auto!important;gap:12px!important;
+ padding:max(16px,env(safe-area-inset-top)) clamp(12px,3vw,28px) max(14px,env(safe-area-inset-bottom))!important;
+ background:radial-gradient(ellipse at 50% 0,#314338,#101713 62%)!important;color:#f5f0e5!important;
+ font-family:Manrope,system-ui,sans-serif!important;
+}
+.af3d-top{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important}
+.af3d-kicker{font-size:9px!important;letter-spacing:.2em!important;color:#d7bf94!important;font-weight:850!important}
+.af3d-top h2{margin:5px 0 3px!important;font-size:clamp(23px,4vw,34px)!important;letter-spacing:-.05em!important}
+.af3d-top p{margin:0!important;color:#b9c3b9!important;font-size:12px!important}
+.af3d-close{width:42px!important;height:42px!important;border-radius:50%!important;border:1px solid rgba(255,255,255,.17)!important;background:rgba(255,255,255,.07)!important;color:#fff!important;font-size:25px!important}
+.af3d-stage{position:relative!important;min-height:0!important;overflow:hidden!important;border:1px solid rgba(231,222,200,.16)!important;border-radius:22px!important;background:#17211c!important;box-shadow:0 22px 65px rgba(0,0,0,.24)!important}
+.af3d-stage canvas{display:block!important;width:100%!important;height:100%!important;touch-action:none!important}
+.af3d-loading{position:absolute!important;inset:0!important;z-index:2!important;display:grid!important;place-items:center!important;color:#e6d6b7!important;font-size:13px!important}
+.af3d-object-info{display:flex!important;flex-direction:column!important;gap:4px!important;padding:12px 15px!important;border:1px solid rgba(231,222,200,.12)!important;border-radius:15px!important;background:rgba(255,255,255,.045)!important}
+.af3d-object-info b{font-size:13px!important;color:#f2e4c9!important}
+.af3d-object-info span{font-size:11px!important;color:#bdc6bd!important;line-height:1.45!important}
+.af3d-controls{display:flex!important;align-items:center!important;gap:7px!important;overflow-x:auto!important;padding:2px 0 5px!important;scrollbar-width:thin!important}
+.af3d-controls button{flex:0 0 auto!important;min-height:38px!important;padding:0 13px!important;border:1px solid rgba(231,222,200,.16)!important;border-radius:999px!important;background:rgba(255,255,255,.07)!important;color:#f4efe4!important;font:700 11px Manrope,sans-serif!important;white-space:nowrap!important}
+.af3d-controls button:first-child{background:linear-gradient(135deg,#e8d8b7,#c6ad80)!important;color:#20251f!important}
+.af3d-controls button:active{transform:scale(.97)!important}
+@media(max-width:600px){
+ .af3d-overlay{gap:9px!important;padding:calc(10px + env(safe-area-inset-top)) 10px calc(9px + env(safe-area-inset-bottom))!important}
+ .af3d-top p{max-width:260px!important;font-size:10px!important}
+ .af3d-stage{border-radius:16px!important}
+ .af3d-controls button{min-height:40px!important;padding:0 12px!important}
+}
+@media(prefers-reduced-motion:reduce){.af3d-controls button,.af3d-close{transition:none!important}}
