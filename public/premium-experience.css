@@ -705,7 +705,7 @@ html body.app-mode .af-chatbot-footer{
     overflow-x:hidden!important;overflow-y:auto!important;
     -webkit-overflow-scrolling:touch!important;
     overscroll-behavior-y:contain!important;
-    clip-path:none!important;
+    clip-path:inset(0 calc(100% - var(--af-reveal)) 0 0)!important;
     padding-bottom:env(safe-area-inset-bottom)!important;
   }
   html body:not(.app-mode) .af-landing-video{
@@ -918,4 +918,10 @@ body.af3d-open{overflow:hidden!important}
  .af3d-controls{display:grid;grid-template-columns:1fr 1fr}
  .af3d-controls button{width:100%}
  .af3d-controls span{grid-column:1/-1;margin:2px 0 0;text-align:center}
+}
+
+@media(max-width:760px){
+ html body:not(.app-mode) .af-top-controls .af-instagram,
+ html body:not(.app-mode) .af-top-controls .af-tiktok,
+ html body:not(.app-mode) .af-top-controls .af-email{display:none!important}
 }
