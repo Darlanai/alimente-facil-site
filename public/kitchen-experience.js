@@ -33,6 +33,52 @@
  root.addEventListener('pointerleave',()=>{video.style.setProperty('--af-scene-x','0px');video.style.setProperty('--af-scene-y','0px')});
  const clock=document.getElementById('afMomentClock');
  if(clock){const update=()=>clock.textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});update();setInterval(update,30000)}
+ // Camada espacial sobre o vídeo: hotspots reposicionáveis, sem pausar ou alterar a filmagem.
+ const spatialToggle=document.createElement('button');
+ spatialToggle.type='button';spatialToggle.id='afVideoSpatialToggle';spatialToggle.className='af-top-icon af-video-spatial-toggle';
+ spatialToggle.setAttribute('aria-label','Ativar pontos interativos no vídeo');spatialToggle.title='Interagir com a cena do vídeo';
+ spatialToggle.innerHTML='<i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>';
+ if(topControls)topControls.insertBefore(spatialToggle,lightBtn);
+ const spatialPanel=document.createElement('section');spatialPanel.className='af-video-spatial-panel';spatialPanel.hidden=true;
+ spatialPanel.innerHTML='<div class="af-video-spatial-head"><div><b>Spatial 8D · cena interativa</b><small>Selecione um objeto ou arraste seu ponto até ele no vídeo</small></div><button class="af-video-spatial-close" type="button" aria-label="Fechar interação">×</button></div><div class="af-video-spatial-items" role="group" aria-label="Objetos interativos"><button type="button" data-object="fridge" aria-pressed="true">Geladeira</button><button type="button" data-object="table" aria-pressed="false">Mesa</button><button type="button" data-object="chairs" aria-pressed="false">Cadeiras</button><button type="button" data-object="cabinets" aria-pressed="false">Armários</button><button type="button" data-object="pantry" aria-pressed="false">Despensa</button><button type="button" data-object="light" aria-pressed="false">Iluminação</button></div><div class="af-video-spatial-detail" aria-live="polite">Geladeira selecionada. Arraste o marcador até a geladeira visível no vídeo e toque nele para abrir os controles.</div><div class="af-video-spatial-note">Os pontos são âncoras interativas sobre a filmagem. A movimentação dos pixels do objeto real exige segmentação e rastreamento quadro a quadro, etapa de visão computacional ainda não conectada.</div>';
+ document.body.appendChild(spatialPanel);
+ const spatialObjects=[
+  {id:'fridge',label:'Geladeira',x:78,y:42,detail:'Geladeira: ponto de interação selecionado. Posicione o marcador sobre a porta no vídeo.'},
+  {id:'table',label:'Mesa',x:49,y:58,detail:'Mesa: ponto de interação selecionado. Posicione o marcador sobre a mesa no vídeo.'},
+  {id:'chairs',label:'Cadeiras',x:27,y:70,detail:'Cadeiras: ponto de interação selecionado. Posicione o marcador sobre uma cadeira no vídeo.'},
+  {id:'cabinets',label:'Armários',x:69,y:25,detail:'Armários: ponto de interação selecionado. Posicione o marcador sobre os armários no vídeo.'},
+  {id:'pantry',label:'Despensa',x:15,y:43,detail:'Despensa: ponto de interação selecionado. Posicione o marcador sobre a despensa no vídeo.'},
+  {id:'light',label:'Iluminação',x:50,y:17,detail:'Iluminação: controle contextual da cena. A filmagem original continua rodando.'}
+ ];
+ const markers=new Map();let activeSpatial='fridge';
+ spatialObjects.forEach(object=>{
+  const marker=document.createElement('button');marker.type='button';marker.className='af-video-spatial-marker';
+  marker.dataset.object=object.id;marker.textContent='✦';marker.setAttribute('aria-label','Ponto interativo: '+object.label);
+  marker.style.left=object.x+'%';marker.style.top=object.y+'%';marker.hidden=true;
+  root.appendChild(marker);markers.set(object.id,marker);
+  let moving=false,moved=false;
+  marker.addEventListener('pointerdown',event=>{moving=true;moved=false;marker.setPointerCapture?.(event.pointerId);event.preventDefault()});
+  marker.addEventListener('pointermove',event=>{if(!moving)return;const dx=event.movementX,dy=event.movementY;if(Math.abs(dx)+Math.abs(dy)>0)moved=true;const rect=root.getBoundingClientRect();const x=Math.max(3,Math.min(97,((event.clientX-rect.left)/rect.width)*100));const y=Math.max(8,Math.min(92,((event.clientY-rect.top)/rect.height)*100));marker.style.left=x+'%';marker.style.top=y+'%'});
+  marker.addEventListener('pointerup',()=>{moving=false;if(!moved)selectSpatial(object.id)});
+  marker.addEventListener('pointercancel',()=>moving=false);
+ });
+ function selectSpatial(id){
+  activeSpatial=id;const object=spatialObjects.find(item=>item.id===id);if(!object)return;
+  spatialPanel.querySelectorAll('[data-object]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.object===id)));
+  spatialPanel.querySelector('.af-video-spatial-detail').textContent=object.detail;
+  markers.forEach((marker,key)=>marker.classList.toggle('is-selected',key===id));
+ }
+ spatialPanel.querySelectorAll('.af-video-spatial-items [data-object]').forEach(button=>button.addEventListener('click',()=>selectSpatial(button.dataset.object)));
+ spatialToggle.addEventListener('click',()=>{
+  const open=spatialPanel.hidden;spatialPanel.hidden=!open;document.body.classList.toggle('af-video-spatial-open',open);
+  markers.forEach(marker=>marker.hidden=!open);
+  spatialToggle.setAttribute('aria-pressed',String(open));
+  spatialToggle.setAttribute('aria-label',open?'Desativar pontos interativos no vídeo':'Ativar pontos interativos no vídeo');
+  if(open)selectSpatial(activeSpatial);
+ });
+ spatialPanel.querySelector('.af-video-spatial-close').addEventListener('click',()=>{
+  spatialPanel.hidden=true;markers.forEach(marker=>marker.hidden=true);document.body.classList.remove('af-video-spatial-open');spatialToggle.setAttribute('aria-pressed','false');
+ });
  if(!exploreBtn)return;
  let activeCleanup=null;
  exploreBtn.addEventListener('click',async()=>{
@@ -45,10 +91,10 @@
    <aside class="af3d-object-info" aria-live="polite"><b>Explore o ambiente</b><span>Geladeira, armários, despensa, mesa, cadeiras e iluminação.</span></aside>
    <nav class="af3d-controls" aria-label="Controles da cozinha"><button type="button" data-action="light">☼ Luzes</button><button type="button" data-focus="fridge">Geladeira</button><button type="button" data-focus="pantry">Despensa</button><button type="button" data-focus="dining">Mesa</button><button type="button" data-focus="cabinets">Armários</button><button type="button" data-walk="forward" aria-label="Avançar pela cozinha">↑</button><button type="button" data-walk="left" aria-label="Mover para a esquerda">←</button><button type="button" data-walk="back" aria-label="Recuar pela cozinha">↓</button><button type="button" data-walk="right" aria-label="Mover para a direita">→</button><button type="button" data-action="zoom-out" aria-label="Afastar câmera">−</button><button type="button" data-action="zoom-in" aria-label="Aproximar câmera">+</button><button type="button" data-action="reset">Visão inicial</button></nav>`;
   document.body.appendChild(overlay);document.body.classList.add('af3d-open');
-  const close=()=>{activeCleanup?.();activeCleanup=null;overlay.remove();document.body.classList.remove('af3d-open')};
+  const close=()=>{if(activeCleanup){activeCleanup();activeCleanup=null}overlay.remove();document.body.classList.remove('af3d-open')};
   overlay.querySelector('.af3d-close').addEventListener('click',close);
   const esc=e=>{if(e.key==='Escape')close()};document.addEventListener('keydown',esc);
-  activeCleanup=()=>{document.removeEventListener('keydown',esc);document.removeEventListener('keydown',onKey);overlay.remove();document.body.classList.remove('af3d-open')};
+  activeCleanup=()=>{document.removeEventListener('keydown',esc);overlay.remove();document.body.classList.remove('af3d-open')};
   try{
    const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js');
    if(!overlay.isConnected)return;
