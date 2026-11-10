@@ -52,8 +52,9 @@
     const panelEdge=()=>edgePercent();
     const currentValue=()=>Number(range?.value||homeEdge());
     const isPanelOpen=()=>currentValue()<50;
-    const showPanel=()=>{document.body.classList.add('af-snap-moving');setReveal(panelEdge());setTimeout(()=>document.body.classList.remove('af-snap-moving'),620)};
-    const showHome=()=>{document.body.classList.add('af-snap-moving');setReveal(homeEdge());setTimeout(()=>document.body.classList.remove('af-snap-moving'),620)};
+    // Abrir o painel precisa ativar o estado real do aplicativo, não apenas revelar a camada escura.
+    const showPanel=()=>afterApp(app=>{if(app.isLoggedIn){startNow(app)}else{openSignup(app,'login')}});
+    const showHome=()=>{document.body.classList.add('af-snap-moving');if(window.app?.isAppMode)window.app.exitAppMode?.();setReveal(homeEdge());setTimeout(()=>document.body.classList.remove('af-snap-moving'),620)};
     const toggleSide=()=>isPanelOpen()?showHome():showPanel();
     setReveal(range?.value||homeEdge());
     document.addEventListener('af:auth-success',()=>{
