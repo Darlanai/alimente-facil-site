@@ -549,3 +549,11 @@ html body.af-video-spatial-open .af-video-spatial-panel{display:block!important}
  html body:not(.app-mode) .af-home-subtitle{margin:8px 0 12px!important}
  html body:not(.app-mode) .af-minimal-footer{margin-top:5px!important;padding-top:9px!important}
 }
+
+/* Live object recognition overlay (MediaPipe running in a dedicated worker). */
+.af-video-detection-layer{position:absolute!important;inset:0!important;z-index:27!important;width:100%!important;height:100%!important;overflow:hidden!important;pointer-events:none!important}
+.af-video-detection-layer[hidden]{display:none!important}
+.af-video-detection-layer g{pointer-events:all!important;cursor:pointer!important}
+.af-video-detection-box{fill:rgba(222,199,151,.07)!important;stroke:#ead5a9!important;stroke-width:4!important;vector-effect:non-scaling-stroke!important;filter:drop-shadow(0 2px 8px rgba(0,0,0,.65))!important}
+.af-video-detection-label{fill:#fff!important;font:700 22px Manrope,system-ui,sans-serif!important;paint-order:stroke!important;stroke:rgba(12,18,14,.85)!important;stroke-width:5px!important;stroke-linejoin:round!important;pointer-events:none!important}
+.af-video-spatial-actions button:disabled{opacity:.55!important;cursor:wait!important}
