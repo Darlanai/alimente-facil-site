@@ -160,3 +160,74 @@ html body:not(.app-mode) .af-scene-dimmed .af-video-shade{background:linear-grad
 
 /* CTA principal controla a entrada no painel; remove o puxador visual que competia com a landing. */
 html body:not(.app-mode) #afGlobalReveal{display:none!important;visibility:hidden!important;pointer-events:none!important}
+
+/* V70 — tema consistente entre landing e painel; controle de ambiente = modo claro/escuro */
+html body.app-mode{
+ color-scheme:dark;
+ background:#111512!important;
+ --glass-dark-bg:#111512;
+ --glass-color:rgba(255,255,255,.045);
+ --glass-border:rgba(255,255,255,.10);
+ --glass-text-primary:#f3f5f1;
+ --glass-text-secondary:#aab2aa;
+}
+html body.app-mode .app-panel-container-standalone,
+html body.app-mode .app-panel-container-standalone .modules-area,
+html body.app-mode .app-panel-container-standalone .dashboard-container{
+ background:#111512!important;
+}
+html body.app-mode .app-panel-container-standalone .dashboard-card,
+html body.app-mode .app-panel-container-standalone .module-card,
+html body.app-mode .app-panel-container-standalone .welcome-section{
+ background:rgba(255,255,255,.045)!important;
+ border-color:rgba(255,255,255,.09)!important;
+ box-shadow:0 8px 26px rgba(0,0,0,.12)!important;
+}
+html body.app-mode .app-panel-container-standalone h1,
+html body.app-mode .app-panel-container-standalone h2,
+html body.app-mode .app-panel-container-standalone h3,
+html body.app-mode .app-panel-container-standalone label{color:#f2f4ef!important}
+html body.app-mode .app-panel-container-standalone p,
+html body.app-mode .app-panel-container-standalone small{color:#aeb7ae!important}
+html body.app-mode .app-panel-container-standalone .glass-dock{
+ background:rgba(20,24,21,.94)!important;border-color:rgba(255,255,255,.1)!important;
+}
+html body.app-mode .app-panel-container-standalone .glass-dock .dock-item.active{
+ color:#e9e7df!important;background:rgba(255,255,255,.09)!important;
+}
+html body.app-mode .af-chatbot-header{background:#222823!important}
+html body.app-mode .af-chatbot-toggle{background:#e9e7df!important;color:#222823!important}
+/* O switch é um controle de tema, não uma promessa de iluminação 3D. */
+html body:not(.app-mode) #afSceneLight small,
+html body.app-mode #afSceneLight small{display:none!important}
+html body #afSceneLight{min-width:42px!important;width:42px!important;padding:0!important}
+html body #afSceneLight span{font-size:17px!important;line-height:1!important}
+html body #afSceneLight i{display:block!important}
+html body #afSceneLight[aria-pressed=true] span{color:#f3d58b!important}
+html body #afSceneLight[aria-pressed=true] i{background:#f3d58b!important}
+html body #afSceneLight[aria-pressed=true] i:after{transform:translateX(11px)!important}
+html body:not(.app-mode) #landing-video-container.af-scene-dimmed .af-video-shade{
+ background:linear-gradient(180deg,rgba(0,0,0,.72),rgba(0,0,0,.58) 48%,rgba(0,0,0,.9))!important;
+}
+html body:not(.app-mode) #landing-video-container.af-scene-dimmed .af-home-copy,
+html body:not(.app-mode) #landing-video-container.af-scene-dimmed .af-minimal-footer{
+ color:#f4dca6!important;filter:brightness(1.18)!important;
+}
+html body:not(.app-mode) #landing-video-container.af-scene-dimmed .af-home-actions .af-primary-cta{
+ background:#222923!important;color:#f4f1e8!important;border:1px solid rgba(255,255,255,.18)!important;
+}
+@media(max-width:600px){
+ html body.app-mode .app-panel-container-standalone{overflow-y:auto!important;overscroll-behavior-y:contain!important}
+ html body.app-mode .app-panel-container-standalone .modules-area{padding:12px!important}
+ html body.app-mode .app-panel-container-standalone .dashboard-card{min-width:0!important;max-width:100%!important}
+ html body.app-mode .app-panel-container-standalone .glass-dock{
+  left:10px!important;right:10px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;
+  width:auto!important;max-width:none!important;box-sizing:border-box!important;
+ }
+ html body.app-mode .app-panel-container-standalone .glass-dock .dock-item{
+  min-width:0!important;padding-inline:6px!important;font-size:10px!important;
+ }
+ html body.app-mode .app-panel-container-standalone input,
+ html body.app-mode .app-panel-container-standalone select,
+ html body.app-mode .app-panel-container-standalone textarea{font-size:16px!important;max-width:100%!important;box-sizing:border-box!important}
+}
