@@ -1,0 +1,159 @@
+/* Alimente Fácil — landing premium, limpa e mobile-first */
+html,body{width:100%;min-height:100%;margin:0;overflow-x:hidden}
+html body:not(.app-mode) #landing-video-container.af-landing-stage{
+ position:relative!important;isolation:isolate!important;display:flex!important;flex-direction:column!important;
+ width:100%!important;min-height:100svh!important;height:100svh!important;max-height:none!important;
+ overflow:hidden!important;padding:0!important;background:#101713!important;color:#f5f2e9!important;
+}
+html body:not(.app-mode) #afLandingVideo{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ object-fit:cover!important;object-position:center center!important;z-index:-2!important;
+ transform:none!important;filter:none!important;transition:none!important;
+}
+html body:not(.app-mode) .af-video-shade{
+ position:absolute!important;inset:0!important;z-index:-1!important;pointer-events:none!important;
+ background:linear-gradient(180deg,rgba(7,13,9,.48) 0%,rgba(7,13,9,.13) 35%,rgba(7,13,9,.46) 68%,rgba(5,11,8,.82) 100%)!important;
+}
+html body:not(.app-mode) .af-minimal-header{
+ position:relative!important;z-index:5!important;inset:auto!important;flex:0 0 68px!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;
+ width:100%!important;box-sizing:border-box!important;padding:12px clamp(18px,4vw,42px)!important;
+ background:linear-gradient(180deg,rgba(5,10,7,.28),transparent)!important;border:0!important;
+}
+html body:not(.app-mode) .af-minimal-brand{display:flex!important;align-items:center!important;gap:10px!important;text-decoration:none!important}
+html body:not(.app-mode) .af-minimal-brand img{width:38px!important;height:38px!important;object-fit:contain!important}
+html body:not(.app-mode) .af-brand-copy strong{display:flex!important;flex-direction:column!important;gap:1px!important;color:#fff!important;font:800 9px/1.15 Manrope,sans-serif!important;letter-spacing:.12em!important}
+html body:not(.app-mode) .af-top-controls{display:flex!important;align-items:center!important;gap:8px!important}
+html body:not(.app-mode) .af-top-controls .af-instagram,
+html body:not(.app-mode) .af-top-controls .af-tiktok,
+html body:not(.app-mode) .af-top-controls .af-email,
+html body:not(.app-mode) .af-top-controls .af-explore-kitchen,
+html body:not(.app-mode) #afVideoSpatialToggle{display:none!important}
+html body:not(.app-mode) .af-top-controls .af-install-top,
+html body:not(.app-mode) .af-power-button{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:39px!important;height:39px!important;min-width:39px!important;border-radius:50%!important;
+ border:1px solid rgba(255,255,255,.34)!important;background:rgba(8,15,10,.32)!important;
+ color:#fff!important;backdrop-filter:blur(14px)!important;
+}
+html body:not(.app-mode) .af-scene-light.af-light-in-header{
+ position:relative!important;inset:auto!important;z-index:6!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;
+ flex:0 0 auto!important;width:auto!important;min-width:94px!important;height:37px!important;
+ margin:0!important;padding:0 11px!important;border:1px solid rgba(255,255,255,.28)!important;
+ border-radius:999px!important;background:rgba(8,15,10,.38)!important;color:#fff!important;
+ box-shadow:none!important;backdrop-filter:blur(14px)!important;
+}
+html body:not(.app-mode) .af-scene-light small{font:700 10px/1 Manrope,sans-serif!important;white-space:nowrap!important}
+html body:not(.app-mode) .af-scene-light i{position:relative!important;display:block!important;width:26px!important;height:15px!important;border-radius:20px!important;background:rgba(255,255,255,.42)!important}
+html body:not(.app-mode) .af-scene-light i:after{content:""!important;position:absolute!important;top:2px!important;left:2px!important;width:11px!important;height:11px!important;border-radius:50%!important;background:#fff!important;transition:transform .2s ease!important}
+html body:not(.app-mode) .af-scene-light[aria-pressed=true] i:after{transform:translateX(11px)!important}
+html body:not(.app-mode) .af-one-screen-home{
+ position:relative!important;z-index:2!important;flex:1 1 auto!important;min-height:0!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;box-sizing:border-box!important;padding:20px clamp(20px,7vw,76px) 34px!important;
+}
+html body:not(.app-mode) .af-home-copy{
+ width:min(100%,650px)!important;margin:0 auto!important;text-align:center!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;gap:0!important;
+}
+html body:not(.app-mode) .af-brand-slogan{
+ margin:0 0 16px!important;color:#e6d4ae!important;font:800 9px/1.3 Manrope,sans-serif!important;
+ letter-spacing:.22em!important;text-transform:uppercase!important;
+}
+html body:not(.app-mode) #afHomeTitle{
+ max-width:650px!important;margin:0!important;color:#fff!important;
+ font:800 clamp(43px,8vw,82px)/.99 Sora,Manrope,sans-serif!important;
+ letter-spacing:-.075em!important;text-wrap:balance!important;text-shadow:0 3px 26px rgba(0,0,0,.24)!important;
+}
+html body:not(.app-mode) #afHomeTitle em{font-style:normal!important;color:#e6d4ae!important}
+html body:not(.app-mode) .af-home-subtitle{
+ margin:17px 0 24px!important;color:rgba(255,255,255,.88)!important;
+ font:500 clamp(13px,2vw,16px)/1.5 Manrope,sans-serif!important;letter-spacing:0!important;
+}
+html body:not(.app-mode) .af-home-actions{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ width:min(100%,390px)!important;gap:10px!important;margin:0!important;
+}
+html body:not(.app-mode) .af-home-actions>*{box-sizing:border-box!important;width:100%!important;min-width:0!important;margin:0!important}
+html body:not(.app-mode) .af-primary-cta{
+ display:flex!important;align-items:center!important;justify-content:center!important;gap:14px!important;
+ min-height:54px!important;padding:0 22px!important;border:0!important;border-radius:999px!important;
+ background:#f6f3eb!important;color:#172019!important;font:800 14px Manrope,sans-serif!important;
+ box-shadow:0 12px 35px rgba(0,0,0,.2)!important;
+}
+html body:not(.app-mode) .af-install-cta{
+ display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;
+ min-height:46px!important;padding:0 18px!important;border:1px solid rgba(255,255,255,.48)!important;
+ border-radius:999px!important;background:rgba(13,21,16,.3)!important;color:#fff!important;
+ font:700 12px Manrope,sans-serif!important;backdrop-filter:blur(12px)!important;
+}
+html body:not(.app-mode) .af-nfce-entry{
+ display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;
+ min-height:40px!important;padding:5px 12px!important;border:0!important;border-radius:999px!important;
+ background:transparent!important;color:rgba(255,255,255,.92)!important;
+ font:700 12px Manrope,sans-serif!important;box-shadow:none!important;
+}
+html body:not(.app-mode) .af-nfce-entry>i:last-child{display:none!important}
+html body:not(.app-mode) .af-nfce-entry .af-nfce-entry-icon{display:none!important}
+html body:not(.app-mode) .af-nfce-entry span strong{font:700 12px Manrope,sans-serif!important}
+html body:not(.app-mode) .af-nfce-entry span small{display:none!important}
+html body:not(.app-mode) .af-price-compact{
+ display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;
+ margin:17px 0 0!important;padding:0!important;color:rgba(255,255,255,.8)!important;
+ font:500 10px Manrope,sans-serif!important;
+}
+html body:not(.app-mode) .af-price-compact strong{color:#fff!important;font:800 14px Manrope,sans-serif!important}
+html body:not(.app-mode) .af-price-compact strong small{font-size:9px!important;font-weight:500!important}
+html body:not(.app-mode) .af-price-compact span{font-size:10px!important}
+html body:not(.app-mode) .af-home-benefits,
+html body:not(.app-mode) .af-landing-moment,
+html body:not(.app-mode) .af-greeting{display:none!important}
+html body:not(.app-mode) .af-minimal-footer{
+ position:relative!important;z-index:4!important;flex:0 0 auto!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;
+ width:100%!important;box-sizing:border-box!important;margin:0!important;
+ padding:13px clamp(18px,4vw,42px) calc(13px + env(safe-area-inset-bottom))!important;
+ border:0!important;border-top:1px solid rgba(255,255,255,.18)!important;
+ background:rgba(5,11,8,.24)!important;color:rgba(255,255,255,.65)!important;
+ font:700 8px Manrope,sans-serif!important;letter-spacing:.12em!important;
+}
+html body:not(.app-mode) .af-legal-links{display:flex!important;align-items:center!important;gap:16px!important}
+html body:not(.app-mode) .af-legal-links a{color:rgba(255,255,255,.78)!important;text-decoration:none!important;font:500 9px Manrope,sans-serif!important}
+html body:not(.app-mode) .af-global-reveal{z-index:7!important}
+html body:not(.app-mode) #af-chatbot-toggle{display:none!important;visibility:hidden!important;pointer-events:none!important}
+html body:not(.app-mode) #af-chatbot{display:none!important;visibility:hidden!important;pointer-events:none!important}
+html body:not(.app-mode) .af-scene-dimmed .af-video-shade{background:linear-gradient(180deg,rgba(0,0,0,.65),rgba(0,0,0,.48) 50%,rgba(0,0,0,.88))!important}
+@media(max-width:600px){
+ html body:not(.app-mode) #landing-video-container.af-landing-stage{min-height:100svh!important;height:100svh!important}
+ html body:not(.app-mode) .af-minimal-header{flex-basis:60px!important;padding:9px 16px!important}
+ html body:not(.app-mode) .af-minimal-brand img{width:34px!important;height:34px!important}
+ html body:not(.app-mode) .af-top-controls{gap:7px!important}
+ html body:not(.app-mode) .af-top-controls .af-install-top,
+ html body:not(.app-mode) .af-power-button{width:35px!important;height:35px!important;min-width:35px!important}
+ html body:not(.app-mode) .af-scene-light.af-light-in-header{height:35px!important;min-width:88px!important;padding:0 9px!important;gap:6px!important}
+ html body:not(.app-mode) .af-scene-light small{font-size:9px!important}
+ html body:not(.app-mode) .af-one-screen-home{padding:14px 20px 20px!important}
+ html body:not(.app-mode) .af-brand-slogan{font-size:8px!important;margin-bottom:13px!important}
+ html body:not(.app-mode) #afHomeTitle{font-size:clamp(39px,10.5vw,54px)!important;line-height:1.01!important;letter-spacing:-.075em!important}
+ html body:not(.app-mode) .af-home-subtitle{font-size:12px!important;margin:13px 0 19px!important}
+ html body:not(.app-mode) .af-home-actions{width:min(100%,360px)!important;gap:8px!important}
+ html body:not(.app-mode) .af-primary-cta{min-height:49px!important;font-size:13px!important}
+ html body:not(.app-mode) .af-install-cta{min-height:42px!important;font-size:11px!important}
+ html body:not(.app-mode) .af-nfce-entry{min-height:34px!important}
+ html body:not(.app-mode) .af-price-compact{margin-top:13px!important;gap:8px!important}
+ html body:not(.app-mode) .af-price-compact strong{font-size:13px!important}
+ html body:not(.app-mode) .af-price-compact span{font-size:9px!important}
+ html body:not(.app-mode) .af-minimal-footer{padding:10px 16px calc(10px + env(safe-area-inset-bottom))!important;font-size:7px!important}
+ html body:not(.app-mode) .af-legal-links{gap:12px!important}
+ html body:not(.app-mode) .af-legal-links a{font-size:8px!important}
+}
+@media(max-height:700px) and (max-width:600px){
+ html body:not(.app-mode) .af-one-screen-home{padding-top:4px!important;padding-bottom:6px!important}
+ html body:not(.app-mode) .af-brand-slogan{margin-bottom:8px!important}
+ html body:not(.app-mode) .af-home-subtitle{margin:9px 0 12px!important}
+ html body:not(.app-mode) .af-primary-cta{min-height:43px!important}
+ html body:not(.app-mode) .af-install-cta{min-height:38px!important}
+ html body:not(.app-mode) .af-price-compact{margin-top:8px!important}
+}
+@media(prefers-reduced-motion:reduce){html body:not(.app-mode) *{scroll-behavior:auto!important;transition:none!important}}
