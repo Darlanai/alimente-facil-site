@@ -147,7 +147,7 @@
    let raf=0;const render=()=>{if(!overlay.isConnected){cancelAnimationFrame(raf);ro.disconnect();renderer.dispose();return}
     scene.traverse(object=>{if(object.userData?.targetY!==undefined)object.rotation.y+=(object.userData.targetY-object.rotation.y)*.16});
     renderer.render(scene,camera);raf=requestAnimationFrame(render)};render();
-   activeCleanup=()=>{cancelAnimationFrame(raf);ro.disconnect();renderer.dispose();canvas.removeEventListener('pointerdown',onDown);canvas.removeEventListener('pointermove',onMove);canvas.removeEventListener('pointerup',onUp);canvas.removeEventListener('wheel',onWheel);canvas.removeEventListener('touchstart',onTouchStart);canvas.removeEventListener('touchmove',onTouchMove);canvas.removeEventListener('touchend',onTouchEnd);document.removeEventListener('keydown',esc);overlay.remove();document.body.classList.remove('af3d-open')};
+   activeCleanup=()=>{cancelAnimationFrame(raf);ro.disconnect();renderer.dispose();canvas.removeEventListener('pointerdown',onDown);canvas.removeEventListener('pointermove',onMove);canvas.removeEventListener('pointerup',onUp);canvas.removeEventListener('wheel',onWheel);canvas.removeEventListener('touchstart',onTouchStart);canvas.removeEventListener('touchmove',onTouchMove);canvas.removeEventListener('touchend',onTouchEnd);document.removeEventListener('keydown',esc);document.removeEventListener('keydown',onKey);overlay.remove();document.body.classList.remove('af3d-open')};
   }catch(error){
    overlay.querySelector('.af3d-loading').textContent='Não foi possível carregar a cena 3D. Verifique a conexão e tente novamente.';
    console.error('[Alimente Fácil 3D]',error);
