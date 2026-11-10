@@ -157,3 +157,6 @@ html body:not(.app-mode) .af-scene-dimmed .af-video-shade{background:linear-grad
  html body:not(.app-mode) .af-price-compact{margin-top:8px!important}
 }
 @media(prefers-reduced-motion:reduce){html body:not(.app-mode) *{scroll-behavior:auto!important;transition:none!important}}
+
+/* CTA principal controla a entrada no painel; remove o puxador visual que competia com a landing. */
+html body:not(.app-mode) #afGlobalReveal{display:none!important;visibility:hidden!important;pointer-events:none!important}
