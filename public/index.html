@@ -43,8 +43,9 @@
 <link href="fiscal-notes.css?v=20260816-1" rel="stylesheet"/>
 <link href="modern-ui.css?v=20260816-9" rel="stylesheet"/>
 <link href="omnitech-cinematic.css?v=20261108-1" rel="stylesheet"/>
-<link href="kitchen-experience.css?v=20261108-2" rel="stylesheet"/>
+
 <link href="premium-experience.css?v=20261110-4" rel="stylesheet"/>
+<link href="landing-clean.css?v=20261110-2" rel="stylesheet"/>
 <style>
     :root {
         --time-scale: 1;
@@ -86,7 +87,7 @@
 <button aria-label="Enviar e-mail" class="af-top-icon af-email" id="afContactOpen" title="Contato por e-mail" type="button"><i class="fa-regular fa-envelope"></i></button>
 <button aria-label="Instalar Alimente Fácil" class="af-top-icon af-install-top btn-install-pwa" id="afInstallLanding" title="Instalar aplicativo" type="button"><i class="fa-solid fa-download"></i></button>
 
-<button aria-label="Explorar cozinha em 3D" class="af-top-icon af-explore-kitchen" id="afExploreKitchen" title="Explorar cozinha 3D" type="button"><i class="fa-solid fa-cube" aria-hidden="true"></i></button>
+<button type="button" class="af-scene-light af-light-in-header" id="afSceneLight" aria-pressed="false" aria-label="Ativar modo noturno" title="Alternar aparência"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i><span class="af-theme-switch" aria-hidden="true"></span></button>
 <button aria-label="Entrar ou acessar sua conta" class="af-power-button" id="landing-auth-btn" title="Entrar" type="button"><i aria-hidden="true" class="fa-solid fa-power-off"></i></button>
 </div></header>
 <aside aria-live="polite" class="af-landing-moment">
@@ -755,6 +756,6 @@
             });
         }
     </script>
-<script type="module" src="kitchen-experience.js?v=20261110-2"></script>
+<script src="landing-runtime.js?v=20261110-2" defer></script>
 </body>
 </html>
