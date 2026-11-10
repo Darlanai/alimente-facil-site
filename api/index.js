@@ -1634,6 +1634,10 @@ app.all(/^\/api(?:\/.*)?$/, (_req, res) => {
   return res.status(404).json({ ok: false, message: 'Rota de API não encontrada.' });
 });
 
+app.get(['/simulador', '/simulador/'], (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'simulador.html'));
+});
+
 app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
