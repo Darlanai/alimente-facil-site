@@ -72,7 +72,8 @@
   if(detectionRaf)cancelAnimationFrame(detectionRaf);detectionRaf=0;
   detectorWorker?.terminate();detectorWorker=null;detectionBusy=false;detectionReady=false;detectionLast=0;
   detectionSvg.replaceChildren();detectionSvg.hidden=true;
-  if(detectionButton)detectionButton.textContent='Reconhecer objetos';
+  markers.forEach((marker,key)=>marker.hidden=spatialPanel.hidden||key!==activeSpatial);
+  if(detectionButton){detectionButton.disabled=false;detectionButton.textContent='Reconhecer objetos';}
  };
  const startDetection=async()=>{
   if(detectorWorker)return;
@@ -83,7 +84,7 @@
    detectorWorker.onmessage=event=>{
     const data=event.data||{};
     if(data.type==='ready'){
-     detectionReady=true;detectionButton.disabled=false;detectionButton.textContent='IA ativa · parar';
+     detectionReady=true;detectionSvg.hidden=false;markers.forEach(marker=>marker.hidden=true);detectionButton.disabled=false;detectionButton.textContent='IA ativa · parar';
      detectionDetail.innerHTML='<b>IA ativa no vídeo</b><span>Identificando objetos reconhecíveis. Toque em uma moldura para selecionar.</span>';
      return;
     }
@@ -154,7 +155,7 @@
  spatialToggle.addEventListener('click',()=>{
   const open=spatialPanel.hidden;spatialPanel.hidden=!open;document.body.classList.toggle('af-video-spatial-open',open);
   spatialToggle.setAttribute('aria-pressed',String(open));spatialToggle.setAttribute('aria-label',open?'Fechar experiência espacial':'Explorar objetos no vídeo');
-  if(open)selectSpatial(activeSpatial);else markers.forEach(marker=>marker.hidden=true);
+  if(open)selectSpatial(activeSpatial);else{stopDetection();markers.forEach(marker=>marker.hidden=true)}
  });
  spatialPanel.querySelector('[data-spatial-action="explore"]').addEventListener('click',()=>exploreBtn?.click());
  if(!exploreBtn)return;
