@@ -52,7 +52,8 @@
    const scene=new THREE.Scene();scene.background=new THREE.Color(0x17211c);scene.fog=new THREE.Fog(0x17211c,11,24);
    const camera=new THREE.PerspectiveCamera(43,1,.1,80);camera.position.set(5.8,4.4,7.8);
    const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
-   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+   const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,reducedMotion?1:1.35));renderer.shadowMap.enabled=!reducedMotion;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
    renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
    scene.add(new THREE.HemisphereLight(0xffe9c8,0x34483b,2.0));
    const key=new THREE.DirectionalLight(0xffe1b5,3.1);key.position.set(-4,8,5);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
@@ -113,7 +114,14 @@
    const resize=()=>{const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)};
    const ro=new ResizeObserver(resize);ro.observe(stage);resize();loading.remove();
    let raf=0;const render=()=>{if(!overlay.isConnected){cancelAnimationFrame(raf);ro.disconnect();renderer.dispose();return}renderer.render(scene,camera);raf=requestAnimationFrame(render)};render();
-   activeCleanup=()=>{cancelAnimationFrame(raf);ro.disconnect();renderer.dispose();canvas.removeEventListener('pointerdown',onDown);canvas.removeEventListener('pointermove',onMove);canvas.removeEventListener('pointerup',onUp);document.removeEventListener('keydown',esc);overlay.remove();document.body.classList.remove('af3d-open')};
+   activeCleanup=()=>{cancelAnimationFrame(raf);ro.disconnect();
+    scene.traverse(object=>{
+     object.geometry?.dispose?.();
+     const materials=Array.isArray(object.material)?object.material:(object.material?[object.material]:[]);
+     materials.forEach(material=>{Object.values(material).forEach(value=>{if(value?.isTexture)value.dispose()});material.dispose()});
+    });
+    renderer.dispose();renderer.forceContextLoss();
+    canvas.removeEventListener('pointerdown',onDown);canvas.removeEventListener('pointermove',onMove);canvas.removeEventListener('pointerup',onUp);document.removeEventListener('keydown',esc);overlay.remove();document.body.classList.remove('af3d-open')};
   }catch(error){
    overlay.querySelector('.af3d-loading').textContent='Não foi possível carregar a cena 3D. Verifique a conexão e tente novamente.';
    console.error('[Alimente Fácil 3D]',error);
