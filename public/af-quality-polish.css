@@ -284,3 +284,95 @@ html body.app-mode .app-panel-container-standalone {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Refined control language: quiet, consistent, tactile — no oversized toy switches. */
+html body:not(.app-mode) .af-top-controls {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+html body:not(.app-mode) .af-top-icon,
+html body:not(.app-mode) .af-power-button,
+html body:not(.app-mode) #afSceneLight {
+  display: inline-grid !important;
+  place-items: center !important;
+  flex: 0 0 38px !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255,255,255,.19) !important;
+  border-radius: 12px !important;
+  background: rgba(14,20,17,.38) !important;
+  color: rgba(255,255,255,.9) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(14px) saturate(125%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(125%) !important;
+  transform: none !important;
+  transition: background .18s ease, border-color .18s ease, color .18s ease !important;
+}
+html body:not(.app-mode) .af-top-icon i,
+html body:not(.app-mode) .af-power-button i,
+html body:not(.app-mode) #afSceneLight i {
+  font-size: 14px !important;
+  line-height: 1 !important;
+}
+html body:not(.app-mode) .af-top-icon:hover,
+html body:not(.app-mode) .af-power-button:hover,
+html body:not(.app-mode) #afSceneLight:hover {
+  background: rgba(255,255,255,.13) !important;
+  border-color: rgba(205,231,209,.55) !important;
+  color: #fff !important;
+  transform: none !important;
+}
+html body:not(.app-mode) .af-power-button {
+  border-color: rgba(190,225,194,.45) !important;
+  background: rgba(190,225,194,.13) !important;
+  color: #e8f5e9 !important;
+}
+html body:not(.app-mode) #afSceneLight {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+  border-color: rgba(255,255,255,.19) !important;
+}
+html body:not(.app-mode) #afSceneLight .af-theme-switch,
+html body:not(.app-mode) #afSceneLight small,
+html body:not(.app-mode) #afSceneLight > span {
+  display: none !important;
+}
+html body:not(.app-mode) .af-top-icon:focus-visible,
+html body:not(.app-mode) .af-power-button:focus-visible,
+html body:not(.app-mode) #afSceneLight:focus-visible {
+  outline: 2px solid #d7ead9 !important;
+  outline-offset: 3px !important;
+}
+@media (max-width: 760px) {
+  html body:not(.app-mode) .af-top-controls {
+    gap: 6px !important;
+    max-width: none !important;
+  }
+  html body:not(.app-mode) .af-top-icon,
+  html body:not(.app-mode) .af-power-button,
+  html body:not(.app-mode) #afSceneLight {
+    flex-basis: 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    border-radius: 10px !important;
+  }
+  html body:not(.app-mode) #afSceneLight {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+  }
+}
