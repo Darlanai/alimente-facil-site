@@ -1,0 +1,286 @@
+/* Alimente Fácil — quality polish pass (Nov 2026)
+   Final responsive guardrails. Keep the original footage flat and continuous:
+   no pointer parallax, no fake depth, no translated/scaled scene animation. */
+
+:root {
+  --af-polish-safe-top: env(safe-area-inset-top, 0px);
+  --af-polish-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+/* The source video is a cinematic background only — never a simulated 3D layer. */
+html body #landing-video-container .af-landing-video,
+html body:not(.app-mode) #landing-video-container .af-landing-video {
+  transform: none !important;
+  transition: none !important;
+  will-change: auto !important;
+  filter: brightness(.76) saturate(.9) contrast(1.06) !important;
+  object-fit: cover !important;
+}
+html body #landing-video-container {
+  isolation: isolate;
+}
+html body #landing-video-container .af-landing-video {
+  pointer-events: none !important;
+}
+
+/* Keep the lighting control in the header zone, never over the legal/footer area. */
+html body:not(.app-mode) #afSceneLight,
+html body:not(.app-mode) .af-scene-light {
+  z-index: 45 !important;
+  transform: none !important;
+}
+
+/* Landing and application are mutually exclusive. */
+html body:not(.app-mode) .app-panel-container-standalone {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+html body.app-mode #landing-video-container,
+html body.app-mode .af-global-reveal {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+html body.app-mode .app-panel-container-standalone {
+  display: flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* Tablet and mobile: one column, natural document flow, no competing overlays. */
+@media (max-width: 760px) {
+  html, body {
+    min-height: 100%;
+    height: auto;
+    overflow-x: clip !important;
+  }
+  body:not(.app-mode) {
+    overflow-y: auto !important;
+  }
+  html body:not(.app-mode) #landing-video-container {
+    position: fixed !important;
+    inset: 0 !important;
+    min-height: 100svh !important;
+    height: 100svh !important;
+    overflow: hidden !important;
+    clip-path: none !important;
+  }
+  html body:not(.app-mode) #landing-video-container .af-landing-video {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-position: center center !important;
+    transform: none !important;
+  }
+  html body:not(.app-mode) .af-minimal-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    min-height: 62px !important;
+    padding: calc(8px + var(--af-polish-safe-top)) 14px 8px !important;
+    z-index: 50 !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+  }
+  html body:not(.app-mode) .af-top-controls {
+    max-width: 56vw !important;
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+  }
+  html body:not(.app-mode) .af-top-icon,
+  html body:not(.app-mode) .af-power-button {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+  }
+  html body:not(.app-mode) .af-landing-moment {
+    display: none !important;
+  }
+  html body:not(.app-mode) .af-one-screen-home {
+    position: relative !important;
+    min-height: 100svh !important;
+    height: auto !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: calc(100px + var(--af-polish-safe-top)) 20px 26px !important;
+    box-sizing: border-box !important;
+  }
+  html body:not(.app-mode) .af-home-copy {
+    width: 100% !important;
+    max-width: 540px !important;
+    margin: 0 auto !important;
+    text-align: left !important;
+  }
+  html body:not(.app-mode) #afHomeTitle {
+    font-size: clamp(48px, 13vw, 76px) !important;
+    line-height: .94 !important;
+    letter-spacing: -.065em !important;
+    overflow-wrap: normal !important;
+    text-wrap: balance !important;
+  }
+  html body:not(.app-mode) .af-home-subtitle {
+    max-width: 42rem !important;
+    margin: 16px 0 20px !important;
+    font-size: clamp(14px, 3.8vw, 17px) !important;
+    line-height: 1.55 !important;
+  }
+  html body:not(.app-mode) .af-home-actions {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+  html body:not(.app-mode) .af-home-actions > * {
+    position: relative !important;
+    inset: auto !important;
+    transform: none !important;
+    grid-column: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+  html body:not(.app-mode) .af-home-actions .af-primary-cta,
+  html body:not(.app-mode) .af-home-actions .af-install-cta {
+    min-height: 50px !important;
+    justify-content: center !important;
+  }
+  html body:not(.app-mode) .af-home-actions .af-nfce-entry {
+    min-height: 68px !important;
+    grid-template-columns: 42px minmax(0, 1fr) 18px !important;
+    gap: 10px !important;
+  }
+  html body:not(.app-mode) .af-home-actions .af-price-compact {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px 12px !important;
+    min-height: 48px !important;
+    padding: 10px 12px !important;
+    margin: 0 !important;
+  }
+  html body:not(.app-mode) .af-price-compact span {
+    max-width: 100% !important;
+    white-space: normal !important;
+    text-align: left !important;
+  }
+  html body:not(.app-mode) .af-home-benefits {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px 14px !important;
+    margin: 14px 0 0 !important;
+  }
+  html body:not(.app-mode) #afSceneLight,
+  html body:not(.app-mode) .af-scene-light {
+    position: fixed !important;
+    top: calc(72px + var(--af-polish-safe-top)) !important;
+    right: 14px !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 55 !important;
+    min-height: 34px !important;
+  }
+  html body:not(.app-mode) .af-minimal-footer {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    margin: 0 20px calc(22px + var(--af-polish-safe-bottom)) !important;
+    padding: 14px 0 8px !important;
+    box-sizing: border-box !important;
+  }
+  html body:not(.app-mode) .af-footer-primary,
+  html body:not(.app-mode) .af-legal-links {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 10px 14px !important;
+  }
+  html body:not(.app-mode) #af-chatbot,
+  html body:not(.app-mode) #af-chatbot-toggle {
+    display: none !important;
+    pointer-events: none !important;
+  }
+
+  /* App shell: fixed viewport, independently scrollable content, safe-area aware. */
+  html body.app-mode .app-panel-container-standalone {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    display: flex !important;
+    flex-direction: row !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  html body.app-mode .app-main-content {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    margin: 0 !important;
+  }
+  html body.app-mode .main-header {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    padding-top: var(--af-polish-safe-top) !important;
+    box-sizing: border-box !important;
+  }
+  html body.app-mode .modules-area {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding-bottom: calc(24px + var(--af-polish-safe-bottom)) !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  html body.app-mode .dashboard-card,
+  html body.app-mode .content-card,
+  html body.app-mode .glass-card,
+  html body.app-mode .card {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  html body.app-mode input,
+  html body.app-mode textarea,
+  html body.app-mode select,
+  html body.app-mode button {
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body #landing-video-container .af-landing-video,
+  html body:not(.app-mode) .af-home-copy,
+  html body:not(.app-mode) .af-home-actions *,
+  html body.app-mode .app-panel-container-standalone * {
+    animation: none !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
