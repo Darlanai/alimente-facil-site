@@ -1,0 +1,927 @@
+/* AF 2026 — strict screen separation + premium glass dashboard */
+:root{
+ --af-ink:#202522;--af-paper:#f3f1eb;--af-glass:rgba(255,255,255,.68);
+ --af-glass-border:rgba(255,255,255,.56);--af-muted:#747b76;
+ --color-primary:#c4a879;--color-primary-dark:#a78a5f;--color-primary-light:#e0cfad;
+ --highlight:#c4a879;--highlight-glow:rgba(196,168,121,.22);
+ --glass-on-color:#c4a879;--glass-on-glow:rgba(196,168,121,.2);
+ --glass-color:rgba(255,255,255,.08);--glass-border:rgba(255,255,255,.14);
+ --glass-blur:blur(22px);--glass-dark-bg:#171b19;--glass-text-primary:#f5f3ed;--glass-text-secondary:#b5bbb5;
+}
+html,body{max-width:100%;overflow-x:hidden}
+body:not(.app-mode) .app-panel-container-standalone{
+ display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+}
+body:not(.app-mode) .af-global-reveal{display:block!important;visibility:visible!important;opacity:1!important}
+body.app-mode #landing-video-container{
+ display:none!important;visibility:hidden!important;pointer-events:none!important;
+}
+body.app-mode .app-panel-container-standalone{
+ display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+ position:fixed!important;inset:0!important;z-index:100!important;
+}
+body.app-mode .af-global-reveal{display:none!important}
+body:not(.app-mode) #af-chatbot{z-index:50000!important}
+body:not(.app-mode) #af-chatbot-toggle{z-index:50001!important}
+body.app-mode #af-chatbot{z-index:50000!important}
+body.app-mode #af-chatbot-toggle{z-index:50001!important}
+
+/* Cinematic footage receives subtle pointer parallax, without a fake 3D dashboard. */
+#landing-video-container .af-landing-video{
+ will-change:transform;transform:translate3d(var(--af-scene-x,0px),var(--af-scene-y,0px),0) scale(1.055)!important;
+ transition:transform .18s ease-out!important;
+}
+#landing-video-container:after{
+ content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+ background:linear-gradient(110deg,rgba(20,23,20,.23),transparent 58%),linear-gradient(0deg,rgba(15,18,16,.42),transparent 35%);
+}
+#landing-video-container .af-minimal-header,#landing-video-container .af-landing-moment,
+#landing-video-container .af-one-screen-home,#landing-video-container .af-minimal-footer,
+#landing-video-container .af-scene-light{z-index:4!important}
+html body .af-top-controls .af-top-icon{color:rgba(255,255,255,.9)!important}
+html body .af-top-controls .af-instagram,html body .af-top-controls .af-tiktok,
+html body .af-top-controls .af-email{color:rgba(255,255,255,.9)!important}
+html body .af-home-actions .af-primary-cta{
+ background:rgba(248,246,239,.94)!important;color:#252b27!important;border:1px solid rgba(255,255,255,.78)!important;
+ box-shadow:0 12px 38px rgba(0,0,0,.16)!important;
+}
+html body .af-home-actions .af-nfce-entry{
+ background:rgba(246,245,239,.18)!important;border:1px solid rgba(255,255,255,.4)!important;
+ backdrop-filter:blur(18px) saturate(135%)!important;
+}
+html body .af-price-compact strong{color:#f6f2e9!important}
+html body .af-home-benefits{color:rgba(255,255,255,.88)!important}
+
+/* Panel: neutral graphite + champagne accents, glass surfaces instead of saturated green. */
+.app-panel-container-standalone{
+ background:radial-gradient(ellipse at 15% 0%,rgba(196,168,121,.09),transparent 42%),#171b19!important;
+ color:#f3f1eb!important;
+}
+.app-panel-container-standalone .app-sidebar{
+ background:rgba(24,29,26,.82)!important;border-right:1px solid rgba(255,255,255,.09)!important;
+ backdrop-filter:blur(24px)!important;
+}
+.app-panel-container-standalone .main-header{
+ background:rgba(24,29,26,.78)!important;border-bottom:1px solid rgba(255,255,255,.08)!important;
+ backdrop-filter:blur(22px)!important;
+}
+.app-panel-container-standalone .glass-card,
+.app-panel-container-standalone .dashboard-card,
+.app-panel-container-standalone .modal-box{
+ background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.035))!important;
+ border:1px solid rgba(255,255,255,.11)!important;border-radius:18px!important;
+ box-shadow:0 12px 38px rgba(0,0,0,.12)!important;backdrop-filter:blur(18px)!important;
+}
+.app-panel-container-standalone .nav-item.active{
+ background:rgba(196,168,121,.15)!important;color:#e5d3b1!important;
+ border:1px solid rgba(196,168,121,.19)!important;
+}
+.app-panel-container-standalone .btn-primary,
+.app-panel-container-standalone .portal-btn.landing{
+ background:linear-gradient(135deg,#d8c39d,#b89a6b)!important;color:#222720!important;
+ border:1px solid rgba(255,255,255,.35)!important;box-shadow:0 8px 24px rgba(0,0,0,.14)!important;
+}
+.app-panel-container-standalone input,.app-panel-container-standalone textarea,
+.app-panel-container-standalone select{
+ border-color:rgba(255,255,255,.14)!important;border-radius:12px!important;
+}
+.app-panel-container-standalone .page-title{color:#dfcba7!important;text-shadow:none!important}
+.app-panel-container-standalone .page-subtitle{color:#b8bdb8!important}
+.app-panel-container-standalone .header-budget{
+ background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.1)!important;
+ border-radius:14px!important;
+}
+.app-panel-container-standalone .icon-button{border-radius:12px!important}
+.app-panel-container-standalone .card,.app-panel-container-standalone .content-card{
+ border-radius:16px!important;
+}
+@media(max-width:760px){
+ body.app-mode .app-panel-container-standalone{height:100dvh!important;overflow:hidden!important}
+ #landing-video-container .af-landing-video{transform:translate3d(var(--af-scene-x,0px),var(--af-scene-y,0px),0) scale(1.08)!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #landing-video-container .af-landing-video{transition:none!important}
+}
+
+
+/* Final mobile composition: CozIA belongs to the app panel only. */
+body:not(.app-mode) #af-chatbot,
+body:not(.app-mode) #af-chatbot-toggle{
+ display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+}
+body.app-mode #af-chatbot-toggle{
+ display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+ position:fixed!important;left:auto!important;right:18px!important;top:auto!important;bottom:18px!important;
+ transform:none!important;z-index:50002!important;
+}
+body.app-mode #af-chatbot{
+ z-index:50003!important;
+}
+body.app-mode #af-chatbot-toggle.af-help-draggable{
+ left:auto!important;right:18px!important;top:auto!important;bottom:18px!important;
+ transform:none!important;
+}
+body:not(.app-mode) #afGlobalReveal{z-index:50010!important}
+body:not(.app-mode) .af-reveal-divider{z-index:50011!important}
+body:not(.app-mode) .af-scene-light{
+ top:clamp(92px,13vh,126px)!important;bottom:auto!important;right:clamp(16px,4vw,52px)!important;
+ z-index:9!important;
+}
+body:not(.app-mode) .af-minimal-footer{bottom:14px!important;z-index:8!important}
+body:not(.app-mode) .af-home-benefits{margin-top:14px!important}
+body:not(.app-mode) .af-home-actions{gap:9px!important}
+body:not(.app-mode) .af-price-compact{margin-top:3px!important}
+.af-install-cta{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;
+ min-height:48px!important;padding:0 18px!important;border-radius:999px!important;
+ border:1px solid rgba(255,255,255,.68)!important;background:rgba(255,255,255,.17)!important;
+ color:#fff!important;font:700 12px/1 Manrope,sans-serif!important;
+ backdrop-filter:blur(16px) saturate(140%)!important;box-shadow:0 8px 24px rgba(0,0,0,.1)!important;
+}
+.af-install-cta i{font-size:13px!important}
+.af-install-top{color:white!important}
+@media(max-width:700px){
+ body:not(.app-mode) .af-top-controls{gap:3px!important}
+ body:not(.app-mode) .af-top-icon{width:29px!important;height:32px!important}
+ body:not(.app-mode) .af-install-top{display:none!important}
+ body:not(.app-mode) .af-home-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+ body:not(.app-mode) .af-primary-cta{grid-column:1/-1!important}
+ body:not(.app-mode) .af-nfce-entry{grid-column:1/-1!important}
+ body:not(.app-mode) .af-install-cta{grid-column:1/-1!important;width:100%!important;min-height:42px!important}
+ body:not(.app-mode) .af-scene-light{top:91px!important;right:15px!important;bottom:auto!important;height:34px!important;padding:0 10px!important}
+ body:not(.app-mode) .af-minimal-footer{bottom:7px!important}
+ body.app-mode #af-chatbot-toggle,body.app-mode #af-chatbot-toggle.af-help-draggable{right:14px!important;bottom:14px!important}
+}
+
+
+@media(max-width:700px){
+ body:not(.app-mode) .af-scene-light{top:auto!important;bottom:52px!important;right:14px!important;height:34px!important}
+ body:not(.app-mode) .af-home-benefits{display:none!important}
+ body:not(.app-mode) .af-brand-slogan{display:none!important}
+ body:not(.app-mode) .af-landing-moment{max-width:calc(100vw - 36px)!important}
+ body:not(.app-mode) .af-landing-moment em{max-width:calc(100vw - 36px)!important;white-space:normal!important}
+ body:not(.app-mode) .af-price-compact{padding-top:8px!important}
+}
+
+
+/* AF Atelier 2026 — acabamento editorial premium, acessível e responsivo */
+:root{
+  --af-luxe-night:#111512;
+  --af-luxe-panel:#191f1b;
+  --af-luxe-panel-raised:#202720;
+  --af-luxe-line:rgba(238,226,202,.13);
+  --af-luxe-gold:#d7bf94;
+  --af-luxe-gold-bright:#f0dfbd;
+  --af-luxe-muted:#aeb6ae;
+  --af-luxe-shadow:0 22px 64px rgba(0,0,0,.28);
+}
+html{scrollbar-gutter:stable}
+button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid var(--af-luxe-gold-bright)!important;
+  outline-offset:3px!important;
+}
+
+/* Landing: contraste editorial e acentos quentes, sem simular geometria 3D. */
+html body:not(.app-mode) #landing-video-container{
+  background:#111712!important;
+}
+html body:not(.app-mode) #landing-video-container:before{
+  background:
+    radial-gradient(ellipse at 78% 28%,rgba(215,191,148,.13),transparent 33%),
+    linear-gradient(90deg,rgba(10,14,12,.82) 0%,rgba(12,16,13,.53) 43%,rgba(12,16,13,.10) 100%),
+    linear-gradient(0deg,rgba(10,13,11,.68),transparent 42%,rgba(10,13,11,.30))!important;
+}
+html body:not(.app-mode) #landing-video-container:after{
+  background:
+    linear-gradient(115deg,rgba(9,13,10,.12),transparent 54%),
+    linear-gradient(0deg,rgba(8,11,9,.44),transparent 34%)!important;
+}
+html body:not(.app-mode) .af-minimal-header{
+  padding-top:clamp(16px,2.8vw,32px)!important;
+  padding-left:clamp(18px,5.5vw,82px)!important;
+  padding-right:clamp(18px,5.5vw,82px)!important;
+}
+html body:not(.app-mode) .af-minimal-brand img{
+  filter:drop-shadow(0 8px 22px rgba(0,0,0,.34))!important;
+}
+html body:not(.app-mode) .af-minimal-brand strong{
+  letter-spacing:.2em!important;
+  text-shadow:0 2px 16px rgba(0,0,0,.32)!important;
+}
+html body:not(.app-mode) .af-top-controls{
+  gap:5px!important;
+  padding:6px!important;
+  border:1px solid rgba(255,246,226,.2)!important;
+  border-radius:999px!important;
+  background:rgba(18,22,18,.36)!important;
+  box-shadow:0 12px 34px rgba(0,0,0,.16)!important;
+  backdrop-filter:blur(20px) saturate(130%)!important;
+}
+html body:not(.app-mode) .af-top-icon,
+html body:not(.app-mode) .af-power-button{
+  border-radius:50%!important;
+  transition:background .2s ease,transform .2s ease,color .2s ease!important;
+}
+html body:not(.app-mode) .af-top-icon:hover,
+html body:not(.app-mode) .af-power-button:hover{
+  color:var(--af-luxe-gold-bright)!important;
+  background:rgba(215,191,148,.14)!important;
+  transform:translateY(-2px)!important;
+}
+html body:not(.app-mode) .af-brand-slogan{
+  color:#e5d1ac!important;
+  letter-spacing:.24em!important;
+}
+html body:not(.app-mode) .af-brand-slogan:before{
+  width:38px!important;
+  background:linear-gradient(90deg,var(--af-luxe-gold),rgba(215,191,148,.2))!important;
+  box-shadow:0 0 18px rgba(215,191,148,.28)!important;
+}
+html body:not(.app-mode) .af-greeting{
+  color:rgba(248,244,235,.88)!important;
+  letter-spacing:.015em!important;
+}
+html body:not(.app-mode) #afHomeTitle{
+  max-width:850px!important;
+  font-size:clamp(62px,9.3vw,136px)!important;
+  line-height:.88!important;
+  letter-spacing:-.092em!important;
+  text-shadow:0 8px 40px rgba(0,0,0,.2)!important;
+}
+html body:not(.app-mode) #afHomeTitle em{
+  background:linear-gradient(105deg,#f1e5cb 4%,#d5bd91 52%,#fff8e9 96%)!important;
+  -webkit-background-clip:text!important;
+  background-clip:text!important;
+  -webkit-text-fill-color:transparent!important;
+  -webkit-text-stroke:.45px rgba(245,229,197,.72)!important;
+  filter:drop-shadow(0 5px 22px rgba(0,0,0,.14))!important;
+}
+html body:not(.app-mode) .af-home-subtitle{
+  max-width:540px!important;
+  color:rgba(250,247,240,.88)!important;
+  font-size:clamp(16px,1.55vw,20px)!important;
+  line-height:1.68!important;
+}
+html body:not(.app-mode) .af-home-actions{
+  gap:10px!important;
+  align-items:stretch!important;
+}
+html body:not(.app-mode) .af-home-actions .af-primary-cta{
+  min-height:56px!important;
+  padding:0 27px!important;
+  border-radius:999px!important;
+  color:#27251f!important;
+  background:linear-gradient(135deg,#f4ead6,#d5bd91)!important;
+  border:1px solid rgba(255,250,237,.76)!important;
+  box-shadow:0 14px 34px rgba(0,0,0,.20),inset 0 1px rgba(255,255,255,.8)!important;
+  font-weight:850!important;
+}
+html body:not(.app-mode) .af-home-actions .af-primary-cta:hover{
+  background:linear-gradient(135deg,#fff8e9,#e4cfaa)!important;
+  box-shadow:0 18px 42px rgba(0,0,0,.27)!important;
+  transform:translateY(-2px)!important;
+}
+html body:not(.app-mode) .af-install-cta{
+  min-height:54px!important;
+  padding:0 19px!important;
+  border:1px solid rgba(244,231,207,.42)!important;
+  background:rgba(21,25,21,.38)!important;
+  color:#f7f0e3!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.12)!important;
+}
+html body:not(.app-mode) .af-install-cta:hover{
+  background:rgba(215,191,148,.16)!important;
+  border-color:rgba(240,223,189,.74)!important;
+  transform:translateY(-2px)!important;
+}
+html body:not(.app-mode) .af-nfce-entry{
+  min-height:56px!important;
+  border:1px solid rgba(244,231,207,.34)!important;
+  border-radius:17px!important;
+  background:rgba(18,23,19,.46)!important;
+  box-shadow:0 12px 32px rgba(0,0,0,.13)!important;
+}
+html body:not(.app-mode) .af-nfce-entry-icon{
+  background:rgba(215,191,148,.16)!important;
+  color:#ecd9b7!important;
+}
+html body:not(.app-mode) .af-nfce-entry small{
+  color:rgba(250,247,240,.72)!important;
+}
+html body:not(.app-mode) .af-price-compact strong{
+  color:#f5ead6!important;
+  letter-spacing:-.035em!important;
+}
+html body:not(.app-mode) .af-price-compact strong small{
+  color:#d7bf94!important;
+}
+html body:not(.app-mode) .af-price-compact span{
+  color:rgba(250,247,240,.74)!important;
+}
+html body:not(.app-mode) .af-home-benefits{
+  color:rgba(245,239,226,.82)!important;
+}
+html body:not(.app-mode) .af-home-benefits i{
+  color:#dfc89e!important;
+}
+html body:not(.app-mode) .af-landing-moment{
+  padding:16px 18px!important;
+  border:1px solid rgba(244,231,207,.2)!important;
+  border-radius:18px!important;
+  background:rgba(18,23,19,.34)!important;
+  box-shadow:0 18px 48px rgba(0,0,0,.14)!important;
+  backdrop-filter:blur(18px) saturate(125%)!important;
+}
+html body:not(.app-mode) .af-brand-moment b,
+html body:not(.app-mode) .af-brand-moment i{
+  color:#e4cfaa!important;
+}
+html body:not(.app-mode) .af-landing-moment em{
+  color:rgba(247,241,229,.72)!important;
+}
+html body:not(.app-mode) .af-scene-light{
+  min-height:36px!important;
+  padding:0 13px!important;
+  border:1px solid rgba(244,231,207,.32)!important;
+  border-radius:999px!important;
+  background:rgba(18,23,19,.48)!important;
+  color:#f5ead6!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.16)!important;
+  backdrop-filter:blur(16px)!important;
+}
+html body:not(.app-mode) .af-scene-light:hover{
+  border-color:rgba(240,223,189,.7)!important;
+  background:rgba(215,191,148,.15)!important;
+}
+html body:not(.app-mode) .af-minimal-footer{
+  color:rgba(244,238,226,.72)!important;
+}
+html body:not(.app-mode) .af-minimal-footer a:hover,
+html body:not(.app-mode) .af-minimal-footer button:hover{
+  color:#f0dfbd!important;
+}
+
+/* Painel: contraste confortável, superfícies consistentes e navegação refinada. */
+html body.app-mode{
+  background:var(--af-luxe-night)!important;
+  color:#f1efe8!important;
+  font-family:Manrope,system-ui,sans-serif!important;
+}
+html body.app-mode .app-panel-container-standalone{
+  background:
+    radial-gradient(ellipse at 16% 0%,rgba(215,191,148,.10),transparent 34%),
+    radial-gradient(ellipse at 95% 94%,rgba(108,132,112,.08),transparent 32%),
+    var(--af-luxe-night)!important;
+  color:#f1efe8!important;
+}
+html body.app-mode .app-sidebar{
+  background:linear-gradient(180deg,rgba(28,33,29,.98),rgba(17,22,19,.98))!important;
+  border-right:1px solid var(--af-luxe-line)!important;
+  box-shadow:14px 0 44px rgba(0,0,0,.15)!important;
+}
+html body.app-mode .app-sidebar .sidebar-header{
+  border-bottom:1px solid rgba(238,226,202,.09)!important;
+}
+html body.app-mode .af-panel-brand-home{
+  color:#f3ead9!important;
+  letter-spacing:.17em!important;
+  text-shadow:0 3px 18px rgba(0,0,0,.18)!important;
+}
+html body.app-mode .app-sidebar .nav-item{
+  color:#b9c0b8!important;
+  border-radius:13px!important;
+  transition:background .2s ease,color .2s ease,transform .2s ease!important;
+}
+html body.app-mode .app-sidebar .nav-item:hover{
+  color:#f4ecdd!important;
+  background:rgba(215,191,148,.075)!important;
+}
+html body.app-mode .app-sidebar .nav-item.active{
+  color:#f3e4c6!important;
+  background:linear-gradient(100deg,rgba(215,191,148,.17),rgba(215,191,148,.045))!important;
+  border:1px solid rgba(215,191,148,.18)!important;
+  box-shadow:inset 2px 0 #d7bf94,0 8px 22px rgba(0,0,0,.08)!important;
+}
+html body.app-mode .app-sidebar .nav-item.active i{
+  color:#e4cda4!important;
+}
+html body.app-mode .main-header{
+  min-height:72px!important;
+  border-bottom:1px solid rgba(238,226,202,.10)!important;
+  background:rgba(20,25,21,.78)!important;
+  box-shadow:0 8px 30px rgba(0,0,0,.07)!important;
+  backdrop-filter:blur(22px) saturate(125%)!important;
+}
+html body.app-mode .header-budget{
+  border:1px solid rgba(238,226,202,.13)!important;
+  border-radius:14px!important;
+  background:rgba(255,255,255,.045)!important;
+  color:#eae4d8!important;
+}
+html body.app-mode .header-budget i{
+  color:#d7bf94!important;
+}
+html body.app-mode .header-utility-cluster .icon-button,
+html body.app-mode .main-header .icon-button{
+  border:1px solid rgba(238,226,202,.11)!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.045)!important;
+  color:#d8d9d1!important;
+  transition:background .18s ease,color .18s ease,border-color .18s ease!important;
+}
+html body.app-mode .header-utility-cluster .icon-button:hover,
+html body.app-mode .main-header .icon-button:hover{
+  border-color:rgba(215,191,148,.35)!important;
+  background:rgba(215,191,148,.11)!important;
+  color:#f4e6ca!important;
+}
+html body.app-mode .modules-area{
+  padding:clamp(16px,2.4vw,34px)!important;
+  scrollbar-gutter:stable;
+}
+html body.app-mode .page-title{
+  color:#ead9b8!important;
+  letter-spacing:-.045em!important;
+}
+html body.app-mode .page-subtitle{
+  color:#b8bdb5!important;
+}
+html body.app-mode .dashboard-card,
+html body.app-mode .glass-card,
+html body.app-mode .content-card,
+html body.app-mode .card,
+html body.app-mode .md-list-column,
+html body.app-mode .md-detail-column{
+  border:1px solid rgba(238,226,202,.105)!important;
+  border-radius:19px!important;
+  background:linear-gradient(145deg,rgba(36,43,36,.88),rgba(25,31,26,.96))!important;
+  box-shadow:0 14px 38px rgba(0,0,0,.13)!important;
+}
+html body.app-mode .dashboard-card .card-header,
+html body.app-mode .card-header,
+html body.app-mode .modal-header{
+  border-color:rgba(238,226,202,.10)!important;
+}
+html body.app-mode .dashboard-card h3,
+html body.app-mode .card h3,
+html body.app-mode .content-card h3{
+  color:#f2ecdf!important;
+}
+html body.app-mode .dashboard-card p,
+html body.app-mode .dashboard-card small,
+html body.app-mode .page-subtitle{
+  color:#b6bdb5!important;
+}
+html body.app-mode .quick-actions-grid .action-card{
+  border:1px solid rgba(238,226,202,.11)!important;
+  border-radius:17px!important;
+  background:linear-gradient(145deg,rgba(39,47,39,.88),rgba(25,31,26,.96))!important;
+  box-shadow:0 10px 26px rgba(0,0,0,.10)!important;
+}
+html body.app-mode .quick-actions-grid .action-card i{
+  color:#d7bf94!important;
+}
+html body.app-mode .quick-actions-grid .action-card:hover{
+  border-color:rgba(215,191,148,.32)!important;
+  background:linear-gradient(145deg,rgba(53,59,47,.94),rgba(29,36,29,.98))!important;
+  transform:translateY(-2px)!important;
+}
+html body.app-mode .btn-primary,
+html body.app-mode .portal-btn.landing,
+html body.app-mode .nfce-primary{
+  border:1px solid rgba(255,250,237,.35)!important;
+  border-radius:13px!important;
+  background:linear-gradient(135deg,#eddfc2,#c8ad7e)!important;
+  color:#272720!important;
+  font-weight:850!important;
+  box-shadow:0 9px 24px rgba(0,0,0,.15),inset 0 1px rgba(255,255,255,.45)!important;
+}
+html body.app-mode .btn-primary:hover,
+html body.app-mode .portal-btn.landing:hover,
+html body.app-mode .nfce-primary:hover{
+  background:linear-gradient(135deg,#f7ecd5,#d9c39b)!important;
+  transform:translateY(-1px)!important;
+}
+html body.app-mode .btn-secondary,
+html body.app-mode .btn-outline{
+  border:1px solid rgba(238,226,202,.16)!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.045)!important;
+  color:#e6e3d9!important;
+}
+html body.app-mode input,
+html body.app-mode select,
+html body.app-mode textarea{
+  border:1px solid rgba(238,226,202,.16)!important;
+  border-radius:12px!important;
+  background:rgba(11,15,12,.62)!important;
+  color:#f2efe7!important;
+}
+html body.app-mode input::placeholder,
+html body.app-mode textarea::placeholder{
+  color:#8f9a91!important;
+}
+html body.app-mode input:focus,
+html body.app-mode select:focus,
+html body.app-mode textarea:focus{
+  border-color:rgba(215,191,148,.65)!important;
+  box-shadow:0 0 0 3px rgba(215,191,148,.11)!important;
+}
+html body.app-mode .glass-dock{
+  border:1px solid rgba(238,226,202,.15)!important;
+  background:rgba(24,30,25,.9)!important;
+  box-shadow:0 16px 42px rgba(0,0,0,.28)!important;
+  backdrop-filter:blur(22px)!important;
+}
+html body.app-mode .glass-dock .dock-item.active{
+  color:#e7d1a8!important;
+}
+html body.app-mode .modal-overlay .modal-box,
+html body.app-mode .nfce-shell{
+  border:1px solid rgba(238,226,202,.15)!important;
+  border-radius:22px!important;
+  background:linear-gradient(145deg,#252d26,#171e19)!important;
+  box-shadow:0 28px 90px rgba(0,0,0,.46)!important;
+}
+html body.app-mode .modal-box h3,
+html body.app-mode .nfce-shell h2{
+  color:#f0e6d4!important;
+}
+html body.app-mode .modal-footer{
+  border-top:1px solid rgba(238,226,202,.1)!important;
+}
+
+/* CozIA: assistente menor, ancorado no painel e visualmente alinhado à marca. */
+html body.app-mode #af-chatbot-toggle{
+  right:max(14px,env(safe-area-inset-right))!important;
+  bottom:max(14px,env(safe-area-inset-bottom))!important;
+  border:1px solid rgba(215,191,148,.42)!important;
+  background:linear-gradient(135deg,rgba(39,43,34,.98),rgba(24,31,25,.98))!important;
+  box-shadow:0 14px 36px rgba(0,0,0,.34),0 0 0 5px rgba(215,191,148,.045)!important;
+}
+html body.app-mode #af-chatbot-toggle>img{
+  background:radial-gradient(circle at 35% 25%,#fff7e6,#d7bf94 52%,#67563a 100%)!important;
+}
+html body.app-mode #af-chatbot-toggle .af-assistant-toggle-label{
+  color:#f4ead7!important;
+}
+html body.app-mode #af-chatbot{
+  border:1px solid rgba(215,191,148,.22)!important;
+  border-radius:20px!important;
+  box-shadow:0 28px 82px rgba(0,0,0,.5)!important;
+  overflow:hidden!important;
+}
+html body.app-mode .af-chatbot-header{
+  background:linear-gradient(115deg,#383b2f,#202a23)!important;
+  border-bottom:1px solid rgba(215,191,148,.16)!important;
+}
+html body.app-mode .af-chatbot-footer{
+  border-top:1px solid rgba(238,226,202,.10)!important;
+  background:rgba(20,25,21,.96)!important;
+}
+
+/* Leitura, movimento e áreas seguras em telas pequenas. */
+@media(max-width:760px){
+  html body:not(.app-mode) .af-one-screen-home{
+    min-height:100svh!important;
+    padding:clamp(112px,15vh,142px) 21px calc(116px + env(safe-area-inset-bottom))!important;
+  }
+  html body:not(.app-mode) .af-home-copy{
+    width:100%!important;
+    max-width:520px!important;
+    margin-inline:auto!important;
+    text-align:left!important;
+  }
+  html body:not(.app-mode) #afHomeTitle{
+    font-size:clamp(57px,15.6vw,82px)!important;
+    line-height:.9!important;
+  }
+  html body:not(.app-mode) .af-home-subtitle{
+    max-width:360px!important;
+    margin:18px 0 20px!important;
+    font-size:15px!important;
+    line-height:1.58!important;
+  }
+  html body:not(.app-mode) .af-home-actions{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:9px!important;
+  }
+  html body:not(.app-mode) .af-home-actions .af-primary-cta,
+  html body:not(.app-mode) .af-home-actions .af-install-cta,
+  html body:not(.app-mode) .af-home-actions .af-nfce-entry{
+    grid-column:1/-1!important;
+    width:100%!important;
+    min-height:49px!important;
+    box-sizing:border-box!important;
+  }
+  html body:not(.app-mode) .af-home-actions .af-price-compact{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:12px!important;
+    margin-top:2px!important;
+    padding:11px 13px!important;
+    border:1px solid rgba(244,231,207,.2)!important;
+    border-radius:14px!important;
+    background:rgba(18,23,19,.28)!important;
+  }
+  html body:not(.app-mode) .af-price-compact strong{
+    white-space:nowrap!important;
+    font-size:18px!important;
+  }
+  html body:not(.app-mode) .af-price-compact span{
+    max-width:175px!important;
+    text-align:right!important;
+    line-height:1.4!important;
+  }
+  html body:not(.app-mode) .af-scene-light{
+    top:auto!important;
+    right:14px!important;
+    bottom:calc(56px + env(safe-area-inset-bottom))!important;
+    min-height:34px!important;
+    z-index:10!important;
+  }
+  html body:not(.app-mode) .af-minimal-footer{
+    left:14px!important;
+    right:14px!important;
+    bottom:calc(7px + env(safe-area-inset-bottom))!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:8px!important;
+    font-size:9px!important;
+  }
+  html body:not(.app-mode) .af-legal-links{gap:10px!important}
+  html body.app-mode .modules-area{
+    padding:14px 12px calc(20px + env(safe-area-inset-bottom))!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  html body.app-mode .dashboard-card,
+  html body.app-mode .glass-card,
+  html body.app-mode .content-card,
+  html body.app-mode .card{
+    border-radius:16px!important;
+  }
+  html body.app-mode #af-chatbot-toggle{
+    right:14px!important;
+    bottom:calc(14px + env(safe-area-inset-bottom))!important;
+  }
+}
+@media(max-height:720px) and (max-width:760px){
+  html body:not(.app-mode) .af-one-screen-home{
+    align-items:flex-start!important;
+    padding-top:104px!important;
+    padding-bottom:calc(126px + env(safe-area-inset-bottom))!important;
+  }
+  html body:not(.app-mode) .af-home-subtitle{margin:14px 0 16px!important}
+  html body:not(.app-mode) .af-home-actions{gap:7px!important}
+  html body:not(.app-mode) .af-home-actions .af-primary-cta,
+  html body:not(.app-mode) .af-home-actions .af-install-cta,
+  html body:not(.app-mode) .af-home-actions .af-nfce-entry{min-height:45px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html body:not(.app-mode) .af-home-copy,
+  html body:not(.app-mode) .af-primary-cta,
+  html body.app-mode .quick-actions-grid .action-card{
+    animation:none!important;
+    transition:none!important;
+    transform:none!important;
+  }
+}
+
+
+/* AF 2026.11 — correção estrutural da composição mobile + painel renovado */
+@media(max-width:760px){
+  /* A landing passa a rolar como uma página; vídeo fica como cenário, não como máscara. */
+  html,body{min-height:100%;height:auto;overflow-x:hidden!important}
+  body:not(.app-mode){overflow-y:auto!important;overscroll-behavior-y:contain}
+  html body:not(.app-mode) .af-landing-stage{
+    position:fixed!important;inset:0!important;
+    overflow-x:hidden!important;overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior-y:contain!important;
+    clip-path:inset(0 calc(100% - var(--af-reveal)) 0 0)!important;
+    padding-bottom:env(safe-area-inset-bottom)!important;
+  }
+  html body:not(.app-mode) .af-landing-video{
+    position:fixed!important;inset:0!important;width:100vw!important;height:100svh!important;
+    object-fit:cover!important;transform:scale(1.06)!important;
+  }
+  html body:not(.app-mode) .af-video-shade{position:fixed!important;inset:0!important}
+  html body:not(.app-mode) .af-minimal-header{
+    position:absolute!important;top:0!important;left:0!important;right:0!important;
+    min-height:66px!important;padding:12px 15px!important;z-index:30!important;
+  }
+  html body:not(.app-mode) .af-landing-moment{
+    position:relative!important;top:auto!important;left:auto!important;right:auto!important;
+    width:auto!important;max-width:none!important;margin:82px 20px 0!important;
+    padding:8px 0 0!important;z-index:5!important;
+  }
+  html body:not(.app-mode) .af-one-screen-home{
+    min-height:0!important;height:auto!important;
+    display:flex!important;align-items:flex-start!important;
+    padding:clamp(42px,7vh,82px) 22px 28px!important;
+    box-sizing:border-box!important;
+  }
+  html body:not(.app-mode) .af-home-copy{
+    width:100%!important;max-width:560px!important;margin:0 auto!important;
+    text-align:left!important;
+  }
+  html body:not(.app-mode) .af-brand-slogan{display:flex!important;margin:0 0 13px!important;font-size:10px!important}
+  html body:not(.app-mode) .af-greeting{margin:0 0 12px!important;font-size:15px!important}
+  html body:not(.app-mode) #afHomeTitle{
+    font-size:clamp(55px,13.5vw,86px)!important;line-height:.9!important;
+    letter-spacing:-.085em!important;margin:0!important;
+  }
+  html body:not(.app-mode) .af-home-subtitle{
+    max-width:480px!important;margin:18px 0 22px!important;
+    font-size:clamp(15px,3.8vw,18px)!important;line-height:1.55!important;
+  }
+  html body:not(.app-mode) .af-home-actions{
+    display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+    gap:11px!important;width:100%!important;align-items:stretch!important;
+  }
+  html body:not(.app-mode) .af-home-actions>*{
+    grid-column:1!important;width:100%!important;max-width:none!important;
+    min-width:0!important;box-sizing:border-box!important;margin:0!important;
+  }
+  html body:not(.app-mode) .af-home-actions .af-primary-cta{
+    min-height:58px!important;padding:0 22px!important;justify-content:center!important;
+    border-radius:18px!important;font-size:16px!important;
+  }
+  html body:not(.app-mode) .af-home-actions .af-install-cta{
+    min-height:50px!important;border-radius:16px!important;font-size:14px!important;
+  }
+  html body:not(.app-mode) .af-home-actions .af-nfce-entry{
+    min-height:78px!important;padding:13px 14px!important;border-radius:17px!important;
+    display:grid!important;grid-template-columns:52px minmax(0,1fr) 20px!important;
+    gap:12px!important;text-align:left!important;
+  }
+  html body:not(.app-mode) .af-nfce-entry>span:nth-child(2){min-width:0!important}
+  html body:not(.app-mode) .af-nfce-entry small{
+    display:block!important;white-space:normal!important;line-height:1.4!important;
+    font-size:12px!important;
+  }
+  html body:not(.app-mode) .af-price-compact{
+    display:flex!important;flex-direction:row!important;align-items:center!important;
+    justify-content:space-between!important;gap:12px!important;
+    min-height:54px!important;padding:10px 13px!important;margin:0!important;
+    border:1px solid rgba(255,255,255,.24)!important;border-radius:15px!important;
+    background:rgba(10,16,12,.28)!important;
+  }
+  html body:not(.app-mode) .af-price-compact strong{font-size:20px!important;white-space:nowrap!important}
+  html body:not(.app-mode) .af-price-compact span{
+    max-width:58%!important;white-space:normal!important;text-align:right!important;
+    font-size:11px!important;line-height:1.35!important;
+  }
+  html body:not(.app-mode) .af-home-benefits{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;margin:16px 0 0!important}
+  /* Iluminação sempre no topo, separada do conteúdo e do rodapé. */
+  html body:not(.app-mode) .af-scene-light{
+    position:fixed!important;top:calc(env(safe-area-inset-top) + 76px)!important;
+    right:15px!important;left:auto!important;bottom:auto!important;
+    z-index:40!important;height:36px!important;min-height:36px!important;
+    padding:0 12px!important;border-radius:999px!important;
+    box-shadow:0 8px 26px rgba(0,0,0,.22)!important;
+  }
+  html body:not(.app-mode) .af-minimal-footer{
+    position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;
+    display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+    justify-content:space-between!important;gap:12px!important;
+    margin:10px 20px calc(24px + env(safe-area-inset-bottom))!important;
+    padding:14px 0 8px!important;border-top:1px solid rgba(255,255,255,.24)!important;
+    font-size:11px!important;
+  }
+  html body:not(.app-mode) .af-footer-primary{display:flex!important;gap:14px!important;flex-wrap:wrap!important}
+  html body:not(.app-mode) .af-legal-links{display:flex!important;flex-direction:row!important;gap:12px!important;flex-wrap:wrap!important}
+  html body:not(.app-mode) #af-chatbot,
+  html body:not(.app-mode) #af-chatbot-toggle{
+    display:none!important;visibility:hidden!important;opacity:0!important;
+    pointer-events:none!important;
+  }
+
+  /* Painel: conteúdo ocupa a tela; menu vira gaveta com backdrop e área de toque. */
+  html body.app-mode .app-panel-container-standalone{
+    position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;
+    min-height:100dvh!important;overflow:hidden!important;display:flex!important;
+    flex-direction:row!important;background:#111713!important;
+  }
+  html body.app-mode .app-main-content{
+    width:100%!important;min-width:0!important;height:100%!important;
+    min-height:0!important;margin:0!important;display:flex!important;flex-direction:column!important;
+  }
+  html body.app-mode .app-sidebar{
+    position:fixed!important;top:0!important;bottom:0!important;left:0!important;
+    width:min(84vw,310px)!important;height:100dvh!important;max-height:100dvh!important;
+    padding:calc(18px + env(safe-area-inset-top)) 15px calc(18px + env(safe-area-inset-bottom))!important;
+    z-index:60010!important;transform:translateX(-105%)!important;
+    background:linear-gradient(180deg,#202922 0%,#151c17 100%)!important;
+    border-right:1px solid rgba(226,207,169,.18)!important;
+    box-shadow:20px 0 65px rgba(0,0,0,.38)!important;
+    transition:transform .28s cubic-bezier(.2,.8,.2,1)!important;
+  }
+  html body.app-mode .app-sidebar.is-open{transform:translateX(0)!important}
+  html body.app-mode .sidebar-overlay{
+    position:fixed!important;inset:0!important;z-index:60000!important;
+    background:rgba(3,8,5,.64)!important;backdrop-filter:blur(5px)!important;
+  }
+  html body.app-mode .main-header{
+    position:relative!important;top:auto!important;left:auto!important;right:auto!important;
+    flex:0 0 auto!important;min-height:68px!important;height:68px!important;
+    padding:0 13px!important;padding-top:env(safe-area-inset-top)!important;
+    box-sizing:content-box!important;gap:10px!important;
+    background:rgba(20,28,22,.96)!important;
+    border-bottom:1px solid rgba(226,207,169,.13)!important;
+  }
+  html body.app-mode .header-left,html body.app-mode .header-actions{min-width:0!important}
+  html body.app-mode .header-actions{gap:7px!important}
+  html body.app-mode .header-utility-cluster{display:flex!important;gap:6px!important}
+  html body.app-mode .header-budget{max-width:145px!important;padding:7px 9px!important;font-size:10px!important}
+  html body.app-mode .header-budget-values{gap:2px!important}
+  html body.app-mode .header-utility-cluster .icon-button,
+  html body.app-mode .main-header .icon-button{
+    width:40px!important;height:40px!important;min-width:40px!important;
+    border-radius:13px!important;background:rgba(255,255,255,.055)!important;
+  }
+  html body.app-mode .modules-area{
+    flex:1 1 auto!important;min-height:0!important;height:auto!important;
+    overflow-y:auto!important;overflow-x:hidden!important;
+    padding:18px 14px calc(26px + env(safe-area-inset-bottom))!important;
+    -webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;
+  }
+  html body.app-mode .page-title{font-size:clamp(23px,6vw,30px)!important;line-height:1.12!important}
+  html body.app-mode .dashboard-card,
+  html body.app-mode .content-card,
+  html body.app-mode .glass-card{
+    border-radius:19px!important;overflow:hidden!important;
+    border:1px solid rgba(228,211,179,.13)!important;
+    background:linear-gradient(145deg,rgba(36,47,38,.96),rgba(24,32,26,.98))!important;
+    box-shadow:0 15px 38px rgba(0,0,0,.18)!important;
+  }
+  html body.app-mode .card-header{padding:16px!important}
+  html body.app-mode .card-content{padding:15px!important}
+  html body.app-mode .nav-item{
+    min-height:48px!important;border-radius:13px!important;
+    font-size:14px!important;margin:3px 0!important;
+  }
+  html body.app-mode #af-chatbot-toggle{
+    right:14px!important;bottom:calc(14px + env(safe-area-inset-bottom))!important;
+    z-index:60020!important;
+  }
+  html body.app-mode #af-chatbot{
+    right:10px!important;bottom:calc(72px + env(safe-area-inset-bottom))!important;
+    max-width:calc(100vw - 20px)!important;max-height:70dvh!important;
+    z-index:60021!important;
+  }
+}
+@media(min-width:761px){
+  html body:not(.app-mode) .af-scene-light{top:92px!important;bottom:auto!important}
+  html body.app-mode .app-sidebar{width:264px!important}
+  html body.app-mode .modules-area{padding:28px!important}
+}
+
+
+/* Cozinha 3D — camada independente, acessível e otimizada para toque */
+.af-explore-kitchen{color:#f0dfbd!important;border-color:rgba(215,191,148,.32)!important}
+.af-explore-kitchen:hover{background:rgba(215,191,148,.16)!important}
+.af3d-overlay{
+ position:fixed;inset:0;z-index:90000;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;
+ gap:12px;padding:clamp(14px,3vw,28px);
+ padding-top:calc(env(safe-area-inset-top) + 14px);
+ padding-bottom:calc(env(safe-area-inset-bottom) + 14px);
+ background:radial-gradient(ellipse at 50% 0%,rgba(215,191,148,.13),transparent 38%),#0d120f;
+ color:#f3eee3;font-family:Manrope,system-ui,sans-serif;
+}
+.af3d-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;min-width:0}
+.af3d-kicker{font-size:9px;letter-spacing:.19em;color:#d7bf94;font-weight:850}
+.af3d-top h2{font:800 clamp(26px,5vw,42px)/1 Sora,Manrope,sans-serif;letter-spacing:-.055em;margin:7px 0}
+.af3d-top p{margin:0;color:#aeb8b0;font-size:12px;line-height:1.45}
+.af3d-close{flex:0 0 44px;width:44px;height:44px;border:1px solid rgba(240,223,189,.22);border-radius:14px;background:rgba(255,255,255,.06);color:#f5ead6;font-size:29px;line-height:1;cursor:pointer}
+.af3d-stage{position:relative;min-height:180px;overflow:hidden;border:1px solid rgba(215,191,148,.19);border-radius:22px;background:#17211c;box-shadow:0 22px 70px rgba(0,0,0,.32)}
+.af3d-stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.af3d-loading{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:#e7d5b4;font-size:14px;z-index:1;pointer-events:none}
+.af3d-object-info{display:grid;gap:5px;padding:14px 16px;border:1px solid rgba(215,191,148,.17);border-radius:16px;background:rgba(255,255,255,.045)}
+.af3d-object-info b{font-size:14px;color:#f0dfbd}
+.af3d-object-info span{font-size:12px;line-height:1.45;color:#b5beb6}
+.af3d-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.af3d-controls button{min-height:42px;padding:0 15px;border:1px solid rgba(215,191,148,.25);border-radius:13px;background:rgba(215,191,148,.10);color:#f0dfbd;font:750 12px Manrope,sans-serif}
+.af3d-controls span{margin-left:auto;color:#849087;font-size:10px}
+body.af3d-open{overflow:hidden!important}
+@media(max-width:760px){
+ .af-explore-kitchen{width:36px!important;height:36px!important;min-width:36px!important;border-radius:12px!important}
+ .af3d-overlay{gap:9px;padding-left:12px;padding-right:12px}
+ .af3d-stage{border-radius:17px}
+ .af3d-controls{display:grid;grid-template-columns:1fr 1fr}
+ .af3d-controls button{width:100%}
+ .af3d-controls span{grid-column:1/-1;margin:2px 0 0;text-align:center}
+}
+
+@media(max-width:760px){
+ html body:not(.app-mode) .af-top-controls .af-instagram,
+ html body:not(.app-mode) .af-top-controls .af-tiktok,
+ html body:not(.app-mode) .af-top-controls .af-email{display:none!important}
+}

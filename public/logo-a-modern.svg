@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+<title id="title">Alimente Fácil — símbolo A</title><desc id="desc">Letra A geométrica formada por folhas e traços fluidos.</desc>
+<defs><linearGradient id="g" x1="18" y1="104" x2="100" y2="10" gradientUnits="userSpaceOnUse"><stop stop-color="#9DE7B4"/><stop offset=".52" stop-color="#D8F9DF"/><stop offset="1" stop-color="#75C994"/></linearGradient><linearGradient id="d" x1="25" y1="105" x2="92" y2="16" gradientUnits="userSpaceOnUse"><stop stop-color="#0C2A1B"/><stop offset="1" stop-color="#163F29"/></linearGradient></defs>
+<rect x="3" y="3" width="114" height="114" rx="34" fill="url(#d)"/><rect x="4" y="4" width="112" height="112" rx="33" stroke="#D8F9DF" stroke-opacity=".2" stroke-width="2"/>
+<path d="M24 91 51.8 27.2c2.5-5.7 10.6-5.7 13.1 0L94 91" fill="none" stroke="url(#g)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M38 72h44" stroke="#D8F9DF" stroke-width="8" stroke-linecap="round"/>
+<path d="M59.5 18c-1.4 12.8 4.8 19.5 16.8 19.6C75.2 25.6 69.6 19 59.5 18Z" fill="#B9F0C8"/>
+<path d="M55 25c-10.8-7.3-20.2-3.9-24.3 7.6C43.1 36.2 51.2 33.5 55 25Z" fill="#82D5A0"/>
+<circle cx="60" cy="99" r="3.2" fill="#D8F9DF"/>
+</svg>

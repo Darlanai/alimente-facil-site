@@ -14,7 +14,7 @@
 <meta charset="utf-8"/>
 <title>Alimente Fácil | Compras, despensa e receitas em um só app</title>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="#10251b" name="theme-color"/>
+<meta content="#171b19" name="theme-color"/>
 <meta content="Organize listas de compras, controle a despensa, planeje refeições e reduza desperdícios com o Alimente Fácil. Teste grátis por 7 dias sem cartão." name="description"/>
 <meta content="Alimente Fácil" name="author"/>
 <meta content="index, follow, max-image-preview:large" name="robots"/>
@@ -42,6 +42,9 @@
 <link href="system-sync.css?v=20260815-5" rel="stylesheet"/>
 <link href="fiscal-notes.css?v=20260816-1" rel="stylesheet"/>
 <link href="modern-ui.css?v=20260816-9" rel="stylesheet"/>
+<link href="omnitech-cinematic.css?v=20261108-1" rel="stylesheet"/>
+<link href="kitchen-experience.css?v=20261108-2" rel="stylesheet"/>
+<link href="premium-experience.css?v=20261110-4" rel="stylesheet"/>
 <style>
     :root {
         --time-scale: 1;
@@ -69,11 +72,11 @@
 </head>
 <body>
 <div aria-label="Apresentação do Alimente Fácil" class="af-landing-stage" id="landing-video-container">
-<video autoplay="" class="af-landing-video" id="afLandingVideo" loop="" muted="" playsinline="" poster="fundo_poster.jpg" preload="metadata" src="fundo.mp4"></video>
+<video autoplay="" class="af-landing-video" id="afLandingVideo" loop="" muted="" playsinline="" poster="fundo_poster.jpg" preload="metadata" src="https://videos.pexels.com/video-files/39576532/16868216_3840_2160_30fps.mp4"></video>
 <div aria-hidden="true" class="af-video-shade"></div>
 <header class="af-minimal-header">
 <a aria-label="Alimente Fácil" class="af-minimal-brand" data-af-go-landing="" href="#inicio">
-<img alt="" height="46" src="logo-af-transparent.png" width="46"/>
+<img alt="" height="46" src="logo-a-modern.svg" width="46"/>
 <span class="af-brand-copy"><strong><span>ALIMENTE</span><span>FÁCIL</span></strong></span>
 </a>
 
@@ -81,7 +84,9 @@
 <a aria-label="Instagram @alimentefacil" class="af-top-icon af-instagram" href="https://www.instagram.com/alimentefacil" rel="noopener" target="_blank" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
 <a aria-label="TikTok @alimentefacil" class="af-top-icon af-tiktok" href="https://www.tiktok.com/@alimentefacil" rel="noopener" target="_blank" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
 <button aria-label="Enviar e-mail" class="af-top-icon af-email" id="afContactOpen" title="Contato por e-mail" type="button"><i class="fa-regular fa-envelope"></i></button>
-<button aria-label="Alternar entre modo claro e escuro" aria-pressed="false" class="af-top-icon af-theme-icon" id="landing-theme-toggle" title="Alternar aparência" type="button"><span aria-hidden="true" class="af-theme-glyph"></span></button>
+<button aria-label="Instalar Alimente Fácil" class="af-top-icon af-install-top btn-install-pwa" id="afInstallLanding" title="Instalar aplicativo" type="button"><i class="fa-solid fa-download"></i></button>
+
+<button aria-label="Explorar cozinha em 3D" class="af-top-icon af-explore-kitchen" id="afExploreKitchen" title="Explorar cozinha 3D" type="button"><i class="fa-solid fa-cube" aria-hidden="true"></i></button>
 <button aria-label="Entrar ou acessar sua conta" class="af-power-button" id="landing-auth-btn" title="Entrar" type="button"><i aria-hidden="true" class="fa-solid fa-power-off"></i></button>
 </div></header>
 <aside aria-live="polite" class="af-landing-moment">
@@ -97,6 +102,7 @@
 <p class="af-home-subtitle">Leia o QR da nota. A CozIA organiza o restante.</p>
 <div class="af-home-actions">
 <button class="af-primary-cta" data-af-start-trial="" type="button">Começar agora <i class="fa-solid fa-arrow-right"></i></button>
+<button class="af-install-cta btn-install-pwa" id="afInstallApp" type="button"><i class="fa-solid fa-download" aria-hidden="true"></i><span>Instalar aplicativo</span></button>
 <button class="af-nfce-entry" data-nfce-open="" type="button" aria-label="Ler uma nota fiscal">
 <span class="af-nfce-entry-icon"><i class="fa-solid fa-qrcode" aria-hidden="true"></i></span>
 <span><strong>Ler nota fiscal</strong><small>Escaneie o QR ou digite a chave de 44 números.</small></span>
@@ -111,6 +117,7 @@
 </div>
 </section>
 </main>
+<button type="button" class="af-scene-light" id="afSceneLight" aria-pressed="false" aria-label="Apagar a iluminação da cozinha"><span aria-hidden="true">☼</span><small>Luz acesa</small><i aria-hidden="true"></i></button>
 <footer class="af-minimal-footer"><div class="af-footer-primary"><button class="af-how-link" id="afHowWorks" type="button">Como funciona</button><button class="af-footer-contact" id="afFooterContact" type="button">Contato</button></div><nav aria-label="Links institucionais" class="af-legal-links"><a href="/termos.html">Termos de uso</a><a href="/politica-de-privacidade.html">Privacidade</a></nav></footer>
 </div>
 <div aria-label="Arraste para alternar entre a apresentação e o painel" class="af-global-reveal" id="afGlobalReveal">
@@ -748,5 +755,6 @@
             });
         }
     </script>
+<script type="module" src="kitchen-experience.js?v=20261110-2"></script>
 </body>
 </html>

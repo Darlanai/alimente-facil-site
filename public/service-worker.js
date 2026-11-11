@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.08.16.bulk-actions-qr-v18';
+const VERSION = '2026.11.11.pwa-query-cache-v24';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -23,6 +23,7 @@ const APP_SHELL = [
   '/ai-data-cozia-brain.js',
   '/alimenta-ai-icon.png',
   '/landing-art.css',
+  '/landing-art.js',
   '/cozia-v7.css',
   '/nfce-scanner.css',
   '/nfce-scanner.js',
@@ -32,6 +33,11 @@ const APP_SHELL = [
   '/system-sync.js',
   '/modern-ui.css',
   '/modern-ui.js',
+  '/omnitech-cinematic.css',
+  '/kitchen-experience.css',
+  '/premium-experience.css',
+  '/kitchen-experience.js',
+  '/logo-a-modern.svg',
   '/auth-premium-gate-fix.js',
   '/reset-password.html',
   '/manifest.webmanifest',
@@ -87,7 +93,7 @@ async function cacheFirst(request) {
 
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(RUNTIME_CACHE);
-  const cached = await cache.match(request);
+  const cached = await cache.match(request, { ignoreSearch: true });
   const fetchPromise = fetch(request).then((res) => {
     if (res.ok) cache.put(request, res.clone());
     return res;

@@ -171,13 +171,23 @@
   async function persistCloudNow(options) {
     options = options || {};
     const userId = state.cloudOwnerId || app.state?.user?.id || '';
-    if (!userId || !app.isLoggedIn) return null;
+    const token = getToken();
+    if (!userId || !app.isLoggedIn || !token || !state.cloudReady) return null;
 
     const payload = buildCloudPayload();
     const serialized = serializeCloudPayload(payload);
+    if (!options.force && serialized === state.cloudLastSerialized) return { ok:true, unchanged:true };
+
+    const write = () => apiFetchJson('/api/app-state', {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ state: payload })
+    });
+    state.cloudSaveChain = state.cloudSaveChain.catch(function () { return null; }).then(write);
+    const result = await state.cloudSaveChain;
     saveLocalUserBackup(userId, payload);
     state.cloudLastSerialized = serialized;
-    return { ok:true, localOnly:true };
+    return result;
   }
 
   function scheduleCloudSave() {
@@ -207,16 +217,29 @@
 
     state.cloudLoadPromise = (async function () {
       try {
-        let payload = readLocalUserBackup(userId) || getLegacyPayloadForUser(user);
+        let payload = null;
+        let cloudStateFound = false;
+        try {
+          const remote = await apiFetchJson('/api/app-state', {
+            method: 'GET',
+            headers: { Authorization: 'Bearer ' + getToken() }
+          });
+          if (remote?.state && typeof remote.state === 'object') {
+            payload = remote.state;
+            cloudStateFound = true;
+          }
+        } catch (remoteError) {
+          console.error('Não foi possível carregar os dados da conta no servidor:', remoteError);
+          throw remoteError;
+        }
+
+        if (!payload) {
+          payload = readLocalUserBackup(userId) || getLegacyPayloadForUser(user);
+        }
         if (!payload) {
           const initialState = cloneJson(app.defaultState || {}) || {};
           delete initialState.user;
-          payload = {
-            schemaVersion: 1,
-            state: initialState,
-            activeListId: 'listaDaSemana',
-            activeModule: 'inicio'
-          };
+          payload = { schemaVersion: 1, state: initialState, activeListId: 'listaDaSemana', activeModule: 'inicio' };
         }
 
         applyCloudPayload(payload, user);
@@ -224,6 +247,10 @@
         state.cloudReady = true;
         saveLocalUserBackup(userId, payload);
         originalSaveState();
+        if (!cloudStateFound) {
+          // Migra o backup local/legado para a conta na primeira autenticação.
+          await persistCloudNow({ force:true });
+        }
         return true;
       } catch (error) {
         const backup = readLocalUserBackup(userId) || getLegacyPayloadForUser(user);
@@ -249,22 +276,25 @@
     return result;
   };
 
-  app.flushAccountData = function flushAccountData(options) {
+  app.flushAccountData = async function flushAccountData(options) {
     if (state.cloudSaveTimer) {
       windowRef.clearTimeout(state.cloudSaveTimer);
       state.cloudSaveTimer = null;
     }
+    if (app.isLoggedIn && (!state.cloudReady || !state.cloudOwnerId || !getToken())) {
+      throw new Error('Os dados da sua conta ainda não foram sincronizados. Aguarde a conexão e tente sair novamente.');
+    }
     return persistCloudNow(Object.assign({ force: true }, options || {}));
   };
 
-  // Conteúdo funcional é local por decisão de privacidade. Autenticação, perfil e assinatura continuam no servidor.
+  // Dados funcionais sincronizados na conta autenticada, com backup local por usuário.
   if (app._remoteStateTimer) windowRef.clearTimeout(app._remoteStateTimer);
-  app._remoteStateReady = false;
-  app.dataStorageMode = 'local-only';
-  app.pushRemoteAppState = async function pushLocalAppStateOnly() { return persistCloudNow({ force:true }); };
-  app.scheduleRemoteStateSync = function scheduleLocalStateOnly() { scheduleCloudSave(); };
-  app.flushRemoteStateSync = async function flushLocalStateOnly() { return persistCloudNow({ force:true }); };
-  app.loadRemoteAppState = async function loadLocalStateOnly() {
+  app._remoteStateReady = true;
+  app.dataStorageMode = 'account-cloud';
+  app.pushRemoteAppState = async function pushRemoteAppState() { return persistCloudNow({ force:true }); };
+  app.scheduleRemoteStateSync = function scheduleRemoteStateSync() { scheduleCloudSave(); };
+  app.flushRemoteStateSync = async function flushRemoteStateSync() { return persistCloudNow({ force:true }); };
+  app.loadRemoteAppState = async function loadRemoteAppState() {
     const user = app.state?.user || {};
     return loadCloudForUser({ id:user.id, name:user.nome, email:user.email });
   };

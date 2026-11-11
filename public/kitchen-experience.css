@@ -1,0 +1,108 @@
+/* Alimente Fácil — real kitchen footage + calm editorial navigation */
+html body #landing-video-container{
+ position:relative!important;isolation:isolate!important;overflow:hidden!important;
+ min-height:100svh!important;height:100svh!important;background:#9b9b8d!important;color:#fff!important;
+}
+html body #landing-video-container:before{
+ content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+ background:linear-gradient(90deg,rgba(12,20,14,.58) 0%,rgba(12,20,14,.25) 52%,rgba(12,20,14,.08) 100%),
+ linear-gradient(0deg,rgba(12,20,14,.42),transparent 45%,rgba(12,20,14,.18));
+ transition:background .7s ease;
+}
+html body #landing-video-container .af-landing-video{
+ display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ object-fit:cover!important;object-position:center 50%!important;filter:none!important;transform:none!important;z-index:0!important;
+}
+html body #landing-video-container .af-video-shade{display:none!important}
+#afKitchenCanvas{display:none!important}
+html body #landing-video-container.af-scene-dimmed:before{
+ background:linear-gradient(90deg,rgba(4,9,7,.76),rgba(4,9,7,.48) 58%,rgba(4,9,7,.25)),
+ linear-gradient(0deg,rgba(4,9,7,.64),rgba(4,9,7,.15));
+}
+html body #landing-video-container.af-scene-dimmed .af-landing-video{filter:brightness(.42) saturate(.78)!important}
+html body .af-minimal-header{
+ position:absolute!important;z-index:8!important;top:0!important;left:0!important;right:0!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ padding:clamp(16px,3vw,34px) clamp(18px,5vw,72px)!important;
+ border:0!important;background:linear-gradient(180deg,rgba(12,20,14,.32),transparent)!important;
+ box-shadow:none!important;backdrop-filter:none!important;
+}
+html body .af-minimal-brand{display:flex!important;align-items:center!important;gap:11px!important;text-decoration:none!important}
+html body .af-minimal-brand img{width:46px!important;height:46px!important;object-fit:contain!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;filter:drop-shadow(0 2px 8px rgba(0,0,0,.16))!important}
+html body .af-minimal-brand strong{display:flex!important;flex-direction:column!important;color:white!important;font:800 11px/1.2 Manrope,sans-serif!important;letter-spacing:.17em!important;text-shadow:0 1px 8px rgba(0,0,0,.25)!important}
+html body .af-top-controls{display:flex!important;align-items:center!important;gap:clamp(8px,1.4vw,20px)!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important}
+html body .af-top-icon{display:grid!important;place-items:center!important;width:36px!important;height:36px!important;background:transparent!important;color:#fff!important;border:0!important;font-size:18px!important}
+html body .af-top-controls .af-theme-icon{display:none!important}
+html body .af-top-controls .af-power-button{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;border:1px solid rgba(255,255,255,.62)!important;background:rgba(255,255,255,.12)!important;color:white!important;border-radius:50%!important;backdrop-filter:blur(12px)!important;box-shadow:none!important}
+html body .af-landing-moment{
+ display:block!important;position:absolute!important;z-index:4!important;left:clamp(22px,5vw,72px)!important;right:auto!important;
+ top:clamp(90px,13vh,140px)!important;transform:none!important;max-width:360px!important;padding:0!important;
+ border:0!important;border-radius:0!important;background:transparent!important;backdrop-filter:none!important;box-shadow:none!important;
+}
+html body .af-brand-moment{display:flex!important;align-items:center!important;gap:10px!important;color:#fff!important;font-size:13px!important;font-weight:700!important;text-shadow:0 1px 8px rgba(0,0,0,.3)!important}
+html body .af-brand-moment b{color:#fff!important;font-variant-numeric:tabular-nums}
+html body .af-landing-moment em{display:block!important;margin-top:7px!important;color:rgba(255,255,255,.88)!important;font-size:12px!important;font-style:normal!important;text-shadow:0 1px 8px rgba(0,0,0,.35)!important}
+html body .af-one-screen-home{
+ position:relative!important;z-index:3!important;min-height:100svh!important;display:flex!important;align-items:center!important;
+ justify-content:flex-start!important;padding:clamp(185px,24vh,250px) clamp(22px,8vw,120px) clamp(135px,17vh,185px)!important;
+}
+html body .af-home-copy{max-width:740px!important;position:relative!important;animation:af-hero-in .9s ease both}
+html body .af-home-copy:before{content:"";position:absolute;z-index:-1;inset:-35px -55px -38px -35px;pointer-events:none;background:radial-gradient(ellipse at 25% 48%,rgba(5,14,9,.30),transparent 74%);filter:blur(25px)}
+html body .af-brand-slogan{display:flex!important;align-items:center!important;gap:12px!important;margin:0 0 20px!important;color:#f2f8ed!important;font:800 10px/1 Manrope,sans-serif!important;letter-spacing:.22em!important;text-transform:uppercase!important}
+html body .af-brand-slogan:before{content:"";width:34px;height:1px;background:#d4edc7}
+html body .af-greeting{margin:0 0 13px!important;color:#fff!important;font-size:clamp(15px,1.5vw,19px)!important;font-weight:600!important;text-shadow:0 1px 8px rgba(0,0,0,.25)!important}
+html body #afHomeTitle{margin:0!important;max-width:800px!important;color:#fff!important;font:800 clamp(62px,9.5vw,128px)/.86 Manrope,sans-serif!important;letter-spacing:-.085em!important;text-wrap:balance!important;text-shadow:0 3px 25px rgba(0,0,0,.13)!important}
+html body #afHomeTitle em{color:transparent!important;-webkit-text-stroke:1.4px rgba(255,255,255,.92)!important;font-style:normal!important}
+html body .af-home-subtitle{max-width:510px!important;margin:25px 0 24px!important;color:rgba(255,255,255,.94)!important;font-size:clamp(16px,1.6vw,20px)!important;line-height:1.55!important;text-shadow:0 1px 9px rgba(0,0,0,.24)!important}
+html body .af-home-actions{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:11px!important}
+html body .af-primary-cta{min-height:54px!important;padding:0 27px!important;border-radius:999px!important;color:#19301f!important;background:#f4f1e8!important;border:1px solid rgba(255,255,255,.75)!important;font:800 13px/1 Manrope,sans-serif!important;box-shadow:0 8px 28px rgba(0,0,0,.15)!important;transition:transform .2s ease,background .2s ease!important}
+html body .af-primary-cta:hover{transform:translateY(-2px)!important;background:#fff!important}
+html body .af-nfce-entry{display:flex!important;align-items:center!important;gap:12px!important;min-height:54px!important;padding:7px 15px 7px 8px!important;border:1px solid rgba(255,255,255,.58)!important;border-radius:16px!important;background:rgba(255,255,255,.15)!important;color:#fff!important;backdrop-filter:blur(13px)!important;box-shadow:none!important}
+html body .af-nfce-entry-icon{display:grid!important;place-items:center!important;width:38px!important;height:38px!important;border-radius:12px!important;background:rgba(255,255,255,.2)!important;color:#fff!important}
+html body .af-nfce-entry strong{font-size:12px!important;font-weight:800!important}
+html body .af-nfce-entry small{display:block!important;margin-top:4px!important;color:rgba(255,255,255,.83)!important;font-size:10px!important}
+html body .af-price-compact{display:flex!important;flex-direction:column!important;gap:4px!important;padding-left:14px!important;border-left:1px solid rgba(255,255,255,.48)!important}
+html body .af-price-compact strong{font-size:21px!important;color:#fff!important}
+html body .af-price-compact strong small,html body .af-price-compact span{color:rgba(255,255,255,.9)!important}
+html body .af-home-benefits{display:flex!important;flex-wrap:wrap!important;gap:10px 20px!important;margin-top:21px!important;color:rgba(255,255,255,.9)!important;font-size:10px!important;font-weight:650!important}
+html body .af-home-benefits span{display:inline-flex!important;align-items:center!important;gap:7px!important}
+html body .af-home-benefits i{color:#eff9e7!important}
+html body .af-minimal-footer{position:absolute!important;z-index:5!important;left:clamp(20px,5vw,72px)!important;right:clamp(20px,5vw,72px)!important;bottom:19px!important;color:rgba(255,255,255,.85)!important;font-size:11px!important;text-shadow:0 1px 8px rgba(0,0,0,.28)!important}
+html body .af-minimal-footer a:hover,html body .af-minimal-footer button:hover{color:#fff!important}
+.af-scene-light{position:absolute;z-index:10;right:clamp(18px,4vw,52px);bottom:clamp(18px,3vh,34px);display:flex;align-items:center;gap:9px;height:42px;padding:0 13px;border:1px solid rgba(255,255,255,.58);border-radius:99px;background:rgba(255,255,255,.16);color:white;backdrop-filter:blur(14px);cursor:pointer;box-shadow:0 5px 22px rgba(0,0,0,.13)}
+.af-scene-light span{font-size:17px}.af-scene-light small{font:700 10px Manrope,sans-serif;letter-spacing:.03em}.af-scene-light i{width:25px;height:14px;border-radius:99px;background:rgba(255,255,255,.75);position:relative}
+.af-scene-light i:after{content:"";position:absolute;width:10px;height:10px;top:2px;left:2px;border-radius:50%;background:#fff;transition:transform .35s}
+.af-scene-light[aria-pressed=true] i:after{transform:translateX(11px)}
+html body #landing-video-container.af-scene-dimmed .af-scene-light{background:rgba(8,13,10,.46)}
+html body .af-global-reveal{display:none!important}
+@media(max-width:700px){
+ html body #landing-video-container .af-landing-video{object-position:58% center!important}
+ html body .af-minimal-header{padding:13px 15px!important}
+ html body .af-minimal-brand img{width:40px!important;height:40px!important}
+ html body .af-minimal-brand strong{font-size:9px!important}
+ html body .af-top-controls{gap:4px!important}
+ html body .af-top-icon{width:30px!important;height:30px!important;font-size:16px!important}
+ html body .af-top-controls .af-power-button{width:35px!important;height:35px!important}
+ html body .af-landing-moment{top:76px!important;left:18px!important;max-width:290px!important}
+ html body .af-brand-moment{font-size:11px!important}
+ html body .af-landing-moment em{font-size:10px!important}
+ html body .af-one-screen-home{min-height:100svh!important;padding:180px 22px 150px!important;align-items:center!important}
+ html body .af-home-copy{width:100%!important}
+ html body .af-brand-slogan{font-size:8px!important;margin-bottom:17px!important}
+ html body .af-greeting{font-size:13px!important}
+ html body #afHomeTitle{font-size:clamp(58px,16vw,82px)!important;line-height:.88!important}
+ html body .af-home-subtitle{font-size:14px!important;margin:18px 0!important}
+ html body .af-home-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+ html body .af-primary-cta{grid-column:1/-1!important;width:100%!important;min-height:50px!important}
+ html body .af-nfce-entry{grid-column:1/-1!important;min-height:58px!important}
+ html body .af-price-compact{grid-column:1/-1!important;border-left:0!important;border-top:1px solid rgba(255,255,255,.38)!important;padding:10px 0 0!important}
+ html body .af-home-benefits{gap:8px 12px!important;margin-top:16px!important;font-size:9px!important}
+ html body .af-minimal-footer{left:16px!important;right:16px!important;bottom:9px!important;font-size:9px!important}
+ .af-scene-light{right:14px;bottom:60px;height:38px;padding:0 10px}
+}
+@media(max-height:700px) and (min-width:701px){
+ html body .af-one-screen-home{padding-top:150px!important;padding-bottom:100px!important}
+ html body #afHomeTitle{font-size:clamp(54px,7vw,94px)!important}
+ html body .af-landing-moment{top:82px!important}
+}
+@media(prefers-reduced-motion:reduce){html body .af-home-copy{animation:none!important}}
