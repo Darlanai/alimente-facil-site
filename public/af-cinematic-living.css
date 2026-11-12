@@ -258,3 +258,5 @@ html body:not(.app-mode) #af-chatbot-toggle{display:none!important}
   html body:not(.app-mode) .af-primary-cta{transition:none!important}
 }
 @keyframes af-cl-arrive{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+html body:not(.app-mode) .af-scene-next[hidden]{display:none!important}
