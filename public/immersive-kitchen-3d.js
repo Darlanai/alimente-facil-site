@@ -1,6 +1,6 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from 'https://esm.sh/three@0.170.0';
+import { OrbitControls } from 'https://esm.sh/three@0.170.0/examples/jsm/controls/OrbitControls.js?external=three';
+import { GLTFLoader } from 'https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js?external=three';
 
 (()=>{
  const canvas=document.getElementById('afKitchen3DCanvas');
@@ -10,7 +10,8 @@ import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/
  let renderer;
  try{
   renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
- }catch(error){if(fallback)fallback.hidden=false;console.error('[AF Kitchen 3D] WebGL indisponível',error);return;}
+ }catch(error){if(fallback)fallback.hidden=false;canvas.style.display='none';console.warn('[AF Kitchen 3D] WebGL indisponível; exibindo imagem de apoio sem exigir instalação.',error);return;}
+ canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();if(fallback)fallback.hidden=false;canvas.style.display='none';},{once:true});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -107,6 +108,27 @@ import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/
      if(closeClip){const a=fridgeActions[closeClip];a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true;a.play();a.timeScale=1;}
    }
  },undefined,(error)=>console.warn('[AF Kitchen 3D] Fridge model unavailable; interactive door hit area remains available.',error));
+ // Direct tap/click interaction on the refrigerator. Camera drag remains camera-only.
+ const fridgeRaycaster=new THREE.Raycaster(),fridgePointer=new THREE.Vector2();
+ let fridgePointerDown=null;
+ canvas.addEventListener('pointerdown',event=>{fridgePointerDown={x:event.clientX,y:event.clientY};});
+ canvas.addEventListener('pointerup',event=>{
+  if(!fridgePointerDown)return;
+  const dx=event.clientX-fridgePointerDown.x,dy=event.clientY-fridgePointerDown.y;fridgePointerDown=null;
+  if(Math.hypot(dx,dy)>8)return;
+  const rect=canvas.getBoundingClientRect();
+  fridgePointer.set(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1);
+  fridgeRaycaster.setFromCamera(fridgePointer,camera);
+  if(!fridgeRaycaster.intersectObject(fridgeHit,false).length)return;
+  fridgeOpen=!fridgeOpen;
+  document.body.classList.toggle('af-fridge-open',fridgeOpen);
+  const wanted=fridgeOpen?'open':'close';
+  const clipName=Object.keys(fridgeActions).find(name=>name.includes(wanted));
+  if(clipName&&fridgeMixer){
+   Object.values(fridgeActions).forEach(action=>action.stop());
+   const action=fridgeActions[clipName];action.reset();action.setLoop(THREE.LoopOnce,1);action.clampWhenFinished=true;action.play();
+  }
+ });
  // Lighting: architectural daylight + warm pendants + cabinet strips.
  const ambient=new THREE.HemisphereLight(0xffead0,0x414b48,1.45);scene.add(ambient);
  const sun=new THREE.DirectionalLight(0xffe4c2,3.2);sun.position.set(-4,8,5);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
