@@ -1,20 +1,22 @@
-/* Alimente Fácil — Maison Verde design system
-   One visual identity across public landing and authenticated workspace. */
+/* Alimente Fácil — Maison Champagne
+   Warm, luminous identity shared by the public landing and authenticated app. */
 :root {
-  --af-luxe-ink: #0b100d;
-  --af-luxe-deep: #101812;
-  --af-luxe-panel: #141e17;
-  --af-luxe-card: #19251d;
-  --af-luxe-card-raised: #1e2c22;
-  --af-luxe-line: rgba(207, 229, 210, .13);
-  --af-luxe-line-strong: rgba(177, 220, 187, .28);
-  --af-luxe-green: #a8d5b1;
-  --af-luxe-green-bright: #c2e8c8;
-  --af-luxe-green-deep: #6d9e79;
-  --af-luxe-gold: #d8c49a;
-  --af-luxe-text: #f2f5ef;
-  --af-luxe-muted: #a3b1a5;
-  --af-luxe-shadow: 0 18px 55px rgba(0,0,0,.22);
+  color-scheme: light;
+  --af-luxe-ink: #49372e;
+  --af-luxe-deep: #5b4437;
+  --af-luxe-panel: #f5efe5;
+  --af-luxe-card: #fffdf8;
+  --af-luxe-card-raised: #f8f2e8;
+  --af-luxe-line: rgba(112, 83, 63, .16);
+  --af-luxe-line-strong: rgba(112, 83, 63, .28);
+  --af-luxe-green: #84977b;
+  --af-luxe-green-bright: #a6b497;
+  --af-luxe-green-deep: #687c60;
+  --af-luxe-gold: #c9ad7b;
+  --af-luxe-champagne: #e8d8bd;
+  --af-luxe-text: #49372e;
+  --af-luxe-muted: #827367;
+  --af-luxe-shadow: 0 14px 38px rgba(84, 62, 45, .09);
   --af-luxe-radius: 18px;
   --color-primary: var(--af-luxe-green);
   --color-primary-dark: var(--af-luxe-green-deep);
@@ -22,102 +24,105 @@
   --primary-color: var(--af-luxe-green);
   --primary-color-light: var(--af-luxe-green-bright);
   --primary-color-dark: var(--af-luxe-green-deep);
-  --primary-color-rgb: 168, 213, 177;
+  --primary-color-rgb: 132, 151, 123;
   --af26-green: var(--af-luxe-green);
   --af26-green-2: var(--af-luxe-green-bright);
-  --af26-bg: var(--af-luxe-ink);
-  --af26-panel: var(--af-luxe-deep);
-  --af26-card: var(--af-luxe-card);
-  --af26-card-2: var(--af-luxe-card-raised);
+  --af26-bg: #f4eee4;
+  --af26-panel: #fbf8f1;
+  --af26-card: #fffdf8;
+  --af26-card-2: #f8f2e8;
   --af26-line: var(--af-luxe-line);
   --af26-text: var(--af-luxe-text);
   --af26-muted: var(--af-luxe-muted);
 }
+html, body { background: #f4eee4; color: var(--af-luxe-text); }
 html body { accent-color: var(--af-luxe-green); }
 html body:not(.app-mode) .af-landing-stage {
-  background: var(--af-luxe-ink);
+  background: #6b5140;
 }
 html body:not(.app-mode) #landing-video-container .af-video-shade {
   background:
-    linear-gradient(90deg, rgba(7,17,11,.72) 0%, rgba(7,17,11,.43) 43%, rgba(7,17,11,.08) 82%),
-    linear-gradient(180deg, rgba(5,12,8,.24), transparent 46%, rgba(5,12,8,.56)) !important;
+    linear-gradient(90deg, rgba(58,40,30,.72) 0%, rgba(67,48,36,.48) 43%, rgba(74,54,40,.12) 82%),
+    linear-gradient(180deg, rgba(50,34,26,.18), transparent 46%, rgba(50,34,26,.48)) !important;
 }
 html body:not(.app-mode) .af-brand-slogan,
-html body:not(.app-mode) .af-greeting { color: var(--af-luxe-green-bright) !important; }
+html body:not(.app-mode) .af-greeting { color: #f0dfc4 !important; }
 html body:not(.app-mode) #afHomeTitle em {
-  color: rgba(194,232,200,.08) !important;
-  -webkit-text-stroke-color: var(--af-luxe-green-bright) !important;
+  color: rgba(232,216,189,.08) !important;
+  -webkit-text-stroke-color: #ead9bd !important;
 }
 html body:not(.app-mode) .af-primary-cta,
 html body:not(.app-mode) .af-home-actions .af-primary-cta {
-  background: linear-gradient(120deg, #c5e6c9, #8fbd9a 58%, #6d9e79) !important;
-  color: #102016 !important;
-  border: 1px solid rgba(232,250,234,.62) !important;
-  box-shadow: 0 12px 34px rgba(100,157,113,.23), inset 0 1px 0 rgba(255,255,255,.48) !important;
+  background: linear-gradient(125deg, #f0e2c9 0%, #ddc59f 58%, #c9ad7b 100%) !important;
+  color: #49372e !important;
+  border: 1px solid rgba(255,250,239,.82) !important;
+  box-shadow: 0 12px 30px rgba(35,24,18,.2), inset 0 1px 0 rgba(255,255,255,.72) !important;
   font-weight: 850 !important;
   letter-spacing: -.015em;
 }
 html body:not(.app-mode) .af-primary-cta:hover {
-  filter: brightness(1.06) saturate(1.04);
-  box-shadow: 0 16px 40px rgba(100,157,113,.3), inset 0 1px 0 rgba(255,255,255,.55) !important;
+  filter: brightness(1.045) saturate(1.02);
+  box-shadow: 0 16px 36px rgba(35,24,18,.25), inset 0 1px 0 rgba(255,255,255,.8) !important;
 }
 html body:not(.app-mode) .af-install-cta,
 html body:not(.app-mode) .af-nfce-entry,
 html body:not(.app-mode) .af-price-compact {
-  border-color: rgba(207,229,210,.22) !important;
-  background: rgba(12,25,16,.52) !important;
-  color: var(--af-luxe-text) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(125%);
-  backdrop-filter: blur(18px) saturate(125%);
+  border: 1px solid rgba(240,224,201,.34) !important;
+  background: rgba(66,48,37,.48) !important;
+  color: #fff9ef !important;
+  -webkit-backdrop-filter: blur(18px) saturate(115%);
+  backdrop-filter: blur(18px) saturate(115%);
 }
 html body:not(.app-mode) .af-nfce-entry:hover,
 html body:not(.app-mode) .af-install-cta:hover {
-  border-color: var(--af-luxe-line-strong) !important;
-  background: rgba(24,48,31,.72) !important;
+  border-color: rgba(240,224,201,.7) !important;
+  background: rgba(82,60,45,.68) !important;
 }
 html body:not(.app-mode) .af-nfce-entry-icon {
-  background: rgba(168,213,177,.13) !important;
-  color: var(--af-luxe-green-bright) !important;
+  background: rgba(166,180,151,.22) !important;
+  color: #dce5d2 !important;
 }
-html body:not(.app-mode) .af-home-benefits i { color: var(--af-luxe-green-bright) !important; }
+html body:not(.app-mode) .af-home-benefits i { color: #d8dfca !important; }
 html body:not(.app-mode) .af-minimal-footer,
 html body:not(.app-mode) .af-minimal-footer a,
-html body:not(.app-mode) .af-minimal-footer button { color: rgba(238,246,239,.78) !important; }
+html body:not(.app-mode) .af-minimal-footer button { color: rgba(255,248,235,.82) !important; }
 html body:not(.app-mode) .af-minimal-footer a:hover,
-html body:not(.app-mode) .af-minimal-footer button:hover { color: var(--af-luxe-green-bright) !important; }
+html body:not(.app-mode) .af-minimal-footer button:hover { color: #ead9bd !important; }
 
-/* Authenticated workspace: same forest/sage/champagne identity as the landing. */
+/* The workspace uses the same champagne / cocoa / restrained sage palette. */
+html body.app-mode {
+  background: #f4eee4 !important;
+  color: var(--af-luxe-text) !important;
+}
 html body.app-mode .app-panel-container-standalone {
   background:
-    radial-gradient(ellipse at 84% -8%, rgba(116,163,125,.16), transparent 34%),
-    radial-gradient(ellipse at 4% 100%, rgba(111,139,111,.07), transparent 38%),
-    var(--af-luxe-ink) !important;
+    radial-gradient(ellipse at 90% -8%, rgba(201,173,123,.16), transparent 34%),
+    radial-gradient(ellipse at 0% 100%, rgba(132,151,123,.10), transparent 38%),
+    #f4eee4 !important;
   color: var(--af-luxe-text) !important;
 }
 html body.app-mode .app-sidebar {
-  background: linear-gradient(180deg, #111a14, #0d140f) !important;
-  border-right: 1px solid var(--af-luxe-line) !important;
+  background: linear-gradient(180deg, #eee5d8, #e8dece) !important;
+  border-right: 1px solid rgba(112,83,63,.14) !important;
 }
 html body.app-mode .sidebar-header,
+html body.app-mode .main-header { border-color: var(--af-luxe-line) !important; }
 html body.app-mode .main-header {
-  border-color: var(--af-luxe-line) !important;
-}
-html body.app-mode .main-header {
-  background: rgba(13,20,15,.78) !important;
+  background: rgba(250,247,240,.9) !important;
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
 html body.app-mode .nav-item {
   border: 1px solid transparent !important;
   border-radius: 13px !important;
-  color: #b7c4b9 !important;
+  color: #746457 !important;
   transition: background .18s ease, border-color .18s ease, color .18s ease !important;
 }
 html body.app-mode .nav-item:hover,
 html body.app-mode .nav-item.active {
-  background: rgba(168,213,177,.105) !important;
-  border-color: rgba(168,213,177,.16) !important;
-  color: var(--af-luxe-green-bright) !important;
+  background: rgba(132,151,123,.15) !important;
+  border-color: rgba(104,124,96,.2) !important;
+  color: #53664c !important;
 }
 html body.app-mode .nav-item i,
 html body.app-mode .header-utility-cluster .icon-button i { color: inherit !important; }
@@ -126,115 +131,114 @@ html body.app-mode .content-card,
 html body.app-mode .glass-card,
 html body.app-mode .md-list-column,
 html body.app-mode .md-detail-column {
-  background: linear-gradient(145deg, rgba(27,40,31,.96), rgba(18,28,21,.98)) !important;
-  border: 1px solid var(--af-luxe-line) !important;
+  background: linear-gradient(145deg, #fffdf8, #faf6ee) !important;
+  border: 1px solid rgba(112,83,63,.13) !important;
   border-radius: var(--af-luxe-radius) !important;
   box-shadow: var(--af-luxe-shadow) !important;
+  color: #49372e !important;
 }
-html body.app-mode .card-header {
-  border-color: var(--af-luxe-line) !important;
-}
+html body.app-mode .card-header { border-color: var(--af-luxe-line) !important; }
 html body.app-mode .btn-primary,
 html body.app-mode button.btn-primary {
-  background: linear-gradient(120deg, #c5e6c9, #8fbd9a 58%, #6d9e79) !important;
-  border: 1px solid rgba(232,250,234,.48) !important;
-  color: #102016 !important;
-  box-shadow: 0 8px 24px rgba(100,157,113,.16), inset 0 1px 0 rgba(255,255,255,.35) !important;
+  background: linear-gradient(125deg, #dfe6d7, #b9c6ad 60%, #9aaa8d) !important;
+  border: 1px solid rgba(104,124,96,.24) !important;
+  color: #3e5038 !important;
+  box-shadow: 0 7px 20px rgba(104,124,96,.13), inset 0 1px 0 rgba(255,255,255,.72) !important;
   font-weight: 800 !important;
 }
 html body.app-mode .btn-primary:hover,
 html body.app-mode button.btn-primary:hover {
-  filter: brightness(1.06);
-  box-shadow: 0 12px 30px rgba(100,157,113,.23) !important;
+  filter: brightness(1.035);
+  box-shadow: 0 11px 26px rgba(104,124,96,.18) !important;
 }
 html body.app-mode .btn-secondary,
 html body.app-mode .icon-button,
-html body.app-mode .header-budget {
+html body.app-mode .header-budget,
+html body.app-mode .af-command-trigger {
   border-color: var(--af-luxe-line) !important;
-  background: rgba(225,241,227,.045) !important;
-  color: #dce8de !important;
+  background: rgba(255,253,248,.8) !important;
+  color: #695547 !important;
 }
 html body.app-mode .btn-secondary:hover,
 html body.app-mode .icon-button:hover,
-html body.app-mode .header-budget:hover {
-  border-color: var(--af-luxe-line-strong) !important;
-  background: rgba(168,213,177,.1) !important;
-  color: var(--af-luxe-green-bright) !important;
+html body.app-mode .header-budget:hover,
+html body.app-mode .af-command-trigger:hover {
+  border-color: rgba(104,124,96,.3) !important;
+  background: #f0eadf !important;
+  color: #53664c !important;
 }
 html body.app-mode input:not([type="checkbox"]):not([type="radio"]),
 html body.app-mode textarea,
 html body.app-mode select {
-  border-color: rgba(207,229,210,.18) !important;
-  background-color: rgba(8,15,10,.72) !important;
-  color: var(--af-luxe-text) !important;
+  border-color: rgba(112,83,63,.2) !important;
+  background-color: #fffdf8 !important;
+  color: #49372e !important;
 }
+html body.app-mode input::placeholder,
+html body.app-mode textarea::placeholder { color: #a29486 !important; }
 html body.app-mode input:focus,
 html body.app-mode textarea:focus,
 html body.app-mode select:focus {
-  border-color: rgba(168,213,177,.62) !important;
-  box-shadow: 0 0 0 3px rgba(168,213,177,.1) !important;
+  border-color: rgba(104,124,96,.58) !important;
+  box-shadow: 0 0 0 3px rgba(132,151,123,.12) !important;
   outline: none !important;
 }
-html body.app-mode .af-command-trigger {
-  border-color: var(--af-luxe-line) !important;
-  background: rgba(225,241,227,.045) !important;
-  color: #dce8de !important;
-}
-html body.app-mode .af-command-trigger:hover {
-  border-color: var(--af-luxe-line-strong) !important;
-  color: var(--af-luxe-green-bright) !important;
-}
 html body.app-mode .af-command-dialog {
-  background: linear-gradient(145deg, #1a281e, #111a14) !important;
+  background: linear-gradient(145deg, #fffdf8, #f3ecdf) !important;
   border-color: var(--af-luxe-line-strong) !important;
+  color: #49372e !important;
+  box-shadow: 0 24px 70px rgba(65,46,33,.18) !important;
 }
 html body.app-mode .af-command-icon {
-  background: rgba(168,213,177,.13) !important;
-  color: var(--af-luxe-green-bright) !important;
+  background: rgba(132,151,123,.16) !important;
+  color: #62775a !important;
 }
 html body.app-mode .system-sync-bar button {
-  background: linear-gradient(145deg, #1d2b21, #142018) !important;
+  background: linear-gradient(145deg, #fffdf8, #f1eadf) !important;
   border-color: var(--af-luxe-line) !important;
-  color: #e1ece3 !important;
+  color: #695547 !important;
 }
 html body.app-mode .system-sync-bar button:first-child {
-  background: linear-gradient(145deg, rgba(105,157,119,.3), rgba(25,55,35,.56)) !important;
-  border-color: rgba(168,213,177,.27) !important;
-  color: var(--af-luxe-green-bright) !important;
+  background: linear-gradient(145deg, #e6ebdf, #d5dfcb) !important;
+  border-color: rgba(104,124,96,.25) !important;
+  color: #53664c !important;
 }
 html body.app-mode .app-sidebar,
 html body.app-mode .app-main-content { color: var(--af-luxe-text) !important; }
 html body.app-mode .header-budget-values,
 html body.app-mode .header-budget-values strong { color: inherit !important; }
-html body.app-mode .header-budget-bar-fill { background: linear-gradient(90deg, #709e79, #c2e8c8) !important; }
+html body.app-mode .header-budget-bar-fill { background: linear-gradient(90deg, #9aaa8d, #c9ad7b) !important; }
 html body.app-mode .af-chatbot-toggle,
-html body.app-mode #af-chatbot-toggle { border-color: rgba(168,213,177,.34) !important; }
-html body.app-mode ::selection { background: rgba(168,213,177,.28); color: #fff; }
+html body.app-mode #af-chatbot-toggle { border-color: rgba(104,124,96,.32) !important; }
+html body.app-mode ::selection { background: rgba(132,151,123,.22); color: #49372e; }
 
-/* Shared micro-interactions: refined, quick and accessible. */
+/* Consistent focus and understated motion. */
 html body button, html body a { -webkit-tap-highlight-color: transparent; }
 html body button:focus-visible, html body a:focus-visible {
-  outline: 2px solid var(--af-luxe-green-bright) !important;
+  outline: 2px solid #9aaa8d !important;
   outline-offset: 3px !important;
 }
 @media (hover:hover) and (prefers-reduced-motion:no-preference) {
   html body.app-mode .dashboard-card,
   html body.app-mode .content-card,
-  html body.app-mode .glass-card { transition: border-color .2s ease, box-shadow .2s ease !important; }
+  html body.app-mode .glass-card {
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease !important;
+  }
   html body.app-mode .dashboard-card:hover,
   html body.app-mode .content-card:hover,
   html body.app-mode .glass-card:hover {
-    border-color: rgba(168,213,177,.22) !important;
-    box-shadow: 0 22px 58px rgba(0,0,0,.25) !important;
+    transform: translateY(-2px);
+    border-color: rgba(132,151,123,.28) !important;
+    box-shadow: 0 18px 42px rgba(84,62,45,.12) !important;
   }
 }
 @media (max-width:760px) {
-  html body.app-mode .app-sidebar { background: #101811 !important; }
+  html body.app-mode .app-sidebar { background: #eee5d8 !important; }
   html body.app-mode .main-header { padding-left: 12px !important; padding-right: 12px !important; }
   html body.app-mode .dashboard-card,
   html body.app-mode .content-card,
   html body.app-mode .glass-card { border-radius: 15px !important; }
 }
 @media (prefers-reduced-motion:reduce) {
-  html body * { scroll-behavior: auto !important; }
+  html body * { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
