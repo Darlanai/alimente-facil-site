@@ -42,8 +42,8 @@
     else { video.currentTime = 0; playCurrent(); }
   });
   video.addEventListener('error', () => {
+    switching = false;
     if (index !== 0) switchTo(0);
-    else switching = false;
   });
   if (nextButton) {
     nextButton.addEventListener('click', () => {
