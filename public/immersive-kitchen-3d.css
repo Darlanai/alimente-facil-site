@@ -12,6 +12,8 @@ html body:not(.app-mode) .af-video-shade{
  linear-gradient(0deg,rgba(7,10,8,.42),transparent 44%,rgba(7,10,8,.10))!important;
  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;pointer-events:none!important;
 }
+html body:not(.app-mode) .af-one-screen-home{pointer-events:none!important}
+html body:not(.app-mode) .af-home-copy{pointer-events:auto!important}
 html body:not(.app-mode) .af-minimal-header,
 html body:not(.app-mode) .af-landing-moment,
 html body:not(.app-mode) .af-one-screen-home,
