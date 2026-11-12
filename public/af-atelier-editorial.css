@@ -1,0 +1,350 @@
+/* Alimente Fácil — Atelier Editorial 2026
+   Market-led landing refinement. Preserves the V3 structure, video and panel logic.
+   No simulated 3D, no scroll hijacking, no changes to account or billing flows. */
+
+:root{
+  --af-atelier-ink:#252820;
+  --af-atelier-paper:#f4efe5;
+  --af-atelier-sand:#dfd2bb;
+  --af-atelier-citrus:#d7e5a2;
+  --af-atelier-clay:#c97859;
+  --af-atelier-line:rgba(255,250,239,.22);
+}
+
+html body:not(.app-mode) #landing-video-container{
+  color:#fffaf1;
+  background:#292b24;
+  font-family:Manrope,system-ui,sans-serif;
+}
+html body:not(.app-mode) #landing-video-container .af-landing-video{
+  filter:brightness(.88) saturate(.82) contrast(1.035)!important;
+  transform:none!important;
+  transition:filter .45s ease!important;
+}
+html body:not(.app-mode) #landing-video-container .af-video-shade{
+  background:
+    linear-gradient(90deg,rgba(21,24,19,.78) 0%,rgba(27,29,22,.55) 38%,rgba(27,29,22,.12) 76%,rgba(27,29,22,.08) 100%),
+    linear-gradient(0deg,rgba(20,22,18,.58),transparent 34%,rgba(20,22,18,.24))!important;
+}
+html body:not(.app-mode) #landing-video-container:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  opacity:.18;
+  background-image:radial-gradient(rgba(255,255,255,.22) .55px,transparent .7px);
+  background-size:5px 5px;
+  mix-blend-mode:soft-light;
+}
+html body:not(.app-mode) .af-minimal-header{
+  padding:clamp(16px,2.5vw,30px) clamp(20px,5.2vw,78px)!important;
+}
+html body:not(.app-mode) .af-minimal-brand{
+  gap:11px!important;
+  text-shadow:0 2px 18px rgba(0,0,0,.28);
+}
+html body:not(.app-mode) .af-minimal-brand img{
+  width:48px!important;height:48px!important;
+}
+html body:not(.app-mode) .af-minimal-brand strong{
+  font:800 11px/1.12 Manrope,system-ui,sans-serif!important;
+  letter-spacing:.2em!important;
+}
+html body:not(.app-mode) .af-top-controls{
+  gap:5px!important;
+  padding:5px!important;
+  border:1px solid rgba(255,250,239,.24)!important;
+  border-radius:999px!important;
+  background:rgba(28,30,24,.28)!important;
+  box-shadow:0 12px 34px rgba(0,0,0,.12)!important;
+  backdrop-filter:blur(18px) saturate(115%)!important;
+}
+html body:not(.app-mode) .af-top-icon,
+html body:not(.app-mode) .af-power-button{
+  width:38px!important;height:38px!important;
+  border:0!important;border-radius:50%!important;
+  background:transparent!important;
+  color:rgba(255,250,239,.92)!important;
+  box-shadow:none!important;
+}
+html body:not(.app-mode) .af-top-icon:hover,
+html body:not(.app-mode) .af-power-button:hover{
+  color:var(--af-atelier-citrus)!important;
+  background:rgba(255,250,239,.12)!important;
+  transform:translateY(-1px)!important;
+}
+
+html body:not(.app-mode) .af-one-screen-home{
+  min-height:100svh!important;
+  padding:clamp(112px,16vh,166px) clamp(24px,8.5vw,132px) clamp(120px,15vh,156px)!important;
+  align-items:center!important;
+}
+html body:not(.app-mode) .af-home-copy{
+  width:min(760px,100%)!important;
+  max-width:760px!important;
+  text-shadow:none!important;
+  animation:af-atelier-arrive .8s cubic-bezier(.2,.72,.2,1) both;
+}
+html body:not(.app-mode) .af-brand-slogan{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  margin:0 0 25px!important;
+  padding:9px 13px!important;
+  border:1px solid rgba(255,250,239,.22)!important;
+  border-radius:999px!important;
+  background:rgba(35,37,29,.24)!important;
+  color:#f0e3c9!important;
+  font:800 9px/1 Manrope,sans-serif!important;
+  letter-spacing:.18em!important;
+  text-transform:uppercase!important;
+  backdrop-filter:blur(12px);
+}
+html body:not(.app-mode) .af-brand-slogan:before{
+  content:"";width:6px;height:6px;border-radius:50%;
+  background:var(--af-atelier-citrus);
+  box-shadow:0 0 0 4px rgba(215,229,162,.12);
+}
+html body:not(.app-mode) .af-greeting{
+  margin:0 0 15px!important;
+  color:#e6dfc9!important;
+  font:600 clamp(14px,1.3vw,18px)/1.4 Manrope,sans-serif!important;
+  letter-spacing:.015em!important;
+}
+html body:not(.app-mode) #afHomeTitle{
+  max-width:780px!important;
+  margin:0!important;
+  color:#fffaf1!important;
+  font:800 clamp(66px,8.6vw,120px)/.88 Sora,Manrope,sans-serif!important;
+  letter-spacing:-.085em!important;
+  text-wrap:balance;
+}
+html body:not(.app-mode) #afHomeTitle span{color:#fffaf1!important}
+html body:not(.app-mode) #afHomeTitle em{
+  color:var(--af-atelier-citrus)!important;
+  -webkit-text-stroke:0!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:1.04em!important;
+  font-weight:500!important;
+  font-style:italic!important;
+  letter-spacing:-.075em!important;
+}
+html body:not(.app-mode) .af-home-subtitle{
+  max-width:510px!important;
+  margin:25px 0 27px!important;
+  color:rgba(255,250,241,.82)!important;
+  font:500 clamp(15px,1.35vw,18px)/1.65 Manrope,sans-serif!important;
+  text-shadow:none!important;
+}
+html body:not(.app-mode) .af-home-actions{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  gap:12px!important;
+}
+html body:not(.app-mode) .af-home-actions .af-primary-cta{
+  min-height:54px!important;
+  padding:0 25px!important;
+  border:1px solid rgba(255,255,255,.72)!important;
+  border-radius:999px!important;
+  background:var(--af-atelier-paper)!important;
+  color:var(--af-atelier-ink)!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.16)!important;
+  font:800 13px/1 Manrope,sans-serif!important;
+  letter-spacing:.01em!important;
+}
+html body:not(.app-mode) .af-home-actions .af-primary-cta:hover{
+  transform:translateY(-2px)!important;
+  box-shadow:0 17px 38px rgba(0,0,0,.22)!important;
+}
+html body:not(.app-mode) .af-nfce-entry{
+  min-height:54px!important;
+  padding:7px 16px 7px 8px!important;
+  gap:11px!important;
+  border:1px solid rgba(255,250,239,.28)!important;
+  border-radius:16px!important;
+  background:rgba(255,250,239,.10)!important;
+  color:#fffaf1!important;
+  box-shadow:none!important;
+  backdrop-filter:blur(15px) saturate(120%)!important;
+}
+html body:not(.app-mode) .af-nfce-entry-icon{
+  width:38px!important;height:38px!important;
+  border-radius:12px!important;
+  background:rgba(215,229,162,.16)!important;
+  color:var(--af-atelier-citrus)!important;
+}
+html body:not(.app-mode) .af-nfce-entry strong{
+  color:#fffaf1!important;font:800 11px/1.2 Manrope,sans-serif!important;
+}
+html body:not(.app-mode) .af-nfce-entry small{
+  color:rgba(255,250,241,.68)!important;
+  font:500 9px/1.35 Manrope,sans-serif!important;
+}
+html body:not(.app-mode) .af-price-compact{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:3px!important;
+  padding:2px 0 2px 15px!important;
+  border-left:1px solid rgba(255,250,239,.3)!important;
+}
+html body:not(.app-mode) .af-price-compact strong{
+  color:#fffaf1!important;font:800 19px/1.1 Sora,sans-serif!important;
+}
+html body:not(.app-mode) .af-price-compact strong small{
+  color:#e8dfca!important;font:600 10px/1 Manrope,sans-serif!important;
+}
+html body:not(.app-mode) .af-price-compact span{
+  color:rgba(255,250,241,.68)!important;font:500 9px/1.35 Manrope,sans-serif!important;
+}
+html body:not(.app-mode) .af-home-benefits{
+  display:flex!important;flex-wrap:wrap!important;gap:10px 20px!important;
+  margin-top:25px!important;
+  color:rgba(255,250,241,.76)!important;
+  font:650 10px/1.4 Manrope,sans-serif!important;
+}
+html body:not(.app-mode) .af-home-benefits span{
+  display:inline-flex!important;align-items:center!important;gap:7px!important;
+}
+html body:not(.app-mode) .af-home-benefits i{
+  color:var(--af-atelier-citrus)!important;font-size:11px!important;
+}
+
+html body:not(.app-mode) .af-landing-moment{
+  top:50%!important;right:clamp(22px,6vw,88px)!important;
+  width:205px!important;max-width:205px!important;
+  padding:17px!important;
+  border:1px solid rgba(255,250,239,.2)!important;
+  border-radius:18px!important;
+  background:rgba(35,37,29,.25)!important;
+  box-shadow:0 18px 48px rgba(0,0,0,.10)!important;
+  backdrop-filter:blur(16px) saturate(110%)!important;
+}
+html body:not(.app-mode) .af-brand-moment{
+  color:#fffaf1!important;font:600 11px/1.4 Manrope,sans-serif!important;
+}
+html body:not(.app-mode) .af-brand-moment b{
+  color:var(--af-atelier-citrus)!important;font:800 17px/1 Sora,sans-serif!important;
+}
+html body:not(.app-mode) .af-landing-moment em{
+  display:block!important;margin-top:9px!important;
+  color:rgba(255,250,241,.7)!important;
+  font:italic 12px/1.5 Georgia,serif!important;
+}
+html body:not(.app-mode) .af-minimal-footer{
+  left:clamp(20px,5.2vw,78px)!important;
+  right:clamp(20px,5.2vw,78px)!important;
+  bottom:16px!important;
+  color:rgba(255,250,241,.76)!important;
+  font:600 10px/1.4 Manrope,sans-serif!important;
+  text-shadow:none!important;
+}
+html body:not(.app-mode) .af-minimal-footer button,
+html body:not(.app-mode) .af-minimal-footer a{
+  color:inherit!important;
+  transition:color .18s ease!important;
+}
+html body:not(.app-mode) .af-minimal-footer button:hover,
+html body:not(.app-mode) .af-minimal-footer a:hover{
+  color:var(--af-atelier-citrus)!important;
+}
+html body:not(.app-mode) .af-legal-links{gap:16px!important}
+
+/* The landing remains a single visual state; the reveal handle stays independent. */
+html body:not(.app-mode) .af-global-reveal{z-index:450!important}
+html body:not(.app-mode) .af-reveal-divider{z-index:451!important}
+html body:not(.app-mode) #af-chatbot,
+html body:not(.app-mode) #af-chatbot-toggle{display:none!important}
+
+/* Small screens: allow the page to scroll instead of compressing controls into the footer. */
+@media(max-width:760px){
+  html body:not(.app-mode) #landing-video-container{
+    overflow-x:hidden!important;overflow-y:auto!important;
+    overscroll-behavior-y:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  html body:not(.app-mode) #landing-video-container .af-landing-video{
+    position:fixed!important;inset:0!important;height:100svh!important;
+    object-position:58% center!important;
+    filter:brightness(.72) saturate(.82) contrast(1.04)!important;
+  }
+  html body:not(.app-mode) #landing-video-container .af-video-shade{
+    background:
+      linear-gradient(90deg,rgba(20,23,18,.76),rgba(24,26,20,.42)),
+      linear-gradient(0deg,rgba(20,22,18,.68),transparent 45%,rgba(20,22,18,.24))!important;
+  }
+  html body:not(.app-mode) .af-minimal-header{
+    position:absolute!important;padding:13px 15px!important;
+  }
+  html body:not(.app-mode) .af-minimal-brand img{width:40px!important;height:40px!important}
+  html body:not(.app-mode) .af-minimal-brand strong{font-size:9px!important}
+  html body:not(.app-mode) .af-top-controls{gap:2px!important;padding:3px!important}
+  html body:not(.app-mode) .af-top-icon,
+  html body:not(.app-mode) .af-power-button{width:31px!important;height:31px!important}
+  html body:not(.app-mode) .af-one-screen-home{
+    min-height:100svh!important;height:auto!important;
+    padding:108px 22px 28px!important;
+    align-items:center!important;
+  }
+  html body:not(.app-mode) .af-home-copy{
+    width:100%!important;max-width:520px!important;margin:0 auto!important;
+  }
+  html body:not(.app-mode) .af-brand-slogan{
+    margin-bottom:18px!important;padding:8px 10px!important;
+    font-size:8px!important;letter-spacing:.14em!important;
+  }
+  html body:not(.app-mode) .af-greeting{font-size:13px!important;margin-bottom:11px!important}
+  html body:not(.app-mode) #afHomeTitle{
+    font-size:clamp(56px,15.8vw,82px)!important;line-height:.9!important;
+  }
+  html body:not(.app-mode) #afHomeTitle em{-webkit-text-stroke:0!important}
+  html body:not(.app-mode) .af-home-subtitle{
+    margin:18px 0 20px!important;font-size:14px!important;line-height:1.55!important;
+  }
+  html body:not(.app-mode) .af-home-actions{
+    display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+    gap:9px!important;align-items:stretch!important;
+  }
+  html body:not(.app-mode) .af-home-actions .af-primary-cta{width:100%!important;min-height:51px!important}
+  html body:not(.app-mode) .af-nfce-entry{width:100%!important;box-sizing:border-box!important}
+  html body:not(.app-mode) .af-price-compact{
+    padding:9px 0 0!important;border:0!important;
+    border-top:1px solid rgba(255,250,239,.25)!important;
+  }
+  html body:not(.app-mode) .af-home-benefits{
+    gap:8px 13px!important;margin-top:16px!important;font-size:9px!important;
+  }
+  html body:not(.app-mode) .af-landing-moment{display:none!important}
+  html body:not(.app-mode) .af-minimal-footer{
+    position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;
+    display:flex!important;align-items:center!important;justify-content:space-between!important;
+    gap:12px!important;margin:0 18px 15px!important;padding:12px 0 4px!important;
+    border-top:1px solid rgba(255,250,239,.18)!important;
+    font-size:9px!important;
+  }
+  html body:not(.app-mode) .af-footer-primary{gap:12px!important}
+  html body:not(.app-mode) .af-legal-links{gap:10px!important}
+}
+@media(max-width:380px){
+  html body:not(.app-mode) .af-minimal-brand{gap:6px!important}
+  html body:not(.app-mode) .af-top-controls{gap:0!important}
+  html body:not(.app-mode) .af-top-icon,
+  html body:not(.app-mode) .af-power-button{width:28px!important;height:28px!important}
+  html body:not(.app-mode) #afHomeTitle{font-size:55px!important}
+  html body:not(.app-mode) .af-home-benefits{font-size:8px!important}
+}
+@media(max-height:700px) and (min-width:761px){
+  html body:not(.app-mode) .af-one-screen-home{padding-top:105px!important;padding-bottom:100px!important}
+  html body:not(.app-mode) .af-home-copy{transform:scale(.92);transform-origin:left center}
+  html body:not(.app-mode) .af-landing-moment{display:none!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html body:not(.app-mode) #landing-video-container .af-landing-video{transition:none!important;transform:none!important}
+  html body:not(.app-mode) .af-home-copy{animation:none!important}
+  html body:not(.app-mode) .af-primary-cta{transition:none!important}
+}
+@keyframes af-atelier-arrive{
+  from{opacity:0;transform:translateY(15px)}
+  to{opacity:1;transform:translateY(0)}
+}
