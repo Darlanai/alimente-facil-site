@@ -1,5 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/loaders/GLTFLoader.js';
 
 (()=>{
  const canvas=document.getElementById('afKitchen3DCanvas');
@@ -69,49 +70,28 @@ import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/exampl
  box('Cuba',[.9,.06,.62],[-1.75,1.07,-4.2],black);
  box('Torneira',[.07,.44,.07],[-1.75,1.32,-4.52],steel);
  box('Cooktop',[1.1,.045,.7],[.65,1.07,-4.18],black);
- // Fridge housing with hinged doors, internal shelves and independent LEDs.
- const fridge=new THREE.Group();fridge.position.set(3.75,0,-3.62);scene.add(fridge);
- box('Nicho da geladeira',[2.05,2.72,1.2],[0,1.38,-.12],oak,fridge);
- box('Fundo interno',[1.68,2.35,.12],[0,1.35,-.73],black,fridge);
- box('Interior refrigerado',[1.62,2.25,.62],[0,1.35,-.48],mat(0x27302d,.35),fridge);
- const fridgeLight=new THREE.PointLight(0xffedce,0,4);fridgeLight.position.set(0,2.15,.2);fridge.add(fridgeLight);
- const fridgeFill=new THREE.PointLight(0xc7e4ff,0,2.5);fridgeFill.position.set(0,1.25,.3);fridge.add(fridgeFill);
- for(let i=0;i<4;i++){
-  box('Prateleira de vidro',[1.52,.035,.54],[0,.52+i*.48,-.1],glass,fridge,false);
-  box('Perfil da prateleira',[1.52,.025,.04],[0,.5+i*.48,.16],steel,fridge,false);
- }
- for(let i=0;i<3;i++){
-  const colors=[0x9e4d36,0x7b9a58,0xd4a64b];
-  const jar=mat(colors[i],.32);
-  box('Alimento fresco',[.28,.27,.24],[-.48+i*.46,.72,.04],jar,fridge);
-  box('Pote de alimento',[.22,.19,.22],[-.46+i*.44,1.23,-.02],mat([0xd8d1bd,0x8ca5a0,0xb3a07d][i],.3),fridge);
- }
- const leftDoor=new THREE.Group();leftDoor.position.set(-.86,1.38,.55);fridge.add(leftDoor);
- const leftPanel=box('Porta esquerda',[.84,2.56,.12],[.42,0,0],steel,leftDoor);
- box('Puxador esquerdo',[.045,.76,.075],[.78,0,.08],black,leftDoor);
- const rightDoor=new THREE.Group();rightDoor.position.set(.86,1.38,.55);fridge.add(rightDoor);
- box('Porta direita',[.84,2.56,.12],[-.42,0,0],steel,rightDoor);
- box('Puxador direito',[.045,.76,.075],[-.78,0,.08],black,rightDoor);
- // Door bins on inner face.
- for(const pivot of [leftDoor,rightDoor])for(let i=0;i<3;i++){
-  box('Prateleira da porta',[.62,.08,.16],[0,-.83+i*.58,-.13],glass,pivot,false);
- }
- const doors=[{node:leftDoor,closed:0,open:-1.75},{node:rightDoor,closed:0,open:1.75}];
- let fridgeOpen=false,doorT=0,lightsOn=true;
- const targetDoor=()=>fridgeOpen?1:0;
- const fridgeMeshes=[leftPanel,...fridge.children.filter(o=>o.name==='Porta direita')];
- const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
- let down=null,moved=false;
- const onDown=e=>{down={x:e.clientX,y:e.clientY};moved=false;};
- const onUp=e=>{
-  if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;down=null;
-  if(Math.hypot(dx,dy)>7)return;
-  const rect=canvas.getBoundingClientRect();pointer.x=((e.clientX-rect.left)/rect.width)*2-1;pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;
-  ray.setFromCamera(pointer,camera);
-  const hit=ray.intersectObjects([leftPanel,...rightDoor.children.filter(o=>o.isMesh)],false)[0];
-  if(hit){fridgeOpen=!fridgeOpen;document.body.classList.toggle('af-fridge-open',fridgeOpen);}
- };
- canvas.addEventListener('pointerdown',onDown);canvas.addEventListener('pointerup',onUp);
+ // Photoreal appliance asset (CC0) with native open/close animation clips.
+ const fridgeAnchor=new THREE.Group();fridgeAnchor.position.set(3.72,0,-3.58);scene.add(fridgeAnchor);
+ const fridgeHit=new THREE.Mesh(new THREE.BoxGeometry(1.25,2.05,1.35),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+ fridgeHit.position.set(0,1.0,0);fridgeHit.userData.fridgeHit=true;fridgeAnchor.add(fridgeHit);
+ let fridgeMixer=null,fridgeActions={},fridgeModelReady=false,fridgeOpen=false;
+ const fridgeLight=new THREE.PointLight(0xffedce,0,4);fridgeLight.position.set(0,1.55,.62);fridgeAnchor.add(fridgeLight);
+ const fridgeFill=new THREE.PointLight(0xc7e4ff,0,2.5);fridgeFill.position.set(0,.82,.55);fridgeAnchor.add(fridgeFill);
+ const fridgeLoader=new GLTFLoader();
+ fridgeLoader.load('https://cdn.3dassets.dev/assets/14039/v1/model.glb',(gltf)=>{
+   const model=gltf.scene;model.scale.setScalar(1.12);model.position.set(-.48,0,-.62);
+   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material.envMapIntensity=1.15;}}});
+   fridgeAnchor.add(model);fridgeModelReady=true;
+   if(gltf.animations?.length){
+     fridgeMixer=new THREE.AnimationMixer(model);
+     for(const clip of gltf.animations){
+       const name=clip.name.toLowerCase();
+       fridgeActions[name]=fridgeMixer.clipAction(clip);
+     }
+     const closeClip=Object.keys(fridgeActions).find(n=>n.includes('close'));
+     if(closeClip){const a=fridgeActions[closeClip];a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true;a.play();a.timeScale=1;}
+   }
+ },undefined,(error)=>console.warn('[AF Kitchen 3D] Fridge model unavailable; interactive door hit area remains available.',error));
  // Lighting: architectural daylight + warm pendants + cabinet strips.
  const ambient=new THREE.HemisphereLight(0xffead0,0x414b48,1.45);scene.add(ambient);
  const sun=new THREE.DirectionalLight(0xffe4c2,3.2);sun.position.set(-4,8,5);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
@@ -132,9 +112,7 @@ import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/exampl
  const ro=new ResizeObserver(resize);ro.observe(root);resize();
  const render=()=>{
   if(!root.isConnected){cancelAnimationFrame(raf);ro.disconnect();controls.dispose();renderer.dispose();return;}
-  const dt=Math.min(clock.getDelta(),.04);doorT+=(targetDoor()-doorT)*Math.min(1,dt*5);
-  doors[0].node.rotation.y=doors[0].closed+(doors[0].open-doors[0].closed)*doorT;
-  doors[1].node.rotation.y=doors[1].closed+(doors[1].open-doors[1].closed)*doorT;
+  const dt=Math.min(clock.getDelta(),.04);fridgeMixer?.update(dt);
   fridgeLight.intensity=THREE.MathUtils.damp(fridgeLight.intensity,fridgeOpen?34:0,8,dt);
   fridgeFill.intensity=THREE.MathUtils.damp(fridgeFill.intensity,fridgeOpen?13:0,8,dt);
   controls.update();renderer.render(scene,camera);raf=requestAnimationFrame(render);
