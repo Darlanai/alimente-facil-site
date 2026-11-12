@@ -1,0 +1,122 @@
+/* Immersive Kitchen 3D — restrained architectural realism. */
+html,body{max-width:100%;overflow-x:hidden}
+html body:not(.app-mode) #landing-video-container{
+ position:relative!important;isolation:isolate!important;background:#171914!important;overflow:hidden!important;
+}
+html body:not(.app-mode) .af-kitchen-3d-canvas{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ display:block!important;z-index:0!important;touch-action:pan-y!important;outline:0;
+}
+html body:not(.app-mode) .af-video-shade{
+ z-index:1!important;background:linear-gradient(90deg,rgba(7,10,8,.48),rgba(7,10,8,.12) 62%,rgba(7,10,8,.04)),
+ linear-gradient(0deg,rgba(7,10,8,.42),transparent 44%,rgba(7,10,8,.10))!important;
+ backdrop-filter:none!important;-webkit-backdrop-filter:none!important;pointer-events:none!important;
+}
+html body:not(.app-mode) .af-minimal-header,
+html body:not(.app-mode) .af-landing-moment,
+html body:not(.app-mode) .af-one-screen-home,
+html body:not(.app-mode) .af-minimal-footer{position:relative!important;z-index:4!important}
+html body:not(.app-mode) .af-top-controls{
+ display:flex!important;align-items:center!important;gap:8px!important;
+ padding:7px 9px!important;border-radius:999px!important;
+ background:rgba(13,17,13,.28)!important;border:1px solid rgba(255,255,255,.17)!important;
+ backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important;
+}
+html body:not(.app-mode) .af-top-icon,
+html body:not(.app-mode) .af-power-button,
+html body:not(.app-mode) .af-scene-light{
+ width:38px!important;height:38px!important;min-width:38px!important;padding:0!important;
+ display:inline-grid!important;place-items:center!important;border-radius:50%!important;
+ color:#f4f1e9!important;background:rgba(255,255,255,.055)!important;
+ border:1px solid rgba(255,255,255,.16)!important;box-shadow:none!important;
+ transition:background .2s ease,border-color .2s ease,transform .2s ease!important;
+}
+html body:not(.app-mode) .af-top-icon:hover,
+html body:not(.app-mode) .af-power-button:hover,
+html body:not(.app-mode) .af-scene-light:hover{background:rgba(255,255,255,.15)!important;transform:translateY(-1px)!important}
+html body:not(.app-mode) .af-scene-light[aria-pressed="false"]{color:#e5c58e!important}
+html body:not(.app-mode) .af-scene-light .af-theme-switch{display:none!important}
+html body:not(.app-mode) .af-brand-copy{color:#f7f5ed!important;text-shadow:0 2px 14px #000!important}
+html body:not(.app-mode) .af-home-copy{background:transparent!important;backdrop-filter:none!important;box-shadow:none!important;border:0!important}
+html body:not(.app-mode) #afHomeTitle{color:#fff!important;text-shadow:0 3px 26px rgba(0,0,0,.55)!important}
+html body:not(.app-mode) #afHomeTitle em{color:#d8c39d!important;-webkit-text-stroke:0!important}
+html body:not(.app-mode) .af-brand-slogan{
+ color:#f0e7d5!important;background:rgba(13,17,13,.28)!important;
+ border:1px solid rgba(255,255,255,.15)!important;backdrop-filter:blur(8px)!important;
+}
+html body:not(.app-mode) .af-greeting,
+html body:not(.app-mode) .af-home-subtitle,
+html body:not(.app-mode) .af-home-benefits{color:rgba(255,255,255,.94)!important;text-shadow:0 2px 16px rgba(0,0,0,.55)!important}
+html body:not(.app-mode) .af-nfce-entry{
+ background:rgba(17,20,16,.54)!important;border:1px solid rgba(255,255,255,.22)!important;
+ backdrop-filter:blur(9px)!important;box-shadow:0 10px 28px rgba(0,0,0,.18)!important;
+}
+html body:not(.app-mode) .af-nfce-entry strong{color:#fff!important}
+html body:not(.app-mode) .af-nfce-entry small{color:rgba(255,255,255,.8)!important}
+html body:not(.app-mode) .af-primary-cta{
+ background:linear-gradient(135deg,#e7dcc7,#c5ae88)!important;color:#241f17!important;
+ box-shadow:0 12px 32px rgba(0,0,0,.28)!important;border:0!important;
+}
+html body:not(.app-mode) .af-kitchen-3d-hint{
+ position:absolute;z-index:5;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));
+ transform:translateX(-50%);display:flex;align-items:center;gap:9px;
+ color:rgba(255,255,255,.84);font:500 11px/1.2 Manrope, sans-serif;
+ letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;
+ padding:10px 15px;border-radius:999px;background:rgba(9,13,10,.3);
+ border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(8px);
+ pointer-events:none;
+}
+html body:not(.app-mode) .af-kitchen-3d-hint i{font-size:13px;color:#e2c99d}
+html body:not(.app-mode) .af-kitchen-3d-fallback{position:absolute;inset:0;z-index:2;display:grid;place-items:center;color:white;background:#171914}
+html body.app-mode .app-panel-container-standalone{
+ background:radial-gradient(ellipse at 82% 0%,rgba(190,164,121,.08),transparent 34%),linear-gradient(145deg,#171a17,#101310 70%,#171914)!important;
+ color:#f0eee7!important;
+}
+html body.app-mode .app-sidebar{background:linear-gradient(180deg,#1b201b,#141814)!important;border-right:1px solid rgba(230,220,200,.1)!important}
+html body.app-mode .main-header{background:rgba(22,26,22,.92)!important;border-bottom:1px solid rgba(230,220,200,.1)!important;backdrop-filter:blur(14px)!important}
+html body.app-mode .modules-area{background:transparent!important;padding:clamp(14px,2vw,30px)!important}
+html body.app-mode .page-title{color:#f4f0e7!important;letter-spacing:-.035em!important}
+html body.app-mode .page-subtitle{color:#b9b4a8!important}
+html body.app-mode #module-notas{
+ color:#eeece5!important;background:transparent!important;
+}
+html body.app-mode #module-notas .dashboard-card,
+html body.app-mode #module-notas .content-card,
+html body.app-mode #module-notas .glass-card,
+html body.app-mode #module-notas .card,
+html body.app-mode #module-notas .notes-card,
+html body.app-mode #module-notas .note-card,
+html body.app-mode #module-notas .empty-state{
+ background:linear-gradient(145deg,rgba(39,43,36,.96),rgba(25,29,25,.98))!important;
+ color:#f0eee7!important;border:1px solid rgba(225,215,195,.12)!important;
+ border-radius:17px!important;box-shadow:0 14px 38px rgba(0,0,0,.2)!important;
+}
+html body.app-mode #module-notas h1,
+html body.app-mode #module-notas h2,
+html body.app-mode #module-notas h3,
+html body.app-mode #module-notas strong{color:#f3efe5!important}
+html body.app-mode #module-notas p,
+html body.app-mode #module-notas small,
+html body.app-mode #module-notas label{color:#bcb7aa!important}
+html body.app-mode #module-notas input,
+html body.app-mode #module-notas select,
+html body.app-mode #module-notas textarea{
+ color:#f3efe8!important;background:#171b17!important;border:1px solid rgba(225,215,195,.16)!important;border-radius:10px!important;
+}
+html body.app-mode #module-notas button{border-radius:10px!important}
+html body.app-mode .dashboard-card,
+html body.app-mode .content-card,
+html body.app-mode .glass-card{
+ background:linear-gradient(145deg,rgba(39,43,36,.96),rgba(25,29,25,.98))!important;
+ border:1px solid rgba(225,215,195,.12)!important;border-radius:17px!important;
+ box-shadow:0 14px 38px rgba(0,0,0,.2)!important;color:#f0eee7!important;
+}
+html body.app-mode .btn-primary,
+html body.app-mode .nfce-primary{background:linear-gradient(135deg,#e3d4b8,#c1a77e)!important;color:#241f17!important;border:0!important;border-radius:10px!important}
+@media(max-width:760px){
+ html body:not(.app-mode) .af-kitchen-3d-hint{bottom:calc(12px + env(safe-area-inset-bottom));font-size:9px;letter-spacing:.08em}
+ html body:not(.app-mode) .af-top-controls{gap:5px!important;padding:5px!important}
+ html body:not(.app-mode) .af-top-icon,html body:not(.app-mode) .af-power-button,html body:not(.app-mode) .af-scene-light{width:34px!important;height:34px!important;min-width:34px!important}
+ html body.app-mode .modules-area{padding:12px 11px calc(24px + env(safe-area-inset-bottom))!important}
+}
+@media(prefers-reduced-motion:reduce){html body:not(.app-mode) .af-top-icon,html body:not(.app-mode) .af-power-button,html body:not(.app-mode) .af-scene-light{transition:none!important}}
