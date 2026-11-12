@@ -27,8 +27,23 @@ import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/
  controls.minPolarAngle=.68;controls.maxPolarAngle=1.48;controls.maxAzimuthAngle=1.12;controls.minAzimuthAngle=-1.12;
  controls.autoRotate=true;controls.autoRotateSpeed=.22;
 
+ const makeWoodTexture=()=>{
+  const c=document.createElement('canvas');c.width=512;c.height=512;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,512,0);g.addColorStop(0,'#4a3325');g.addColorStop(.48,'#8c6444');g.addColorStop(1,'#503728');x.fillStyle=g;x.fillRect(0,0,512,512);
+  for(let i=0;i<190;i++){const px=(i*73)%512,alpha=.035+((i*17)%10)/180;x.strokeStyle='rgba(24,13,8,'+alpha+')';x.lineWidth=1+(i%3);x.beginPath();x.moveTo(px,0);x.bezierCurveTo(px+((i%7)-3)*3,150,px+((i%9)-4)*2,340,px+((i%5)-2)*4,512);x.stroke();}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(2,1);t.colorSpace=THREE.SRGBColorSpace;return t;
+ };
+ const makeMarbleTexture=()=>{
+  const c=document.createElement('canvas');c.width=512;c.height=512;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,512,512);g.addColorStop(0,'#d8d5cd');g.addColorStop(.5,'#a8a79f');g.addColorStop(1,'#e7e2d7');x.fillStyle=g;x.fillRect(0,0,512,512);
+  for(let i=0;i<28;i++){x.strokeStyle='rgba(70,76,76,'+(.06+(i%5)*.018)+')';x.lineWidth=1+(i%3);x.beginPath();let y=(i*83)%512;x.moveTo(0,y);x.bezierCurveTo(130,y-35+(i%9)*8,310,y+30-(i%7)*9,512,y-24+(i%11)*5);x.stroke();}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(2,2);t.colorSpace=THREE.SRGBColorSpace;return t;
+ };
+ const woodTexture=makeWoodTexture(),marbleTexture=makeMarbleTexture();
  const mat=(color,rough=.7,metal=0,extra={})=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal,...extra});
- const floorMat=mat(0x8a7760,.48),wallMat=mat(0xd7d0c2,.9),oak=mat(0x654833,.45),oakLight=mat(0x9b7653,.42),stone=mat(0xaaa69b,.24),darkStone=mat(0x262b29,.24,.22),steel=mat(0x9da5a4,.25,.78),black=mat(0x171b1b,.28,.5),glass=mat(0x8fa9a4,.12,.15,{transparent:true,opacity:.22});
+ const woodMaterial=mat(0xffffff,.46,0,{map:woodTexture});
+ const stoneMaterial=mat(0xffffff,.24,.04,{map:marbleTexture});
+ const floorMat=mat(0xffffff,.48,0,{map:woodTexture}),wallMat=mat(0xd7d0c2,.9),oak=woodMaterial,oakLight=mat(0xffffff,.5,0,{map:woodTexture}),stone=stoneMaterial,darkStone=mat(0x262b29,.24,.22),steel=mat(0x9da5a4,.25,.78),black=mat(0x171b1b,.28,.5),glass=mat(0x8fa9a4,.12,.15,{transparent:true,opacity:.22});
  const box=(name,size,pos,material,parent=scene,cast=true)=>{
   const m=new THREE.Mesh(new THREE.BoxGeometry(...size),material);m.name=name;m.position.set(...pos);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m;
  };
