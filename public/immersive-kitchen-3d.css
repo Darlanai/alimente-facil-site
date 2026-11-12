@@ -69,7 +69,14 @@ html body:not(.app-mode) .af-kitchen-3d-hint{
  pointer-events:none;
 }
 html body:not(.app-mode) .af-kitchen-3d-hint i{font-size:13px;color:#e2c99d}
-html body:not(.app-mode) .af-kitchen-3d-fallback{position:absolute;inset:0;z-index:2;display:grid;place-items:center;color:white;background:#171914}
+html body:not(.app-mode) .af-kitchen-3d-fallback{position:absolute;inset:0;z-index:2;display:block!important;background-color:#3b3832;background-image:linear-gradient(90deg,rgba(12,15,12,.42),rgba(12,15,12,.08)),url('https://images.unsplash.com/photo-1632948415569-1173c4cd59d6?auto=format&fit=crop&fm=jpg&q=85&w=2200');background-position:center;background-size:cover;background-repeat:no-repeat;}
+html body:not(.app-mode) #theme-toggle-btn-panel{display:none!important}
+html body:not(.app-mode) .af-minimal-header{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;min-height:76px!important;padding:12px clamp(16px,4vw,40px)!important;box-sizing:border-box!important}
+html body:not(.app-mode) .af-minimal-brand{display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important}
+html body:not(.app-mode) .af-top-controls{margin-left:auto!important;flex:0 0 auto!important;gap:7px!important}
+html body:not(.app-mode) .af-top-icon,html body:not(.app-mode) .af-power-button,html body:not(.app-mode) .af-scene-light{width:42px!important;height:42px!important;min-width:42px!important}
+html body:not(.app-mode) .af-scene-light{position:static!important;inset:auto!important;transform:none!important;box-shadow:none!important}
+@media(max-width:420px){html body:not(.app-mode) .af-minimal-header{padding:10px 14px!important}html body:not(.app-mode) .af-brand-copy{font-size:12px!important}html body:not(.app-mode) .af-top-controls{gap:5px!important}html body:not(.app-mode) .af-top-icon,html body:not(.app-mode) .af-power-button,html body:not(.app-mode) .af-scene-light{width:38px!important;height:38px!important;min-width:38px!important}}
 html body.app-mode .app-panel-container-standalone{
  background:radial-gradient(ellipse at 82% 0%,rgba(190,164,121,.08),transparent 34%),linear-gradient(145deg,#171a17,#101310 70%,#171914)!important;
  color:#f0eee7!important;
