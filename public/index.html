@@ -46,6 +46,7 @@
 
 <link href="premium-experience.css?v=20261110-4" rel="stylesheet"/>
 <link href="landing-clean.css?v=20261110-2" rel="stylesheet"/>
+<link href="immersive-kitchen-3d.css?v=20261112-1" rel="stylesheet"/>
 <style>
     :root {
         --time-scale: 1;
@@ -73,8 +74,8 @@
 </head>
 <body>
 <div aria-label="Apresentação do Alimente Fácil" class="af-landing-stage" id="landing-video-container">
-<video autoplay="" class="af-landing-video" id="afLandingVideo" loop="" muted="" playsinline="" poster="fundo_poster.jpg" preload="metadata" src="https://videos.pexels.com/video-files/39576532/16868216_3840_2160_30fps.mp4"></video>
-<div aria-hidden="true" class="af-video-shade"></div>
+<canvas id="afKitchen3DCanvas" class="af-kitchen-3d-canvas" aria-label="Cozinha tridimensional interativa. Arraste para explorar e toque na geladeira para abrir."></canvas><div class="af-kitchen-3d-fallback" id="afKitchen3DFallback" hidden>Ative o WebGL para explorar a cozinha 3D.</div>
+<div aria-hidden="true" class="af-video-shade"></div><div class="af-kitchen-3d-hint" aria-hidden="true"><i class="fa-solid fa-hand-pointer"></i><span>Arraste para explorar · toque na geladeira</span></div>
 <header class="af-minimal-header">
 <a aria-label="Alimente Fácil" class="af-minimal-brand" data-af-go-landing="" href="#inicio">
 <img alt="" height="46" src="logo-a-modern.svg" width="46"/>
@@ -82,9 +83,9 @@
 </a>
 
 <div class="af-top-controls">
-<a aria-label="Instagram @alimentefacil" class="af-top-icon af-instagram" href="https://www.instagram.com/alimentefacil" rel="noopener" target="_blank" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
-<a aria-label="TikTok @alimentefacil" class="af-top-icon af-tiktok" href="https://www.tiktok.com/@alimentefacil" rel="noopener" target="_blank" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-<button aria-label="Enviar e-mail" class="af-top-icon af-email" id="afContactOpen" title="Contato por e-mail" type="button"><i class="fa-regular fa-envelope"></i></button>
+
+
+
 <button aria-label="Instalar Alimente Fácil" class="af-top-icon af-install-top btn-install-pwa" id="afInstallLanding" title="Instalar aplicativo" type="button"><i class="fa-solid fa-download"></i></button>
 
 <button type="button" class="af-scene-light af-light-in-header" id="afSceneLight" aria-pressed="false" aria-label="Ativar modo noturno" title="Alternar aparência"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i><span class="af-theme-switch" aria-hidden="true"></span></button>
@@ -757,5 +758,6 @@
         }
     </script>
 <script src="landing-runtime.js?v=20261110-2" defer></script>
+<script type="module" src="immersive-kitchen-3d.js?v=20261112-1"></script>
 </body>
 </html>
