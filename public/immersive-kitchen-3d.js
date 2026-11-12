@@ -152,7 +152,7 @@ import { GLTFLoader } from 'https://esm.sh/three@0.170.0/examples/jsm/loaders/GL
   const dt=Math.min(clock.getDelta(),.04);fridgeMixer?.update(dt);
   fridgeLight.intensity=THREE.MathUtils.damp(fridgeLight.intensity,fridgeOpen?34:0,8,dt);
   fridgeFill.intensity=THREE.MathUtils.damp(fridgeFill.intensity,fridgeOpen?13:0,8,dt);
-  controls.update();renderer.render(scene,camera);raf=requestAnimationFrame(render);
+  controls.update();renderer.render(scene,camera);if(fallback&&!fallback.hidden)fallback.hidden=true;raf=requestAnimationFrame(render);
  };render();
  window.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);ro.disconnect();controls.dispose();renderer.dispose();},{once:true});
 })();
