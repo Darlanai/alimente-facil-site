@@ -72,7 +72,7 @@
         button.innerHTML = '<span class="af-command-icon"><i class="fa-solid ' + item.icon + '" aria-hidden="true"></i></span><span class="af-command-copy"><strong></strong><small></small></span><i class="fa-solid fa-arrow-up-right-from-square af-command-go" aria-hidden="true"></i>';
         button.querySelector('strong').textContent = item.title;
         button.querySelector('small').textContent = item.detail;
-        button.addEventListener('mouseenter', () => { active = index; render(); });
+        button.addEventListener('mouseenter', () => { active = index; results.querySelectorAll('.af-command-result').forEach((node, i) => { node.classList.toggle('is-active', i === active); node.setAttribute('aria-selected', String(i === active)); }); });
         button.addEventListener('click', () => run(item));
         results.append(button);
       });
