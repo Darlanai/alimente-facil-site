@@ -1,131 +1,21 @@
-/* Immersive Kitchen 3D — restrained architectural realism. */
-html,body{max-width:100%;overflow-x:hidden}
-html body:not(.app-mode) #landing-video-container{
- position:relative!important;isolation:isolate!important;background:#171914!important;overflow:hidden!important;
-}
-html body:not(.app-mode) .af-kitchen-3d-canvas{
- position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
- display:block!important;z-index:0!important;touch-action:pan-y!important;outline:0;
-}
-html body:not(.app-mode) .af-video-shade{
- z-index:1!important;background:linear-gradient(90deg,rgba(7,10,8,.48),rgba(7,10,8,.12) 62%,rgba(7,10,8,.04)),
- linear-gradient(0deg,rgba(7,10,8,.42),transparent 44%,rgba(7,10,8,.10))!important;
- backdrop-filter:none!important;-webkit-backdrop-filter:none!important;pointer-events:none!important;
-}
-html body:not(.app-mode) .af-one-screen-home{pointer-events:none!important}
-html body:not(.app-mode) .af-home-copy{pointer-events:auto!important}
-html body:not(.app-mode) .af-minimal-header,
-html body:not(.app-mode) .af-landing-moment,
-html body:not(.app-mode) .af-one-screen-home,
-html body:not(.app-mode) .af-minimal-footer{position:relative!important;z-index:4!important}
-html body:not(.app-mode) .af-top-controls{
- display:flex!important;align-items:center!important;gap:8px!important;
- padding:7px 9px!important;border-radius:999px!important;
- background:rgba(13,17,13,.28)!important;border:1px solid rgba(255,255,255,.17)!important;
- backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important;
-}
-html body:not(.app-mode) .af-top-icon,
-html body:not(.app-mode) .af-power-button,
-html body:not(.app-mode) .af-scene-light{
- width:38px!important;height:38px!important;min-width:38px!important;padding:0!important;
- display:inline-grid!important;place-items:center!important;border-radius:50%!important;
- color:#f4f1e9!important;background:rgba(255,255,255,.055)!important;
- border:1px solid rgba(255,255,255,.16)!important;box-shadow:none!important;
- transition:background .2s ease,border-color .2s ease,transform .2s ease!important;
-}
-html body:not(.app-mode) .af-top-icon:hover,
-html body:not(.app-mode) .af-power-button:hover,
-html body:not(.app-mode) .af-scene-light:hover{background:rgba(255,255,255,.15)!important;transform:translateY(-1px)!important}
-html body:not(.app-mode) .af-scene-light[aria-pressed="false"]{color:#e5c58e!important}
-html body:not(.app-mode) .af-scene-light .af-theme-switch{display:none!important}
-html body:not(.app-mode) .af-brand-copy{color:#f7f5ed!important;text-shadow:0 2px 14px #000!important}
-html body:not(.app-mode) .af-home-copy{background:transparent!important;backdrop-filter:none!important;box-shadow:none!important;border:0!important}
-html body:not(.app-mode) #afHomeTitle{color:#fff!important;text-shadow:0 3px 26px rgba(0,0,0,.55)!important}
-html body:not(.app-mode) #afHomeTitle em{color:#d8c39d!important;-webkit-text-stroke:0!important}
-html body:not(.app-mode) .af-brand-slogan{
- color:#f0e7d5!important;background:rgba(13,17,13,.28)!important;
- border:1px solid rgba(255,255,255,.15)!important;backdrop-filter:blur(8px)!important;
-}
-html body:not(.app-mode) .af-greeting,
-html body:not(.app-mode) .af-home-subtitle,
-html body:not(.app-mode) .af-home-benefits{color:rgba(255,255,255,.94)!important;text-shadow:0 2px 16px rgba(0,0,0,.55)!important}
-html body:not(.app-mode) .af-nfce-entry{
- background:rgba(17,20,16,.54)!important;border:1px solid rgba(255,255,255,.22)!important;
- backdrop-filter:blur(9px)!important;box-shadow:0 10px 28px rgba(0,0,0,.18)!important;
-}
-html body:not(.app-mode) .af-nfce-entry strong{color:#fff!important}
-html body:not(.app-mode) .af-nfce-entry small{color:rgba(255,255,255,.8)!important}
-html body:not(.app-mode) .af-primary-cta{
- background:linear-gradient(135deg,#e7dcc7,#c5ae88)!important;color:#241f17!important;
- box-shadow:0 12px 32px rgba(0,0,0,.28)!important;border:0!important;
-}
-html body:not(.app-mode) .af-kitchen-3d-hint{
- position:absolute;z-index:5;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));
- transform:translateX(-50%);display:flex;align-items:center;gap:9px;
- color:rgba(255,255,255,.84);font:500 11px/1.2 Manrope, sans-serif;
- letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;
- padding:10px 15px;border-radius:999px;background:rgba(9,13,10,.3);
- border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(8px);
- pointer-events:none;
-}
-html body:not(.app-mode) .af-kitchen-3d-hint i{font-size:13px;color:#e2c99d}
-html body:not(.app-mode) .af-kitchen-3d-fallback:not([hidden]){position:absolute;inset:0;z-index:2;display:block!important;background-color:#3b3832;background-image:linear-gradient(90deg,rgba(12,15,12,.42),rgba(12,15,12,.08)),url('https://images.unsplash.com/photo-1632948415569-1173c4cd59d6?auto=format&fit=crop&fm=jpg&q=85&w=2200');background-position:center;background-size:cover;background-repeat:no-repeat;}
-html body:not(.app-mode) #theme-toggle-btn-panel{display:none!important}
-html body:not(.app-mode) .af-minimal-header{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;min-height:76px!important;padding:12px clamp(16px,4vw,40px)!important;box-sizing:border-box!important}
-html body:not(.app-mode) .af-minimal-brand{display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important}
-html body:not(.app-mode) .af-top-controls{margin-left:auto!important;flex:0 0 auto!important;gap:7px!important}
-html body:not(.app-mode) .af-top-icon,html body:not(.app-mode) .af-power-button,html body:not(.app-mode) .af-scene-light{width:42px!important;height:42px!important;min-width:42px!important}
-html body:not(.app-mode) .af-scene-light{position:static!important;inset:auto!important;transform:none!important;box-shadow:none!important}
-@media(max-width:420px){html body:not(.app-mode) .af-minimal-header{padding:10px 14px!important}html body:not(.app-mode) .af-brand-copy{font-size:12px!important}html body:not(.app-mode) .af-top-controls{gap:5px!important}html body:not(.app-mode) .af-top-icon,html body:not(.app-mode) .af-power-button,html body:not(.app-mode) .af-scene-light{width:38px!important;height:38px!important;min-width:38px!important}}
-html body.app-mode .app-panel-container-standalone{
- background:radial-gradient(ellipse at 82% 0%,rgba(190,164,121,.08),transparent 34%),linear-gradient(145deg,#171a17,#101310 70%,#171914)!important;
- color:#f0eee7!important;
-}
-html body.app-mode .app-sidebar{background:linear-gradient(180deg,#1b201b,#141814)!important;border-right:1px solid rgba(230,220,200,.1)!important}
-html body.app-mode .main-header{background:rgba(22,26,22,.92)!important;border-bottom:1px solid rgba(230,220,200,.1)!important;backdrop-filter:blur(14px)!important}
-html body.app-mode .modules-area{background:transparent!important;padding:clamp(14px,2vw,30px)!important}
-html body.app-mode .page-title{color:#f4f0e7!important;letter-spacing:-.035em!important}
-html body.app-mode .page-subtitle{color:#b9b4a8!important}
-html body.app-mode #module-notas{
- color:#eeece5!important;background:transparent!important;
-}
-html body.app-mode #module-notas .dashboard-card,
-html body.app-mode #module-notas .content-card,
-html body.app-mode #module-notas .glass-card,
-html body.app-mode #module-notas .card,
-html body.app-mode #module-notas .notes-card,
-html body.app-mode #module-notas .note-card,
-html body.app-mode #module-notas .empty-state{
- background:linear-gradient(145deg,rgba(39,43,36,.96),rgba(25,29,25,.98))!important;
- color:#f0eee7!important;border:1px solid rgba(225,215,195,.12)!important;
- border-radius:17px!important;box-shadow:0 14px 38px rgba(0,0,0,.2)!important;
-}
-html body.app-mode #module-notas h1,
-html body.app-mode #module-notas h2,
-html body.app-mode #module-notas h3,
-html body.app-mode #module-notas strong{color:#f3efe5!important}
-html body.app-mode #module-notas p,
-html body.app-mode #module-notas small,
-html body.app-mode #module-notas label{color:#bcb7aa!important}
-html body.app-mode #module-notas input,
-html body.app-mode #module-notas select,
-html body.app-mode #module-notas textarea{
- color:#f3efe8!important;background:#171b17!important;border:1px solid rgba(225,215,195,.16)!important;border-radius:10px!important;
-}
-html body.app-mode #module-notas button{border-radius:10px!important}
-html body.app-mode .dashboard-card,
-html body.app-mode .content-card,
-html body.app-mode .glass-card{
- background:linear-gradient(145deg,rgba(39,43,36,.96),rgba(25,29,25,.98))!important;
- border:1px solid rgba(225,215,195,.12)!important;border-radius:17px!important;
- box-shadow:0 14px 38px rgba(0,0,0,.2)!important;color:#f0eee7!important;
-}
-html body.app-mode .btn-primary,
-html body.app-mode .nfce-primary{background:linear-gradient(135deg,#e3d4b8,#c1a77e)!important;color:#241f17!important;border:0!important;border-radius:10px!important}
-@media(max-width:760px){
- html body:not(.app-mode) .af-kitchen-3d-hint{bottom:calc(12px + env(safe-area-inset-bottom));font-size:9px;letter-spacing:.08em}
- html body:not(.app-mode) .af-top-controls{gap:5px!important;padding:5px!important}
- html body:not(.app-mode) .af-top-icon,html body:not(.app-mode) .af-power-button,html body:not(.app-mode) .af-scene-light{width:34px!important;height:34px!important;min-width:34px!important}
- html body.app-mode .modules-area{padding:12px 11px calc(24px + env(safe-area-inset-bottom))!important}
-}
-@media(prefers-reduced-motion:reduce){html body:not(.app-mode) .af-top-icon,html body:not(.app-mode) .af-power-button,html body:not(.app-mode) .af-scene-light{transition:none!important}}
+html body:not(.app-mode) #landing-video-container{background:#171914!important;isolation:isolate!important}
+html body:not(.app-mode) .af-kitchen-cinema{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 48%!important;z-index:0!important;display:block!important;background:#171914!important}
+html body:not(.app-mode) .af-video-shade{z-index:1!important;background:linear-gradient(90deg,rgba(8,11,8,.48),rgba(8,11,8,.12) 64%,rgba(8,11,8,.03)),linear-gradient(0deg,rgba(8,11,8,.38),transparent 44%)!important;backdrop-filter:none!important;pointer-events:none!important}
+html body:not(.app-mode) #landing-video-container.af-kitchen-night .af-kitchen-cinema{filter:brightness(.48) saturate(.78)!important;transition:filter .55s ease}
+html body:not(.app-mode) #landing-video-container:not(.af-kitchen-night) .af-kitchen-cinema{filter:brightness(.9) saturate(1.02)!important;transition:filter .55s ease}
+html body.app-mode #module-notas .af-notes-page{--af-ink:#f2eee5;--af-green:#c9b38d;--af-mint:rgba(199,177,139,.1);--af-line:rgba(230,220,200,.13);--af-paper:#20251f;color:#f2eee5!important;background:transparent!important}
+html body.app-mode #module-notas .af-page-head p,html body.app-mode #module-notas .af-note-card header p,html body.app-mode #module-notas .af-note-card small,html body.app-mode #module-notas .af-note-card dt{color:#bdb7aa!important}
+html body.app-mode #module-notas .af-quota-card{background:linear-gradient(135deg,rgba(196,174,135,.13),rgba(255,255,255,.025))!important;border:1px solid rgba(214,192,151,.2)!important;color:#f4efe5!important}
+html body.app-mode #module-notas .af-note-card{background:linear-gradient(145deg,#252a24,#191e19)!important;border:1px solid rgba(230,220,200,.14)!important;box-shadow:0 16px 42px rgba(0,0,0,.2)!important;color:#f2eee5!important;border-radius:20px!important}
+html body.app-mode #module-notas .af-note-card h3,html body.app-mode #module-notas .af-note-card header>strong,html body.app-mode #module-notas .af-note-metrics b,html body.app-mode #module-notas .af-note-products b{color:#f3eee3!important}
+html body.app-mode #module-notas .af-note-metrics span{background:rgba(255,255,255,.045)!important;color:#c0baae!important}
+html body.app-mode #module-notas .af-note-card>footer{background:rgba(0,0,0,.12)!important}
+html body.app-mode #module-notas .af-note-card footer button{background:rgba(255,255,255,.045)!important;border:1px solid rgba(230,220,200,.15)!important;color:#e8e0d0!important}
+html body.app-mode #module-notas .af-empty-note{background:linear-gradient(145deg,#252a24,#191e19)!important;border:1px dashed rgba(230,220,200,.22)!important;color:#f2eee5!important}
+html body.app-mode #module-notas .af-empty-note p{color:#bdb7aa!important}
+html body.app-mode #module-notas .af-official-seal{background:rgba(150,190,160,.1)!important;color:#b6d2bd!important}
+html body.app-mode #module-notas .af-action-primary,html body.app-mode #module-notas .af-empty-note button{background:linear-gradient(135deg,#e4d5b7,#c1a77e)!important;color:#211d16!important}
+html body.app-mode .af-export-dock{position:fixed;z-index:9990;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));display:flex;gap:7px;padding:7px;border:1px solid rgba(220,205,177,.2);border-radius:999px;background:rgba(20,24,20,.92);box-shadow:0 12px 32px rgba(0,0,0,.28);backdrop-filter:blur(16px)}
+html body.app-mode .af-export-dock button{width:42px;height:42px;border:1px solid rgba(255,255,255,.12);border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.055);color:#f4eee2;font-size:16px}
+html body.app-mode .af-export-dock [data-af-export=whatsapp]{color:#9de1b1}html body.app-mode .af-export-dock [data-af-export=pdf]{color:#e7b5a7}html body.app-mode .af-export-dock [data-af-export=png]{color:#d7c397}
+@media(max-width:600px){html body.app-mode .af-export-dock{right:10px;bottom:calc(12px + env(safe-area-inset-bottom));gap:5px;padding:6px}html body.app-mode .af-export-dock button{width:38px;height:38px}}
