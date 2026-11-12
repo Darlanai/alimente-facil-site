@@ -19,3 +19,61 @@ html body.app-mode .af-export-dock{position:fixed;z-index:9990;right:14px;bottom
 html body.app-mode .af-export-dock button{width:42px;height:42px;border:1px solid rgba(255,255,255,.12);border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.055);color:#f4eee2;font-size:16px}
 html body.app-mode .af-export-dock [data-af-export=whatsapp]{color:#9de1b1}html body.app-mode .af-export-dock [data-af-export=pdf]{color:#e7b5a7}html body.app-mode .af-export-dock [data-af-export=png]{color:#d7c397}
 @media(max-width:600px){html body.app-mode .af-export-dock{right:10px;bottom:calc(12px + env(safe-area-inset-bottom));gap:5px;padding:6px}html body.app-mode .af-export-dock button{width:38px;height:38px}}
+
+
+/* 2026-11-12 hotfix: reveal the real landing content and separate the panel handle from the footage. */
+html body:not(.app-mode) .af-landing-stage{
+  clip-path:none!important;-webkit-clip-path:none!important;
+  --af-reveal:100%!important;
+  position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  isolation:isolate!important;background:#171914!important;
+}
+html body:not(.app-mode) .af-kitchen-cinema{
+  position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;
+  object-fit:cover!important;object-position:center center!important;
+  z-index:0!important;pointer-events:none!important;transform:none!important;
+}
+html body:not(.app-mode) .af-video-shade{
+  position:fixed!important;inset:0!important;z-index:1!important;pointer-events:none!important;
+  background:linear-gradient(90deg,rgba(7,10,8,.56),rgba(7,10,8,.19) 72%,rgba(7,10,8,.08)),
+  linear-gradient(0deg,rgba(7,10,8,.48),rgba(7,10,8,.04) 55%,rgba(7,10,8,.18))!important;
+  backdrop-filter:none!important;
+}
+html body:not(.app-mode) .af-minimal-header{position:absolute!important;z-index:30!important;top:0!important;left:0!important;right:0!important}
+html body:not(.app-mode) .af-landing-moment{position:relative!important;z-index:4!important}
+html body:not(.app-mode) .af-one-screen-home{position:relative!important;z-index:5!important;min-height:100dvh!important}
+html body:not(.app-mode) .af-home-copy{position:relative!important;z-index:6!important;background:transparent!important;backdrop-filter:none!important}
+html body:not(.app-mode) .af-minimal-footer{position:relative!important;z-index:6!important}
+html body:not(.app-mode) .af-kitchen-3d-hint{display:none!important}
+html body:not(.app-mode) #af-chatbot-toggle{display:none!important;visibility:hidden!important;pointer-events:none!important}
+html body:not(.app-mode) #afGlobalReveal{position:fixed!important;z-index:50000!important;top:50%!important;right:0!important;left:auto!important;width:38px!important;height:104px!important;transform:translateY(-50%)!important;pointer-events:auto!important;clip-path:none!important}
+html body:not(.app-mode) #afRevealDivider{position:absolute!important;inset:0!important;width:38px!important;height:104px!important;z-index:50001!important;pointer-events:auto!important}
+html body:not(.app-mode) #afRevealDivider span{right:0!important;left:auto!important;top:50%!important;transform:translateY(-50%)!important;width:27px!important;min-width:27px!important;height:68px!important;border-radius:14px 0 0 14px!important;border-right:0!important;background:rgba(22,27,23,.88)!important;border-color:rgba(226,232,222,.24)!important;box-shadow:0 8px 28px rgba(0,0,0,.32)!important;backdrop-filter:blur(14px)!important}
+html body:not(.app-mode) #afRevealRange{position:absolute!important;inset:0!important;width:38px!important;height:104px!important;opacity:0!important;cursor:ew-resize!important;z-index:50002!important}
+html body:not(.app-mode) #afRevealHint{display:none!important}
+html body.app-mode #af-chatbot-toggle.af-assistant-toggle{
+  width:48px!important;min-width:48px!important;max-width:48px!important;height:48px!important;min-height:48px!important;max-height:48px!important;
+  border-radius:50%!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  background:linear-gradient(145deg,#26382d,#111b15)!important;border:1px solid rgba(211,194,157,.48)!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.32),inset 0 1px rgba(255,255,255,.12)!important;
+}
+html body.app-mode #af-chatbot-toggle.af-assistant-toggle .af-assistant-toggle-label{display:none!important}
+html body.app-mode #af-chatbot-toggle.af-assistant-toggle img{width:27px!important;height:27px!important;flex:0 0 27px!important}
+html body.app-mode .af-export-dock{
+  right:14px!important;bottom:76px!important;z-index:49990!important;
+  display:flex!important;gap:6px!important;padding:6px!important;
+  border-radius:999px!important;background:rgba(18,23,19,.92)!important;
+  border:1px solid rgba(224,210,181,.22)!important;backdrop-filter:blur(14px)!important;
+}
+html body.app-mode .af-export-dock button{width:38px!important;height:38px!important;border-radius:50%!important;background:transparent!important;border:1px solid rgba(255,255,255,.12)!important}
+html body.app-mode .af-export-dock button[data-af-export=print]{color:#e9e3d7!important}
+@media(max-width:760px){
+ html body:not(.app-mode) .af-landing-stage{height:100dvh!important}
+ html body:not(.app-mode) .af-one-screen-home{min-height:auto!important;padding-top:36px!important;padding-bottom:118px!important}
+ html body:not(.app-mode) .af-home-copy{margin-top:0!important}
+ html body:not(.app-mode) #afGlobalReveal{right:0!important;top:48%!important}
+ html body.app-mode .af-export-dock{right:10px!important;bottom:78px!important;gap:4px!important;padding:5px!important}
+ html body.app-mode .af-export-dock button{width:35px!important;height:35px!important}
+}
+@media(prefers-reduced-motion:reduce){html body:not(.app-mode) .af-kitchen-cinema{transition:none!important}}
