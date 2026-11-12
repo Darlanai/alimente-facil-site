@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.11.12.immersive-kitchen-3d-v35';
+const VERSION = '2026.11.12.real-kitchen-video-export-v36';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -36,8 +36,7 @@ const APP_SHELL = [
   '/landing-clean.css',
   '/premium-experience.css',
   '/landing-runtime.js',
-  '/immersive-kitchen-3d.css',
-  '/immersive-kitchen-3d.js',
+  '/global-export-tools.js',
   '/logo-a-modern.svg',
   '/auth-premium-gate-fix.js',
   '/reset-password.html',
