@@ -3,7 +3,7 @@
    - Runtime cache: images (cache-first), fonts/css/js (stale-while-revalidate)
    - Videos: network-only (avoid huge caches)
 */
-const VERSION = '2026.11.13.v3-visual-refinement-v38';
+const VERSION = '2026.11.13.kitchen-landing-v39';
 const APP_SHELL_CACHE = `af-app-shell-${VERSION}`;
 const RUNTIME_CACHE = `af-runtime-${VERSION}`;
 
@@ -38,6 +38,7 @@ const APP_SHELL = [
   '/landing-runtime.js',
   '/immersive-kitchen-3d.css',
   '/v3-visual-refinement.css',
+  '/v3-kitchen-landing.css',
   '/global-export-tools.js',
   '/logo-a-modern.svg',
   '/auth-premium-gate-fix.js',
