@@ -64,3 +64,7 @@ html body:not(.app-mode) .af-kitchen-caption{display:none!important}
 html body:not(.app-mode) .af-minimal-footer{justify-content:center!important;text-align:center!important;padding:13px 14px calc(18px + env(safe-area-inset-bottom))!important}
 }
 @media(prefers-reduced-motion:reduce){html body:not(.app-mode) .af-home-actions .af-primary-cta{transition:none!important}}
+
+/* The existing header light switch continues to work with the still image. */
+html body:not(.app-mode) #landing-video-container.af-kitchen-night .af-kitchen-photo{filter:brightness(.62) saturate(.72)!important;transition:filter .3s ease!important}
+html body:not(.app-mode) #landing-video-container:not(.af-kitchen-night) .af-kitchen-photo{filter:brightness(1) saturate(.9)!important;transition:filter .3s ease!important}
